@@ -1,7 +1,8 @@
 @page "/demo"
 @rendermode InteractiveWebAssembly
-@using BlazorAtoms.ActivityIndicators
-@using BlazorAtoms.ActivityIndicators.Indicators
+@using BlazorAtoms.BusyIndicators
+@using BlazorAtoms.BusyIndicators.Indicators
+@using BlazorAtoms.Shared
 
 <PageTitle>Blazor Atoms Demo</PageTitle>
 
@@ -133,7 +134,7 @@
 <style>body { background-color: @BgColor; }</style>
 
 <h1>Blazor Atoms Demo</h1>
-<p>Live playgrounds: <a href="playground/pulsebar">PulseBar</a> &middot; <a href="playground/pulsescanner">PulseScanner</a></p>
+<p>Live playgrounds: <a href="playground/pulsebar">AtomPulseBar</a> &middot; <a href="playground/pulsescanner">AtomPulseScanner</a></p>
 
 <div class="page-bg-ctrl">
     <label>Page background</label>
@@ -141,7 +142,7 @@
 </div>
 
 <h2>Round indicators</h2>
-<p>Rendered through the <code>&lt;ActivityIndicator&gt;</code> wrapper by name. Controls below apply to
+<p>Rendered through the <code>&lt;AtomBusyIndicator&gt;</code> wrapper by name. Controls below apply to
    <em>all</em> of them at once. Each color is optional — leave it unchecked to use the indicator's
    built-in light/dark default; a color only shows where that indicator declares the knob.</p>
 
@@ -187,7 +188,7 @@
     @foreach (var name in RoundIndicators)
     {
         <div class="indicator-card" @key="name">
-            <ActivityIndicator Name="@name" Size="@Size"
+            <AtomBusyIndicator Name="@name" Size="@Size"
                                Blip="@(OverrideBlip ? Blip : null)"
                                Glow="@(OverrideGlow ? Glow : null)"
                                Line="@(OverrideLine ? Line : null)"
@@ -209,31 +210,31 @@
 
 @code {
     private static readonly string SvgNamespace =
-        typeof(ActivityIndicator).Namespace + ".Indicators";
+        typeof(AtomBusyIndicator).Namespace + ".Indicators";
 
     private static readonly Type[] SvgComponents =
-        typeof(ActivityIndicator).Assembly.GetTypes()
+        typeof(AtomBusyIndicator).Assembly.GetTypes()
             .Where(t => typeof(ComponentBase).IsAssignableFrom(t)
                      && !t.IsAbstract
                      && t.Namespace == SvgNamespace)
             .OrderBy(t => t.Name, StringComparer.Ordinal)
             .ToArray();
 
-    // Round indicators go through the public <ActivityIndicator> wrapper by Name.
+    // Round indicators go through the public <AtomBusyIndicator> wrapper by Name.
     private static readonly string[] RoundIndicators = SvgComponents
-        .Where(t => t.Name.StartsWith("Busy", StringComparison.Ordinal))
+        .Where(t => typeof(AtomBusyIndicatorBase).IsAssignableFrom(t))
         .Select(t => t.Name)
         .ToArray();
 
     // Everything else (Pulse*) is self-contained → render the Type directly.
     private static readonly Type[] LinearIndicators = SvgComponents
-        .Where(t => !t.Name.StartsWith("Busy", StringComparison.Ordinal))
+        .Where(t => !typeof(AtomBusyIndicatorBase).IsAssignableFrom(t))
         .ToArray();
 
     // Page background color (applied to <body> via the inline style above).
     private string BgColor = "#ffffff";
 
-    // Round-indicator controls — applied to every <ActivityIndicator> above.
+    // Round-indicator controls — applied to every <AtomBusyIndicator> above.
     private int Size = 72;
 
     // Each color is forwarded only when its Override flag is on; otherwise null lets

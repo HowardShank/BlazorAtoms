@@ -1,11 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
 
+  <Import Project="$(RepoRoot)build\Packable.props" />
+  <Import Project="$(RepoRoot)build\Shared.props" />
+
   <PropertyGroup>
-    <PackageId>BlazorAtoms.ActivityIndicators</PackageId>
-    <Title>Blazor Activity Indicators</Title>
+    <PackageId>BlazorAtoms.BusyIndicators</PackageId>
+    <Title>Blazor Busy Indicators</Title>
     <Description>Self-contained animated SVG busy/activity indicators for Blazor (Server or WebAssembly). No JS, no dependencies.</Description>
-    <PackageTags>Blazor;ActivityIndicator;Busy;Spinner;SVG;Loading;WebAssembly;Server</PackageTags>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>Blazor;BusyIndicator;ActivityIndicator;Busy;Spinner;SVG;Loading;WebAssembly;Server</PackageTags>
+    <Version>0.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,11 +21,6 @@
 
   <ItemGroup>
     <TrimmerRootDescriptor Include="ILLink.Descriptors.xml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- Repo-root README becomes the NuGet package readme. -->
-    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

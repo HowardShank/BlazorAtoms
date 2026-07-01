@@ -1,9 +1,9 @@
 @page "/playground/pulsebar"
 @rendermode InteractiveServer
 @using System.Globalization
-@using BlazorAtoms.ActivityIndicators.Indicators
+@using BlazorAtoms.BusyIndicators.Indicators
 
-<PageTitle>PulseBar Playground</PageTitle>
+<PageTitle>AtomPulseBar Playground</PageTitle>
 
 <style>
     .stage-outer {
@@ -95,14 +95,14 @@
     }
 </style>
 
-<h1>PulseBar playground</h1>
-<p>Tune <code>&lt;PulseBar&gt;</code> live. The animation stays pure CSS; changing a control rebuilds the SVG.
+<h1>AtomPulseBar playground</h1>
+<p>Tune <code>&lt;AtomPulseBar&gt;</code> live. The animation stays pure CSS; changing a control rebuilds the SVG.
    The dashed box is a resizable stand-in for your container, so you can watch the bar fill 100% of its width.</p>
-<p><a href="demo">&larr; Back to demo</a> &middot; <a href="playground/pulsescanner">PulseScanner playground &rarr;</a></p>
+<p><a href="demo">&larr; Back to demo</a> &middot; <a href="playground/pulsescanner">AtomPulseScanner playground &rarr;</a></p>
 
 <div class="stage-outer">
     <div class="stage" style="width:@(ContainerWidth)%">
-        <PulseBar Speed="@Speed" Color="@Color" TailLength="@TailLength" TailSpread="@TailSpread"
+        <AtomPulseBar Speed="@Speed" Color="@Color" TailLength="@TailLength" TailSpread="@TailSpread"
                   BlockWidth="@BlockWidth" HeadWidth="@EffectiveHeadWidth" Height="@Height"
                   CornerRadius="@CornerRadius" ShowTrack="@ShowTrack" TrackOpacity="@TrackOpacity" />
     </div>
@@ -174,7 +174,7 @@
 @code {
     private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
 
-    // PulseBar playground state — defaults match PulseBar.razor.
+    // AtomPulseBar playground state — defaults match AtomPulseBar.razor.
     private double Speed = 2.0;
     private string Color = "#00ffee";
     private int TailLength = 12;
@@ -188,6 +188,6 @@
     private bool ShowTrack = true;
     private int ContainerWidth = 100;
 
-    // When linked, pass null so PulseBar falls back to BlockWidth for the head.
+    // When linked, pass null so AtomPulseBar falls back to BlockWidth for the head.
     private double? EffectiveHeadWidth => HeadLinked ? null : HeadWidth;
 }

@@ -1,9 +1,9 @@
 @page "/playground/pulsescanner"
 @rendermode InteractiveServer
 @using System.Globalization
-@using BlazorAtoms.ActivityIndicators.Indicators
+@using BlazorAtoms.BusyIndicators.Indicators
 
-<PageTitle>PulseScanner Playground</PageTitle>
+<PageTitle>AtomPulseScanner Playground</PageTitle>
 
 <style>
     .stage-outer {
@@ -94,14 +94,14 @@
     }
 </style>
 
-<h1>PulseScanner playground</h1>
-<p>Tune <code>&lt;PulseScanner&gt;</code> live. A glowing dot eases left and right, bounces at each end,
+<h1>AtomPulseScanner playground</h1>
+<p>Tune <code>&lt;AtomPulseScanner&gt;</code> live. A glowing dot eases left and right, bounces at each end,
    and trails a fading comet tail. The animation stays pure CSS; changing a control rebuilds the SVG.</p>
-<p><a href="demo">&larr; Back to demo</a> &middot; <a href="playground/pulsebar">PulseBar playground &rarr;</a></p>
+<p><a href="demo">&larr; Back to demo</a> &middot; <a href="playground/pulsebar">AtomPulseBar playground &rarr;</a></p>
 
 <div class="stage-outer scanner">
     <div class="stage">
-        <PulseScanner Speed="@ScSpeed" Color="@ScColor" TailLength="@ScTailLength" TailSpread="@ScTailSpread"
+        <AtomPulseScanner Speed="@ScSpeed" Color="@ScColor" TailLength="@ScTailLength" TailSpread="@ScTailSpread"
                       HeadRadius="@ScHeadRadius" Width="@ScWidth" Height="@ScHeight"
                       ShowTrack="@ScShowTrack" ShowCore="@ScShowCore" />
     </div>
@@ -158,7 +158,7 @@
 @code {
     private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
 
-    // PulseScanner playground state — defaults match PulseScanner.razor.
+    // AtomPulseScanner playground state — defaults match AtomPulseScanner.razor.
     private double ScSpeed = 2.4;
     private string ScColor = "#00ffee";
     private int ScTailLength = 10;

@@ -6,11 +6,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RazorLangVersion>9.0</RazorLangVersion>
 
-    <!-- Shared package identity. License, icon, and repository URL are finalized in Step 2. -->
+    <!-- Repo root (with trailing slash) so shared build assets resolve from any project depth. -->
+    <RepoRoot>$(MSBuildThisFileDirectory)</RepoRoot>
+
+    <!-- Shared package identity. Per-library PackageId/Version live in each csproj;
+         shared pack settings (license/icon/urls/SourceLink) live in build/Packable.props. -->
     <Authors>Howard Shank</Authors>
     <Company>Howard Shank</Company>
     <Product>BlazorAtoms</Product>
-    <Version>0.1.0</Version>
   </PropertyGroup>
 
 </Project>

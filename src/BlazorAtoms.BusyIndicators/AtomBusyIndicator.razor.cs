@@ -1,35 +1,31 @@
 using System.Collections.Concurrent;
 using System.Reflection;
 using Microsoft.AspNetCore.Components;
+using BlazorAtoms.Shared;
 
-namespace BlazorAtoms.ActivityIndicators;
+namespace BlazorAtoms.BusyIndicators;
 
 /// <summary>
-/// Wrapper that renders one of the <c>Busy*</c> SVG indicators living in the
-/// <c>BlazorAtoms.ActivityIndicators.Indicators</c> namespace.
+/// Wrapper that renders one of the <c>AtomBusy*</c> SVG indicators — the non-abstract subclasses
+/// of <see cref="AtomBusyIndicatorBase"/> living in the
+/// <c>BlazorAtoms.BusyIndicators.Indicators</c> namespace.
 /// <para>
 /// Set <see cref="Name"/> to render a specific indicator; leave it null/empty to render a
-/// random one. The candidate set is discovered by reflection (namespace + <c>Busy</c> prefix),
-/// so adding or removing a <c>Busy*.razor</c> in the Indicators folder requires no change here.
+/// random one. The candidate set is discovered by reflection (every non-abstract
+/// <see cref="AtomBusyIndicatorBase"/>), so adding or removing an <c>AtomBusy*.razor</c> in the
+/// Indicators folder requires no change here.
 /// </para>
 /// </summary>
-public partial class ActivityIndicator : ComponentBase
+public partial class AtomBusyIndicator : AtomComponentBase
 {
-    // The indicators live in the wrapper's namespace + ".Indicators".
-    private static readonly string IndicatorsNamespace = typeof(ActivityIndicator).Namespace + ".Indicators";
-
     /// <summary>
-    /// All discoverable indicator component types, computed once per process. Filtered to
-    /// non-abstract <see cref="ComponentBase"/> types in the Indicators namespace whose name
-    /// starts with "Busy". The wrapper is in the parent namespace and is not named Busy*, so it
-    /// cannot match itself. Trimming-safe via ILLink.Descriptors.xml (roots the Indicators namespace).
+    /// All discoverable indicator component types, computed once per process: non-abstract
+    /// subclasses of <see cref="AtomBusyIndicatorBase"/>. The wrapper is not one, so it cannot
+    /// match itself. Trimming-safe via ILLink.Descriptors.xml (roots the Indicators namespace).
     /// </summary>
     private static readonly Type[] Candidates =
-        typeof(ActivityIndicator).Assembly.GetTypes()
-            .Where(t => typeof(ComponentBase).IsAssignableFrom(t)
-                     && !t.IsAbstract
-                     && t.Namespace == IndicatorsNamespace
-                     && t.Name.StartsWith("Busy", StringComparison.Ordinal))
+        typeof(AtomBusyIndicator).Assembly.GetTypes()
+            .Where(t => typeof(AtomBusyIndicatorBase).IsAssignableFrom(t) && !t.IsAbstract)
             .OrderBy(t => t.Name, StringComparer.Ordinal)
             .ToArray();
 
@@ -38,7 +34,8 @@ public partial class ActivityIndicator : ComponentBase
     private static readonly ConcurrentDictionary<Type, HashSet<string>> ParamNames = new();
 
     /// <summary>Indicator to render. Null/empty selects a random indicator. Matched
-    /// case-insensitively against the component type name, accepting both "BusyGears" and "Gears".</summary>
+    /// case-insensitively against the component type name, accepting "AtomBusyGears",
+    /// "BusyGears" and "Gears".</summary>
     [Parameter] public string? Name { get; set; }
 
     /// <summary>Rendered width/height in pixels. Forwarded to every indicator.</summary>
@@ -72,9 +69,7 @@ public partial class ActivityIndicator : ComponentBase
 
         if (!string.IsNullOrWhiteSpace(Name))
         {
-            var hit = Candidates.FirstOrDefault(t =>
-                string.Equals(t.Name, Name, StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(t.Name, "Busy" + Name, StringComparison.OrdinalIgnoreCase));
+            var hit = Candidates.FirstOrDefault(t => NameMatches(t.Name, Name));
             if (hit is not null) { ResolvedType = hit; return; }
 
             // Unknown name: notify the host, then fall back to random. Never throw.
@@ -85,6 +80,13 @@ public partial class ActivityIndicator : ComponentBase
         _randomPick ??= Candidates[Random.Shared.Next(Candidates.Length)];
         ResolvedType = _randomPick;
     }
+
+    // Accepts the full type name ("AtomBusyGears"), the name without the Atom prefix
+    // ("BusyGears"), and the bare form ("Gears") — all case-insensitive.
+    private static bool NameMatches(string typeName, string requested) =>
+        string.Equals(typeName, requested, StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(typeName, "Atom" + requested, StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(typeName, "AtomBusy" + requested, StringComparison.OrdinalIgnoreCase);
 
     private static HashSet<string> DeclaredParams(Type t) =>
         ParamNames.GetOrAdd(t, ty => ty

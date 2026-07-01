@@ -1,0 +1,9 @@
+@* Wrapper over the AtomBusy* SVG indicators.
+   - Name set  -> renders that indicator (case-insensitive; "AtomBusyGears", "BusyGears" or "Gears").
+   - Name null -> renders a random indicator (stable across re-renders).
+   See AtomBusyIndicator.razor.cs for discovery + parameter forwarding. *@
+@inherits AtomComponentBase
+@if (ResolvedType is not null)
+{
+    <DynamicComponent Type="ResolvedType" Parameters="BuildParameters()" />
+}

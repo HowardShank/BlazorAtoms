@@ -1,0 +1,15 @@
+<Project>
+
+  <!--
+    Links the BlazorAtoms.Shared source into the importing library and compiles it in.
+    No project reference, no runtime dependency: each package stays standalone (0 BlazorAtoms deps).
+    A library opts in with: <Import Project="$(RepoRoot)build\Shared.props" />
+  -->
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)src\BlazorAtoms.Shared\**\*.cs"
+             Exclude="$(RepoRoot)src\BlazorAtoms.Shared\obj\**;$(RepoRoot)src\BlazorAtoms.Shared\bin\**">
+      <Link>Shared\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Compile>
+  </ItemGroup>
+
+</Project>

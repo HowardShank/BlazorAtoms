@@ -1,6 +1,6 @@
 @*
-    PulseBar.razor
-    --------------
+    AtomPulseBar.razor
+    ------------------
     A full-height block slides back and forth inside a rectangular track,
     bounces at each end, and trails a fading tail. Pure CSS animation (no
     JavaScript). The SVG uses preserveAspectRatio="none" + width:100%, so it
@@ -8,10 +8,10 @@
     plain progress bar.
 
     Usage:
-        <div style="width:100%"><PulseBar /></div>
-        <PulseBar Color="#ff4400" Speed="1.0" TailLength="8" />
-        <PulseBar Color="#cc00ff" Height="30" TailLength="14" />
-        <PulseBar Color="#ffaa00" Height="8" BlockWidth="0.22" />
+        <div style="width:100%"><AtomPulseBar /></div>
+        <AtomPulseBar Color="#ff4400" Speed="1.0" TailLength="8" />
+        <AtomPulseBar Color="#cc00ff" Height="30" TailLength="14" />
+        <AtomPulseBar Color="#ffaa00" Height="8" BlockWidth="0.22" />
 
     Just drop it in any block-level container; it fills that container's width.
     Each instance gets a unique CSS id, so many can share one page safely.

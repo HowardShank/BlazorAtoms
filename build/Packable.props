@@ -1,0 +1,31 @@
+<Project>
+
+  <!--
+    Shared NuGet pack + reproducible-build settings for BlazorAtoms component libraries.
+    Imported ONLY by packable library csprojs (never by demos/tests/shared), so pack and
+    symbol settings don't leak onto non-shipping projects. Per-package identity
+    (PackageId/Title/Description/Tags/Version) stays in each library csproj.
+  -->
+  <PropertyGroup>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>blazoratoms-icon-128x128.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/HowardShank/BlazorAtoms</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/HowardShank/BlazorAtoms</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+
+    <!-- Reproducible build + SourceLink + symbol package. net9 SDK bundles SourceLink in-box. -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(RepoRoot)README.md" Pack="true" PackagePath="\" />
+    <None Include="$(RepoRoot)assets\blazoratoms-icon-128x128.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>
