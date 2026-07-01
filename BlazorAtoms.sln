@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
+	ProjectSection(SolutionItems) = preProject
+		src\LIBRARY-CATALOG.md = src\LIBRARY-CATALOG.md
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorAtoms.BusyIndicators", "src\BlazorAtoms.BusyIndicators\BlazorAtoms.BusyIndicators.csproj", "{10DC5B1B-1F17-4EF0-9844-985913C7DFB5}"
 EndProject
@@ -29,14 +32,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorWebAppWasmDemo", "Bla
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorWebAppWasmDemo.Client", "BlazorWebAppWasmDemo\BlazorWebAppWasmDemo.Client\BlazorWebAppWasmDemo.Client.csproj", "{9E2C678D-A2A3-49C1-9715-B7421163D3DA}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "assets", "assets", "{NEW-GUID}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "assets", "assets", "{E899D024-8C6E-4FC5-99F3-0AC925CA6BEA}"
 	ProjectSection(SolutionItems) = preProject
-			assets\blazoratoms-icon-flameA.svg = assets\blazoratoms-icon-flameA.svg
-			assets\blazoratoms-icon-flameB.svg = assets\blazoratoms-icon-flameB.svg
-			assets\blazoratoms-icon.svg = assets\blazoratoms-icon.svg
-			assets\blazoratoms-logo-flameA.svg = assets\blazoratoms-logo-flameA.svg
-			assets\blazoratoms-logo.svg = assets\blazoratoms-logo.svg
-			assets\logo-playground.html = assets\logo-playground.html
+		assets\blazoratoms-icon-flameA.svg = assets\blazoratoms-icon-flameA.svg
+		assets\blazoratoms-icon-flameB.svg = assets\blazoratoms-icon-flameB.svg
+		assets\blazoratoms-icon.svg = assets\blazoratoms-icon.svg
+		assets\blazoratoms-logo-flameA.svg = assets\blazoratoms-logo-flameA.svg
+		assets\blazoratoms-logo.svg = assets\blazoratoms-logo.svg
+		assets\logo-playground.html = assets\logo-playground.html
 	EndProjectSection
 EndProject
 Global
