@@ -1,0 +1,46 @@
+<svg viewBox="0 0 120 120" width="@Size" height="@Size" class="busy-funnel @Class" style="@ThemeStyle">
+    <polygon class="funnel-fill" points="30,40 90,40 65,72 65,84 55,84 55,72" />
+    <line class="rim" x1="30" y1="40" x2="90" y2="40" />
+    <path class="funnel-wall" d="M30,40 L55,72 L55,84" />
+    <path class="funnel-wall" d="M90,40 L65,72 L65,84" />
+    @foreach (var d in Drops)
+    {
+        <circle class="drop" cx="60" cy="72" r="2.6" style="--sx:@(d.Sx)px;animation-delay:@(d.Delay)s" />
+    }
+    <circle class="drop caught caughtL" cx="60" cy="72" r="2.8" style="animation-delay:0.30s" />
+    <circle class="drop caught caughtR" cx="60" cy="72" r="2.8" style="animation-delay:1.40s" />
+</svg>
+
+@code {
+    /// <summary>Rendered width/height in pixels (viewBox scales cleanly).</summary>
+    [Parameter] public int Size { get; set; } = 48;
+
+    /// <summary>Color of the moving particles. Falls back to the built-in light/dark default when null.</summary>
+    [Parameter] public string? Blip { get; set; }
+
+    /// <summary>Color of the caught-dot highlight. Falls back to the built-in default when null.</summary>
+    [Parameter] public string? Glow { get; set; }
+
+    /// <summary>Color of the funnel walls / rim. Falls back to the built-in default when null.</summary>
+    [Parameter] public string? Line { get; set; }
+
+    /// <summary>Faint funnel body fill. Falls back to the built-in default when null.</summary>
+    [Parameter] public string? Fill { get; set; }
+
+    /// <summary>Extra CSS class(es) applied to the root svg element.</summary>
+    [Parameter] public string? Class { get; set; }
+
+    private record Drop(int Sx, string Delay);
+
+    private static readonly Drop[] Drops =
+    {
+        new(-24, "0"), new(-16, "0.55"), new(-8, "1.10"), new(0, "1.65"),
+        new(8, "2.20"), new(16, "0.85"), new(24, "1.95"),
+    };
+
+    private string ThemeStyle => string.Concat(
+        Blip is null ? "" : $"--ind-blip:{Blip};",
+        Glow is null ? "" : $"--ind-glow:{Glow};",
+        Line is null ? "" : $"--ind-line:{Line};",
+        Fill is null ? "" : $"--ind-fill:{Fill};");
+}

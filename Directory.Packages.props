@@ -1,0 +1,26 @@
+<Project>
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <!-- Versions are defined here once; csproj files use versionless <PackageReference>. -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.AspNetCore.Components.Web" Version="9.0.11" />
+  </ItemGroup>
+
+  <!-- Demo host/client dependencies -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.17" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.0.17" />
+  </ItemGroup>
+
+  <!-- Test dependencies -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageVersion Include="bunit" Version="1.40.0" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,25 @@
+/* --ind-blip (strand dots) / --ind-glow (front highlight) / --ind-line (rungs). */
+svg { --ind-blip-d:#6fe3e3; --ind-glow-d:#eafdfd; --ind-line-d:#4aa3a3; }
+@media (prefers-color-scheme: light) {
+  svg { --ind-blip-d:#0e9c9c; --ind-glow-d:#04545f; --ind-line-d:#0e9c9c; }
+}
+
+.dot  { transform-box:fill-box; transform-origin:center; animation: dna-node 3s ease-in-out infinite; }
+.rung { stroke: var(--ind-line, var(--ind-line-d)); stroke-width:2; transform-box:fill-box; transform-origin:center; animation: dna-rung 3s ease-in-out infinite; }
+
+@keyframes dna-node {
+  0%   { transform: translateX(0) scale(1);     opacity:1;  fill: var(--ind-glow, var(--ind-glow-d)); }
+  25%  { transform: translateX(20px) scale(.8); opacity:.7; fill: var(--ind-blip, var(--ind-blip-d)); }
+  50%  { transform: translateX(0) scale(.55);   opacity:.4; fill: var(--ind-blip, var(--ind-blip-d)); }
+  75%  { transform: translateX(-20px) scale(.8);opacity:.7; fill: var(--ind-blip, var(--ind-blip-d)); }
+  100% { transform: translateX(0) scale(1);     opacity:1;  fill: var(--ind-glow, var(--ind-glow-d)); }
+}
+@keyframes dna-rung {
+  0%   { transform: scaleX(0); opacity:.12; }
+  25%  { transform: scaleX(1); opacity:.5; }
+  50%  { transform: scaleX(0); opacity:.12; }
+  75%  { transform: scaleX(1); opacity:.5; }
+  100% { transform: scaleX(0); opacity:.12; }
+}
+
+@media (prefers-reduced-motion: reduce) { .dot, .rung { animation: none; } }

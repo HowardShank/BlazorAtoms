@@ -1,0 +1,30 @@
+/* --ind-blip (items) / --ind-glow (revealed item + glint) / --ind-line (rim + */
+/* handle) / --ind-fill (glass tint). *-d values are scheme-aware defaults.    */
+svg { --ind-blip-d:#6fe3e3; --ind-glow-d:#eafdfd; --ind-line-d:#4aa3a3; --ind-fill-d:rgba(95,224,224,.10); }
+@media (prefers-color-scheme: light) {
+  svg { --ind-blip-d:#0e9c9c; --ind-glow-d:#04545f; --ind-line-d:#0e9c9c; --ind-fill-d:rgba(14,143,143,.12); }
+}
+
+.item-static { fill: var(--ind-blip, var(--ind-blip-d)); opacity:.14; }
+.item        { fill: var(--ind-blip, var(--ind-blip-d)); transform-box:fill-box; transform-origin:center; animation: mag-reveal 4s ease-in-out infinite; }
+.lens        { animation: mag-orbit 4s linear infinite; }
+.glass-rim   { fill: var(--ind-fill, var(--ind-fill-d)); stroke: var(--ind-line, var(--ind-line-d)); stroke-width:3; }
+.handle      { stroke: var(--ind-line, var(--ind-line-d)); stroke-width:4; stroke-linecap:round; fill:none; }
+.glint       { stroke: var(--ind-glow, var(--ind-glow-d)); stroke-width:2; stroke-linecap:round; fill:none; opacity:.5; }
+
+@keyframes mag-reveal {
+  0%, 42%   { opacity:.22; transform:scale(1);   fill: var(--ind-blip, var(--ind-blip-d)); }
+  50%       { opacity:1;   transform:scale(1.9); fill: var(--ind-glow, var(--ind-glow-d)); }
+  58%, 100% { opacity:.22; transform:scale(1);   fill: var(--ind-blip, var(--ind-blip-d)); }
+}
+@keyframes mag-orbit {
+  0%      { transform: translate(22px,0); }     8.333%  { transform: translate(19.05px,11px); }
+  16.667% { transform: translate(11px,19.05px); } 25%   { transform: translate(0,22px); }
+  33.333% { transform: translate(-11px,19.05px); } 41.667% { transform: translate(-19.05px,11px); }
+  50%     { transform: translate(-22px,0); }    58.333% { transform: translate(-19.05px,-11px); }
+  66.667% { transform: translate(-11px,-19.05px); } 75%  { transform: translate(0,-22px); }
+  83.333% { transform: translate(11px,-19.05px); } 91.667% { transform: translate(19.05px,-11px); }
+  100%    { transform: translate(22px,0); }
+}
+
+@media (prefers-reduced-motion: reduce) { .item, .lens { animation: none; } }

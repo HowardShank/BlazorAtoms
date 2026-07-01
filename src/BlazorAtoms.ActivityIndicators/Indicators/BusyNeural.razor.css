@@ -1,0 +1,23 @@
+/* --ind-blip (nodes) / --ind-glow (pulses + node flash) / --ind-line (edges). */
+svg { --ind-blip-d:#6fe3e3; --ind-glow-d:#eafdfd; --ind-line-d:#4aa3a3; }
+@media (prefers-color-scheme: light) {
+  svg { --ind-blip-d:#0e9c9c; --ind-glow-d:#04545f; --ind-line-d:#0e9c9c; }
+}
+
+.edge  { stroke: var(--ind-line, var(--ind-line-d)); stroke-width:1.5; opacity:.3; }
+.node  { fill: var(--ind-blip, var(--ind-blip-d)); transform-box:fill-box; transform-origin:center; animation: neuro-fire 2.8s ease-in-out infinite; }
+.pulse { fill: var(--ind-glow, var(--ind-glow-d)); transform-box:fill-box; transform-origin:center; animation: neuro-pulse 2.8s linear infinite; }
+
+@keyframes neuro-fire {
+  0%, 40%   { transform: scale(1);   fill: var(--ind-blip, var(--ind-blip-d)); }
+  50%       { transform: scale(1.7); fill: var(--ind-glow, var(--ind-glow-d)); }
+  60%, 100% { transform: scale(1);   fill: var(--ind-blip, var(--ind-blip-d)); }
+}
+@keyframes neuro-pulse {
+  0%        { transform: translate(0,0); opacity:0; }
+  6%        { opacity:1; }
+  30%       { transform: translate(var(--tx), var(--ty)); opacity:1; }
+  36%, 100% { transform: translate(var(--tx), var(--ty)); opacity:0; }
+}
+
+@media (prefers-reduced-motion: reduce) { .node, .pulse { animation: none; } .pulse { opacity: 0; } }

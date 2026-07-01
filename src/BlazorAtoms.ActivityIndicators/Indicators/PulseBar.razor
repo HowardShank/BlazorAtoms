@@ -1,0 +1,115 @@
+@*
+    PulseBar.razor
+    --------------
+    A full-height block slides back and forth inside a rectangular track,
+    bounces at each end, and trails a fading tail. Pure CSS animation (no
+    JavaScript). The SVG uses preserveAspectRatio="none" + width:100%, so it
+    stretches to fill the width of its parent at a fixed pixel height, like a
+    plain progress bar.
+
+    Usage:
+        <div style="width:100%"><PulseBar /></div>
+        <PulseBar Color="#ff4400" Speed="1.0" TailLength="8" />
+        <PulseBar Color="#cc00ff" Height="30" TailLength="14" />
+        <PulseBar Color="#ffaa00" Height="8" BlockWidth="0.22" />
+
+    Just drop it in any block-level container; it fills that container's width.
+    Each instance gets a unique CSS id, so many can share one page safely.
+
+    The standalone SvgOutput/scanner-bar.svg is the Color="#00ffee",
+    Speed="2.0", TailLength="12" configuration of this component.
+*@
+@using System.Globalization
+@using System.Text
+
+<div class="pulse-bar" style="width:100%">@((MarkupString)BuildSvg())</div>
+
+@code {
+    // Internal coordinate space; preserveAspectRatio="none" stretches it to fit.
+    private const int VBW = 1000;
+    private const int VBH = 100;
+
+    /// <summary>Seconds for one end-to-end sweep (one bounce is two sweeps).</summary>
+    [Parameter] public double Speed { get; set; } = 2.0;
+
+    /// <summary>Block/tail/track color (any CSS color).</summary>
+    [Parameter] public string Color { get; set; } = "#00ffee";
+
+    /// <summary>Number of trailing blocks behind the head. 0 = no tail.</summary>
+    [Parameter] public int TailLength { get; set; } = 12;
+
+    /// <summary>Fraction of one sweep that the tail spans (longer = stretchier).</summary>
+    [Parameter] public double TailSpread { get; set; } = 0.22;
+
+    /// <summary>Bar height in px. Width always fills the parent container.</summary>
+    [Parameter] public double Height { get; set; } = 14;
+
+    /// <summary>Moving block width as a fraction (0-1) of the track width.
+    /// Used for the tail blocks, and for the head too unless HeadWidth is set.</summary>
+    [Parameter] public double BlockWidth { get; set; } = 0.14;
+
+    /// <summary>Optional head (leading block) width as a fraction (0-1) of the
+    /// track width. When null, the head uses BlockWidth like the tail.</summary>
+    [Parameter] public double? HeadWidth { get; set; }
+
+    /// <summary>Track/clip corner radius in internal units (0 = square corners).</summary>
+    [Parameter] public double CornerRadius { get; set; } = 16;
+
+    /// <summary>Draw the faint full-length track behind the block.</summary>
+    [Parameter] public bool ShowTrack { get; set; } = true;
+
+    /// <summary>Opacity of the faint track.</summary>
+    [Parameter] public double TrackOpacity { get; set; } = 0.12;
+
+    // Unique per instance so multiple bars on a page never share keyframes/clip ids.
+    private readonly string _id = "pb" + Guid.NewGuid().ToString("N").Substring(0, 8);
+
+    private static string F(double x) =>
+        Math.Round(x, 2).ToString(CultureInfo.InvariantCulture);
+
+    private string BuildSvg()
+    {
+        var tail = Math.Max(0, TailLength);
+        var bw = Clamp01(BlockWidth) * VBW;                       // tail block width
+        var headBw = Clamp01(HeadWidth ?? BlockWidth) * VBW;      // head block width
+        var travel = VBW - headBw;                                // head bounces edge-to-edge
+        var step = tail > 0 ? Speed * TailSpread / tail : 0;
+        var clip = _id + "-clip";
+
+        var sb = new StringBuilder();
+        sb.Append($"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 {VBW} {VBH}\" ")
+          .Append($"preserveAspectRatio=\"none\" width=\"100%\" height=\"{F(Height)}\" style=\"display:block\">");
+
+        // Scoped CSS: alternate = bounce, ease-in-out = slow at the ends.
+        sb.Append("<style>")
+          .Append($".{_id}{{animation:{_id}-scan {F(Speed)}s ease-in-out infinite alternate;}}")
+          .Append($"@keyframes {_id}-scan{{from{{transform:translateX(0)}}to{{transform:translateX({F(travel)}px)}}}}")
+          .Append("</style>");
+
+        sb.Append($"<defs><clipPath id=\"{clip}\">")
+          .Append($"<rect x=\"0\" y=\"0\" width=\"{VBW}\" height=\"{VBH}\" rx=\"{F(CornerRadius)}\" ry=\"{F(CornerRadius)}\"/>")
+          .Append("</clipPath></defs>");
+
+        if (ShowTrack)
+            sb.Append($"<rect x=\"0\" y=\"0\" width=\"{VBW}\" height=\"{VBH}\" ")
+              .Append($"rx=\"{F(CornerRadius)}\" ry=\"{F(CornerRadius)}\" fill=\"{Color}\" opacity=\"{F(TrackOpacity)}\"/>");
+
+        sb.Append($"<g clip-path=\"url(#{clip})\">");
+
+        // Tail: dim-to-bright, each block lags the head by a growing animation-delay
+        // so it sits where the head was a moment ago. Head drawn last (on top).
+        for (var i = tail; i >= 1; i--)
+        {
+            var delay = i * step;
+            var opacity = (1.0 - (double)i / (tail + 1)) * 0.9;
+            sb.Append($"<rect class=\"{_id}\" x=\"0\" y=\"0\" width=\"{F(bw)}\" height=\"{VBH}\" ")
+              .Append($"fill=\"{Color}\" opacity=\"{F(opacity)}\" style=\"animation-delay:{F(delay)}s\"/>");
+        }
+
+        sb.Append($"<rect class=\"{_id}\" x=\"0\" y=\"0\" width=\"{F(headBw)}\" height=\"{VBH}\" fill=\"{Color}\"/>");
+        sb.Append("</g></svg>");
+        return sb.ToString();
+    }
+
+    private static double Clamp01(double v) => Math.Max(0.01, Math.Min(1.0, v));
+}

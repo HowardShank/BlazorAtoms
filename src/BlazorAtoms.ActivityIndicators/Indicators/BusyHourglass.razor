@@ -1,0 +1,48 @@
+<svg viewBox="0 0 120 120" width="@Size" height="@Size" class="busy-hourglass @Class" style="@ThemeStyle">
+    <defs>
+        <clipPath id="@_topClip"><polygon points="38,28 82,28 60,60" /></clipPath>
+        <clipPath id="@_botClip"><polygon points="38,92 82,92 60,60" /></clipPath>
+    </defs>
+    <g class="frame">
+        <polygon class="glass" points="38,28 82,28 60,60" />
+        <polygon class="glass" points="38,92 82,92 60,60" />
+
+        <g clip-path="url(#@(_topClip))"><rect class="sand sand-top" x="36" y="27" width="48" height="33" /></g>
+        <g clip-path="url(#@(_botClip))"><rect class="sand sand-bottom" x="36" y="60" width="48" height="33" /></g>
+
+        <line class="stream" x1="60" y1="57" x2="60" y2="63" />
+
+        <line class="cap" x1="36" y1="27" x2="84" y2="27" />
+        <line class="cap" x1="36" y1="93" x2="84" y2="93" />
+    </g>
+</svg>
+
+@code {
+    /// <summary>Rendered width/height in pixels.</summary>
+    [Parameter] public int Size { get; set; } = 48;
+
+    /// <summary>Sand color. Falls back to the built-in light/dark default when null.</summary>
+    [Parameter] public string? Blip { get; set; }
+
+    /// <summary>Falling-stream color. Falls back to the built-in default when null.</summary>
+    [Parameter] public string? Glow { get; set; }
+
+    /// <summary>Frame color. Falls back to the built-in default when null.</summary>
+    [Parameter] public string? Line { get; set; }
+
+    /// <summary>Glass tint. Falls back to the built-in default when null.</summary>
+    [Parameter] public string? Fill { get; set; }
+
+    /// <summary>Extra CSS class(es) on the root svg element.</summary>
+    [Parameter] public string? Class { get; set; }
+
+    // Unique clip ids per instance so multiple hourglasses on one page don't collide.
+    private readonly string _topClip = "hg-top-" + Guid.NewGuid().ToString("N").Substring(0, 8);
+    private readonly string _botClip = "hg-bot-" + Guid.NewGuid().ToString("N").Substring(0, 8);
+
+    private string ThemeStyle => string.Concat(
+        Blip is null ? "" : $"--ind-blip:{Blip};",
+        Glow is null ? "" : $"--ind-glow:{Glow};",
+        Line is null ? "" : $"--ind-line:{Line};",
+        Fill is null ? "" : $"--ind-fill:{Fill};");
+}

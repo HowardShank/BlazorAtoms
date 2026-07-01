@@ -1,0 +1,16 @@
+<Project>
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RazorLangVersion>9.0</RazorLangVersion>
+
+    <!-- Shared package identity. License, icon, and repository URL are finalized in Step 2. -->
+    <Authors>Howard Shank</Authors>
+    <Company>Howard Shank</Company>
+    <Product>BlazorAtoms</Product>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+</Project>

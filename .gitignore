@@ -1,0 +1,29 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+
+# Local package output
+artifacts/
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Test results
+[Tt]est[Rr]esults/
+*.trx
+*.coverage
+*.coverage.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code
+CLAUDE.md
+CLAUDE.local.md
+.claude/

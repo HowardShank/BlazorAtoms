@@ -1,0 +1,172 @@
+@page "/playground/pulsescanner"
+@rendermode InteractiveWebAssembly
+
+@using System.Globalization
+@using BlazorAtoms.ActivityIndicators.Indicators
+
+<PageTitle>PulseScanner Playground</PageTitle>
+
+<style>
+    .stage-outer {
+        background: radial-gradient(ellipse at center, #0b1019 0%, #07090d 100%);
+        border: 1px solid #1b2330;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        justify-content: center;
+    }
+
+    .stage {
+        max-width: 100%;
+    }
+
+    .stage svg {
+        max-width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    .controls {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 1rem 1.5rem;
+        background: #0d1118;
+        border: 1px solid #1b2330;
+        border-radius: 12px;
+        padding: 1.25rem 1.5rem;
+        color: #cfd8e3;
+    }
+
+    .ctrl {
+        display: flex;
+        flex-direction: column;
+        gap: .35rem;
+    }
+
+    .ctrl label {
+        font-size: .8rem;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: #8794a3;
+        display: flex;
+        justify-content: space-between;
+        gap: .5rem;
+    }
+
+    .ctrl label .val {
+        color: #5fb7c9;
+        font-family: ui-monospace, Consolas, monospace;
+        text-transform: none;
+    }
+
+    .controls input[type=range] {
+        width: 100%;
+        accent-color: #00b3c4;
+    }
+
+    .controls input[type=color] {
+        width: 100%;
+        height: 32px;
+        background: none;
+        border: 1px solid #1b2330;
+        border-radius: 6px;
+        padding: 2px;
+    }
+
+    .ctrl .row {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+    }
+
+    .ctrl .row input[type=checkbox] {
+        accent-color: #00b3c4;
+        width: 16px;
+        height: 16px;
+    }
+
+    .ctrl .row label {
+        text-transform: none;
+        letter-spacing: 0;
+        color: #cfd8e3;
+        font-size: .85rem;
+        justify-content: flex-start;
+    }
+</style>
+
+<h1>PulseScanner playground</h1>
+<p>Tune <code>&lt;PulseScanner&gt;</code> live. A glowing dot eases left and right, bounces at each end,
+   and trails a fading comet tail. The animation stays pure CSS; changing a control rebuilds the SVG.</p>
+<p><a href="demo">&larr; Back to demo</a> &middot; <a href="playground/pulsebar">PulseBar playground &rarr;</a></p>
+
+<div class="stage-outer scanner">
+    <div class="stage">
+        <PulseScanner Speed="@ScSpeed" Color="@ScColor" TailLength="@ScTailLength" TailSpread="@ScTailSpread"
+                      HeadRadius="@ScHeadRadius" Width="@ScWidth" Height="@ScHeight"
+                      ShowTrack="@ScShowTrack" ShowCore="@ScShowCore" />
+    </div>
+</div>
+
+<div class="controls">
+    <div class="ctrl">
+        <label>Speed (s/sweep) <span class="val">@(ScSpeed.ToString(Inv))s</span></label>
+        <input type="range" min="0.3" max="6" step="0.1"
+               @bind="ScSpeed" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Color <span class="val">@ScColor</span></label>
+        <input type="color" @bind="ScColor" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>Tail length <span class="val">@ScTailLength</span></label>
+        <input type="range" min="0" max="30" step="1"
+               @bind="ScTailLength" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>Tail spread <span class="val">@ScTailSpread.ToString(Inv)</span></label>
+        <input type="range" min="0.05" max="0.6" step="0.01"
+               @bind="ScTailSpread" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Head radius (px) <span class="val">@(ScHeadRadius.ToString(Inv))px</span></label>
+        <input type="range" min="3" max="40" step="1"
+               @bind="ScHeadRadius" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Width (px) <span class="val">@(ScWidth)px</span></label>
+        <input type="range" min="200" max="1000" step="10"
+               @bind="ScWidth" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>Height (px) <span class="val">@(ScHeight)px</span></label>
+        <input type="range" min="40" max="300" step="10"
+               @bind="ScHeight" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>Options</label>
+        <div class="row">
+            <input type="checkbox" id="scShowTrack" @bind="ScShowTrack" />
+            <label for="scShowTrack">Show track</label>
+        </div>
+        <div class="row" style="margin-top:.4rem">
+            <input type="checkbox" id="scShowCore" @bind="ScShowCore" />
+            <label for="scShowCore">Show white core</label>
+        </div>
+    </div>
+</div>
+
+@code {
+    private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
+
+    // PulseScanner playground state — defaults match PulseScanner.razor.
+    private double ScSpeed = 2.4;
+    private string ScColor = "#00ffee";
+    private int ScTailLength = 10;
+    private double ScTailSpread = 0.22;
+    private double ScHeadRadius = 13;
+    private int ScWidth = 640;
+    private int ScHeight = 140;
+    private bool ScShowTrack = true;
+    private bool ScShowCore = true;
+}

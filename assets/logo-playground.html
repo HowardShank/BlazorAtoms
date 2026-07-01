@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BlazorAtoms Logo Playground</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; padding: 2rem 1.5rem 3rem; background: #07090d; color: #cfd8e3;
+         font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  h1 { font-weight: 600; letter-spacing: 0.02em; margin: 0 0 0.25rem; }
+  h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.09em; color: #6f7d8c;
+       margin: 0.25rem 0 0.75rem; border-bottom: 1px solid #1b2330; padding-bottom: 0.35rem; }
+  p.lead { margin: 0 0 1.5rem; color: #8794a3; max-width: 78ch; }
+  .wrap { max-width: 1040px; margin: 0 auto; }
+
+  .stage-outer { border: 1px solid #1b2330; border-radius: 12px; padding: 1.25rem;
+                 margin-bottom: 1.25rem; }
+  .stage { display: flex; align-items: center; justify-content: center; border-radius: 8px;
+           min-height: 240px; padding: 1.5rem; transition: background 0.15s; }
+  .stage svg { height: 100%; width: auto; max-width: 100%; }
+  .stagebar { display: flex; gap: 0.6rem; align-items: center; margin-top: 0.9rem; flex-wrap: wrap; }
+  .stagebar .seg { display: flex; gap: 0.35rem; }
+  .stagebar button { background: #16202c; color: #9fb3c4; border: 1px solid #25303f;
+                     border-radius: 6px; padding: 0.35rem 0.8rem; font-size: 0.8rem; cursor: pointer; }
+  .stagebar button:hover { background: #1d2a38; color: #cfe6f0; }
+  .stagebar button.on { background: #F97316; color: #1a1206; border-color: #F97316; font-weight: 600; }
+  .stagebar .spacer { flex: 1; }
+
+  .panel { background: #0d1118; border: 1px solid #1b2330; border-radius: 12px;
+           padding: 1rem 1.25rem 1.25rem; margin-bottom: 1.25rem; }
+  .controls { display: grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr));
+              gap: 0.85rem 1.4rem; }
+  .ctrl { display: flex; flex-direction: column; gap: 0.3rem; }
+  .ctrl label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+                color: #8794a3; display: flex; justify-content: space-between; gap: 0.5rem; }
+  .ctrl label .val { color: #f0a35f; font-family: "Cascadia Code",Consolas,monospace; text-transform: none; }
+  input[type=range] { width: 100%; accent-color: #F97316; }
+  input[type=color] { width: 100%; height: 30px; background: none; border: 1px solid #1b2330;
+                      border-radius: 6px; padding: 2px; cursor: pointer; }
+  input[type=text] { width: 100%; box-sizing: border-box; background: #0a0e14; color: #e6eef7;
+                     border: 1px solid #25303f; border-radius: 6px; padding: 0.4rem 0.55rem;
+                     font-size: 0.9rem; font-family: "Cascadia Code",Consolas,monospace; }
+  select { width: 100%; background: #0a0e14; color: #e6eef7; border: 1px solid #25303f;
+           border-radius: 6px; padding: 0.4rem 0.5rem; font-size: 0.85rem; }
+  .hidden { display: none !important; }
+
+  .out .block { background: #0d1118; border: 1px solid #1b2330; border-radius: 10px;
+                padding: 0.9rem 1.1rem; }
+  .out .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+  .out .head span { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.08em; color: #6f7d8c; }
+  .out .head .btns { display: flex; gap: 0.5rem; }
+  .out code { display: block; white-space: pre-wrap; word-break: break-word; max-height: 220px; overflow: auto;
+              font-size: 0.78rem; color: #9fd0b0; font-family: "Cascadia Code",Consolas,monospace; }
+  button.act { background: #16202c; color: #9fb3c4; border: 1px solid #25303f;
+               border-radius: 6px; padding: 0.3rem 0.7rem; font-size: 0.78rem; cursor: pointer; }
+  button.act:hover { background: #1d2a38; color: #cfe6f0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>BlazorAtoms Logo Playground</h1>
+  <p class="lead">Tune the mark live &mdash; text, colors/shades, flame style, sizes &mdash; then
+  <b>Copy</b> or <b>Download</b> the SVG. Everything is generated in-page; nothing is saved until you export.
+  Switch between the square <b>Icon</b>, the horizontal <b>Lockup</b>, and the <b>Stacked</b> lockup.
+  The label &amp; wordmark fields swap in/out depending on which you're editing.</p>
+
+  <div class="stage-outer">
+    <div class="stage" id="stage" style="background:#ffffff"></div>
+    <div class="stagebar">
+      <div class="seg">
+        <button id="m-icon" class="on" data-mode="icon">Icon (square)</button>
+        <button id="m-lock" data-mode="lockup">Lockup (horizontal)</button>
+        <button id="m-stack" data-mode="stacked">Stacked</button>
+      </div>
+      <span class="spacer"></span>
+      <span style="font-size:.75rem;color:#6f7d8c">Preview bg</span>
+      <div class="seg">
+        <button data-bg="#ffffff" class="on">Light</button>
+        <button data-bg="#1e1e1e">Dark</button>
+        <button data-bg="#3b4a8c">Blue</button>
+      </div>
+      <input type="color" id="bgCustom" value="#ffffff" style="width:34px;height:30px;flex:none">
+    </div>
+  </div>
+
+  <!-- TEXT -->
+  <div class="panel">
+    <h2>Text</h2>
+    <div class="controls">
+      <div class="ctrl"><label>Atomic number</label><input type="text" id="t_num" value="4" maxlength="3"></div>
+      <div class="ctrl"><label>Element symbol</label><input type="text" id="t_sym" value="Be" maxlength="3"></div>
+      <div class="ctrl" data-only="icon"><label>Label (bottom)</label><input type="text" id="t_label" value="ELEMENTS" maxlength="12"></div>
+      <div class="ctrl" data-only="lockup stacked"><label>Wordmark line 1</label><input type="text" id="t_word1" value="Blazor" maxlength="16"></div>
+      <div class="ctrl" data-only="lockup stacked"><label>Wordmark line 2</label><input type="text" id="t_word2" value="Elements" maxlength="16"></div>
+    </div>
+  </div>
+
+  <!-- COLORS -->
+  <div class="panel">
+    <h2>Colors &amp; shades</h2>
+    <div class="controls" style="margin-bottom:0.95rem;border-bottom:1px dashed #1b2330;padding-bottom:0.95rem">
+      <div class="ctrl"><label>Primary color <span class="val" id="v_primary"></span></label><input type="color" id="c_primary" value="#F97316"></div>
+      <div class="ctrl"><label>Flame mode</label><div class="row" style="height:30px"><input type="checkbox" id="tintFlame"><label for="tintFlame">Tint flame with primary</label></div></div>
+      <div class="ctrl"><label>&nbsp;</label><button class="act" id="btnDerive" style="height:30px">Re-derive shades from primary</button></div>
+    </div>
+    <div class="controls">
+      <div class="ctrl"><label>Tile top</label><input type="color" id="c_tileTop" value="#FF9A4D"></div>
+      <div class="ctrl"><label>Tile bottom</label><input type="color" id="c_tileBot" value="#EA5E0B"></div>
+      <div class="ctrl"><label>Tile edge (stroke)</label><input type="color" id="c_stroke" value="#C24E06"></div>
+      <div class="ctrl"><label>Flame tip</label><input type="color" id="c_flameTop" value="#FFE07A"></div>
+      <div class="ctrl"><label>Flame mid</label><input type="color" id="c_flameMid" value="#FF9A2E"></div>
+      <div class="ctrl"><label>Flame base</label><input type="color" id="c_flameBase" value="#F2530E"></div>
+      <div class="ctrl"><label>Inner flame top</label><input type="color" id="c_innerTop" value="#FFF1B8"></div>
+      <div class="ctrl"><label>Inner flame bottom</label><input type="color" id="c_innerBot" value="#FFB03A"></div>
+      <div class="ctrl"><label>Ember glow</label><input type="color" id="c_ember" value="#FFB258"></div>
+      <div class="ctrl"><label>Symbol text</label><input type="color" id="c_symbol" value="#FFFFFF"></div>
+      <div class="ctrl"><label>Number / label</label><input type="color" id="c_cream" value="#FFE8D6"></div>
+      <div class="ctrl" data-only="lockup stacked"><label>Wordmark line 1</label><input type="color" id="c_word1" value="#6B6B6B"></div>
+      <div class="ctrl" data-only="lockup stacked"><label>Wordmark 2 top</label><input type="color" id="c_word2Top" value="#FF8A2E"></div>
+      <div class="ctrl" data-only="lockup stacked"><label>Wordmark 2 bottom</label><input type="color" id="c_word2Bot" value="#EA5E0B"></div>
+    </div>
+  </div>
+
+  <!-- SHAPE / SIZE -->
+  <div class="panel">
+    <h2>Shape &amp; size</h2>
+    <div class="controls">
+      <div class="ctrl"><label>Flame style</label>
+        <select id="s_flame"><option value="A">A · twin-tongue flicker</option>
+          <option value="B">B · sharp taper</option>
+          <option value="teardrop">Teardrop (original)</option></select></div>
+      <div class="ctrl"><label>Flame scale <span class="val" id="v_flameScale"></span></label>
+        <input type="range" id="s_flameScale" min="0.5" max="1.7" step="0.05" value="1"></div>
+      <div class="ctrl"><label>Tile corner <span class="val" id="v_corner"></span></label>
+        <input type="range" id="s_corner" min="0" max="40" step="1" value="16"></div>
+      <div class="ctrl"><label>Tile edge width <span class="val" id="v_strokeW"></span></label>
+        <input type="range" id="s_strokeW" min="0" max="6" step="0.5" value="2"></div>
+      <div class="ctrl"><label>Symbol size <span class="val" id="v_symSize"></span></label>
+        <input type="range" id="s_symSize" min="28" max="60" step="1" value="46"></div>
+      <div class="ctrl"><label>Number size <span class="val" id="v_numSize"></span></label>
+        <input type="range" id="s_numSize" min="9" max="24" step="1" value="16"></div>
+      <div class="ctrl" data-only="icon"><label>Label size <span class="val" id="v_labelSize"></span></label>
+        <input type="range" id="s_labelSize" min="6" max="16" step="0.5" value="10"></div>
+      <div class="ctrl" data-only="icon"><label>Label spacing <span class="val" id="v_labelSpace"></span></label>
+        <input type="range" id="s_labelSpace" min="0" max="6" step="0.25" value="2.5"></div>
+      <div class="ctrl" data-only="lockup stacked"><label>Wordmark 1 size <span class="val" id="v_w1Size"></span></label>
+        <input type="range" id="s_w1Size" min="16" max="44" step="1" value="30"></div>
+      <div class="ctrl" data-only="lockup stacked"><label>Wordmark 2 size <span class="val" id="v_w2Size"></span></label>
+        <input type="range" id="s_w2Size" min="24" max="60" step="1" value="46"></div>
+    </div>
+  </div>
+
+  <!-- OUTPUT SIZE + PNG EXPORT -->
+  <div class="panel">
+    <h2>Output size &amp; PNG export</h2>
+    <div class="controls">
+      <div class="ctrl"><label>Output size <span class="val" id="v_outDims"></span></label>
+        <input type="text" id="outSize" value="128" inputmode="numeric"></div>
+      <div class="ctrl"><label>Size presets (px)</label>
+        <div class="row" style="flex-wrap:wrap;gap:.35rem">
+          <button class="act psz" data-psize="16">16</button>
+          <button class="act psz" data-psize="32">32</button>
+          <button class="act psz" data-psize="48">48</button>
+          <button class="act psz" data-psize="64">64</button>
+          <button class="act psz" data-psize="128">128</button>
+          <button class="act psz" data-psize="256">256</button>
+          <button class="act psz" data-psize="512">512</button>
+        </div></div>
+      <div class="ctrl"><label>PNG background</label>
+        <div class="row" style="height:30px"><input type="checkbox" id="pngBg" checked><label for="pngBg">Transparent (else bake preview bg)</label></div></div>
+      <div class="ctrl"><label>&nbsp;</label>
+        <div class="row" style="flex-wrap:wrap;gap:.5rem">
+          <button class="act" id="btnPng">Download PNG</button>
+          <button class="act" id="btnPngSet">Download set (16-256)</button>
+        </div></div>
+    </div>
+  </div>
+
+  <!-- BLAZOR COMPONENT (.razor) -->
+  <div class="panel">
+    <h2>Blazor component (.razor) &mdash; self-contained, drop into any Blazor project</h2>
+    <div class="controls" style="margin-bottom:.7rem">
+      <div class="ctrl"><label>Component name</label><input type="text" id="compName" value="BeMark" maxlength="40"></div>
+    </div>
+    <div class="out">
+      <div class="block">
+        <div class="head"><span>Component source &mdash; no CSS file, no JS, no DI, no package</span>
+          <div class="btns">
+            <button class="act" id="btnCopyRazor">Copy</button>
+            <button class="act" id="btnDownloadRazor">Download .razor</button>
+          </div></div>
+        <code id="razorOut"></code>
+      </div>
+      <div class="block" style="margin-top:.8rem">
+        <div class="head"><span>Usage</span></div>
+        <code id="usageOut"></code>
+      </div>
+    </div>
+  </div>
+
+  <div class="out">
+    <div class="block">
+      <div class="head"><span>Raw SVG</span>
+        <div class="btns">
+          <button class="act" id="btnCopy">Copy</button>
+          <button class="act" id="btnDownload">Download .svg</button>
+          <button class="act" id="btnReset">Reset all</button>
+        </div>
+      </div>
+      <code id="svgOut"></code>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- flame path sets (outer, inner) in the 0..128 tile coordinate space ----
+const FLAMES = {
+  A: { outer: "M64 47 C 55 47, 49 42, 50 34 C 51 27, 56 26, 57 20 C 58 15, 55 12, 58 7 C 60 11, 61 16, 63 17 C 64 12, 63 8, 65 5 C 68 11, 69 17, 72 22 C 76 28, 79 31, 79 37 C 79 43, 73 47, 64 47 Z",
+       inner: "M64 22 C 59 28, 57 31, 57 37 C 57 42, 60 45, 64 45 C 68 45, 71 42, 71 37 C 71 32, 68 30, 66 24 C 65 22, 65 20, 64 22 Z" },
+  B: { outer: "M64 4 C 61 16, 52 22, 51 33 C 50 41, 57 47, 64 47 C 71 47, 78 41, 77 33 C 76 22, 67 16, 64 4 Z",
+       inner: "M64 18 C 61 26, 57 29, 57 36 C 57 42, 60 45, 64 45 C 68 45, 71 42, 71 36 C 71 29, 67 26, 64 18 Z" },
+  teardrop: { outer: "M64 6 C 56 20, 49 25, 49 34 C 49 42, 56 46, 64 46 C 72 46, 79 42, 79 34 C 79 25, 72 20, 64 6 Z",
+       inner: "M64 20 C 59 28, 56 31, 56 37 C 56 42, 60 45, 64 45 C 68 45, 72 42, 72 37 C 72 31, 69 28, 64 20 Z" }
+};
+const FONT = "'Segoe UI','Helvetica Neue',Arial,sans-serif";
+
+// ---- color math: derive the whole palette from one primary ----
+const clampP = v => Math.max(0, Math.min(100, v));
+function hexToHsl(hex){
+  let r=parseInt(hex.slice(1,3),16)/255, g=parseInt(hex.slice(3,5),16)/255, b=parseInt(hex.slice(5,7),16)/255;
+  const max=Math.max(r,g,b), min=Math.min(r,g,b); let h, s, l=(max+min)/2;
+  if(max===min){ h=0; s=0; }
+  else{ const d=max-min; s = l>0.5 ? d/(2-max-min) : d/(max+min);
+    switch(max){ case r: h=(g-b)/d+(g<b?6:0); break; case g: h=(b-r)/d+2; break; default: h=(r-g)/d+4; }
+    h*=60; }
+  return [h, s*100, l*100];
+}
+function hslToHex(h,s,l){
+  h=((h%360)+360)%360; s=clampP(s)/100; l=clampP(l)/100;
+  const c=(1-Math.abs(2*l-1))*s, x=c*(1-Math.abs((h/60)%2-1)), m=l-c/2;
+  let r,g,b;
+  if(h<60){r=c;g=x;b=0;} else if(h<120){r=x;g=c;b=0;} else if(h<180){r=0;g=c;b=x;}
+  else if(h<240){r=0;g=x;b=c;} else if(h<300){r=x;g=0;b=c;} else {r=c;g=0;b=x;}
+  const t=v=>('0'+Math.round((v+m)*255).toString(16)).slice(-2);
+  return '#'+t(r)+t(g)+t(b);
+}
+function luminance(hex){
+  const f=v=>{ v/=255; return v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4); };
+  return 0.2126*f(parseInt(hex.slice(1,3),16)) + 0.7152*f(parseInt(hex.slice(3,5),16)) + 0.0722*f(parseInt(hex.slice(5,7),16));
+}
+// returns a map of c_* picker id -> hex, computed from the primary
+function derive(primaryHex, tintFlame){
+  const [ph, ps] = hexToHsl(primaryHex);
+  const pl = hexToHsl(primaryHex)[2];
+  // flame ramp: fixed fiery hues, or primary's hue when tinting
+  const fh = t => tintFlame ? ph : t;             // t = fiery fallback hue
+  const flameMid  = hslToHex(fh(32), tintFlame?88:95, 57);
+  const map = {
+    c_tileTop:  hslToHex(ph, ps, clampP(pl+12)),
+    c_tileBot:  hslToHex(ph, ps, pl),
+    c_stroke:   hslToHex(ph, clampP(ps+8), clampP(pl-22)),
+    c_ember:    hslToHex(ph, clampP(ps-5), clampP(pl+18)),
+    c_cream:    hslToHex(ph, clampP(ps-25), clampP(pl+45)),
+    c_flameTop: hslToHex(fh(48), tintFlame?90:95, 78),
+    c_flameMid: flameMid,
+    c_flameBase:hslToHex(fh(15), tintFlame?85:92, 50),
+    c_innerTop: hslToHex(fh(45), tintFlame?70:100, 86),
+    c_innerBot: hslToHex(fh(36), tintFlame?85:100, 62),
+    c_word2Top: flameMid,
+    c_word2Bot: hslToHex(ph, ps, pl),
+    c_symbol:   luminance(hslToHex(ph, ps, pl)) > 0.5 ? '#3A2A10' : '#FFFFFF',
+  };
+  return map;
+}
+
+const IDS = ['t_num','t_sym','t_label','t_word1','t_word2',
+  'c_tileTop','c_tileBot','c_stroke','c_flameTop','c_flameMid','c_flameBase','c_innerTop','c_innerBot',
+  'c_ember','c_symbol','c_cream','c_word1','c_word2Top','c_word2Bot',
+  's_flame','s_flameScale','s_corner','s_strokeW','s_symSize','s_numSize','s_labelSize','s_labelSpace','s_w1Size','s_w2Size',
+  'outSize','compName'];
+const el = {};
+IDS.forEach(id => el[id] = document.getElementById(id));
+const DEFAULTS = {}; IDS.forEach(id => DEFAULTS[id] = el[id].value);
+
+// deep-link via hash, e.g. #lockup&primary=1fa6a6&tint=1  (query strings are flaky on file://)
+const hparams = new URLSearchParams(location.hash.slice(1));
+let mode = hparams.has('stacked') ? 'stacked' : hparams.has('lockup') ? 'lockup' : 'icon';
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function defs(o){
+  return `<defs>`
+    + `<linearGradient id="tileGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${o.c_tileTop}"/><stop offset="1" stop-color="${o.c_tileBot}"/></linearGradient>`
+    + `<linearGradient id="flameGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${o.c_flameTop}"/><stop offset="0.55" stop-color="${o.c_flameMid}"/><stop offset="1" stop-color="${o.c_flameBase}"/></linearGradient>`
+    + `<linearGradient id="flameInner" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${o.c_innerTop}"/><stop offset="1" stop-color="${o.c_innerBot}"/></linearGradient>`
+    + `<radialGradient id="emberGlow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="${o.c_ember}" stop-opacity="0.55"/><stop offset="1" stop-color="${o.c_ember}" stop-opacity="0"/></radialGradient>`
+    + `<linearGradient id="wordGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${o.c_word2Top}"/><stop offset="1" stop-color="${o.c_word2Bot}"/></linearGradient>`
+    + `</defs>`;
+}
+
+// tile in 0..128 space; includeLabel adds the bottom element name
+function tile(o, includeLabel){
+  const fl = FLAMES[o.s_flame];
+  const sc = parseFloat(o.s_flameScale);
+  const flameXf = `translate(64,47) scale(${sc}) translate(-64,-47)`;
+  let s = '';
+  s += `<rect x="14" y="28" width="100" height="84" rx="${o.s_corner}" fill="url(#tileGrad)" stroke="${o.c_stroke}" stroke-width="${o.s_strokeW}"/>`;
+  s += `<g transform="${flameXf}">`;
+  s += `<circle cx="64" cy="30" r="24" fill="url(#emberGlow)"/>`;
+  s += `<path d="${fl.outer}" fill="url(#flameGrad)"/>`;
+  s += `<path d="${fl.inner}" fill="url(#flameInner)"/>`;
+  s += `</g>`;
+  s += `<text x="29" y="52" font-family="${FONT}" font-size="${o.s_numSize}" font-weight="600" fill="${o.c_cream}">${esc(o.t_num)}</text>`;
+  s += `<text x="64" y="94" text-anchor="middle" font-family="${FONT}" font-size="${o.s_symSize}" font-weight="700" fill="${o.c_symbol}">${esc(o.t_sym)}</text>`;
+  if (includeLabel && o.t_label.trim())
+    s += `<text x="64" y="106" text-anchor="middle" font-family="${FONT}" font-size="${o.s_labelSize}" font-weight="600" letter-spacing="${o.s_labelSpace}" fill="${o.c_cream}">${esc(o.t_label)}</text>`;
+  return s;
+}
+
+function buildIcon(o){
+  const sz = parseInt(o.outSize) || 128;   // whole-mark size; viewBox stays 0 0 128 128
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="${sz}" height="${sz}" role="img" aria-label="${esc(o.t_sym)} ${esc(o.t_label)}">`
+    + `<title>BlazorAtoms</title>` + defs(o) + tile(o, true) + `</svg>`;
+}
+
+function buildLockup(o){
+  const h = parseInt(o.outSize) || 128;     // outSize = height; width keeps the 430:128 ratio
+  const w = Math.round(h * 430 / 128);
+  let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 430 128" width="${w}" height="${h}" role="img" aria-label="${esc(o.t_word1)} ${esc(o.t_word2)}">`
+    + `<title>${esc(o.t_word1)} ${esc(o.t_word2)}</title>` + defs(o);
+  s += `<g>` + tile(o, false) + `</g>`;
+  s += `<text x="140" y="58" font-family="${FONT}" font-size="${o.s_w1Size}" font-weight="500" letter-spacing="0.5" fill="${o.c_word1}">${esc(o.t_word1)}</text>`;
+  s += `<text x="138" y="102" font-family="${FONT}" font-size="${o.s_w2Size}" font-weight="800" letter-spacing="0.5" fill="url(#wordGrad)">${esc(o.t_word2)}</text>`;
+  s += `</svg>`;
+  return s;
+}
+
+function buildStacked(o){
+  const h = parseInt(o.outSize) || 128;          // outSize = height; width keeps the 320:220 ratio
+  const w = Math.round(h * 320 / 220);
+  let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" width="${w}" height="${h}" role="img" aria-label="${esc(o.t_word1)} ${esc(o.t_word2)}">`
+    + `<title>${esc(o.t_word1)} ${esc(o.t_word2)}</title>` + defs(o);
+  s += `<g transform="translate(96,8)">` + tile(o, false) + `</g>`;   // tile centered on top
+  s += `<text x="160" y="158" text-anchor="middle" font-family="${FONT}" font-size="${o.s_w1Size}" font-weight="500" letter-spacing="0.5" fill="${o.c_word1}">${esc(o.t_word1)}</text>`;
+  s += `<text x="160" y="202" text-anchor="middle" font-family="${FONT}" font-size="${o.s_w2Size}" font-weight="800" letter-spacing="0.5" fill="url(#wordGrad)">${esc(o.t_word2)}</text>`;
+  s += `</svg>`;
+  return s;
+}
+
+function readState(){ const o = {}; IDS.forEach(id => o[id] = el[id].value); return o; }
+
+// ---- Blazor component generator: self-contained .razor, current settings = [Parameter] defaults ----
+function csStr(s){ return String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"'); }
+function compNameOf(o){ return ((o.compName || 'BeMark').trim() || 'BeMark').replace(/[^A-Za-z0-9_]/g, ''); }
+function buildRazor(o){
+  const name = compNameOf(o);
+  const layoutEnum = ({ icon: 'Icon', lockup: 'Lockup', stacked: 'Stacked' })[mode] || 'Icon';
+  return `@* ${name}.razor — self-contained Blazor mark generated by the BlazorAtoms logo playground.
+   No CSS file, no JS, no DI, no package reference. Works in Server or WASM. Namespace-free: it inherits the
+   folder's namespace — reference via @using, or drop it in the same folder / list it in _Imports.razor.
+   <${name} /> reproduces your current design (settings are baked as the defaults). Override any parameter. *@
+@((MarkupString)BuildSvg())
+
+@code {
+    /// <summary>Which arrangement to render. Use e.g. Layout="${name}.BeLayout.Stacked".</summary>
+    public enum BeLayout { Icon, Lockup, Stacked }
+
+    // content
+    [Parameter] public BeLayout Layout { get; set; } = BeLayout.${layoutEnum};
+    [Parameter] public int Size { get; set; } = ${parseInt(o.outSize) || 128};   // icon: edge px; lockup/stacked: height px (width keeps aspect)
+    [Parameter] public string Number { get; set; } = "${csStr(o.t_num)}";
+    [Parameter] public string Symbol { get; set; } = "${csStr(o.t_sym)}";
+    [Parameter] public string Label { get; set; } = "${csStr(o.t_label)}";
+    [Parameter] public string Word1 { get; set; } = "${csStr(o.t_word1)}";
+    [Parameter] public string Word2 { get; set; } = "${csStr(o.t_word2)}";
+
+    // shape
+    [Parameter] public string Flame { get; set; } = "${o.s_flame}";   // "A" | "B" | "teardrop"
+    [Parameter] public double FlameScale { get; set; } = ${o.s_flameScale};
+    [Parameter] public int Corner { get; set; } = ${parseInt(o.s_corner)};
+    [Parameter] public double StrokeWidth { get; set; } = ${o.s_strokeW};
+    [Parameter] public int SymbolSize { get; set; } = ${parseInt(o.s_symSize)};
+    [Parameter] public int NumberSize { get; set; } = ${parseInt(o.s_numSize)};
+    [Parameter] public double LabelSize { get; set; } = ${o.s_labelSize};
+    [Parameter] public double LabelSpacing { get; set; } = ${o.s_labelSpace};
+    [Parameter] public int Word1Size { get; set; } = ${parseInt(o.s_w1Size)};
+    [Parameter] public int Word2Size { get; set; } = ${parseInt(o.s_w2Size)};
+
+    // colors
+    [Parameter] public string TileTop { get; set; } = "${o.c_tileTop}";
+    [Parameter] public string TileBottom { get; set; } = "${o.c_tileBot}";
+    [Parameter] public string Stroke { get; set; } = "${o.c_stroke}";
+    [Parameter] public string FlameTip { get; set; } = "${o.c_flameTop}";
+    [Parameter] public string FlameMid { get; set; } = "${o.c_flameMid}";
+    [Parameter] public string FlameBase { get; set; } = "${o.c_flameBase}";
+    [Parameter] public string InnerTop { get; set; } = "${o.c_innerTop}";
+    [Parameter] public string InnerBottom { get; set; } = "${o.c_innerBot}";
+    [Parameter] public string Ember { get; set; } = "${o.c_ember}";
+    [Parameter] public string SymbolColor { get; set; } = "${o.c_symbol}";
+    [Parameter] public string Cream { get; set; } = "${o.c_cream}";
+    [Parameter] public string Word1Color { get; set; } = "${o.c_word1}";
+    [Parameter] public string Word2Top { get; set; } = "${o.c_word2Top}";
+    [Parameter] public string Word2Bottom { get; set; } = "${o.c_word2Bot}";
+
+    readonly string _u = System.Guid.NewGuid().ToString("N").Substring(0, 8); // unique gradient ids per instance
+    static string F(double v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    static string Esc(string s) => (s ?? "").Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
+
+    string BuildSvg()
+    {
+        const string font = "Segoe UI, Helvetica Neue, Arial, sans-serif";
+        string fo, fi;
+        switch (Flame)
+        {
+            case "B":        fo = "${FLAMES.B.outer}"; fi = "${FLAMES.B.inner}"; break;
+            case "teardrop": fo = "${FLAMES.teardrop.outer}"; fi = "${FLAMES.teardrop.inner}"; break;
+            default:         fo = "${FLAMES.A.outer}"; fi = "${FLAMES.A.inner}"; break;
+        }
+        string xf = $"translate(64,47) scale({F(FlameScale)}) translate(-64,-47)";
+        string defs =
+            "<defs>" +
+            $"<linearGradient id='tileGrad_{_u}' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='{TileTop}'/><stop offset='1' stop-color='{TileBottom}'/></linearGradient>" +
+            $"<linearGradient id='flameGrad_{_u}' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='{FlameTip}'/><stop offset='0.55' stop-color='{FlameMid}'/><stop offset='1' stop-color='{FlameBase}'/></linearGradient>" +
+            $"<linearGradient id='flameInner_{_u}' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='{InnerTop}'/><stop offset='1' stop-color='{InnerBottom}'/></linearGradient>" +
+            $"<radialGradient id='emberGlow_{_u}' cx='0.5' cy='0.5' r='0.5'><stop offset='0' stop-color='{Ember}' stop-opacity='0.55'/><stop offset='1' stop-color='{Ember}' stop-opacity='0'/></radialGradient>" +
+            $"<linearGradient id='wordGrad_{_u}' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='{Word2Top}'/><stop offset='1' stop-color='{Word2Bottom}'/></linearGradient>" +
+            "</defs>";
+        string tile =
+            $"<rect x='14' y='28' width='100' height='84' rx='{Corner}' fill='url(#tileGrad_{_u})' stroke='{Stroke}' stroke-width='{F(StrokeWidth)}'/>" +
+            $"<g transform='{xf}'>" +
+            $"<circle cx='64' cy='30' r='24' fill='url(#emberGlow_{_u})'/>" +
+            $"<path d='{fo}' fill='url(#flameGrad_{_u})'/>" +
+            $"<path d='{fi}' fill='url(#flameInner_{_u})'/>" +
+            "</g>" +
+            $"<text x='29' y='52' font-family='{font}' font-size='{NumberSize}' font-weight='600' fill='{Cream}'>{Esc(Number)}</text>" +
+            $"<text x='64' y='94' text-anchor='middle' font-family='{font}' font-size='{SymbolSize}' font-weight='700' fill='{SymbolColor}'>{Esc(Symbol)}</text>";
+        if (Layout == BeLayout.Icon && !string.IsNullOrWhiteSpace(Label))
+            tile += $"<text x='64' y='106' text-anchor='middle' font-family='{font}' font-size='{F(LabelSize)}' font-weight='600' letter-spacing='{F(LabelSpacing)}' fill='{Cream}'>{Esc(Label)}</text>";
+
+        if (Layout == BeLayout.Icon)
+            return $"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128' width='{Size}' height='{Size}' role='img' aria-label='{Esc(Symbol)} {Esc(Label)}'>{defs}{tile}</svg>";
+
+        if (Layout == BeLayout.Stacked)
+        {
+            int ws = (int)System.Math.Round(Size * 320.0 / 220.0);
+            string wordsS =
+                $"<text x='160' y='158' text-anchor='middle' font-family='{font}' font-size='{Word1Size}' font-weight='500' letter-spacing='0.5' fill='{Word1Color}'>{Esc(Word1)}</text>" +
+                $"<text x='160' y='202' text-anchor='middle' font-family='{font}' font-size='{Word2Size}' font-weight='800' letter-spacing='0.5' fill='url(#wordGrad_{_u})'>{Esc(Word2)}</text>";
+            return $"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 220' width='{ws}' height='{Size}' role='img' aria-label='{Esc(Word1)} {Esc(Word2)}'>{defs}<g transform='translate(96,8)'>{tile}</g>{wordsS}</svg>";
+        }
+
+        int w = (int)System.Math.Round(Size * 430.0 / 128.0);
+        string words =
+            $"<text x='140' y='58' font-family='{font}' font-size='{Word1Size}' font-weight='500' letter-spacing='0.5' fill='{Word1Color}'>{Esc(Word1)}</text>" +
+            $"<text x='138' y='102' font-family='{font}' font-size='{Word2Size}' font-weight='800' letter-spacing='0.5' fill='url(#wordGrad_{_u})'>{Esc(Word2)}</text>";
+        return $"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 430 128' width='{w}' height='{Size}' role='img' aria-label='{Esc(Word1)} {Esc(Word2)}'>{defs}<g>{tile}</g>{words}</svg>";
+    }
+}
+`;
+}
+function buildUsage(o){
+  const n = compNameOf(o);
+  return `<${n} />                                                  @* your current design *@\n`
+       + `<${n} Layout="${n}.BeLayout.Lockup" Size="64" />          @* horizontal, 64px tall *@\n`
+       + `<${n} Layout="${n}.BeLayout.Stacked" Size="96" />         @* stacked *@\n`
+       + `<${n} Symbol="Xe" Number="54" TileTop="#1FA6A6" TileBottom="#127D7D" />`;
+}
+
+const READOUTS = { s_flameScale:'v_flameScale', s_corner:'v_corner', s_strokeW:'v_strokeW',
+  s_symSize:'v_symSize', s_numSize:'v_numSize', s_labelSize:'v_labelSize', s_labelSpace:'v_labelSpace',
+  s_w1Size:'v_w1Size', s_w2Size:'v_w2Size' };
+
+let currentSvg = '';
+let currentRazor = '';
+function update(){
+  const o = readState();
+  // show/hide mode-specific controls
+  document.querySelectorAll('[data-only]').forEach(n => {
+    n.classList.toggle('hidden', !n.getAttribute('data-only').split(' ').includes(mode));
+  });
+  Object.keys(READOUTS).forEach(k => { const t = document.getElementById(READOUTS[k]); if(t) t.textContent = el[k].value; });
+  const os = parseInt(el.outSize.value) || 0;
+  const rw = mode === 'icon' ? os : mode === 'stacked' ? Math.round(os*320/220) : Math.round(os*430/128);
+  document.getElementById('v_outDims').textContent = `${rw}×${os}`;
+
+  currentSvg = mode === 'icon' ? buildIcon(o) : mode === 'stacked' ? buildStacked(o) : buildLockup(o);
+  document.getElementById('stage').innerHTML = currentSvg;
+  document.getElementById('svgOut').textContent = currentSvg;
+
+  currentRazor = buildRazor(o);
+  document.getElementById('razorOut').textContent = currentRazor;
+  document.getElementById('usageOut').textContent = buildUsage(o);
+}
+
+IDS.forEach(id => { el[id].addEventListener('input', update); el[id].addEventListener('change', update); });
+
+// primary-color derivation (populate-then-tweak: writes into the individual pickers)
+el.c_primary = document.getElementById('c_primary');
+el.tintFlame = document.getElementById('tintFlame');
+function applyPrimary(){
+  const m = derive(el.c_primary.value, el.tintFlame.checked);
+  Object.keys(m).forEach(k => { if(el[k]) el[k].value = m[k]; });
+  document.getElementById('v_primary').textContent = el.c_primary.value;
+  update();
+}
+el.c_primary.addEventListener('input', applyPrimary);
+el.tintFlame.addEventListener('change', applyPrimary);
+document.getElementById('btnDerive').addEventListener('click', applyPrimary);
+document.getElementById('v_primary').textContent = el.c_primary.value;
+
+// mode buttons
+document.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => {
+  mode = b.dataset.mode;
+  document.querySelectorAll('[data-mode]').forEach(x => x.classList.toggle('on', x.dataset.mode === mode));
+  update();
+}));
+
+// preview bg
+function setBg(hex){ document.getElementById('stage').style.background = hex; document.getElementById('bgCustom').value = /^#[0-9a-fA-F]{6}$/.test(hex)?hex:'#ffffff'; }
+document.querySelectorAll('[data-bg]').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('[data-bg]').forEach(x => x.classList.remove('on'));
+  b.classList.add('on'); setBg(b.dataset.bg);
+}));
+document.getElementById('bgCustom').addEventListener('input', e => {
+  document.querySelectorAll('[data-bg]').forEach(x => x.classList.remove('on')); setBg(e.target.value);
+});
+
+// copy / download / reset
+document.getElementById('btnCopy').addEventListener('click', function(){
+  navigator.clipboard.writeText(currentSvg).then(() => { const o=this.textContent; this.textContent='Copied'; setTimeout(()=>this.textContent=o,1200); }, ()=>{});
+});
+document.getElementById('btnDownload').addEventListener('click', () => {
+  const blob = new Blob([currentSvg], {type:'image/svg+xml'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = mode==='icon' ? 'blazoratoms-icon.svg' : 'blazoratoms-logo.svg';
+  a.click(); URL.revokeObjectURL(a.href);
+});
+document.getElementById('btnReset').addEventListener('click', () => {
+  IDS.forEach(id => el[id].value = DEFAULTS[id]);
+  el.c_primary.value = '#F97316'; el.tintFlame.checked = false;
+  document.getElementById('v_primary').textContent = el.c_primary.value;
+  update();
+});
+
+// ---- PNG export (client-side canvas raster of the self-contained SVG) ----
+el.pngBg = document.getElementById('pngBg');
+function dimsFor(size){
+  if (mode === 'icon') return [size, size];
+  if (mode === 'stacked') return [Math.round(size*320/220), size];
+  return [Math.round(size*430/128), size];
+}
+function currentSvgAt(size){ const o = readState(); o.outSize = size; return mode === 'icon' ? buildIcon(o) : mode === 'stacked' ? buildStacked(o) : buildLockup(o); }
+async function svgToPng(svgStr, w, h, bg){
+  // wait for fonts so text rasterizes correctly, but never hang on it
+  if (document.fonts && document.fonts.ready) { try { await Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 300))]); } catch(e){} }
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      const ctx = cv.getContext('2d');
+      if (bg) { ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h); }
+      ctx.drawImage(img, 0, 0, w, h);
+      cv.toBlob(b => b ? res(b) : rej(new Error('toBlob returned null')), 'image/png');
+    };
+    img.onerror = () => rej(new Error('SVG image failed to load'));
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
+  });
+}
+async function downloadPng(size){
+  const [w, h] = dimsFor(size);
+  const bg = el.pngBg.checked ? null : document.getElementById('stage').style.background;
+  try {
+    const blob = await svgToPng(currentSvgAt(size), w, h, bg);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (mode === 'icon' ? 'blazoratoms-icon-' : 'blazoratoms-logo-') + w + 'x' + h + '.png';
+    a.click(); URL.revokeObjectURL(a.href);
+  } catch(e){ alert('PNG export failed: ' + e.message); }
+}
+async function downloadSet(){
+  for (const s of [16, 32, 48, 64, 128, 256]) { await downloadPng(s); await new Promise(r => setTimeout(r, 200)); }
+}
+document.querySelectorAll('.psz').forEach(b => b.addEventListener('click', () => { el.outSize.value = b.dataset.psize; update(); }));
+document.getElementById('btnPng').addEventListener('click', () => downloadPng(parseInt(el.outSize.value) || 128));
+document.getElementById('btnPngSet').addEventListener('click', downloadSet);
+
+// Blazor .razor copy / download
+document.getElementById('btnCopyRazor').addEventListener('click', function(){
+  navigator.clipboard.writeText(currentRazor).then(() => { const o=this.textContent; this.textContent='Copied'; setTimeout(()=>this.textContent=o,1200); }, ()=>{});
+});
+document.getElementById('btnDownloadRazor').addEventListener('click', () => {
+  const blob = new Blob([currentRazor], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = compNameOf(readState()) + '.razor';
+  a.click(); URL.revokeObjectURL(a.href);
+});
+
+// apply primary from the hash deep-link, if present
+if(hparams.has('primary')){
+  const hex = '#' + hparams.get('primary').replace(/^#/,'');
+  if(/^#[0-9a-fA-F]{6}$/.test(hex)) el.c_primary.value = hex;
+  el.tintFlame.checked = hparams.get('tint') === '1';
+  applyPrimary();
+}
+
+// DEV verification hook (disabled): append "#pngtest=256" to the URL to rasterize the
+// current mark and drop the resulting PNG into the stage on a blue field -> proves the
+// SVG -> canvas -> PNG path (incl. text) works. Red stage = raster failed. Uncomment to explore.
+// NOTE: won't show under a headless --screenshot (the raster resolves after load); use a real browser.
+// if(hparams.has('pngtest')){
+//   const s = parseInt(hparams.get('pngtest')) || 128;
+//   const [w, h] = dimsFor(s);
+//   svgToPng(currentSvgAt(s), w, h, null).then(b => {
+//     const im = new Image();
+//     im.onload = () => { const st = document.getElementById('stage'); st.style.background = '#3b4a8c'; st.innerHTML = ''; st.appendChild(im); };
+//     im.src = URL.createObjectURL(b);
+//   }).catch(e => {
+//     const st = document.getElementById('stage'); st.style.background = '#a00000'; st.innerHTML = '';
+//     st.textContent = 'RASTER FAIL: ' + e.message;
+//   });
+// }
+
+// sync mode buttons to initial mode (supports #lockup / #stacked deep-link)
+document.querySelectorAll('[data-mode]').forEach(x => x.classList.toggle('on', x.dataset.mode === mode));
+update();
+</script>
+</body>
+</html>

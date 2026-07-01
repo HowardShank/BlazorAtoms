@@ -1,0 +1,18 @@
+<!--
+  Trimmer root descriptor (WASM-AOT / PublishTrimmed safety).
+
+  ActivityIndicator discovers the Busy* indicators by REFLECTION
+  (Assembly.GetTypes() filtered by namespace + "Busy" prefix). Reflection is
+  invisible to the IL linker, so under a trimmed/AOT publish the indicator types —
+  referenced nowhere statically — would be stripped and discovery would find nothing.
+
+  Rooting the Indicators namespace keeps every Busy* type (and its members) regardless of
+  consumer trim settings, and stays expandable: the <namespace> wildcard covers any
+  future indicator added to the folder. Blazor Server never trims, so this is a no-op
+  there.
+-->
+<linker>
+  <assembly fullname="BlazorAtoms.ActivityIndicators">
+    <namespace fullname="BlazorAtoms.ActivityIndicators.Indicators" />
+  </assembly>
+</linker>

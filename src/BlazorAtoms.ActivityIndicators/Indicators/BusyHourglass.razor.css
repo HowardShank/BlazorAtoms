@@ -1,0 +1,28 @@
+/* --ind-line (frame) / --ind-fill (glass) / --ind-blip (sand) / --ind-glow    */
+/* (falling stream). *-d values are scheme-aware defaults.                     */
+svg { --ind-blip-d:#6fe3e3; --ind-glow-d:#eafdfd; --ind-line-d:#4aa3a3; --ind-fill-d:rgba(95,224,224,.10); }
+@media (prefers-color-scheme: light) {
+  svg { --ind-blip-d:#0e9c9c; --ind-glow-d:#04545f; --ind-line-d:#0e9c9c; --ind-fill-d:rgba(14,143,143,.12); }
+}
+
+.glass  { fill: var(--ind-fill, var(--ind-fill-d)); stroke: var(--ind-line, var(--ind-line-d)); stroke-width:2; stroke-linejoin:round; }
+.cap    { stroke: var(--ind-line, var(--ind-line-d)); stroke-width:3.5; stroke-linecap:round; }
+.sand   { fill: var(--ind-blip, var(--ind-blip-d)); }
+.stream { stroke: var(--ind-glow, var(--ind-glow-d)); stroke-width:1.6; stroke-linecap:round; stroke-dasharray:1.5 2.5; animation: hg-fall .5s linear infinite, hg-stream 4s linear infinite; }
+
+.frame       { transform-box: view-box; transform-origin: 60px 60px; animation: hg-flip 4s ease-in-out infinite; }
+/* sand is a rect clipped to the glass triangle; lowering/raising it keeps a */
+/* flat surface bounded by the slanted walls (no width squish).              */
+.sand-top    { animation: hg-drain 4s ease-in-out infinite; }
+.sand-bottom { animation: hg-fill 4s ease-in-out infinite; }
+
+@keyframes hg-flip   { 0%, 82% { transform: rotate(0); } 100% { transform: rotate(180deg); } }
+@keyframes hg-drain  { 0% { transform: translateY(0); } 82%, 100% { transform: translateY(33px); } }
+@keyframes hg-fill   { 0% { transform: translateY(33px); } 82%, 100% { transform: translateY(0); } }
+@keyframes hg-fall   { to { stroke-dashoffset: -8; } }
+@keyframes hg-stream { 0% { opacity:0; } 6% { opacity:1; } 80% { opacity:1; } 84%, 100% { opacity:0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .frame, .sand-top, .sand-bottom, .stream { animation: none; }
+  .sand-bottom { transform: translateY(33px); }
+}

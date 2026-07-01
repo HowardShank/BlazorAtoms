@@ -1,0 +1,68 @@
+<svg viewBox="0 0 120 120" width="@Size" height="@Size" class="busy-neural @Class" style="@ThemeStyle">
+    <g>
+        @foreach (var e in Edges)
+        {
+            <line class="edge" x1="@e.X1" y1="@e.Y1" x2="@e.X2" y2="@e.Y2" />
+        }
+    </g>
+    <g>
+        @foreach (var p in Pulses)
+        {
+            <circle class="pulse" cx="@p.Cx" cy="@p.Cy" r="2.2" style="--tx:@(p.Tx)px;--ty:@(p.Ty)px;animation-delay:@(p.Delay)s" />
+        }
+    </g>
+    <g>
+        @foreach (var n in Nodes)
+        {
+            <circle class="node" cx="@n.Cx" cy="@n.Cy" r="5" style="animation-delay:@(n.Delay)s" />
+        }
+    </g>
+</svg>
+
+@code {
+    /// <summary>Rendered width/height in pixels.</summary>
+    [Parameter] public int Size { get; set; } = 48;
+
+    /// <summary>Node color. Falls back to the built-in light/dark default when null.</summary>
+    [Parameter] public string? Blip { get; set; }
+
+    /// <summary>Traveling pulse + node-flash color. Falls back to the built-in default when null.</summary>
+    [Parameter] public string? Glow { get; set; }
+
+    /// <summary>Edge color. Falls back to the built-in default when null.</summary>
+    [Parameter] public string? Line { get; set; }
+
+    /// <summary>Extra CSS class(es) on the root svg element.</summary>
+    [Parameter] public string? Class { get; set; }
+
+    private record Edge(int X1, int Y1, int X2, int Y2);
+    private record Pulse(int Cx, int Cy, int Tx, int Ty, string Delay);
+    private record Node(int Cx, int Cy, string Delay);
+
+    // Layers at x = 28 / 60 / 92, two nodes each at y = 40 / 80.
+    private static readonly Edge[] Edges =
+    {
+        new(28,40,60,40), new(28,40,60,80), new(28,80,60,40), new(28,80,60,80),
+        new(60,40,92,40), new(60,40,92,80), new(60,80,92,40), new(60,80,92,80),
+    };
+
+    // Wave 1 (L0->L1) at delay 0; wave 2 (L1->L2) at delay 0.84s.
+    private static readonly Pulse[] Pulses =
+    {
+        new(28,40,32,0,"0"),   new(28,40,32,40,"0"),   new(28,80,32,-40,"0"),   new(28,80,32,0,"0"),
+        new(60,40,32,0,"0.84"),new(60,40,32,40,"0.84"),new(60,80,32,-40,"0.84"),new(60,80,32,0,"0.84"),
+    };
+
+    // Fire delay = arrival - 1.4s (peak of neuro-fire is at 50% of the 2.8s loop).
+    private static readonly Node[] Nodes =
+    {
+        new(28,40,"-1.40"), new(28,80,"-1.40"),
+        new(60,40,"-0.56"), new(60,80,"-0.56"),
+        new(92,40,"0.28"),  new(92,80,"0.28"),
+    };
+
+    private string ThemeStyle => string.Concat(
+        Blip is null ? "" : $"--ind-blip:{Blip};",
+        Glow is null ? "" : $"--ind-glow:{Glow};",
+        Line is null ? "" : $"--ind-line:{Line};");
+}

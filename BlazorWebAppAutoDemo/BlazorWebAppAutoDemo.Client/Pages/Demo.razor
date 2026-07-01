@@ -1,0 +1,256 @@
+@page "/demo"
+@rendermode InteractiveWebAssembly
+@using BlazorAtoms.ActivityIndicators
+@using BlazorAtoms.ActivityIndicators.Indicators
+
+<PageTitle>Blazor Atoms Demo</PageTitle>
+
+<style>
+    .indicator-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin: 1rem 0 2.5rem;
+    }
+
+    .indicator-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        gap: .75rem;
+        min-width: 120px;
+        padding: 1.25rem 1rem;
+        border: 1px solid #d0d0d8;
+        border-radius: 8px;
+    }
+
+    .indicator-card .caption {
+        font: 600 .85rem/1 ui-monospace, monospace;
+        color: #555;
+    }
+
+    .linear-card {
+        margin: 0 0 2rem;
+        padding: 1.25rem;
+        border: 1px solid #d0d0d8;
+        border-radius: 8px;
+    }
+
+    .linear-card .caption {
+        display: block;
+        margin-bottom: .75rem;
+        font: 600 .85rem/1 ui-monospace, monospace;
+        color: #555;
+    }
+
+    .round-controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 1rem 1.5rem;
+        margin: 1rem 0 1.5rem;
+        padding: 1rem 1.25rem;
+        border: 1px solid #d0d0d8;
+        border-radius: 8px;
+    }
+
+    .round-controls .ctrl {
+        display: flex;
+        flex-direction: column;
+        gap: .4rem;
+    }
+
+    .round-controls label {
+        font: 600 .8rem/1 ui-monospace, monospace;
+        color: #555;
+    }
+
+    .round-controls .val {
+        color: #0a7ea4;
+        font-weight: 400;
+    }
+
+    .round-controls input[type=range] {
+        width: 160px;
+    }
+
+    .round-controls .color-ctrl {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+    }
+
+    .round-controls input[type=color] {
+        width: 42px;
+        height: 28px;
+        padding: 0;
+        border: 1px solid #d0d0d8;
+        border-radius: 4px;
+        background: none;
+    }
+
+    .round-controls input[type=checkbox] {
+        width: 15px;
+        height: 15px;
+    }
+
+    .round-controls .btn-reset {
+        padding: .4rem .9rem;
+        border: 1px solid #d0d0d8;
+        border-radius: 6px;
+        background: #f5f5f7;
+        cursor: pointer;
+        font-size: .85rem;
+    }
+
+    .round-controls .btn-reset:hover {
+        background: #ececf0;
+    }
+
+    .page-bg-ctrl {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        margin: .5rem 0 1rem;
+    }
+
+    .page-bg-ctrl label {
+        font: 600 .85rem/1 ui-monospace, monospace;
+        color: #555;
+    }
+
+    .page-bg-ctrl input[type=color] {
+        width: 42px;
+        height: 28px;
+        padding: 0;
+        border: 1px solid #d0d0d8;
+        border-radius: 4px;
+        background: none;
+    }
+</style>
+
+<style>body { background-color: @BgColor; }</style>
+
+<h1>Blazor Atoms Demo</h1>
+<p>Live playgrounds: <a href="playground/pulsebar">PulseBar</a> &middot; <a href="playground/pulsescanner">PulseScanner</a></p>
+
+<div class="page-bg-ctrl">
+    <label>Page background</label>
+    <input type="color" @bind="BgColor" @bind:event="oninput" />
+</div>
+
+<h2>Round indicators</h2>
+<p>Rendered through the <code>&lt;ActivityIndicator&gt;</code> wrapper by name. Controls below apply to
+   <em>all</em> of them at once. Each color is optional — leave it unchecked to use the indicator's
+   built-in light/dark default; a color only shows where that indicator declares the knob.</p>
+
+<div class="round-controls">
+    <div class="ctrl">
+        <label>Size <span class="val">@(Size)px</span></label>
+        <input type="range" min="24" max="160" step="4" @bind="Size" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>Blip</label>
+        <div class="color-ctrl">
+            <input type="checkbox" @bind="OverrideBlip" title="Override Blip" />
+            <input type="color" @bind="Blip" @bind:event="oninput" disabled="@(!OverrideBlip)" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Glow</label>
+        <div class="color-ctrl">
+            <input type="checkbox" @bind="OverrideGlow" title="Override Glow" />
+            <input type="color" @bind="Glow" @bind:event="oninput" disabled="@(!OverrideGlow)" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Line</label>
+        <div class="color-ctrl">
+            <input type="checkbox" @bind="OverrideLine" title="Override Line" />
+            <input type="color" @bind="Line" @bind:event="oninput" disabled="@(!OverrideLine)" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Fill</label>
+        <div class="color-ctrl">
+            <input type="checkbox" @bind="OverrideFill" title="Override Fill" />
+            <input type="color" @bind="Fill" @bind:event="oninput" disabled="@(!OverrideFill)" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <button class="btn-reset" @onclick="ResetRound">Reset</button>
+    </div>
+</div>
+
+<div class="indicator-grid">
+    @foreach (var name in RoundIndicators)
+    {
+        <div class="indicator-card" @key="name">
+            <ActivityIndicator Name="@name" Size="@Size"
+                               Blip="@(OverrideBlip ? Blip : null)"
+                               Glow="@(OverrideGlow ? Glow : null)"
+                               Line="@(OverrideLine ? Line : null)"
+                               Fill="@(OverrideFill ? Fill : null)" />
+            <span class="caption">@name</span>
+        </div>
+    }
+</div>
+
+<h2>Linear indicators</h2>
+<p>Self-contained <code>Pulse*</code> components, rendered directly (excluded from the wrapper).</p>
+@foreach (var type in LinearIndicators)
+{
+    <div class="linear-card" @key="type">
+        <span class="caption">@type.Name</span>
+        <div style="width:100%"><DynamicComponent Type="@type" /></div>
+    </div>
+}
+
+@code {
+    private static readonly string SvgNamespace =
+        typeof(ActivityIndicator).Namespace + ".Indicators";
+
+    private static readonly Type[] SvgComponents =
+        typeof(ActivityIndicator).Assembly.GetTypes()
+            .Where(t => typeof(ComponentBase).IsAssignableFrom(t)
+                     && !t.IsAbstract
+                     && t.Namespace == SvgNamespace)
+            .OrderBy(t => t.Name, StringComparer.Ordinal)
+            .ToArray();
+
+    // Round indicators go through the public <ActivityIndicator> wrapper by Name.
+    private static readonly string[] RoundIndicators = SvgComponents
+        .Where(t => t.Name.StartsWith("Busy", StringComparison.Ordinal))
+        .Select(t => t.Name)
+        .ToArray();
+
+    // Everything else (Pulse*) is self-contained → render the Type directly.
+    private static readonly Type[] LinearIndicators = SvgComponents
+        .Where(t => !t.Name.StartsWith("Busy", StringComparison.Ordinal))
+        .ToArray();
+
+    // Page background color (applied to <body> via the inline style above).
+    private string BgColor = "#ffffff";
+
+    // Round-indicator controls — applied to every <ActivityIndicator> above.
+    private int Size = 72;
+
+    // Each color is forwarded only when its Override flag is on; otherwise null lets
+    // the indicator fall back to its built-in light/dark default.
+    private bool OverrideBlip, OverrideGlow, OverrideLine, OverrideFill;
+    private string Blip = "#3b82f6";
+    private string Glow = "#f59e0b";
+    private string Line = "#64748b";
+    private string Fill = "#cbd5e1";
+
+    private void ResetRound()
+    {
+        Size = 72;
+        OverrideBlip = OverrideGlow = OverrideLine = OverrideFill = false;
+        Blip = "#3b82f6";
+        Glow = "#f59e0b";
+        Line = "#64748b";
+        Fill = "#cbd5e1";
+    }
+}

@@ -1,0 +1,8 @@
+@* Wrapper over the Busy* SVG indicators.
+   - Name set  -> renders that indicator (case-insensitive; "BusyGears" or "Gears").
+   - Name null -> renders a random indicator (stable across re-renders).
+   See ActivityIndicator.razor.cs for discovery + parameter forwarding. *@
+@if (ResolvedType is not null)
+{
+    <DynamicComponent Type="ResolvedType" Parameters="BuildParameters()" />
+}

@@ -1,0 +1,39 @@
+<svg viewBox="0 0 120 120" width="@Size" height="@Size" class="busy-swarm @Class" style="@ThemeStyle">
+    <g class="swarm">
+        <circle class="core" cx="60" cy="60" r="4" />
+        @foreach (var d in Dots)
+        {
+            <circle class="dot" cx="@d.Cx" cy="@d.Cy" r="2.8"
+                    style="--dx0:@(d.Dx0)px;--dy0:@(d.Dy0)px;--dx1:@(d.Dx1)px;--dy1:@(d.Dy1)px" />
+        }
+    </g>
+</svg>
+
+@code {
+    /// <summary>Rendered width/height in pixels (viewBox scales cleanly).</summary>
+    [Parameter] public int Size { get; set; } = 48;
+
+    /// <summary>Color of the swarming dots. Falls back to the built-in light/dark default when null.</summary>
+    [Parameter] public string? Blip { get; set; }
+
+    /// <summary>Color of the pulsing core. Falls back to the built-in default when null.</summary>
+    [Parameter] public string? Glow { get; set; }
+
+    /// <summary>Extra CSS class(es) applied to the root svg element.</summary>
+    [Parameter] public string? Class { get; set; }
+
+    // Cx/Cy kept as strings so they render verbatim regardless of the server's culture.
+    private record Dot(string Cx, string Cy, int Dx0, int Dy0, int Dx1, int Dy1);
+
+    private static readonly Dot[] Dots =
+    {
+        new("86", "60", -46, -34, -10, 40),   new("82.5", "73", -30, -48, 20, 28),  new("73", "82.5", -40, -30, 30, 18),
+        new("60", "86", 24, -44, -34, 18),    new("47", "82.5", 34, -40, -18, 22),  new("37.5", "73", 40, -30, 28, 30),
+        new("34", "60", 44, -10, 30, -36),    new("37.5", "47", 40, 18, 20, 40),    new("47", "37.5", 30, 34, -22, 42),
+        new("60", "34", -20, 44, 26, 40),     new("73", "37.5", -34, 40, -30, 34),  new("82.5", "47", -44, 20, -36, -20),
+    };
+
+    private string ThemeStyle => string.Concat(
+        Blip is null ? "" : $"--ind-blip:{Blip};",
+        Glow is null ? "" : $"--ind-glow:{Glow};");
+}

@@ -1,0 +1,59 @@
+<svg viewBox="0 0 120 120" width="@Size" height="@Size" class="busy-magnifier @Class" style="@ThemeStyle">
+    <g>
+        @foreach (var f in Filler)
+        {
+            <circle class="item-static" cx="@f.X" cy="@f.Y" r="2" />
+        }
+        @foreach (var it in Items)
+        {
+            <circle class="item" cx="@it.X" cy="@it.Y" r="3.2" style="animation-delay:@(it.Delay)s" />
+        }
+    </g>
+    <g class="lens">
+        <circle class="glass-rim" cx="60" cy="60" r="11" />
+        <path class="glint" d="M54,57 A7 7 0 0 1 58,53" />
+        <line class="handle" x1="67.8" y1="67.8" x2="79" y2="79" />
+    </g>
+</svg>
+
+@code {
+    /// <summary>Rendered width/height in pixels.</summary>
+    [Parameter] public int Size { get; set; } = 48;
+
+    /// <summary>Item dots. Falls back to the built-in light/dark default when null.</summary>
+    [Parameter] public string? Blip { get; set; }
+
+    /// <summary>Revealed/magnified item + lens glint. Falls back to the built-in default when null.</summary>
+    [Parameter] public string? Glow { get; set; }
+
+    /// <summary>Lens rim + handle. Falls back to the built-in default when null.</summary>
+    [Parameter] public string? Line { get; set; }
+
+    /// <summary>Glass tint. Falls back to the built-in default when null.</summary>
+    [Parameter] public string? Fill { get; set; }
+
+    /// <summary>Extra CSS class(es) on the root svg element.</summary>
+    [Parameter] public string? Class { get; set; }
+
+    // Coords kept as strings so decimals render verbatim regardless of server culture.
+    private record Pt(string X, string Y);
+    private record Item(string X, string Y, string Delay);
+
+    private static readonly Pt[] Filler =
+    {
+        new("60", "60"), new("45", "50"), new("75", "50"), new("52", "72"), new("70", "70"),
+    };
+
+    // delay = ((angle/360) - 0.5) * 4s, so each item lights as the lens orbits over it.
+    private static readonly Item[] Items =
+    {
+        new("82", "60", "-2.000"), new("71", "79.05", "-1.333"), new("49", "79.05", "-0.667"),
+        new("38", "60", "0.000"),  new("49", "40.95", "0.667"),  new("71", "40.95", "1.333"),
+    };
+
+    private string ThemeStyle => string.Concat(
+        Blip is null ? "" : $"--ind-blip:{Blip};",
+        Glow is null ? "" : $"--ind-glow:{Glow};",
+        Line is null ? "" : $"--ind-line:{Line};",
+        Fill is null ? "" : $"--ind-fill:{Fill};");
+}

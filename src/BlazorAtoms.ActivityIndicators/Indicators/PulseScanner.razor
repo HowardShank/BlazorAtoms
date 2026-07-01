@@ -1,0 +1,103 @@
+@*
+    PulseScanner.razor
+    ------------------
+    A glowing dot that eases left and right, bounces back at each end, and
+    trails a fading comet tail. Pure CSS animation (no JavaScript), transparent
+    background. Drop it anywhere and tune it with the parameters below.
+
+    Usage:
+        <PulseScanner />
+        <PulseScanner Color="#ff4400" Speed="1.4" TailLength="14" />
+        <PulseScanner Width="800" Height="160" Color="#00ff55" ShowTrack="false" />
+
+    Every instance gets a unique CSS id, so you can place many on one page
+    with different speeds/sizes without their keyframes colliding.
+
+    The standalone SvgOutput/scanner-pulse.svg is the Color="#00ffee",
+    Speed="2.4", TailLength="10" configuration of this component.
+*@
+@using System.Globalization
+@using System.Text
+
+<div class="pulse-scanner">@((MarkupString)BuildSvg())</div>
+
+@code {
+    /// <summary>Seconds for one left-to-right sweep (one bounce is two sweeps).</summary>
+    [Parameter] public double Speed { get; set; } = 2.4;
+
+    /// <summary>Dot/tail color (any CSS color, e.g. "#00ffee").</summary>
+    [Parameter] public string Color { get; set; } = "#00ffee";
+
+    /// <summary>Number of trailing dots behind the head. 0 = no tail.</summary>
+    [Parameter] public int TailLength { get; set; } = 10;
+
+    /// <summary>Fraction of one sweep that the tail spans (longer = stretchier comet).</summary>
+    [Parameter] public double TailSpread { get; set; } = 0.22;
+
+    [Parameter] public int Width { get; set; } = 640;
+    [Parameter] public int Height { get; set; } = 140;
+
+    /// <summary>Radius of the bright head dot, in px.</summary>
+    [Parameter] public double HeadRadius { get; set; } = 13;
+
+    /// <summary>Draw the faint baseline track the dot travels along.</summary>
+    [Parameter] public bool ShowTrack { get; set; } = true;
+
+    /// <summary>Bright white core in the head dot for an LED look.</summary>
+    [Parameter] public bool ShowCore { get; set; } = true;
+
+    // Unique per instance so multiple scanners on a page never share keyframes.
+    private readonly string _id = "ps" + Guid.NewGuid().ToString("N").Substring(0, 8);
+
+    private static string F(double x) =>
+        Math.Round(x, 2).ToString(CultureInfo.InvariantCulture);
+
+    private string BuildSvg()
+    {
+        var tail = Math.Max(0, TailLength);
+        var margin = Math.Max(HeadRadius + 8, Width * 0.08);
+        var travel = Width - 2 * margin;
+        var cy = Height / 2.0;
+        var step = tail > 0 ? Speed * TailSpread / tail : 0;
+
+        var sb = new StringBuilder();
+        sb.Append($"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 {Width} {Height}\" ")
+          .Append($"width=\"{Width}\" height=\"{Height}\">");
+
+        // Scoped CSS: alternate = bounce, ease-in-out = slow at the ends.
+        sb.Append("<style>")
+          .Append($".{_id}{{animation:{_id}-scan {F(Speed)}s ease-in-out infinite alternate;}}")
+          .Append($"@keyframes {_id}-scan{{from{{transform:translateX(0)}}to{{transform:translateX({F(travel)}px)}}}}")
+          .Append("</style>");
+
+        var fid = _id + "-glow";
+        sb.Append($"<defs><filter id=\"{fid}\" x=\"-80%\" y=\"-80%\" width=\"260%\" height=\"260%\">")
+          .Append("<feGaussianBlur stdDeviation=\"4\" result=\"b\"/>")
+          .Append("<feMerge><feMergeNode in=\"b\"/><feMergeNode in=\"b\"/><feMergeNode in=\"SourceGraphic\"/></feMerge>")
+          .Append("</filter></defs>");
+
+        if (ShowTrack)
+            sb.Append($"<line x1=\"{F(margin)}\" y1=\"{F(cy)}\" x2=\"{F(Width - margin)}\" y2=\"{F(cy)}\" ")
+              .Append($"stroke=\"{Color}\" stroke-width=\"1\" opacity=\"0.12\"/>");
+
+        sb.Append($"<g filter=\"url(#{fid})\">");
+
+        // Tail: dim-to-bright, each dot lags the head by a growing animation-delay
+        // so it sits where the head was a moment ago. Head drawn last (on top).
+        for (var i = tail; i >= 1; i--)
+        {
+            var delay = i * step;
+            var opacity = (1.0 - (double)i / (tail + 1)) * 0.9;
+            var r = HeadRadius * (1.0 - 0.6 * i / tail);
+            sb.Append($"<circle class=\"{_id}\" cx=\"{F(margin)}\" cy=\"{F(cy)}\" r=\"{F(r)}\" ")
+              .Append($"fill=\"{Color}\" opacity=\"{F(opacity)}\" style=\"animation-delay:{F(delay)}s\"/>");
+        }
+
+        sb.Append($"<circle class=\"{_id}\" cx=\"{F(margin)}\" cy=\"{F(cy)}\" r=\"{F(HeadRadius)}\" fill=\"{Color}\"/>");
+        if (ShowCore)
+            sb.Append($"<circle class=\"{_id}\" cx=\"{F(margin)}\" cy=\"{F(cy)}\" r=\"{F(HeadRadius * 0.4)}\" fill=\"#ffffff\"/>");
+
+        sb.Append("</g></svg>");
+        return sb.ToString();
+    }
+}

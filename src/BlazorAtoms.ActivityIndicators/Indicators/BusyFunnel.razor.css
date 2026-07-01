@@ -1,0 +1,42 @@
+/* Scheme-aware defaults. Host overrides --ind-blip / --ind-glow / --ind-line / */
+/* --ind-fill (via the component parameters or any ancestor) win over these.   */
+svg { --ind-blip-d:#6fe3e3; --ind-glow-d:#eafdfd; --ind-line-d:#4aa3a3; --ind-fill-d:rgba(95,224,224,.10); }
+@media (prefers-color-scheme: light) {
+  svg { --ind-blip-d:#0e9c9c; --ind-glow-d:#04545f; --ind-line-d:#0e9c9c; --ind-fill-d:rgba(14,143,143,.12); }
+}
+
+.funnel-fill { fill: var(--ind-fill, var(--ind-fill-d)); }
+.funnel-wall { fill:none; stroke: var(--ind-line, var(--ind-line-d)); stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
+.rim         { stroke: var(--ind-line, var(--ind-line-d)); stroke-width:2; stroke-linecap:round; opacity:.6; }
+.drop        { fill: var(--ind-blip, var(--ind-blip-d)); transform-box:fill-box; transform-origin:center; animation:funnel-fall 2.6s linear infinite; }
+.caught      { fill: var(--ind-glow, var(--ind-glow-d)); }
+.caughtL     { animation: funnel-caughtL 2.6s ease-in-out infinite; }
+.caughtR     { animation: funnel-caughtR 2.6s ease-in-out infinite; }
+
+@keyframes funnel-fall {
+  0%   { transform: translate(var(--sx), -62px); opacity: 0; }
+  7%   { opacity: 1; }
+  58%  { transform: translate(0, 0); opacity: 1; }
+  84%  { transform: translate(0, 30px); opacity: 0; }
+  100% { transform: translate(0, 30px); opacity: 0; }
+}
+@keyframes funnel-caughtL {
+  0%       { transform: translate(-20px, -62px) scale(1); opacity: 0; }
+  7%       { opacity: 1; }
+  33%      { transform: translate(-12px, -18px) scale(1); opacity: 1; }
+  40%, 56% { transform: translate(-12px, -18px) scale(1.4); }
+  70%      { transform: translate(0, 0) scale(1); }
+  88%,100% { transform: translate(0, 30px) scale(1); opacity: 0; }
+}
+@keyframes funnel-caughtR {
+  0%       { transform: translate(20px, -62px) scale(1); opacity: 0; }
+  7%       { opacity: 1; }
+  33%      { transform: translate(12px, -18px) scale(1); opacity: 1; }
+  40%, 56% { transform: translate(12px, -18px) scale(1.4); }
+  70%      { transform: translate(0, 0) scale(1); }
+  88%,100% { transform: translate(0, 30px) scale(1); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drop, .caught { animation: none; }
+}

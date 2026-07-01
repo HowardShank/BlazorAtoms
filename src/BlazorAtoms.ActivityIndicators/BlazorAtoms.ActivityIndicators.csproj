@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <PackageId>BlazorAtoms.ActivityIndicators</PackageId>
+    <Title>Blazor Activity Indicators</Title>
+    <Description>Self-contained animated SVG busy/activity indicators for Blazor (Server or WebAssembly). No JS, no dependencies.</Description>
+    <PackageTags>Blazor;ActivityIndicator;Busy;Spinner;SVG;Loading;WebAssembly;Server</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <TrimmerRootDescriptor Include="ILLink.Descriptors.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Repo-root README becomes the NuGet package readme. -->
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

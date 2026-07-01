@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="BlazorAtoms">
+  <!-- Flame variant B: sharp taper / pointed. Only the flame paths differ from the base icon. -->
+  <title>BlazorAtoms (flame B)</title>
+  <defs>
+    <linearGradient id="tileGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FF9A4D"/>
+      <stop offset="1" stop-color="#EA5E0B"/>
+    </linearGradient>
+    <linearGradient id="flameGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFE07A"/>
+      <stop offset="0.55" stop-color="#FF9A2E"/>
+      <stop offset="1" stop-color="#F2530E"/>
+    </linearGradient>
+    <linearGradient id="flameInner" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFF1B8"/>
+      <stop offset="1" stop-color="#FFB03A"/>
+    </linearGradient>
+    <radialGradient id="emberGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FFB258" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#FFB258" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect x="14" y="28" width="100" height="84" rx="16"
+        fill="url(#tileGrad)" stroke="#C24E06" stroke-width="2"/>
+
+  <circle cx="64" cy="30" r="24" fill="url(#emberGlow)"/>
+  <path d="M64 4 C 61 16, 52 22, 51 33 C 50 41, 57 47, 64 47 C 71 47, 78 41, 77 33 C 76 22, 67 16, 64 4 Z"
+        fill="url(#flameGrad)"/>
+  <path d="M64 18 C 61 26, 57 29, 57 36 C 57 42, 60 45, 64 45 C 68 45, 71 42, 71 36 C 71 29, 67 26, 64 18 Z"
+        fill="url(#flameInner)"/>
+
+  <text x="29" y="52" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif"
+        font-size="16" font-weight="600" fill="#FFE8D6">4</text>
+  <text x="64" y="94" text-anchor="middle"
+        font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif"
+        font-size="44" font-weight="700" fill="#FFFFFF">Be</text>
+  <text x="64" y="106" text-anchor="middle"
+        font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif"
+        font-size="10" font-weight="600" letter-spacing="2.5" fill="#FFE8D6">ELEMENTS</text>
+</svg>

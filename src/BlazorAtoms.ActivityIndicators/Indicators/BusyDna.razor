@@ -1,0 +1,54 @@
+<svg viewBox="0 0 120 120" width="@Size" height="@Size" class="busy-dna @Class" style="@ThemeStyle">
+    <g>
+        @foreach (var r in Rows)
+        {
+            <line class="rung" x1="40" y1="@r.Y" x2="80" y2="@r.Y" style="animation-delay:@(r.DelayA)s" />
+        }
+    </g>
+    <g>
+        @foreach (var r in Rows)
+        {
+            <circle class="dot" cx="60" cy="@r.Y" r="3.5" style="animation-delay:@(r.DelayA)s" />
+            <circle class="dot" cx="60" cy="@r.Y" r="3.5" style="animation-delay:@(r.DelayB)s" />
+        }
+    </g>
+</svg>
+
+@code {
+    /// <summary>Rendered width/height in pixels.</summary>
+    [Parameter] public int Size { get; set; } = 48;
+
+    /// <summary>Strand dots. Falls back to the built-in light/dark default when null.</summary>
+    [Parameter] public string? Blip { get; set; }
+
+    /// <summary>Front-of-helix highlight. Falls back to the built-in default when null.</summary>
+    [Parameter] public string? Glow { get; set; }
+
+    /// <summary>Base-pair rungs. Falls back to the built-in default when null.</summary>
+    [Parameter] public string? Line { get; set; }
+
+    /// <summary>Extra CSS class(es) on the root svg element.</summary>
+    [Parameter] public string? Class { get; set; }
+
+    // One row every 12px. DelayA drives strand A + the rung; DelayB = DelayA - 1.5s
+    // puts strand B half a period (3s loop) out of phase. Negative delays avoid a
+    // frozen first frame; strings keep them culture-invariant.
+    private record Row(string Y, string DelayA, string DelayB);
+
+    private static readonly Row[] Rows =
+    {
+        new("18",  "0",       "-1.5"),
+        new("30",  "-0.375",  "-1.875"),
+        new("42",  "-0.75",   "-2.25"),
+        new("54",  "-1.125",  "-2.625"),
+        new("66",  "-1.5",    "-3.0"),
+        new("78",  "-1.875",  "-3.375"),
+        new("90",  "-2.25",   "-3.75"),
+        new("102", "-2.625",  "-4.125"),
+    };
+
+    private string ThemeStyle => string.Concat(
+        Blip is null ? "" : $"--ind-blip:{Blip};",
+        Glow is null ? "" : $"--ind-glow:{Glow};",
+        Line is null ? "" : $"--ind-line:{Line};");
+}

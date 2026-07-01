@@ -1,0 +1,19 @@
+/* --ind-line (teeth + rim) / --ind-fill (gear body) / --ind-blip (large hub) / */
+/* --ind-glow (small hub). *-d values are scheme-aware defaults.               */
+svg { --ind-blip-d:#6fe3e3; --ind-glow-d:#eafdfd; --ind-line-d:#4aa3a3; --ind-fill-d:rgba(95,224,224,.10); }
+@media (prefers-color-scheme: light) {
+  svg { --ind-blip-d:#0e9c9c; --ind-glow-d:#04545f; --ind-line-d:#0e9c9c; --ind-fill-d:rgba(14,143,143,.12); }
+}
+
+.teeth { fill:none; stroke: var(--ind-line, var(--ind-line-d)); }
+.body  { fill: var(--ind-fill, var(--ind-fill-d)); stroke: var(--ind-line, var(--ind-line-d)); stroke-width:1.5; }
+.hub-a { fill: var(--ind-blip, var(--ind-blip-d)); }
+.hub-b { fill: var(--ind-glow, var(--ind-glow-d)); }
+
+.gear-a { transform-box: view-box; transform-origin: 48px 52px; animation: gear-cw 6s linear infinite; }
+.gear-b { transform-box: view-box; transform-origin: 70px 70px; animation: gear-ccw 4s linear infinite; }
+
+@keyframes gear-cw  { to { transform: rotate(360deg); } }
+@keyframes gear-ccw { to { transform: rotate(-360deg); } }
+
+@media (prefers-reduced-motion: reduce) { .gear-a, .gear-b { animation: none; } }
