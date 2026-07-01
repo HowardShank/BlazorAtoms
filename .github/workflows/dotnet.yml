@@ -1,0 +1,33 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: .NET
+
+on:
+  #push:
+  #  branches: [ "main" ]
+  #pull_request:
+  #  branches: [ "main" ]
+  # Manual trigger from the Actions tab. NOTE: workflow_dispatch does NOT support
+  # a `branches:` filter — that key is invalid here and would be ignored. You pick
+  # the branch to run against in the GitHub UI when you click "Run workflow".
+  workflow_dispatch:
+  
+jobs:
+  build:
+
+#    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
+
+    steps:
+    - uses: actions/checkout@v7
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 9.0.x
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Test
+      run: dotnet test --no-build --verbosity normal

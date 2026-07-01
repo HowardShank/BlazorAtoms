@@ -1,0 +1,30 @@
+# Default owner for everything in the repo
+* @HowardShank
+
+# Explicitly list files owned by you (redundant but clear)
+# High-risk repo governance and security files
+/.github/workflows/*                  @HowardShank
+/.github/CODEOWNERS                   @HowardShank
+/.github/dependabot.yml               @HowardShank
+/.github/SECURITY.md                  @HowardShank
+
+# Package publishing / release controls
+/nuget.config                         @HowardShank
+/Directory.Build.props                @HowardShank
+/Directory.Build.targets              @HowardShank
+/global.json                          @HowardShank
+
+# Project + solution structure
+/*.sln                                @HowardShank
+/src/*/*.csproj                       @HowardShank
+/tests/*/*.csproj                     @HowardShank
+
+# Legal + policy
+/LICENSE.txt                          @HowardShank
+/README.md                            @HowardShank
+/SECURITY.md                          @HowardShank
+/CODE_OF_CONDUCT.md                   @HowardShank
+
+# Supply chain / dependency lock points (if present)
+/packages.lock.json                   @HowardShank
+/**/packages.lock.json                @HowardShank
