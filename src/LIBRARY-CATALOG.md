@@ -70,6 +70,7 @@ rating icons, QR/barcodes, skeleton shapes, and icons.
 | `BlazorAtoms.Ratings` | AtomRating (stars/hearts), AtomRatingInput |
 | `BlazorAtoms.Layout` | AtomStack, AtomGrid, AtomDivider, AtomSpacer, AtomCenter, AtomAspectRatio |
 | `BlazorAtoms.Transitions` | AtomFade, AtomSlide, AtomCollapse, AtomScale (CSS-only) |
+| `BlazorAtoms.Barcodes` *(scaffolded)* | AtomBarcode (1D), AtomQrCode (2D) — own C# encoder → SVG; generation only |
 
 On-brand standout: **`Charts`** — SVG, JS-free, same DNA as the busy indicators.
 
@@ -83,6 +84,7 @@ On-brand standout: **`Charts`** — SVG, JS-free, same DNA as the busy indicator
 - **Ratings** — star/heart scales. `AtomRating` displays a read-only score (★★★★☆ 4/5); `AtomRatingInput` lets the user hover/click to set one (product reviews, feedback). Supports half-steps, a custom icon, and an optional count label.
 - **Layout** — invisible structural building blocks: stack (spacing), grid, divider, spacer, centering — the scaffolding you arrange other components inside.
 - **Transitions** — reusable enter/leave animations (fade, slide, collapse, scale) wrapped around content that appears or disappears. CSS-only.
+- **Barcodes** — machine-readable graphics generated from a value, rendered as SVG. "Barcode" is the umbrella: `AtomBarcode` for 1D/linear (Code128, EAN-13, Code39…) and `AtomQrCode` for 2D/matrix (QR). **Generation only, using our own C# encoder** — a third-party lib (QRCoder/ZXing) would break the 0-dep rule. Note: *reading/scanning* a code needs a camera + JS → a separate Tier C concern, not part of this library. *(Project scaffolded; encoders pending — see `Task-Difficulty.md`.)*
 
 ## Tier B — feasible, minor/optional JS
 
@@ -97,7 +99,6 @@ On-brand standout: **`Charts`** — SVG, JS-free, same DNA as the busy indicator
 | `BlazorAtoms.Alerts` | AtomAlert, AtomToast, AtomBanner, AtomCallout | toast timing via C# timer |
 | `BlazorAtoms.Icons` | AtomIcon (+ optional curated SVG set) | renderer is 0-dep; a bundled icon set is larger |
 | `BlazorAtoms.Typography` | AtomHeading, AtomText, AtomCode, AtomKbd, AtomTruncate | JS-free |
-| `BlazorAtoms.Codes` | AtomQrCode, AtomBarcode | pure-C# generation → SVG, 0-dep, on-brand |
 
 **What each does:**
 - **Inputs** — the core form fields (text, number, checkbox, radio, switch, slider, select), two-way bound to your data.
@@ -109,7 +110,6 @@ On-brand standout: **`Charts`** — SVG, JS-free, same DNA as the busy indicator
 - **Alerts** — messages to the user: inline alert/callout, a page banner, and toast (an auto-dismissing popup notification).
 - **Icons** — an `AtomIcon` renderer for SVG glyphs, optionally paired with a bundled icon set.
 - **Typography** — text primitives: headings, body text, inline code, keyboard keys, truncation.
-- **Codes** — machine-readable graphics generated from a value (QR codes, barcodes), output as SVG.
 
 ## Tier C — heavier (needs JS interop or a dependency). Decide later; may dent the 0-dep goal.
 

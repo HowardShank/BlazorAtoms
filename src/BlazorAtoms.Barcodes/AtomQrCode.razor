@@ -1,0 +1,57 @@
+@inherits AtomComponentBase
+@using System.Net
+@using System.Text
+
+@* AtomQrCode — QR (2D matrix barcode) generator, rendered as inline SVG.
+   SCAFFOLD: the parameter API below is the intended public surface, but the encoder
+   (Reed-Solomon EC + masking) is not implemented yet — this renders a placeholder.
+   See src/Task-Difficulty.md. *@
+
+<div class="atom-qrcode">@((MarkupString)BuildSvg())</div>
+
+@code {
+    /// <summary>Text/data to encode.</summary>
+    [Parameter, EditorRequired] public string Value { get; set; } = "";
+
+    /// <summary>Rendered width/height in pixels.</summary>
+    [Parameter] public int Size { get; set; } = 160;
+
+    /// <summary>Error-correction level.</summary>
+    [Parameter] public QrErrorCorrection EcLevel { get; set; } = QrErrorCorrection.M;
+
+    /// <summary>Module (dark) color.</summary>
+    [Parameter] public string Color { get; set; } = "#000000";
+
+    /// <summary>Background fill. Null leaves it transparent.</summary>
+    [Parameter] public string? Background { get; set; }
+
+    /// <summary>Quiet-zone border width, in modules (spec minimum is 4).</summary>
+    [Parameter] public int QuietZone { get; set; } = 4;
+
+    /// <summary>Extra CSS class(es) on the root svg element.</summary>
+    [Parameter] public string? Class { get; set; }
+
+    private static string Esc(string s) => WebUtility.HtmlEncode(s);
+
+    // TODO: implement QR encoding (byte-mode -> Reed-Solomon GF(256) -> matrix -> masking) -> <rect> modules,
+    // replacing the placeholder body below. Pure C#, no JS. Notes: src/Task-Difficulty.md.
+    private string BuildSvg()
+    {
+        var cls = Class is null ? "atom-qrcode" : "atom-qrcode " + Esc(Class);
+        var sb = new StringBuilder();
+
+        sb.Append($"<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"{cls}\" role=\"img\" ")
+          .Append($"aria-label=\"QR code: {Esc(Value)}\" width=\"{Size}\" height=\"{Size}\" viewBox=\"0 0 {Size} {Size}\">");
+
+        if (Background is not null)
+            sb.Append($"<rect x=\"0\" y=\"0\" width=\"{Size}\" height=\"{Size}\" fill=\"{Background}\"/>");
+
+        sb.Append($"<rect x=\"1\" y=\"1\" width=\"{Size - 2}\" height=\"{Size - 2}\" fill=\"none\" ")
+          .Append($"stroke=\"{Color}\" stroke-dasharray=\"4 4\"/>");
+        sb.Append($"<text x=\"{Size / 2}\" y=\"{Size / 2}\" text-anchor=\"middle\" dominant-baseline=\"middle\" ")
+          .Append($"font-family=\"ui-monospace, monospace\" font-size=\"11\" fill=\"{Color}\">QR encoder — TODO</text>");
+
+        sb.Append("</svg>");
+        return sb.ToString();
+    }
+}

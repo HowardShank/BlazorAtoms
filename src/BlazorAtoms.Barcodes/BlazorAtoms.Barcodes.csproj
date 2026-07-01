@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <Import Project="$(RepoRoot)build\Packable.props" />
+  <Import Project="$(RepoRoot)build\Shared.props" />
+
+  <PropertyGroup>
+    <PackageId>BlazorAtoms.Barcodes</PackageId>
+    <Title>Blazor Barcodes</Title>
+    <Description>Barcode and QR code generators for Blazor, rendered as inline SVG. Pure C#, no JavaScript, no dependencies. Generation only.</Description>
+    <PackageTags>Blazor;Barcode;QRCode;QR;Code128;EAN;UPC;SVG;WebAssembly;Server</PackageTags>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Tests exercise the internal encoders directly. -->
+    <InternalsVisibleTo Include="BlazorAtoms.Barcodes.Tests" />
+  </ItemGroup>
+
+</Project>
