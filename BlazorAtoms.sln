@@ -29,6 +29,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorWebAppWasmDemo", "Bla
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorWebAppWasmDemo.Client", "BlazorWebAppWasmDemo\BlazorWebAppWasmDemo.Client\BlazorWebAppWasmDemo.Client.csproj", "{9E2C678D-A2A3-49C1-9715-B7421163D3DA}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "assets", "assets", "{NEW-GUID}"
+	ProjectSection(SolutionItems) = preProject
+			assets\blazoratoms-icon-flameA.svg = assets\blazoratoms-icon-flameA.svg
+			assets\blazoratoms-icon-flameB.svg = assets\blazoratoms-icon-flameB.svg
+			assets\blazoratoms-icon.svg = assets\blazoratoms-icon.svg
+			assets\blazoratoms-logo-flameA.svg = assets\blazoratoms-logo-flameA.svg
+			assets\blazoratoms-logo.svg = assets\blazoratoms-logo.svg
+			assets\logo-playground.html = assets\logo-playground.html
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
