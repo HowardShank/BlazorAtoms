@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <!-- Internal demo-shared RCL: the playground pages shared by the three demo apps
+         (Server / Auto / Wasm). Deduped here so each page body lives once; the demos keep
+         only thin @page + @rendermode wrappers. NOT a shipped product, so no NuGet package. -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Components rendered by the shared playground views. -->
+    <ProjectReference Include="..\BlazorAtoms.ActivityIndicators\BlazorAtoms.ActivityIndicators.csproj" />
+    <ProjectReference Include="..\BlazorAtoms.Barcodes\BlazorAtoms.Barcodes.csproj" />
+  </ItemGroup>
+
+</Project>
