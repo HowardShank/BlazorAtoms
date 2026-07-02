@@ -16,7 +16,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorAtoms.ActivityIndicators.Tests", "tests\BlazorAtoms.ActivityIndicators.Tests\BlazorAtoms.ActivityIndicators.Tests.csproj", "{D9A0BE85-F120-4E9B-94D5-18A7C60CB690}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "I have", "I have", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "demos", "demos", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BlazorWebAppAutoDemo", "BlazorWebAppAutoDemo", "{92957C74-72F3-4A90-BD5F-490EA661A849}"
 EndProject
