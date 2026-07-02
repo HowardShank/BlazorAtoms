@@ -1,0 +1,75 @@
+@page "/qrcode"
+@rendermode InteractiveWebAssembly
+@using BlazorAtoms.Barcodes
+
+<PageTitle>AtomQrCode — Blazor Atoms</PageTitle>
+
+<h1>AtomQrCode</h1>
+<p>QR codes (2D) as pure inline SVG — byte mode, versions 1–40, four error-correction levels. No JavaScript, no dependencies.</p>
+
+<div class="qr-stage">
+    <AtomQrCode Value="@Value" Size="@Size" EcLevel="@EcLevel" Color="@Color"
+                Background="@(UseBackground ? Background : null)" QuietZone="@QuietZone" />
+</div>
+
+<div class="qr-controls">
+    <div class="qr-ctrl qr-wide">
+        <label>Value</label>
+        <textarea rows="2" @bind="Value" @bind:event="oninput"></textarea>
+    </div>
+    <div class="qr-ctrl">
+        <label>EC level</label>
+        <select @bind="EcLevel">
+            @foreach (var e in Levels) { <option value="@e">@e</option> }
+        </select>
+    </div>
+    <div class="qr-ctrl">
+        <label>Size <span class="val">@(Size)px</span></label>
+        <input type="range" min="80" max="400" step="8" @bind="Size" @bind:event="oninput" />
+    </div>
+    <div class="qr-ctrl">
+        <label>Quiet zone <span class="val">@QuietZone</span></label>
+        <input type="range" min="0" max="8" step="1" @bind="QuietZone" @bind:event="oninput" />
+    </div>
+    <div class="qr-ctrl">
+        <label>Module color <span class="val">@Color</span></label>
+        <input type="color" @bind="Color" @bind:event="oninput" />
+    </div>
+    <div class="qr-ctrl">
+        <label>Background</label>
+        <div class="row">
+            <input type="checkbox" @bind="UseBackground" />
+            <input type="color" @bind="Background" @bind:event="oninput" disabled="@(!UseBackground)" />
+        </div>
+    </div>
+</div>
+
+<p class="qr-hint">Higher EC levels (Q/H) survive more damage but hold less data, so a long value may bump the version up.</p>
+
+<style>
+    .qr-stage { background:#fff; border:1px solid #d0d0d8; border-radius:12px; padding:1.5rem; text-align:center; margin-bottom:1.5rem; overflow-x:auto; }
+    .qr-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:1rem 1.5rem; background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; }
+    .qr-ctrl { display:flex; flex-direction:column; gap:.35rem; }
+    .qr-ctrl.qr-wide { grid-column:1 / -1; }
+    .qr-ctrl label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; }
+    .qr-ctrl label .val { color:#5fb7c9; font-family:ui-monospace,monospace; text-transform:none; }
+    .qr-ctrl textarea { padding:.5rem .6rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; resize:vertical; }
+    .qr-ctrl select { padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; }
+    .qr-ctrl input[type=range] { width:100%; accent-color:#00b3c4; }
+    .qr-ctrl input[type=color] { width:100%; height:32px; background:none; border:1px solid #1b2330; border-radius:6px; padding:2px; }
+    .qr-ctrl .row { display:flex; align-items:center; gap:.5rem; }
+    .qr-ctrl .row input[type=checkbox] { accent-color:#00b3c4; width:16px; height:16px; }
+    .qr-hint { color:#6b7785; font-size:.85rem; margin-top:1rem; }
+</style>
+
+@code {
+    private static readonly QrErrorCorrection[] Levels = (QrErrorCorrection[])Enum.GetValues(typeof(QrErrorCorrection));
+
+    private string Value = "https://github.com/HowardShank/BlazorAtoms";
+    private QrErrorCorrection EcLevel = QrErrorCorrection.M;
+    private int Size = 200;
+    private int QuietZone = 4;
+    private string Color = "#111111";
+    private bool UseBackground = true;
+    private string Background = "#ffffff";
+}

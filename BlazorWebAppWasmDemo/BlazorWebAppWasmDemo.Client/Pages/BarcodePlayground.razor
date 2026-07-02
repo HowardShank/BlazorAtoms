@@ -1,0 +1,89 @@
+@page "/barcodes"
+@rendermode InteractiveWebAssembly
+@using BlazorAtoms.Barcodes
+
+<PageTitle>AtomBarcode — Blazor Atoms</PageTitle>
+
+<h1>AtomBarcode</h1>
+<p>Linear (1D) barcodes as pure inline SVG — no JavaScript, no dependencies. Choose a symbology and type a value;
+   input that's invalid for the chosen symbology shows an inline error tile.</p>
+
+<div class="ba-stage">
+    <AtomBarcode Value="@Value" Symbology="@Symbology" Height="@Height" ModuleWidth="@ModuleWidth"
+                 Color="@Color" Background="@(UseBackground ? Background : null)" ShowText="@ShowText" />
+</div>
+
+<div class="ba-controls">
+    <div class="ba-ctrl ba-wide">
+        <label>Value</label>
+        <input type="text" @bind="Value" @bind:event="oninput" />
+    </div>
+    <div class="ba-ctrl">
+        <label>Symbology</label>
+        <select @bind="Symbology">
+            @foreach (var s in Symbologies) { <option value="@s">@s</option> }
+        </select>
+    </div>
+    <div class="ba-ctrl">
+        <label>Module width <span class="val">@ModuleWidth.ToString(Inv)px</span></label>
+        <input type="range" min="1" max="5" step="0.5" @bind="ModuleWidth" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ba-ctrl">
+        <label>Height <span class="val">@((int)Height)px</span></label>
+        <input type="range" min="30" max="140" step="2" @bind="Height" @bind:event="oninput" />
+    </div>
+    <div class="ba-ctrl">
+        <label>Bar color <span class="val">@Color</span></label>
+        <input type="color" @bind="Color" @bind:event="oninput" />
+    </div>
+    <div class="ba-ctrl">
+        <label>Background</label>
+        <div class="row">
+            <input type="checkbox" @bind="UseBackground" />
+            <input type="color" @bind="Background" @bind:event="oninput" disabled="@(!UseBackground)" />
+        </div>
+    </div>
+    <div class="ba-ctrl">
+        <label>Text</label>
+        <div class="row">
+            <input type="checkbox" id="baText" @bind="ShowText" />
+            <label for="baText" class="inline">Show human-readable value</label>
+        </div>
+    </div>
+</div>
+
+<p class="ba-hint">
+    <code>Code128</code>: ASCII 32–126 · <code>Code39</code>: A–Z 0–9 and <code>- . $ / + %</code> ·
+    <code>Ean13</code>/<code>UpcA</code>/<code>Itf</code>: digits · <code>Codabar</code>: digits and <code>- $ : / . +</code>.
+</p>
+
+<style>
+    .ba-stage { background:#fff; border:1px solid #d0d0d8; border-radius:12px; padding:1.5rem; text-align:center; margin-bottom:1.5rem; overflow-x:auto; }
+    .ba-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:1rem 1.5rem; background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; }
+    .ba-ctrl { display:flex; flex-direction:column; gap:.35rem; }
+    .ba-ctrl.ba-wide { grid-column:1 / -1; }
+    .ba-ctrl label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; }
+    .ba-ctrl label .val { color:#5fb7c9; font-family:ui-monospace,monospace; text-transform:none; }
+    .ba-ctrl input[type=text] { padding:.5rem .6rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; }
+    .ba-ctrl select { padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; }
+    .ba-ctrl input[type=range] { width:100%; accent-color:#00b3c4; }
+    .ba-ctrl input[type=color] { width:100%; height:32px; background:none; border:1px solid #1b2330; border-radius:6px; padding:2px; }
+    .ba-ctrl .row { display:flex; align-items:center; gap:.5rem; }
+    .ba-ctrl .row input[type=checkbox] { accent-color:#00b3c4; width:16px; height:16px; }
+    .ba-ctrl .row label.inline { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; }
+    .ba-hint { color:#6b7785; font-size:.85rem; margin-top:1rem; }
+</style>
+
+@code {
+    private static readonly System.Globalization.CultureInfo Inv = System.Globalization.CultureInfo.InvariantCulture;
+    private static readonly BarcodeSymbology[] Symbologies = (BarcodeSymbology[])Enum.GetValues(typeof(BarcodeSymbology));
+
+    private string Value = "BLAZORATOMS-123";
+    private BarcodeSymbology Symbology = BarcodeSymbology.Code128;
+    private double Height = 70;
+    private double ModuleWidth = 2;
+    private string Color = "#111111";
+    private bool UseBackground = true;
+    private string Background = "#ffffff";
+    private bool ShowText = true;
+}
