@@ -1,4 +1,6 @@
 @inherits AtomBusyIndicatorBase
+@if (!CancellationToken.IsCancellationRequested)
+{
 <svg viewBox="0 0 120 120" width="@Size" height="@Size" class="busy-swarm @Class" style="@ThemeStyle">
     <g class="swarm">
         <circle class="core" cx="60" cy="60" r="4" />
@@ -9,6 +11,7 @@
         }
     </g>
 </svg>
+}
 
 @code {
     /// <summary>Rendered width/height in pixels (viewBox scales cleanly).</summary>

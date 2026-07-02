@@ -3,7 +3,7 @@
    - Name null -> renders a random indicator (stable across re-renders).
    See AtomBusyIndicator.razor.cs for discovery + parameter forwarding. *@
 @inherits AtomComponentBase
-@if (ResolvedType is not null)
+@if (ResolvedType is not null && !CancellationToken.IsCancellationRequested)
 {
     <DynamicComponent Type="ResolvedType" Parameters="BuildParameters()" />
 }

@@ -65,6 +65,9 @@ public partial class AtomBusyIndicator : AtomComponentBase
 
     protected override async Task OnParametersSetAsync()
     {
+        // Honor cancellation up front: resolve nothing so the render path emits no indicator.
+        if (CancellationToken.IsCancellationRequested) { ResolvedType = null; return; }
+
         if (Candidates.Length == 0) { ResolvedType = null; return; }
 
         if (!string.IsNullOrWhiteSpace(Name))
@@ -74,6 +77,9 @@ public partial class AtomBusyIndicator : AtomComponentBase
 
             // Unknown name: notify the host, then fall back to random. Never throw.
             await OnUnknownName.InvokeAsync(Name);
+
+            // The host callback may have been slow; re-check before continuing.
+            if (CancellationToken.IsCancellationRequested) { ResolvedType = null; return; }
         }
 
         // Pick once and remember, so re-renders don't flicker to a different indicator.
@@ -106,6 +112,8 @@ public partial class AtomBusyIndicator : AtomComponentBase
         }
 
         if (declared.Contains("Size")) dict["Size"] = Size;   // non-null int
+        // Non-null struct: forward like Size so the indicator honors the same token.
+        if (declared.Contains("CancellationToken")) dict["CancellationToken"] = CancellationToken;
         Add("Blip", Blip);
         Add("Glow", Glow);
         Add("Line", Line);

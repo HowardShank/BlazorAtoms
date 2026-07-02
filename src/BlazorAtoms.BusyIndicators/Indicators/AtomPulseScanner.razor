@@ -18,8 +18,12 @@
 *@
 @using System.Globalization
 @using System.Text
+@inherits AtomComponentBase
 
-<div class="pulse-scanner">@((MarkupString)BuildSvg())</div>
+@if (!CancellationToken.IsCancellationRequested)
+{
+    <div class="pulse-scanner">@((MarkupString)BuildSvg())</div>
+}
 
 @code {
     /// <summary>Seconds for one left-to-right sweep (one bounce is two sweeps).</summary>
@@ -54,6 +58,8 @@
 
     private string BuildSvg()
     {
+        if (CancellationToken.IsCancellationRequested) return string.Empty;
+
         var tail = Math.Max(0, TailLength);
         var margin = Math.Max(HeadRadius + 8, Width * 0.08);
         var travel = Width - 2 * margin;
@@ -86,6 +92,7 @@
         // so it sits where the head was a moment ago. Head drawn last (on top).
         for (var i = tail; i >= 1; i--)
         {
+            if (CancellationToken.IsCancellationRequested) return string.Empty;
             var delay = i * step;
             var opacity = (1.0 - (double)i / (tail + 1)) * 0.9;
             var r = HeadRadius * (1.0 - 0.6 * i / tail);

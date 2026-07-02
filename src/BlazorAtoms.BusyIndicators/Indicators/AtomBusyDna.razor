@@ -1,4 +1,6 @@
 @inherits AtomBusyIndicatorBase
+@if (!CancellationToken.IsCancellationRequested)
+{
 <svg viewBox="0 0 120 120" width="@Size" height="@Size" class="busy-dna @Class" style="@ThemeStyle">
     <g>
         @foreach (var r in Rows)
@@ -14,6 +16,7 @@
         }
     </g>
 </svg>
+}
 
 @code {
     /// <summary>Rendered width/height in pixels.</summary>

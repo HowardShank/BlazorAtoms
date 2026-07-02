@@ -1,4 +1,6 @@
 @inherits AtomBusyIndicatorBase
+@if (!CancellationToken.IsCancellationRequested)
+{
 <svg viewBox="0 0 120 120" width="@Size" height="@Size" class="busy-funnel @Class" style="@ThemeStyle">
     <polygon class="funnel-fill" points="30,40 90,40 65,72 65,84 55,84 55,72" />
     <line class="rim" x1="30" y1="40" x2="90" y2="40" />
@@ -11,6 +13,7 @@
     <circle class="drop caught caughtL" cx="60" cy="72" r="2.8" style="animation-delay:0.30s" />
     <circle class="drop caught caughtR" cx="60" cy="72" r="2.8" style="animation-delay:1.40s" />
 </svg>
+}
 
 @code {
     /// <summary>Rendered width/height in pixels (viewBox scales cleanly).</summary>

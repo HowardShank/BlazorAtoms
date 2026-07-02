@@ -7,7 +7,10 @@
 @* AtomBarcode — linear (1D) barcode generator, rendered as inline SVG (no JS, no deps).
    Implemented symbologies: Code39. Others fall back to an error tile until added. *@
 
-<div class="atom-barcode">@((MarkupString)BuildSvg())</div>
+@if (!CancellationToken.IsCancellationRequested)
+{
+    <div class="atom-barcode">@((MarkupString)BuildSvg())</div>
+}
 
 @code {
     /// <summary>Data to encode.</summary>
@@ -42,6 +45,8 @@
 
     private string BuildSvg()
     {
+        if (CancellationToken.IsCancellationRequested) return string.Empty;
+
         bool[] modules;
         try
         {
@@ -70,6 +75,7 @@
         var i = 0;
         while (i < modules.Length)
         {
+            if (CancellationToken.IsCancellationRequested) return string.Empty;
             if (!modules[i]) { i++; continue; }
             var run = 1;
             while (i + run < modules.Length && modules[i + run]) run++;
