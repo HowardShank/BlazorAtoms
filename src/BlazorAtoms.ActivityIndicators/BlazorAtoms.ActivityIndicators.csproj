@@ -4,10 +4,10 @@
   <Import Project="$(RepoRoot)build\Shared.props" />
 
   <PropertyGroup>
-    <PackageId>BlazorAtoms.BusyIndicators</PackageId>
-    <Title>Blazor Busy Indicators</Title>
-    <Description>Self-contained animated SVG busy/activity indicators for Blazor (Server or WebAssembly). No JS, no dependencies.</Description>
-    <PackageTags>Blazor;BusyIndicator;ActivityIndicator;Busy;Spinner;SVG;Loading;WebAssembly;Server</PackageTags>
+    <PackageId>BlazorAtoms.ActivityIndicators</PackageId>
+    <Title>Blazor Activity Indicators</Title>
+    <Description>Self-contained animated SVG activity indicators for Blazor (Server or WebAssembly). No JS, no dependencies.</Description>
+    <PackageTags>Blazor;ActivityIndicator;Activity;Spinner;SVG;Loading;WebAssembly;Server</PackageTags>
     <Version>0.1.0</Version>
   </PropertyGroup>
 

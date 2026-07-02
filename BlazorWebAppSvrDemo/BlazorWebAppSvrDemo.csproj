@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\BlazorAtoms.BusyIndicators\BlazorAtoms.BusyIndicators.csproj" />
+    <ProjectReference Include="..\src\BlazorAtoms.ActivityIndicators\BlazorAtoms.ActivityIndicators.csproj" />
     <ProjectReference Include="..\src\BlazorAtoms.Barcodes\BlazorAtoms.Barcodes.csproj" />
   </ItemGroup>
 

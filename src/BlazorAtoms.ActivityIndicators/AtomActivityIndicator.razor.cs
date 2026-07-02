@@ -3,29 +3,29 @@ using System.Reflection;
 using Microsoft.AspNetCore.Components;
 using BlazorAtoms.Shared;
 
-namespace BlazorAtoms.BusyIndicators;
+namespace BlazorAtoms.ActivityIndicators;
 
 /// <summary>
-/// Wrapper that renders one of the <c>AtomBusy*</c> SVG indicators — the non-abstract subclasses
-/// of <see cref="AtomBusyIndicatorBase"/> living in the
-/// <c>BlazorAtoms.BusyIndicators.Indicators</c> namespace.
+/// Wrapper that renders one of the <c>AtomActivity*</c> SVG indicators — the non-abstract subclasses
+/// of <see cref="AtomActivityIndicatorBase"/> living in the
+/// <c>BlazorAtoms.ActivityIndicators.Indicators</c> namespace.
 /// <para>
 /// Set <see cref="Name"/> to render a specific indicator; leave it null/empty to render a
 /// random one. The candidate set is discovered by reflection (every non-abstract
-/// <see cref="AtomBusyIndicatorBase"/>), so adding or removing an <c>AtomBusy*.razor</c> in the
+/// <see cref="AtomActivityIndicatorBase"/>), so adding or removing an <c>AtomActivity*.razor</c> in the
 /// Indicators folder requires no change here.
 /// </para>
 /// </summary>
-public partial class AtomBusyIndicator : AtomComponentBase
+public partial class AtomActivityIndicator : AtomComponentBase
 {
     /// <summary>
     /// All discoverable indicator component types, computed once per process: non-abstract
-    /// subclasses of <see cref="AtomBusyIndicatorBase"/>. The wrapper is not one, so it cannot
+    /// subclasses of <see cref="AtomActivityIndicatorBase"/>. The wrapper is not one, so it cannot
     /// match itself. Trimming-safe via ILLink.Descriptors.xml (roots the Indicators namespace).
     /// </summary>
     private static readonly Type[] Candidates =
-        typeof(AtomBusyIndicator).Assembly.GetTypes()
-            .Where(t => typeof(AtomBusyIndicatorBase).IsAssignableFrom(t) && !t.IsAbstract)
+        typeof(AtomActivityIndicator).Assembly.GetTypes()
+            .Where(t => typeof(AtomActivityIndicatorBase).IsAssignableFrom(t) && !t.IsAbstract)
             .OrderBy(t => t.Name, StringComparer.Ordinal)
             .ToArray();
 
@@ -34,8 +34,8 @@ public partial class AtomBusyIndicator : AtomComponentBase
     private static readonly ConcurrentDictionary<Type, HashSet<string>> ParamNames = new();
 
     /// <summary>Indicator to render. Null/empty selects a random indicator. Matched
-    /// case-insensitively against the component type name, accepting "AtomBusyGears",
-    /// "BusyGears" and "Gears".</summary>
+    /// case-insensitively against the component type name, accepting "AtomActivityGears",
+    /// "ActivityGears" and "Gears".</summary>
     [Parameter] public string? Name { get; set; }
 
     /// <summary>Rendered width/height in pixels. Forwarded to every indicator.</summary>
@@ -87,12 +87,12 @@ public partial class AtomBusyIndicator : AtomComponentBase
         ResolvedType = _randomPick;
     }
 
-    // Accepts the full type name ("AtomBusyGears"), the name without the Atom prefix
-    // ("BusyGears"), and the bare form ("Gears") — all case-insensitive.
+    // Accepts the full type name ("AtomActivityGears"), the name without the Atom prefix
+    // ("ActivityGears"), and the bare form ("Gears") — all case-insensitive.
     private static bool NameMatches(string typeName, string requested) =>
         string.Equals(typeName, requested, StringComparison.OrdinalIgnoreCase) ||
         string.Equals(typeName, "Atom" + requested, StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(typeName, "AtomBusy" + requested, StringComparison.OrdinalIgnoreCase);
+        string.Equals(typeName, "AtomActivity" + requested, StringComparison.OrdinalIgnoreCase);
 
     private static HashSet<string> DeclaredParams(Type t) =>
         ParamNames.GetOrAdd(t, ty => ty

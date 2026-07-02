@@ -31,53 +31,62 @@ tiles give us distinct + unified at once. Each library is rendered as an **eleme
 
 ## What makes it a *family* beyond the shape
 
-**1. Color encodes category** (like real periodic groups) — hue is assigned by function, not at random:
+**1. Color encodes category** (like real periodic groups) — hue is assigned by function, not at random.
+The real periodic convention is *hue = category*; we adapt it to these functional categories, each
+with a base hue. Every library takes a **shade within its category's base hue** (per-library hex in
+the Element symbols table's **Primary** column), so same-category tiles read as one family yet each
+tile stays distinct in NuGet search.
 
-| Category | Libraries |
-|---|---|
-| Feedback & status | BusyIndicators, Progress, Skeletons, Alerts |
-| Data & viz | Charts, Barcodes, Ratings |
-| Forms & input | Inputs, Buttons, Pickers |
-| Layout & containers | Layout, Cards, Tabs, Panels, Tables |
-| Content & identity | Typography, Icons, Avatars, Badges |
-| Overlay & behavior | Overlays, Tooltips, Navigation, Behaviors, Transitions |
+| Category | Base hue | Libraries |
+|---|---|---|
+| Feedback & status | red `#E5484D` | ActivityIndicators, Progress, Skeletons, Alerts |
+| Data & viz | blue `#3B82F6` | Charts, Barcodes, Ratings |
+| Forms & input | green `#22C55E` | Inputs, Buttons, Pickers |
+| Layout & containers | violet `#7C5CFF` | Layout, Cards, Tabs, Panels, Tables |
+| Content & identity | teal `#14B8A6` | Typography, Icons, Avatars, Badges |
+| Overlay & behavior | magenta `#EC4899` | Overlays, Tooltips, Navigation, Behaviors, Transitions |
 
-(Exact palette TBD in the playground; keep the master flame/orange for the umbrella tile.)
+**Flame:** stays the orange fire on every per-library tile as the constant family stamp — only the
+tile fill/stroke/ember take the library hue. The master orange/flame identity is reserved for the
+umbrella **B** tile (`#F97316`). (The playground's *Flame Mode* toggle previews tinting the flame to
+the hue instead — under evaluation.) The tile palette derives from one primary hex per library.
 
 **2. Element symbols — prefer real periodic symbols where they fit.** This is the brand hook.
 
-| Library | Symbol | Z | Label | Real element? |
-|---|---|---|---|---|
-| Inputs | In | 49 | INPUTS | Indium ✓ |
-| Cards | Cd | 48 | CARDS | Cadmium ✓ |
-| Tabs | Tb | 65 | TABS | Terbium ✓ |
-| Panels | Pa | 91 | PANELS | Protactinium ✓ |
-| Alerts | Al | 13 | ALERTS | Aluminium ✓ |
-| Ratings | Ra | 88 | RATINGS | Radium ✓ |
-| Layout | La | 57 | LAYOUT | Lanthanum ✓ |
-| Tables | Ta | 73 | TABLES | Tantalum ✓ |
-| Progress | Pr | 59 | PROGRESS | Praseodymium ✓ |
-| BusyIndicators | Bi | 83 | BUSY | Bismuth ✓ |
-| Behaviors | Bh | 107 | BEHAVIOR | Bohrium ✓ |
-| Transitions | Ts | 117 | MOTION | Tennessine ✓ (or "Tr", coined) |
-| Barcodes | Bc | 56 | BARCODES | coined · Z from Ba (Barium) |
-| Skeletons | Sk | 21 | SKELETON | coined · Z from Sc (Scandium) |
-| Charts | Ch | 6 | CHARTS | coined · Z from C (Carbon) |
-| Badges | Bg | 97 | BADGES | coined · Z from Bk (Berkelium) |
-| Avatars | Av | 47 | AVATARS | coined · Z from Ag (Silver) |
-| Buttons | Bt | 5 | BUTTONS | coined · Z from B (Boron) |
-| Tooltips | Tt | 81 | TOOLTIPS | coined · Z from Tl (Thallium) |
-| Icons | Ic | 53 | ICONS | coined · Z from I (Iodine) |
-| Typography | Ty | 22 | TYPE | coined · Z from Ti (Titanium) |
-| Overlays | Ov | 8 | OVERLAYS | coined · Z from O (Oxygen) |
-| Pickers | Pk | 78 | PICKERS | coined · Z from Pt (Platinum) |
-| Navigation | Nv | 11 | NAV | coined · Z from Na (Sodium) |
+| Library | Symbol | Z | Label | Primary | Real element? |
+|---|---|---|---|---|---|
+| Inputs | In | 49 | INPUTS | `#22C55E` | Indium ✓ |
+| Cards | Cd | 48 | CARDS | `#6A4BE0` | Cadmium ✓ |
+| Tabs | Tb | 65 | TABS | `#8B6EFF` | Terbium ✓ |
+| Panels | Pa | 91 | PANELS | `#5B3FC4` | Protactinium ✓ |
+| Alerts | Al | 13 | ALERTS | `#FF6A6E` | Aluminium ✓ |
+| Ratings | Ra | 88 | RATINGS | `#5B9BFF` | Radium ✓ |
+| Layout | La | 57 | LAYOUT | `#7C5CFF` | Lanthanum ✓ |
+| Tables | Ta | 73 | TABLES | `#9B82FF` | Tantalum ✓ |
+| Progress | Pr | 59 | PROGRESS | `#F0565B` | Praseodymium ✓ |
+| ActivityIndicators | Ac | 89 | ACTIVITY | `#E5484D` | Actinium ✓ |
+| Behaviors | Bh | 107 | BEHAVIOR | `#C42A78` | Bohrium ✓ |
+| Transitions | Ts | 117 | MOTION | `#FF7DBE` | Tennessine ✓ (or "Tr", coined) |
+| Barcodes | Bc | 56 | BARCODES | `#2E6FE0` | coined · Z from Ba (Barium) |
+| Skeletons | Sk | 21 | SKELETON | `#C43A3F` | coined · Z from Sc (Scandium) |
+| Charts | Ch | 6 | CHARTS | `#3B82F6` | coined · Z from C (Carbon) |
+| Badges | Bg | 97 | BADGES | `#0C8577` | coined · Z from Bk (Berkelium) |
+| Avatars | Av | 47 | AVATARS | `#2DD4BF` | coined · Z from Ag (Silver) |
+| Buttons | Bt | 5 | BUTTONS | `#16A34A` | coined · Z from B (Boron) |
+| Tooltips | Tt | 81 | TOOLTIPS | `#DB2F86` | coined · Z from Tl (Thallium) |
+| Icons | Ic | 53 | ICONS | `#0E9E8E` | coined · Z from I (Iodine) |
+| Typography | Ty | 22 | TYPE | `#14B8A6` | coined · Z from Ti (Titanium) |
+| Overlays | Ov | 8 | OVERLAYS | `#EC4899` | coined · Z from O (Oxygen) |
+| Pickers | Pk | 78 | PICKERS | `#4ADE80` | coined · Z from Pt (Platinum) |
+| Navigation | Nv | 11 | NAV | `#F368AC` | coined · Z from Na (Sodium) |
 
 **Z (atomic number):** real-element symbols use the element's own number; coined symbols borrow the
 nearest real element's Z — the alt where one fits, else the closest symbol match. No Z collides.
 **Label** is the short tile-bottom text (≤~8 chars, so it fits the tile width); the full library name
-stays the symbol's element name / wordmark. `assets/logo-playground.html`'s element presets mirror
-this table exactly (`[library, symbol, Z, label]`) — **keep the two in sync**.
+stays the symbol's element name / wordmark. **Primary** is the per-library tile color — a shade within
+the library's category base hue (see §1); the playground derives the full tile palette from it, and
+the flame stays orange. `assets/logo-playground.html`'s element presets mirror this table exactly
+(`[library, symbol, Z, label, primary]`) — **keep the two in sync**.
 
 Story: **the shape is the format, the color is the group, the symbol is the element.**
 
@@ -130,7 +139,8 @@ Rules:
 
 ## Open decisions
 
-- [ ] Finalize the category palette (hex values) in the playground.
+- [x] Category palette set: per-category base hue + per-library shade (see §1 and the Primary
+      column). Per-tile hexes still tunable in the playground.
 - [ ] Confirm each element symbol (lock the real-element ones; decide coined vs alt for the rest).
 - [ ] Include a per-library glyph, or keep symbol-only?
 - [x] Atomic number = real element Z (coined symbols borrow the nearest real element's Z; see the

@@ -19,7 +19,7 @@ usable in any Blazor render mode.
 - **Library** = package id = assembly = root namespace = `BlazorAtoms.<Area>`.
   - `<Area>` is PascalCase: **plural** for countable families (`Inputs`, `Cards`, `Charts`),
     a mass noun otherwise (`Layout`, `Progress`, `Navigation`).
-- **Public component** = `Atom<Name>` for both the type and the tag, e.g. `AtomBusyGears` → `<AtomBusyGears />`.
+- **Public component** = `Atom<Name>` for both the type and the tag, e.g. `AtomActivityGears` → `<AtomActivityGears />`.
 - **Component groups** within a library = subfolder + matching sub-namespace (e.g. `Indicators/`).
 - **Dependencies**: framework only (`Microsoft.AspNetCore.Components.Web`); no third-party runtime packages.
   Shared code lives in `BlazorAtoms.Shared` and is compiled in via `build/Shared.props` (no package dependency).
@@ -61,7 +61,7 @@ rating icons, QR/barcodes, skeleton shapes, and icons.
 
 | Library | Components (`Atom*`) |
 |---|---|
-| `BlazorAtoms.BusyIndicators` *(shipped)* | AtomBusyGears, AtomBusyDna, AtomBusyFunnel, AtomBusyHourglass, AtomBusyMagnifier, AtomBusyNeural, AtomBusySwarm, AtomPulseBar, AtomPulseScanner |
+| `BlazorAtoms.ActivityIndicators` *(shipped)* | AtomActivityGears, AtomActivityDna, AtomActivityFunnel, AtomActivityHourglass, AtomActivityMagnifier, AtomActivityNeural, AtomActivitySwarm, AtomPulseBar, AtomPulseScanner |
 | `BlazorAtoms.Progress` | AtomProgressBar, AtomProgressRing, AtomProgressSteps, AtomMeter |
 | `BlazorAtoms.Skeletons` | AtomSkeletonText, AtomSkeletonBlock, AtomSkeletonAvatar, AtomSkeletonCard |
 | `BlazorAtoms.Charts` | AtomSparkline, AtomBarChart, AtomLineChart, AtomDonut, AtomGauge |
@@ -72,10 +72,10 @@ rating icons, QR/barcodes, skeleton shapes, and icons.
 | `BlazorAtoms.Transitions` | AtomFade, AtomSlide, AtomCollapse, AtomScale (CSS-only) |
 | `BlazorAtoms.Barcodes` *(implemented)* | AtomBarcode (1D), AtomQrCode (2D) — own C# encoder → SVG; generation only |
 
-On-brand standout: **`Charts`** — SVG, JS-free, same DNA as the busy indicators.
+On-brand standout: **`Charts`** — SVG, JS-free, same DNA as the activity indicators.
 
 **What each does:**
-- **BusyIndicators** — animated "working…" loaders (gears, DNA, pulse bars) for when a task is running with no known progress %.
+- **ActivityIndicators** — animated "working…" loaders (gears, DNA, pulse bars) for when a task is running with no known progress %.
 - **Progress** — shows how far along a task is: a filling bar, ring, or step tracker. Use when you *do* know the percentage (uploads, wizards).
 - **Skeletons** — grey placeholder shapes shown while data loads, roughly matching the layout of the content to come, usually with a shimmer (the grey boxes YouTube/LinkedIn show before content paints). Less jarring than a spinner. Swap in the real component when data arrives.
 - **Charts** — small data visuals drawn as SVG (sparkline, bar, line, donut, gauge) — lightweight, no charting library.
@@ -130,7 +130,7 @@ On-brand standout: **`Charts`** — SVG, JS-free, same DNA as the busy indicator
 
 ---
 
-## Suggested first wave (after BusyIndicators)
+## Suggested first wave (after ActivityIndicators)
 
 `Progress` → `Skeletons` → `Badges` → `Charts`
 

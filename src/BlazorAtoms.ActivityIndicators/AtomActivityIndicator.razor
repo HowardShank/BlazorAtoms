@@ -1,7 +1,7 @@
-@* Wrapper over the AtomBusy* SVG indicators.
-   - Name set  -> renders that indicator (case-insensitive; "AtomBusyGears", "BusyGears" or "Gears").
+@* Wrapper over the AtomActivity* SVG indicators.
+   - Name set  -> renders that indicator (case-insensitive; "AtomActivityGears", "ActivityGears" or "Gears").
    - Name null -> renders a random indicator (stable across re-renders).
-   See AtomBusyIndicator.razor.cs for discovery + parameter forwarding. *@
+   See AtomActivityIndicator.razor.cs for discovery + parameter forwarding. *@
 @inherits AtomComponentBase
 @if (ResolvedType is not null && !CancellationToken.IsCancellationRequested)
 {

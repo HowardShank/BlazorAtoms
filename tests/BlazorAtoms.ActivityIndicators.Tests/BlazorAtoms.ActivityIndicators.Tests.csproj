@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\BlazorAtoms.BusyIndicators\BlazorAtoms.BusyIndicators.csproj" />
+    <ProjectReference Include="..\..\src\BlazorAtoms.ActivityIndicators\BlazorAtoms.ActivityIndicators.csproj" />
   </ItemGroup>
 
 </Project>

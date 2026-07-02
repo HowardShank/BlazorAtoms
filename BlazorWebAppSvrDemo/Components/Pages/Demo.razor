@@ -1,7 +1,7 @@
 @page "/demo"
 @rendermode InteractiveServer
-@using BlazorAtoms.BusyIndicators
-@using BlazorAtoms.BusyIndicators.Indicators
+@using BlazorAtoms.ActivityIndicators
+@using BlazorAtoms.ActivityIndicators.Indicators
 @using BlazorAtoms.Shared
 
 <PageTitle>Blazor Atoms Demo</PageTitle>
@@ -142,7 +142,7 @@
 </div>
 
 <h2>Round indicators</h2>
-<p>Rendered through the <code>&lt;AtomBusyIndicator&gt;</code> wrapper by name. Controls below apply to
+<p>Rendered through the <code>&lt;AtomActivityIndicator&gt;</code> wrapper by name. Controls below apply to
    <em>all</em> of them at once. Each color is optional — leave it unchecked to use the indicator's
    built-in light/dark default; a color only shows where that indicator declares the knob.</p>
 
@@ -188,7 +188,7 @@
     @foreach (var name in RoundIndicators)
     {
         <div class="indicator-card" @key="name">
-            <AtomBusyIndicator Name="@name" Size="@Size"
+            <AtomActivityIndicator Name="@name" Size="@Size"
                                Blip="@(OverrideBlip ? Blip : null)"
                                Glow="@(OverrideGlow ? Glow : null)"
                                Line="@(OverrideLine ? Line : null)"
@@ -210,31 +210,31 @@
 
 @code {
     private static readonly string SvgNamespace =
-        typeof(AtomBusyIndicator).Namespace + ".Indicators";
+        typeof(AtomActivityIndicator).Namespace + ".Indicators";
 
     private static readonly Type[] SvgComponents =
-        typeof(AtomBusyIndicator).Assembly.GetTypes()
+        typeof(AtomActivityIndicator).Assembly.GetTypes()
             .Where(t => typeof(ComponentBase).IsAssignableFrom(t)
                      && !t.IsAbstract
                      && t.Namespace == SvgNamespace)
             .OrderBy(t => t.Name, StringComparer.Ordinal)
             .ToArray();
 
-    // Round indicators go through the public <AtomBusyIndicator> wrapper by Name.
+    // Round indicators go through the public <AtomActivityIndicator> wrapper by Name.
     private static readonly string[] RoundIndicators = SvgComponents
-        .Where(t => typeof(AtomBusyIndicatorBase).IsAssignableFrom(t))
+        .Where(t => typeof(AtomActivityIndicatorBase).IsAssignableFrom(t))
         .Select(t => t.Name)
         .ToArray();
 
     // Everything else (AtomPulse*) is self-contained → render the Type directly.
     private static readonly Type[] LinearIndicators = SvgComponents
-        .Where(t => !typeof(AtomBusyIndicatorBase).IsAssignableFrom(t))
+        .Where(t => !typeof(AtomActivityIndicatorBase).IsAssignableFrom(t))
         .ToArray();
 
     // Page background color (applied to <body> via the inline style above).
     private string BgColor = "#ffffff";
 
-    // Round-indicator controls — applied to every <AtomBusyIndicator> above.
+    // Round-indicator controls — applied to every <AtomActivityIndicator> above.
     private int Size = 72;
 
     // Each color is forwarded only when its Override flag is on; otherwise null lets

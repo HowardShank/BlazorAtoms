@@ -1,7 +1,7 @@
-@inherits AtomBusyIndicatorBase
+@inherits AtomActivityIndicatorBase
 @if (!CancellationToken.IsCancellationRequested)
 {
-<svg viewBox="0 0 120 120" width="@Size" height="@Size" class="busy-dna @Class" style="@ThemeStyle">
+<svg viewBox="0 0 120 120" width="@Size" height="@Size" class="activity-dna @Class" style="@ThemeStyle">
     <g>
         @foreach (var r in Rows)
         {

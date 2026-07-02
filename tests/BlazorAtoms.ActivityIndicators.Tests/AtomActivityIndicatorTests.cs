@@ -1,38 +1,38 @@
-namespace BlazorAtoms.BusyIndicators.Tests;
+namespace BlazorAtoms.ActivityIndicators.Tests;
 
 // Smoke tests — prove the wrapper's discovery, name resolution, parameter
 // filtering, and unknown-name callback are wired correctly.
-public class AtomBusyIndicatorTests : TestContext
+public class AtomActivityIndicatorTests : TestContext
 {
     [Fact]
     public void No_name_renders_a_random_indicator()
     {
-        var cut = RenderComponent<AtomBusyIndicator>();
+        var cut = RenderComponent<AtomActivityIndicator>();
 
-        // A round AtomBusy* indicator was discovered and rendered.
+        // A round AtomActivity* indicator was discovered and rendered.
         Assert.NotNull(cut.Find("svg"));
     }
 
     [Theory]
-    [InlineData("AtomBusyGears")]
-    [InlineData("BusyGears")]        // "Atom" prefix is optional
-    [InlineData("Gears")]            // "AtomBusy" prefix is optional
+    [InlineData("AtomActivityGears")]
+    [InlineData("ActivityGears")]        // "Atom" prefix is optional
+    [InlineData("Gears")]            // "AtomActivity" prefix is optional
     public void Named_resolves_the_specific_indicator(string name)
     {
-        var cut = RenderComponent<AtomBusyIndicator>(p => p.Add(c => c.Name, name));
+        var cut = RenderComponent<AtomActivityIndicator>(p => p.Add(c => c.Name, name));
 
-        Assert.Contains("busy-gears", cut.Markup);
+        Assert.Contains("activity-gears", cut.Markup);
     }
 
     [Fact]
     public void Unsupported_parameter_is_filtered_not_thrown()
     {
-        // AtomBusySwarm declares no Fill; forwarding it must be silently dropped, never throw.
-        var cut = RenderComponent<AtomBusyIndicator>(p => p
+        // AtomActivitySwarm declares no Fill; forwarding it must be silently dropped, never throw.
+        var cut = RenderComponent<AtomActivityIndicator>(p => p
             .Add(c => c.Name, "Swarm")
             .Add(c => c.Fill, "red"));
 
-        Assert.Contains("busy-swarm", cut.Markup);
+        Assert.Contains("activity-swarm", cut.Markup);
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public class AtomBusyIndicatorTests : TestContext
         var called = 0;
         string? requested = null;
 
-        var cut = RenderComponent<AtomBusyIndicator>(p => p
+        var cut = RenderComponent<AtomActivityIndicator>(p => p
             .Add(c => c.Name, "DoesNotExist")
             .Add(c => c.OnUnknownName, EventCallback.Factory.Create<string>(this, s => { called++; requested = s; })));
 

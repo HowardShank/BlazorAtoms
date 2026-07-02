@@ -1,6 +1,6 @@
 # BlazorAtoms.ActivityIndicators
 
-Self-contained, pure-CSS animated SVG **activity / busy indicators** for Blazor —
+Self-contained, pure-CSS animated SVG **activity / activity indicators** for Blazor —
 **Server or WebAssembly**. No JavaScript, no dependencies, transparent background,
 seamless loop. Ships as a Razor Class Library (RCL).
 
@@ -15,13 +15,13 @@ Two **form-factors**:
 
 | Component | Visual | Reads as |
 |-----------|--------|----------|
-| `BusyFunnel` | Particles pour into a funnel; most fall through, a couple catch on the walls and glow before releasing. | *sifting / filtering / matching* |
-| `BusySwarm`  | Scattered dots drift inward to form a ring, hold, disperse, and reform while slowly swirling. | *gathering / assembling an answer* |
-| `BusyMagnifier` | A lens orbits a field of items; each item magnifies and glows as the lens passes over it. | *searching / scanning* |
-| `BusyGears` | Two meshing gears turn in opposite directions at coupled speeds. | *working / processing* |
-| `BusyNeural` | Pulses travel left-to-right across a small layered network, firing each node as they arrive. | *thinking / computing* |
-| `BusyHourglass` | Sand drains from the top chamber to the bottom, then the glass flips. | *waiting / time-bound work* |
-| `BusyDna` | Two dot strands rotate as a double helix with base-pair rungs. | *deep analysis* |
+| `ActivityFunnel` | Particles pour into a funnel; most fall through, a couple catch on the walls and glow before releasing. | *sifting / filtering / matching* |
+| `ActivitySwarm`  | Scattered dots drift inward to form a ring, hold, disperse, and reform while slowly swirling. | *gathering / assembling an answer* |
+| `ActivityMagnifier` | A lens orbits a field of items; each item magnifies and glows as the lens passes over it. | *searching / scanning* |
+| `ActivityGears` | Two meshing gears turn in opposite directions at coupled speeds. | *working / processing* |
+| `ActivityNeural` | Pulses travel left-to-right across a small layered network, firing each node as they arrive. | *thinking / computing* |
+| `ActivityHourglass` | Sand drains from the top chamber to the bottom, then the glass flips. | *waiting / time-bound work* |
+| `ActivityDna` | Two dot strands rotate as a double helix with base-pair rungs. | *deep analysis* |
 
 All motion is CSS `@keyframes`; theming is done with CSS custom properties. **Every
 indicator shares the same `--ind-*` token model and the same parameter set**, so the
@@ -36,13 +36,13 @@ BlazorAtoms.ActivityIndicators/
   ActivityIndicator.razor / .razor.cs    <- the wrapper (this is what you usually use)
   ILLink.Descriptors.xml                 <- WASM trim-safety (see "Server + WebAssembly")
   Indicators/
-    BusyFunnel.razor      BusyFunnel.razor.css
-    BusySwarm.razor       BusySwarm.razor.css
-    BusyMagnifier.razor   BusyMagnifier.razor.css
-    BusyGears.razor       BusyGears.razor.css
-    BusyNeural.razor      BusyNeural.razor.css
-    BusyHourglass.razor   BusyHourglass.razor.css
-    BusyDna.razor         BusyDna.razor.css
+    ActivityFunnel.razor      ActivityFunnel.razor.css
+    ActivitySwarm.razor       ActivitySwarm.razor.css
+    ActivityMagnifier.razor   ActivityMagnifier.razor.css
+    ActivityGears.razor       ActivityGears.razor.css
+    ActivityNeural.razor      ActivityNeural.razor.css
+    ActivityHourglass.razor   ActivityHourglass.razor.css
+    ActivityDna.razor         ActivityDna.razor.css
     PulseBar.razor                                 <- linear (slider) form-factor, used directly
     PulseScanner.razor                             <- linear (slider) form-factor, used directly
 ```
@@ -50,7 +50,7 @@ BlazorAtoms.ActivityIndicators/
 | Type | Namespace |
 |---|---|
 | `ActivityIndicator` (wrapper) | `BlazorAtoms.ActivityIndicators` |
-| The 7 round `Busy*` indicators | `BlazorAtoms.ActivityIndicators.Indicators` |
+| The 7 round `Activity*` indicators | `BlazorAtoms.ActivityIndicators.Indicators` |
 | Linear indicators (`PulseBar`, `PulseScanner`) | `BlazorAtoms.ActivityIndicators.Indicators` |
 
 Each round `.razor` holds the SVG geometry (inlined so host CSS can reach it); each
@@ -89,8 +89,8 @@ leave it unset to render a **random** indicator (the pick is stable across re-re
 
 ```razor
 <ActivityIndicator />                          @* random *@
-<ActivityIndicator Name="BusyGears" />         @* specific *@
-<ActivityIndicator Name="Gears" Size="64" />   @* "Busy" prefix optional; Size forwarded *@
+<ActivityIndicator Name="ActivityGears" />         @* specific *@
+<ActivityIndicator Name="Gears" Size="64" />   @* "Activity" prefix optional; Size forwarded *@
 <ActivityIndicator Name="Swarm" Fill="red" />  @* Fill silently dropped — Swarm has no Fill — no error *@
 ```
 
@@ -98,7 +98,7 @@ leave it unset to render a **random** indicator (the pick is stable across re-re
 
 | Parameter | Type | Default | Notes |
 |-----------|------|---------|-------|
-| `Name` | `string?` | `null` | Indicator to show. `null`/empty → **random**. Matched case-insensitively against the component type name, accepting both `"BusyGears"` and `"Gears"`. |
+| `Name` | `string?` | `null` | Indicator to show. `null`/empty → **random**. Matched case-insensitively against the component type name, accepting both `"ActivityGears"` and `"Gears"`. |
 | `Size` | `int` | `48` | Rendered width/height in px. Forwarded to every indicator. |
 | `Blip` | `string?` | `null` | Sets `--ind-blip`. Forwarded only if the chosen indicator declares it. |
 | `Glow` | `string?` | `null` | Sets `--ind-glow`. Forwarded only if the chosen indicator declares it. |
@@ -120,12 +120,12 @@ leave it unset to render a **random** indicator (the pick is stable across re-re
 
 - **Discovery is by convention** — the wrapper reflects over its own assembly for
   non-abstract `ComponentBase` types in the `…ActivityIndicators.Indicators` namespace whose name
-  starts with `Busy`, cached once per process. The naming convention IS the registry: a
-  library maintainer can **add or remove a `Busy*.razor`** in `Indicators/` and the wrapper picks
+  starts with `Activity`, cached once per process. The naming convention IS the registry: a
+  library maintainer can **add or remove a `Activity*.razor`** in `Indicators/` and the wrapper picks
   it up on the next build with **no code change**. (Downstream consumers don't register
   their own — the indicator set is what the package provides.)
 - **Parameter forwarding is filtered** — the indicators don't all declare the same params
-  (`BusySwarm` has no `Line`/`Fill`; `BusyNeural` has no `Fill`). The wrapper forwards only
+  (`ActivitySwarm` has no `Line`/`Fill`; `ActivityNeural` has no `Fill`). The wrapper forwards only
   the parameters the chosen indicator actually declares, so passing an unsupported one is
   silently ignored rather than throwing.
 
@@ -136,17 +136,17 @@ leave it unset to render a **random** indicator (the pick is stable across re-re
 You can also use any indicator without the wrapper:
 
 ```razor
-<BusyFunnel    Size="48" />
-<BusySwarm     Size="48" />
-<BusyMagnifier Size="48" />
-<BusyGears     Size="48" />
-<BusyNeural    Size="48" />
-<BusyHourglass Size="48" />
-<BusyDna       Size="48" />
+<ActivityFunnel    Size="48" />
+<ActivitySwarm     Size="48" />
+<ActivityMagnifier Size="48" />
+<ActivityGears     Size="48" />
+<ActivityNeural    Size="48" />
+<ActivityHourglass Size="48" />
+<ActivityDna       Size="48" />
 ```
 
 Every indicator accepts the same parameter set (string color params map 1:1 to the tokens
-below). `BusySwarm`, `BusyNeural`, and `BusyDna` only declare the params they use
+below). `ActivitySwarm`, `ActivityNeural`, and `ActivityDna` only declare the params they use
 (`Blip`/`Glow`, plus `Line` for neural/dna), so an unsupported one is simply unavailable
 on those.
 
@@ -167,11 +167,11 @@ A second **form-factor** of activity indicator: a marker that slides back and fo
 track (bouncing at each end, trailing a fading comet tail). Same purpose as the round set,
 different shape. Unlike the round indicators these are **deliberately configured and used
 directly** — they are *not* part of the `<ActivityIndicator />` random/named pool (its
-`Busy*` filter excludes them by design), because each exposes its own rich, divergent
+`Activity*` filter excludes them by design), because each exposes its own rich, divergent
 parameter set that a shared picker couldn't carry.
 
 They are **self-contained**: the SVG (including a scoped `<style>` with a unique per-instance
-id) is emitted inline, so — unlike the `Busy*` set — they do **not** require the consumer's
+id) is emitted inline, so — unlike the `Activity*` set — they do **not** require the consumer's
 `{App}.styles.css` bundle. They still live in the `…Indicators` namespace, so the trim descriptor
 keeps them trim-safe under WASM-AOT automatically. They use a single `Color` parameter
 rather than the round set's `--ind-*` tokens.
@@ -228,7 +228,7 @@ rather than the round set's `--ind-*` tokens.
 
 ## How the styling works
 
-> The `--ind-*` token model below applies to the **round `Busy*`** set. The linear
+> The `--ind-*` token model below applies to the **round `Activity*`** set. The linear
 > indicators above use a single `Color` parameter instead.
 
 ### Why inline (not `<img>`)
@@ -283,13 +283,13 @@ Per-component specifics:
 
 | Component | `--ind-blip` | `--ind-glow` | `--ind-line` | `--ind-fill` |
 |-----------|--------------|--------------|--------------|--------------|
-| `BusyFunnel` | falling particles | caught-dot highlight | funnel walls + rim | funnel body |
-| `BusySwarm` | swarming dots | pulsing core | — | — |
-| `BusyMagnifier` | field items | revealed item + glint | lens rim + handle | glass tint |
-| `BusyGears` | large-gear hub | small-gear hub | teeth + rims | gear bodies |
-| `BusyNeural` | nodes | pulses + node flash | edges | — |
-| `BusyHourglass` | sand | falling stream | frame | glass tint |
-| `BusyDna` | strand dots | front-of-helix highlight | base-pair rungs | — |
+| `ActivityFunnel` | falling particles | caught-dot highlight | funnel walls + rim | funnel body |
+| `ActivitySwarm` | swarming dots | pulsing core | — | — |
+| `ActivityMagnifier` | field items | revealed item + glint | lens rim + handle | glass tint |
+| `ActivityGears` | large-gear hub | small-gear hub | teeth + rims | gear bodies |
+| `ActivityNeural` | nodes | pulses + node flash | edges | — |
+| `ActivityHourglass` | sand | falling stream | frame | glass tint |
+| `ActivityDna` | strand dots | front-of-helix highlight | base-pair rungs | — |
 
 Any token left unset uses the component's scheme-aware default. Tip: for the faint
 `--ind-fill`, pass a translucent color, e.g. `rgba(124,58,237,.12)`.
@@ -309,17 +309,17 @@ There are three equivalent ways to theme — pick whichever fits your call site:
 <ActivityIndicator Name="Funnel" Size="64"
                    Blip="#8b5cf6" Glow="#4c1d95" Line="#7c3aed" Fill="rgba(124,58,237,.12)" />
 
-<BusySwarm Size="64" Blip="#f59e0b" Glow="#92400e" />
+<ActivitySwarm Size="64" Blip="#f59e0b" Glow="#92400e" />
 ```
 
 ### 2. Reusable named theme (parameter-free call sites)
 ```razor
-<ActivityIndicator Name="Funnel" Class="busy-brand" />
-<ActivityIndicator Name="Swarm"  Class="busy-brand" />
+<ActivityIndicator Name="Funnel" Class="activity-brand" />
+<ActivityIndicator Name="Swarm"  Class="activity-brand" />
 ```
 ```css
 /* site.css */
-.busy-brand {
+.activity-brand {
   --ind-blip: #0ea5e9;
   --ind-glow: #0369a1;
   --ind-line: #0284c7;
@@ -329,19 +329,19 @@ There are three equivalent ways to theme — pick whichever fits your call site:
 
 ### 3. Theme an entire region (tokens inherit into every child indicator)
 ```razor
-<div class="panel-busy">
+<div class="panel-activity">
     <ActivityIndicator Name="Funnel" /> <ActivityIndicator Name="Swarm" />
 </div>
 ```
 ```css
-.panel-busy { --ind-blip:#34d399; --ind-glow:#065f46; }
+.panel-activity { --ind-blip:#34d399; --ind-glow:#065f46; }
 ```
 
 ### 4. Single accent via `currentColor`
 Map every token to `currentColor`, then drive it with the element's `color` — it inherits
 from buttons, links, text, theme classes, etc.
 ```razor
-<BusySwarm Size="40" Blip="currentColor" Glow="currentColor" Class="accent" />
+<ActivitySwarm Size="40" Blip="currentColor" Glow="currentColor" Class="accent" />
 ```
 ```css
 .accent { color: #e11d48; } /* or inherit from a themed parent */
@@ -352,18 +352,18 @@ A light card inside a dark-themed app won't auto-darken (OS theme is still dark)
 the tokens explicitly for guaranteed contrast:
 ```razor
 <div class="light-card">
-    <BusyFunnel Blip="#0e9c9c" Glow="#04545f" Line="#0e9c9c" Fill="rgba(14,143,143,.12)" />
+    <ActivityFunnel Blip="#0e9c9c" Glow="#04545f" Line="#0e9c9c" Fill="rgba(14,143,143,.12)" />
 </div>
 ```
 
 ### 6. Size with `em` so it tracks surrounding text
 `Size` is px, but you can also let it scale with font size by adding a class:
 ```razor
-<span class="inline-busy"><BusySwarm Class="em-size" /></span>
+<span class="inline-activity"><ActivitySwarm Class="em-size" /></span>
 ```
 ```css
 .em-size { width: 1.25em; height: 1.25em; } /* overrides the px width/height */
-.inline-busy { vertical-align: -0.2em; }
+.inline-activity { vertical-align: -0.2em; }
 ```
 
 ---
@@ -391,7 +391,7 @@ animations stop and the indicator holds a static, still-legible frame. No code n
 shapes freeze at their authored start position. To show a tidier resting state, override
 it from host CSS — e.g. show the swarm as a calm, fully-formed ring:
 ```razor
-<BusySwarm Class="rm-tidy" />
+<ActivitySwarm Class="rm-tidy" />
 ```
 ```css
 @media (prefers-reduced-motion: reduce) {
@@ -414,7 +414,7 @@ DI — so they work unchanged under `InteractiveServer`, `InteractiveWebAssembly
 
 The one WASM-specific concern is **trimming**: the wrapper discovers indicators by
 reflection, which the IL linker can't see, so under a trimmed/AOT WASM publish the
-`Busy*` types would otherwise be stripped. The package ships an embedded
+`Activity*` types would otherwise be stripped. The package ships an embedded
 `ILLink.Descriptors.xml` that roots the `…Indicators` namespace, so discovery survives trimming
 and stays expandable. **Nothing for consumers to configure** — Blazor Server never trims
 (no-op there), and trimmed WASM consumers get the descriptor automatically.
@@ -428,8 +428,8 @@ and stays expandable. **Nothing for consumers to configure** — Blazor Server n
 - **`transform-box: fill-box`** — used throughout so `transform-origin: center` resolves to
   each element's *own* box (not the SVG viewport); required for in-place scaling/pivoting.
   Don't remove it.
-- **Culture safety** — components with fractional coordinates or delays (`BusySwarm`,
-  `BusyMagnifier`, `BusyDna`, and the neural/hourglass delays) store those values as
+- **Culture safety** — components with fractional coordinates or delays (`ActivitySwarm`,
+  `ActivityMagnifier`, `ActivityDna`, and the neural/hourglass delays) store those values as
   **strings** so they render verbatim. A `double` like `82.5` would emit `82,5` under a
   comma-decimal server culture and break the SVG. Keep them as strings if you edit the
   geometry/timing.

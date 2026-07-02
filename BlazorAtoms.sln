@@ -10,11 +10,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72
 		src\Task-Difficulty.md = src\Task-Difficulty.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorAtoms.BusyIndicators", "src\BlazorAtoms.BusyIndicators\BlazorAtoms.BusyIndicators.csproj", "{10DC5B1B-1F17-4EF0-9844-985913C7DFB5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorAtoms.ActivityIndicators", "src\BlazorAtoms.ActivityIndicators\BlazorAtoms.ActivityIndicators.csproj", "{10DC5B1B-1F17-4EF0-9844-985913C7DFB5}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorAtoms.BusyIndicators.Tests", "tests\BlazorAtoms.BusyIndicators.Tests\BlazorAtoms.BusyIndicators.Tests.csproj", "{D9A0BE85-F120-4E9B-94D5-18A7C60CB690}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorAtoms.ActivityIndicators.Tests", "tests\BlazorAtoms.ActivityIndicators.Tests\BlazorAtoms.ActivityIndicators.Tests.csproj", "{D9A0BE85-F120-4E9B-94D5-18A7C60CB690}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Demos", "Demos", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject

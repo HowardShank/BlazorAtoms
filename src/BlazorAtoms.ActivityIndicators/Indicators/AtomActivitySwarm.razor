@@ -1,7 +1,7 @@
-@inherits AtomBusyIndicatorBase
+@inherits AtomActivityIndicatorBase
 @if (!CancellationToken.IsCancellationRequested)
 {
-<svg viewBox="0 0 120 120" width="@Size" height="@Size" class="busy-swarm @Class" style="@ThemeStyle">
+<svg viewBox="0 0 120 120" width="@Size" height="@Size" class="activity-swarm @Class" style="@ThemeStyle">
     <g class="swarm">
         <circle class="core" cx="60" cy="60" r="4" />
         @foreach (var d in Dots)
