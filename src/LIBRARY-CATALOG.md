@@ -70,7 +70,7 @@ rating icons, QR/barcodes, skeleton shapes, and icons.
 | `BlazorAtoms.Ratings` | AtomRating (stars/hearts), AtomRatingInput |
 | `BlazorAtoms.Layout` | AtomStack, AtomGrid, AtomDivider, AtomSpacer, AtomCenter, AtomAspectRatio |
 | `BlazorAtoms.Transitions` | AtomFade, AtomSlide, AtomCollapse, AtomScale (CSS-only) |
-| `BlazorAtoms.Barcodes` *(scaffolded)* | AtomBarcode (1D), AtomQrCode (2D) — own C# encoder → SVG; generation only |
+| `BlazorAtoms.Barcodes` *(implemented)* | AtomBarcode (1D), AtomQrCode (2D) — own C# encoder → SVG; generation only |
 
 On-brand standout: **`Charts`** — SVG, JS-free, same DNA as the busy indicators.
 
@@ -84,7 +84,7 @@ On-brand standout: **`Charts`** — SVG, JS-free, same DNA as the busy indicator
 - **Ratings** — star/heart scales. `AtomRating` displays a read-only score (★★★★☆ 4/5); `AtomRatingInput` lets the user hover/click to set one (product reviews, feedback). Supports half-steps, a custom icon, and an optional count label.
 - **Layout** — invisible structural building blocks: stack (spacing), grid, divider, spacer, centering — the scaffolding you arrange other components inside.
 - **Transitions** — reusable enter/leave animations (fade, slide, collapse, scale) wrapped around content that appears or disappears. CSS-only.
-- **Barcodes** — machine-readable graphics generated from a value, rendered as SVG. "Barcode" is the umbrella: `AtomBarcode` for 1D/linear (Code128, EAN-13, Code39…) and `AtomQrCode` for 2D/matrix (QR). **Generation only, using our own C# encoder** — a third-party lib (QRCoder/ZXing) would break the 0-dep rule. Note: *reading/scanning* a code needs a camera + JS → a separate Tier C concern, not part of this library. *(Project scaffolded; encoders pending — see `Task-Difficulty.md`.)*
+- **Barcodes** — machine-readable graphics generated from a value, rendered as SVG. "Barcode" is the umbrella: `AtomBarcode` for 1D/linear (Code128, EAN-13, Code39…) and `AtomQrCode` for 2D/matrix (QR). **Generation only, using our own C# encoder** — a third-party lib (QRCoder/ZXing) would break the 0-dep rule. Note: *reading/scanning* a code needs a camera + JS → a separate Tier C concern, not part of this library. *(Implemented: Code39, Code128, EAN-13, UPC-A, ITF, Codabar (1D) + QR byte-mode v1–40 (2D), verified by ZXing round-trip / reference tests.)*
 
 ## Tier B — feasible, minor/optional JS
 

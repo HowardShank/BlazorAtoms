@@ -1,16 +1,16 @@
 @inherits AtomComponentBase
+@using System.Globalization
 @using System.Net
 @using System.Text
+@using BlazorAtoms.Barcodes.Encoders
 
-@* AtomQrCode — QR (2D matrix barcode) generator, rendered as inline SVG.
-   SCAFFOLD: the parameter API below is the intended public surface, but the encoder
-   (Reed-Solomon EC + masking) is not implemented yet — this renders a placeholder.
-   See src/Task-Difficulty.md. *@
+@* AtomQrCode — QR (2D matrix barcode) generator, rendered as inline SVG (no JS, no deps).
+   Byte mode, versions 1–40, EC levels L/M/Q/H. *@
 
 <div class="atom-qrcode">@((MarkupString)BuildSvg())</div>
 
 @code {
-    /// <summary>Text/data to encode.</summary>
+    /// <summary>Text/data to encode (UTF-8).</summary>
     [Parameter, EditorRequired] public string Value { get; set; } = "";
 
     /// <summary>Rendered width/height in pixels.</summary>
@@ -33,25 +33,53 @@
 
     private static string Esc(string s) => WebUtility.HtmlEncode(s);
 
-    // TODO: implement QR encoding (byte-mode -> Reed-Solomon GF(256) -> matrix -> masking) -> <rect> modules,
-    // replacing the placeholder body below. Pure C#, no JS. Notes: src/Task-Difficulty.md.
     private string BuildSvg()
     {
-        var cls = Class is null ? "atom-qrcode" : "atom-qrcode " + Esc(Class);
-        var sb = new StringBuilder();
+        bool[,] m;
+        try
+        {
+            m = QrEncoder.Encode(Value, EcLevel);
+        }
+        catch (Exception ex)
+        {
+            return ErrorSvg(ex.Message);
+        }
 
+        var n = m.GetLength(0);
+        var q = QuietZone;
+        var dim = n + 2 * q; // viewBox units = modules; svg scales to Size px
+        var cls = Class is null ? "atom-qrcode" : "atom-qrcode " + Esc(Class);
+
+        var sb = new StringBuilder();
         sb.Append($"<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"{cls}\" role=\"img\" ")
-          .Append($"aria-label=\"QR code: {Esc(Value)}\" width=\"{Size}\" height=\"{Size}\" viewBox=\"0 0 {Size} {Size}\">");
+          .Append($"aria-label=\"QR code: {Esc(Value)}\" width=\"{Size}\" height=\"{Size}\" ")
+          .Append($"viewBox=\"0 0 {dim} {dim}\" shape-rendering=\"crispEdges\">");
 
         if (Background is not null)
-            sb.Append($"<rect x=\"0\" y=\"0\" width=\"{Size}\" height=\"{Size}\" fill=\"{Background}\"/>");
+            sb.Append($"<rect x=\"0\" y=\"0\" width=\"{dim}\" height=\"{dim}\" fill=\"{Background}\"/>");
 
-        sb.Append($"<rect x=\"1\" y=\"1\" width=\"{Size - 2}\" height=\"{Size - 2}\" fill=\"none\" ")
-          .Append($"stroke=\"{Color}\" stroke-dasharray=\"4 4\"/>");
-        sb.Append($"<text x=\"{Size / 2}\" y=\"{Size / 2}\" text-anchor=\"middle\" dominant-baseline=\"middle\" ")
-          .Append($"font-family=\"ui-monospace, monospace\" font-size=\"11\" fill=\"{Color}\">QR encoder — TODO</text>");
+        // One <rect> per horizontal run of dark modules.
+        for (var r = 0; r < n; r++)
+        {
+            var c = 0;
+            while (c < n)
+            {
+                if (!m[r, c]) { c++; continue; }
+                var run = 1;
+                while (c + run < n && m[r, c + run]) run++;
+                sb.Append($"<rect x=\"{q + c}\" y=\"{q + r}\" width=\"{run}\" height=\"1\" fill=\"{Color}\"/>");
+                c += run;
+            }
+        }
 
         sb.Append("</svg>");
         return sb.ToString();
     }
+
+    private string ErrorSvg(string message) =>
+        $"<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"atom-qrcode atom-qrcode-error\" role=\"img\" " +
+        $"aria-label=\"QR error\" width=\"{Size}\" height=\"{Size}\" viewBox=\"0 0 {Size} {Size}\">" +
+        $"<rect x=\"1\" y=\"1\" width=\"{Size - 2}\" height=\"{Size - 2}\" fill=\"none\" stroke=\"#c00\" stroke-dasharray=\"4 4\"/>" +
+        $"<text x=\"{Size / 2}\" y=\"{Size / 2}\" text-anchor=\"middle\" dominant-baseline=\"middle\" " +
+        $"font-family=\"ui-monospace, monospace\" font-size=\"10\" fill=\"#c00\">{Esc(message)}</text></svg>";
 }

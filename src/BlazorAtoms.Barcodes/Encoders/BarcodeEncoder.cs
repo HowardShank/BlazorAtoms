@@ -13,6 +13,8 @@ internal static class BarcodeEncoder
         BarcodeSymbology.Code39 => Code39Encoder.Encode(value),
         BarcodeSymbology.Ean13 => Ean13Encoder.Encode(value),
         BarcodeSymbology.UpcA => UpcAEncoder.Encode(value),
+        BarcodeSymbology.Itf => ItfEncoder.Encode(value),
+        BarcodeSymbology.Codabar => CodabarEncoder.Encode(value),
         _ => throw new NotSupportedException($"{symbology} encoding is not implemented yet."),
     };
 }
