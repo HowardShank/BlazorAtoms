@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\BlazorAtoms.Branding\BlazorAtoms.Branding.csproj" />
+    <ProjectReference Include="..\..\branding\BlazorAtoms.Branding\BlazorAtoms.Branding.csproj" />
     <ProjectReference Include="..\BlazorWebAppWasmDemo.Client\BlazorWebAppWasmDemo.Client.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
   </ItemGroup>

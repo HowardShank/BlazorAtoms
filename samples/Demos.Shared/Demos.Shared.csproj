@@ -13,8 +13,8 @@
 
   <ItemGroup>
     <!-- Components rendered by the shared playground views. -->
-    <ProjectReference Include="..\BlazorAtoms.ActivityIndicators\BlazorAtoms.ActivityIndicators.csproj" />
-    <ProjectReference Include="..\BlazorAtoms.Barcodes\BlazorAtoms.Barcodes.csproj" />
+    <ProjectReference Include="..\..\src\BlazorAtoms.ActivityIndicators\BlazorAtoms.ActivityIndicators.csproj" />
+    <ProjectReference Include="..\..\src\BlazorAtoms.Barcodes\BlazorAtoms.Barcodes.csproj" />
   </ItemGroup>
 
 </Project>
