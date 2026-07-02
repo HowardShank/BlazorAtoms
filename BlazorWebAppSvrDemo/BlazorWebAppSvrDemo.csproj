@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\src\BlazorAtoms.ActivityIndicators\BlazorAtoms.ActivityIndicators.csproj" />
     <ProjectReference Include="..\src\BlazorAtoms.Barcodes\BlazorAtoms.Barcodes.csproj" />
+    <ProjectReference Include="..\src\BlazorAtoms.Branding\BlazorAtoms.Branding.csproj" />
   </ItemGroup>
 
 </Project>

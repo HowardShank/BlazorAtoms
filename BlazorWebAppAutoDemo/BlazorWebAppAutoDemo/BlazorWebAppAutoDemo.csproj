@@ -7,12 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\BlazorAtoms.Branding\BlazorAtoms.Branding.csproj" />
     <ProjectReference Include="..\BlazorWebAppAutoDemo.Client\BlazorWebAppAutoDemo.Client.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Components\Shared\" />
   </ItemGroup>
 
 </Project>

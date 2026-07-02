@@ -1,0 +1,18 @@
+@* AtomPanelsMark.razor — BlazorAtoms "Panels" brand mark. Thin wrapper over the shared AtomMark engine.
+   Payload (symbol / number / label / colors) is baked here; chrome (tile shape, flame, fonts, the
+   "Blazor" wordmark) is inherited from AtomMark's defaults. Needs AtomMark.razor in the same folder
+   (or @using its namespace). Override Layout (Icon|Lockup|Stacked) or Size; the brand payload is fixed. *@
+<AtomMark Layout="@Layout" Size="@Size"
+          Number="91" Symbol="Pa" Label="PANELS" Word2="PANELS"
+          TileTop="#836ed2" TileBottom="#5b3fc4" Stroke="#2f1d76" Ember="#9989d6" Cream="#f3f1f7"
+          FlameTip="#fce792" FlameMid="#fa9829" FlameBase="#f5450a"
+          InnerTop="#ffedb8" InnerBottom="#ffb13d"
+          Word2Top="#fa9829" Word2Bottom="#5b3fc4" SymbolColor="#FFFFFF" />
+
+@code {
+    /// <summary>Layout arrangement — Icon (default), Lockup, or Stacked.</summary>
+    [Parameter] public AtomMark.MarkLayout Layout { get; set; } = AtomMark.MarkLayout.Icon;
+
+    /// <summary>Overall size in px — icon edge, or lockup/stacked height (width keeps aspect).</summary>
+    [Parameter] public int Size { get; set; } = 128;
+}

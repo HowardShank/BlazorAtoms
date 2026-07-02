@@ -1,37 +1,52 @@
+@using BlazorAtoms.Branding.Marks
+
 <div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">Blazor Atoms Demo</a>
-    </div>
+	<div class="container-fluid">
+		<AtomMark Layout="AtomMark.MarkLayout.Lockup"/>
+		@* <a class="navbar-brand" href="">Blazor Atoms Demo</a> *@
+	</div>
 </div>
 
 <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
+	<nav class="nav flex-column">
+		<div class="nav-group px-3">Getting Started</div>
+		<div class="nav-item px-3">
+			<NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+				@* <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home *@
+				<AtomMark Layout="AtomMark.MarkLayout.Icon" Size="48" /> Home
+			</NavLink>
+		</div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="demo">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Activity Indicators
-            </NavLink>
-        </div>
+		<div class="nav-group px-3">Feedback & Status</div>
+		<div class="nav-item px-3">
+			<NavLink class="nav-link" href="demo">
+				<AtomActivityIndicatorsMark Layout="AtomMark.MarkLayout.Icon" Size="48" /> Activity Indicators
+			</NavLink>
+		</div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="barcodes">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Barcodes
-            </NavLink>
-        </div>
+		<div class="nav-group px-3">Data & Vizualization</div>
+		<div class="nav-item px-3">
+			<NavLink class="nav-link" href="barcodes">
+				<AtomBarcodesMark Layout="AtomMark.MarkLayout.Icon" Size="48" /> Barcodes
+			</NavLink>
+		</div>
+		<div class="nav-item px-3">
+			<NavLink class="nav-link" href="qrcode">
+				<AtomBarcodesMark Layout="AtomMark.MarkLayout.Icon" Size="48" /> QR Codes
+			</NavLink>
+		</div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="qrcode">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> QR Code
-            </NavLink>
-        </div>
+		<div class="nav-group px-3">Layout & containers</div>
 
-    </nav>
+		<div class="nav-group px-3">Forms & Input</div>
+
+		<div class="nav-group px-3">Content & identity</div>
+
+		<div class="nav-group px-3">Overlay & behavior</div>
+		
+
+	</nav>
 </div>
 

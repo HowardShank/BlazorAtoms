@@ -1,0 +1,18 @@
+@* AtomTypographyMark.razor — BlazorAtoms "Typography" brand mark. Thin wrapper over the shared AtomMark engine.
+   Payload (symbol / number / label / colors) is baked here; chrome (tile shape, flame, fonts, the
+   "Blazor" wordmark) is inherited from AtomMark's defaults. Needs AtomMark.razor in the same folder
+   (or @using its namespace). Override Layout (Icon|Lockup|Stacked) or Size; the brand payload is fixed. *@
+<AtomMark Layout="@Layout" Size="@Size"
+          Number="22" Symbol="Ty" Label="TYPE" Word2="TYPE"
+          TileTop="#22e7d1" TileBottom="#14b8a6" Stroke="#05564e" Ember="#43e5d3" Cream="#c4eee9"
+          FlameTip="#fce792" FlameMid="#fa9829" FlameBase="#f5450a"
+          InnerTop="#ffedb8" InnerBottom="#ffb13d"
+          Word2Top="#fa9829" Word2Bottom="#14b8a6" SymbolColor="#FFFFFF" />
+
+@code {
+    /// <summary>Layout arrangement — Icon (default), Lockup, or Stacked.</summary>
+    [Parameter] public AtomMark.MarkLayout Layout { get; set; } = AtomMark.MarkLayout.Icon;
+
+    /// <summary>Overall size in px — icon edge, or lockup/stacked height (width keeps aspect).</summary>
+    [Parameter] public int Size { get; set; } = 128;
+}

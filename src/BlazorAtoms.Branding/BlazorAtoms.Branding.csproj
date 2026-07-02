@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <!-- Internal brand-asset RCL: the BlazorAtoms family marks (logos/tiles) used by the demos
+         (and later docs). NOT a shipped product yet, so no NuGet package. To publish later:
+         set IsPackable=true, import build\Packable.props, and add PackageId/Title/Version. -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+  </ItemGroup>
+
+</Project>

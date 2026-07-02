@@ -1,0 +1,18 @@
+@* AtomInputsMark.razor — BlazorAtoms "Inputs" brand mark. Thin wrapper over the shared AtomMark engine.
+   Payload (symbol / number / label / colors) is baked here; chrome (tile shape, flame, fonts, the
+   "Blazor" wordmark) is inherited from AtomMark's defaults. Needs AtomMark.razor in the same folder
+   (or @using its namespace). Override Layout (Icon|Lockup|Stacked) or Size; the brand payload is fixed. *@
+<AtomMark Layout="@Layout" Size="@Size"
+          Number="49" Symbol="In" Label="INPUTS" Word2="INPUTS"
+          TileTop="#45df7e" TileBottom="#22c55e" Stroke="#0d6a2f" Ember="#64df91" Cream="#dbf2e3"
+          FlameTip="#fce792" FlameMid="#fa9829" FlameBase="#f5450a"
+          InnerTop="#ffedb8" InnerBottom="#ffb13d"
+          Word2Top="#fa9829" Word2Bottom="#22c55e" SymbolColor="#FFFFFF" />
+
+@code {
+    /// <summary>Layout arrangement — Icon (default), Lockup, or Stacked.</summary>
+    [Parameter] public AtomMark.MarkLayout Layout { get; set; } = AtomMark.MarkLayout.Icon;
+
+    /// <summary>Overall size in px — icon edge, or lockup/stacked height (width keeps aspect).</summary>
+    [Parameter] public int Size { get; set; } = 128;
+}
