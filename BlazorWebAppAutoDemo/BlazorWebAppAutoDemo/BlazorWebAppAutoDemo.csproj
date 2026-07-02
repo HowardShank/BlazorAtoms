@@ -11,4 +11,8 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Components\Shared\" />
+  </ItemGroup>
+
 </Project>

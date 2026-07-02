@@ -44,7 +44,7 @@ tile stays distinct in NuGet search.
 | Forms & input | green `#22C55E` | Inputs, Buttons, Pickers |
 | Layout & containers | violet `#7C5CFF` | Layout, Cards, Tabs, Panels, Tables |
 | Content & identity | teal `#14B8A6` | Typography, Icons, Avatars, Badges |
-| Overlay & behavior | magenta `#EC4899` | Overlays, Tooltips, Navigation, Behaviors, Transitions |
+| Overlay & behavior | gold `#C9BC22` | Overlays, Tooltips, Navigation, Behaviors, Transitions |
 
 **Flame:** stays the orange fire on every per-library tile as the constant family stamp — only the
 tile fill/stroke/ember take the library hue. The master orange/flame identity is reserved for the
@@ -65,20 +65,20 @@ the hue instead — under evaluation.) The tile palette derives from one primary
 | Tables | Ta | 73 | TABLES | `#9B82FF` | Tantalum ✓ |
 | Progress | Pr | 59 | PROGRESS | `#F0565B` | Praseodymium ✓ |
 | ActivityIndicators | Ac | 89 | ACTIVITY | `#E5484D` | Actinium ✓ |
-| Behaviors | Bh | 107 | BEHAVIOR | `#C42A78` | Bohrium ✓ |
-| Transitions | Ts | 117 | MOTION | `#FF7DBE` | Tennessine ✓ (or "Tr", coined) |
+| Behaviors | Bh | 107 | BEHAVIOR | `#978C0C` | Bohrium ✓ |
+| Transitions | Ts | 117 | MOTION | `#ECE07A` | Tennessine ✓ (or "Tr", coined) |
 | Barcodes | Bc | 56 | BARCODES | `#2E6FE0` | coined · Z from Ba (Barium) |
 | Skeletons | Sk | 21 | SKELETON | `#C43A3F` | coined · Z from Sc (Scandium) |
 | Charts | Ch | 6 | CHARTS | `#3B82F6` | coined · Z from C (Carbon) |
 | Badges | Bg | 97 | BADGES | `#0C8577` | coined · Z from Bk (Berkelium) |
 | Avatars | Av | 47 | AVATARS | `#2DD4BF` | coined · Z from Ag (Silver) |
 | Buttons | Bt | 5 | BUTTONS | `#16A34A` | coined · Z from B (Boron) |
-| Tooltips | Tt | 81 | TOOLTIPS | `#DB2F86` | coined · Z from Tl (Thallium) |
+| Tooltips | Tt | 81 | TOOLTIPS | `#B0A414` | coined · Z from Tl (Thallium) |
 | Icons | Ic | 53 | ICONS | `#0E9E8E` | coined · Z from I (Iodine) |
 | Typography | Ty | 22 | TYPE | `#14B8A6` | coined · Z from Ti (Titanium) |
-| Overlays | Ov | 8 | OVERLAYS | `#EC4899` | coined · Z from O (Oxygen) |
+| Overlays | Ov | 8 | OVERLAYS | `#C9BC22` | coined · Z from O (Oxygen) |
 | Pickers | Pk | 78 | PICKERS | `#4ADE80` | coined · Z from Pt (Platinum) |
-| Navigation | Nv | 11 | NAV | `#F368AC` | coined · Z from Na (Sodium) |
+| Navigation | Nv | 11 | NAV | `#DED04A` | coined · Z from Na (Sodium) |
 
 **Z (atomic number):** real-element symbols use the element's own number; coined symbols borrow the
 nearest real element's Z — the alt where one fits, else the closest symbol match. No Z collides.

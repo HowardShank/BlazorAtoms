@@ -191,6 +191,7 @@
           <div class="btns">
             <button class="act" id="btnCopyRazor">Copy</button>
             <button class="act" id="btnDownloadRazor">Download .razor</button>
+            <button class="act" id="btnDownloadFamily" title="One shared AtomMark.razor engine + a thin Atom&lt;Lib&gt;Mark.razor wrapper per library (25 marks). Downloads all 26 files — keep them in one folder.">Download family set (26)</button>
           </div></div>
         <code id="razorOut"></code>
       </div>
@@ -354,7 +355,7 @@ function readState(){ const o = {}; IDS.forEach(id => o[id] = el[id].value); ret
 
 // ---- Blazor component generator: self-contained .razor, current settings = [Parameter] defaults ----
 function csStr(s){ return String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"'); }
-function compNameOf(o){ return ((o.compName || 'BeMark').trim() || 'BeMark').replace(/[^A-Za-z0-9_]/g, ''); }
+function compNameOf(o){ return ((o.compName || 'AtomsMark').trim() || 'AtomsMark').replace(/[^A-Za-z0-9_]/g, ''); }
 function buildRazor(o){
   const name = compNameOf(o);
   const layoutEnum = ({ icon: 'Icon', lockup: 'Lockup', stacked: 'Stacked' })[mode] || 'Icon';
@@ -365,11 +366,11 @@ function buildRazor(o){
 @((MarkupString)BuildSvg())
 
 @code {
-    /// <summary>Which arrangement to render. Use e.g. Layout="${name}.BeLayout.Stacked".</summary>
-    public enum BeLayout { Icon, Lockup, Stacked }
+    /// <summary>Which arrangement to render. Use e.g. Layout="${name}.MarkLayout.Stacked".</summary>
+    public enum MarkLayout { Icon, Lockup, Stacked }
 
     // content
-    [Parameter] public BeLayout Layout { get; set; } = BeLayout.${layoutEnum};
+    [Parameter] public MarkLayout Layout { get; set; } = MarkLayout.${layoutEnum};
     [Parameter] public int Size { get; set; } = ${parseInt(o.outSize) || 128};   // icon: edge px; lockup/stacked: height px (width keeps aspect)
     [Parameter] public string Number { get; set; } = "${csStr(o.t_num)}";
     [Parameter] public string Symbol { get; set; } = "${csStr(o.t_sym)}";
@@ -437,13 +438,13 @@ function buildRazor(o){
             "</g>" +
             $"<text x='29' y='52' font-family='{font}' font-size='{NumberSize}' font-weight='600' fill='{Cream}'>{Esc(Number)}</text>" +
             $"<text x='64' y='94' text-anchor='middle' font-family='{font}' font-size='{SymbolSize}' font-weight='700' fill='{SymbolColor}'>{Esc(Symbol)}</text>";
-        if (Layout == BeLayout.Icon && !string.IsNullOrWhiteSpace(Label))
+        if (Layout == MarkLayout.Icon && !string.IsNullOrWhiteSpace(Label))
             tile += $"<text x='64' y='106' text-anchor='middle' font-family='{font}' font-size='{F(LabelSize)}' font-weight='600' letter-spacing='{F(LabelSpacing)}' fill='{Cream}'>{Esc(Label)}</text>";
 
-        if (Layout == BeLayout.Icon)
+        if (Layout == MarkLayout.Icon)
             return $"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128' width='{Size}' height='{Size}' role='img' aria-label='{Esc(Symbol)} {Esc(Label)}'>{defs}{tile}</svg>";
 
-        if (Layout == BeLayout.Stacked)
+        if (Layout == MarkLayout.Stacked)
         {
             int ws = (int)System.Math.Round(Size * 320.0 / 220.0);
             string wordsS =
@@ -464,9 +465,52 @@ function buildRazor(o){
 function buildUsage(o){
   const n = compNameOf(o);
   return `<${n} />                                                  @* your current design *@\n`
-       + `<${n} Layout="${n}.BeLayout.Lockup" Size="64" />          @* horizontal, 64px tall *@\n`
-       + `<${n} Layout="${n}.BeLayout.Stacked" Size="96" />         @* stacked *@\n`
+       + `<${n} Layout="${n}.MarkLayout.Lockup" Size="64" />          @* horizontal, 64px tall *@\n`
+       + `<${n} Layout="${n}.MarkLayout.Stacked" Size="96" />         @* stacked *@\n`
        + `<${n} Symbol="Xe" Number="54" TileTop="#1FA6A6" TileBottom="#127D7D" />`;
+}
+
+// ---- Family-set generator: ONE shared AtomMark engine + a thin wrapper per library ----
+// For the whole family living together (25 marks in one project) this beats 25 self-contained
+// copies: the ~130-line render engine exists ONCE (fix a tweak in one place; guaranteed
+// pixel-consistency), and each wrapper is just that library's baked payload
+// (symbol / number / label / colors). Chrome — tile shape, flame, fonts, the "Blazor" wordmark —
+// stays on the engine's defaults: "freeze the chrome, vary the payload." Engine + wrappers must
+// sit together (same folder, or @using the engine's namespace).
+function attrEsc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function buildEngineRazor(o){ return buildRazor(Object.assign({}, o, { compName: 'AtomMark' })); }
+function buildWrapperRazor(o, lib, sym, num, label, primary){
+  const name = markName(lib);
+  const c = derive(primary, false);          // flame stays orange (family stamp); tile takes the lib hue
+  const size = parseInt(o.outSize) || 128;
+  return `@* ${name}.razor — BlazorAtoms "${lib}" brand mark. Thin wrapper over the shared AtomMark engine.
+   Payload (symbol / number / label / colors) is baked here; chrome (tile shape, flame, fonts, the
+   "Blazor" wordmark) is inherited from AtomMark's defaults. Needs AtomMark.razor in the same folder
+   (or @using its namespace). Override Layout (Icon|Lockup|Stacked) or Size; the brand payload is fixed. *@
+<AtomMark Layout="@Layout" Size="@Size"
+          Number="${attrEsc(num)}" Symbol="${attrEsc(sym)}" Label="${attrEsc(label)}" Word2="${attrEsc(label)}"
+          TileTop="${c.c_tileTop}" TileBottom="${c.c_tileBot}" Stroke="${c.c_stroke}" Ember="${c.c_ember}" Cream="${c.c_cream}"
+          FlameTip="${c.c_flameTop}" FlameMid="${c.c_flameMid}" FlameBase="${c.c_flameBase}"
+          InnerTop="${c.c_innerTop}" InnerBottom="${c.c_innerBot}"
+          Word2Top="${c.c_word2Top}" Word2Bottom="${c.c_word2Bot}" SymbolColor="${c.c_symbol}" />
+
+@code {
+    /// <summary>Layout arrangement — Icon (default), Lockup, or Stacked.</summary>
+    [Parameter] public AtomMark.MarkLayout Layout { get; set; } = AtomMark.MarkLayout.Icon;
+
+    /// <summary>Overall size in px — icon edge, or lockup/stacked height (width keeps aspect).</summary>
+    [Parameter] public int Size { get; set; } = ${size};
+}
+`;
+}
+// engine + 25 marks (umbrella B + every library in ELEMENT_PRESETS). Returns [{name, content}].
+function buildFamilySet(o){
+  const files = [{ name: 'AtomMark.razor', content: buildEngineRazor(o) }];
+  files.push({ name: markName('BlazorAtoms') + '.razor', content: buildWrapperRazor(o, 'BlazorAtoms', 'B', '5', 'Atoms', '#F97316') });
+  ELEMENT_PRESETS.forEach(([, items]) => items.forEach(([lib, sym, num, label, primary]) => {
+    files.push({ name: markName(lib) + '.razor', content: buildWrapperRazor(o, lib, sym, num, label, primary) });
+  }));
+  return files;
 }
 
 const READOUTS = { s_flameScale:'v_flameScale', s_corner:'v_corner', s_strokeW:'v_strokeW',
@@ -514,7 +558,7 @@ const ELEMENT_PRESETS = [
   ['Forms & input',       [['Inputs','In','49','INPUTS','#22C55E'], ['Buttons','Bt','5','BUTTONS','#16A34A'], ['Pickers','Pk','78','PICKERS','#4ADE80']]],
   ['Layout & containers', [['Layout','La','57','LAYOUT','#7C5CFF'], ['Cards','Cd','48','CARDS','#6A4BE0'], ['Tabs','Tb','65','TABS','#8B6EFF'], ['Panels','Pa','91','PANELS','#5B3FC4'], ['Tables','Ta','73','TABLES','#9B82FF']]],
   ['Content & identity',  [['Typography','Ty','22','TYPE','#14B8A6'], ['Icons','Ic','53','ICONS','#0E9E8E'], ['Avatars','Av','47','AVATARS','#2DD4BF'], ['Badges','Bg','97','BADGES','#0C8577']]],
-  ['Overlay & behavior',  [['Overlays','Ov','8','OVERLAYS','#EC4899'], ['Tooltips','Tt','81','TOOLTIPS','#DB2F86'], ['Navigation','Nv','11','NAV','#F368AC'], ['Behaviors','Bh','107','BEHAVIOR','#C42A78'], ['Transitions','Ts','117','MOTION','#FF7DBE']]],
+  ['Overlay & behavior',  [['Overlays','Ov','8','OVERLAYS','#C9BC22'], ['Tooltips','Tt','81','TOOLTIPS','#B0A414'], ['Navigation','Nv','11','NAV','#DED04A'], ['Behaviors','Bh','107','BEHAVIOR','#978C0C'], ['Transitions','Ts','117','MOTION','#ECE07A']]],
 ];
 const presetSel = document.getElementById('t_preset');
 ELEMENT_PRESETS.forEach(([cat, items]) => {
@@ -535,6 +579,10 @@ umb.textContent = 'BlazorAtoms — B (5)';
 umb.dataset.num = '5'; umb.dataset.sym = 'B'; umb.dataset.label = 'Atoms'; umb.dataset.primary = '#F97316';
 presetSel.insertBefore(umb, presetSel.children[1] || null);   // right after "Custom (manual)"
 presetSel.value = 'BlazorAtoms';                              // reflect the load default in the dropdown
+// component-name pattern for the generated .razor: family Atom prefix + subject + "Mark".
+// Umbrella → AtomsMark; per library → Atom<Lib>Mark (AtomBarcodesMark, AtomActivityIndicatorsMark).
+// Filename must equal this name (Blazor rule); the download uses compNameOf(state) + '.razor'.
+function markName(lib){ return lib === 'BlazorAtoms' ? 'AtomsMark' : 'Atom' + lib + 'Mark'; }
 presetSel.addEventListener('change', () => {
   const opt = presetSel.selectedOptions[0];
   if (!opt || !opt.value) return;              // "Custom (manual)" — leave the fields alone
@@ -542,6 +590,7 @@ presetSel.addEventListener('change', () => {
   el.t_sym.value = opt.dataset.sym;
   el.t_label.value = opt.dataset.label;        // short form → icon tile label
   el.t_word2.value = opt.dataset.label;        // identical → lockup/stacked wordmark line 2
+  el.compName.value = markName(opt.value);     // family-consistent name (still editable)
   // apply the library's primary; applyPrimary() derives the full tile palette + re-renders.
   // Flame stays orange unless Flame Mode (tintFlame) is on — left untouched so you can test it.
   el.c_primary.value = opt.dataset.primary || el.c_primary.value;
@@ -656,6 +705,18 @@ document.getElementById('btnDownloadRazor').addEventListener('click', () => {
   a.href = URL.createObjectURL(blob);
   a.download = compNameOf(readState()) + '.razor';
   a.click(); URL.revokeObjectURL(a.href);
+});
+// family set: AtomMark.razor engine + 25 Atom<Lib>Mark.razor wrappers, staggered downloads
+document.getElementById('btnDownloadFamily').addEventListener('click', async () => {
+  const files = buildFamilySet(readState());
+  for (const f of files){
+    const blob = new Blob([f.content], {type:'text/plain'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = f.name;
+    a.click(); URL.revokeObjectURL(a.href);
+    await new Promise(r => setTimeout(r, 150));
+  }
 });
 
 // apply primary from the hash deep-link, if present
