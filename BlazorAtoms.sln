@@ -5,7 +5,9 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
 	ProjectSection(SolutionItems) = preProject
+		src\Icon-Roadmap.md = src\Icon-Roadmap.md
 		src\LIBRARY-CATALOG.md = src\LIBRARY-CATALOG.md
+		src\Task-Difficulty.md = src\Task-Difficulty.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorAtoms.BusyIndicators", "src\BlazorAtoms.BusyIndicators\BlazorAtoms.BusyIndicators.csproj", "{10DC5B1B-1F17-4EF0-9844-985913C7DFB5}"
@@ -45,6 +47,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorAtoms.Barcodes", "src\BlazorAtoms.Barcodes\BlazorAtoms.Barcodes.csproj", "{EBA8165F-1C2B-4173-ADEA-1826E947E41F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorAtoms.Barcodes.Tests", "tests\BlazorAtoms.Barcodes.Tests\BlazorAtoms.Barcodes.Tests.csproj", "{3F634FD7-6B04-4CDD-9B86-4CFC2F3BFB36}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "icons", "icons", "{E59DE943-0AEE-4CCC-BC30-B5EB47559DB6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -181,6 +185,7 @@ Global
 		{9E2C678D-A2A3-49C1-9715-B7421163D3DA} = {0B7A057E-E328-4FE7-89EA-1F1A9F1D1289}
 		{EBA8165F-1C2B-4173-ADEA-1826E947E41F} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{3F634FD7-6B04-4CDD-9B86-4CFC2F3BFB36} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{E59DE943-0AEE-4CCC-BC30-B5EB47559DB6} = {E899D024-8C6E-4FC5-99F3-0AC925CA6BEA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {4957CA83-0A70-4957-9B46-950BA1F33B3E}

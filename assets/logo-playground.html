@@ -88,11 +88,13 @@
   <div class="panel">
     <h2>Text</h2>
     <div class="controls">
-      <div class="ctrl"><label>Atomic number</label><input type="text" id="t_num" value="4" maxlength="3"></div>
-      <div class="ctrl"><label>Element symbol</label><input type="text" id="t_sym" value="Be" maxlength="3"></div>
-      <div class="ctrl" data-only="icon"><label>Label (bottom)</label><input type="text" id="t_label" value="ELEMENTS" maxlength="12"></div>
+      <div class="ctrl" style="grid-column:1/-1"><label>Element preset <span class="val">from Icon-Roadmap.md</span></label>
+        <select id="t_preset"><option value="">Custom (manual)</option></select></div>
+      <div class="ctrl"><label>Atomic number</label><input type="text" id="t_num" value="5" maxlength="3"></div>
+      <div class="ctrl"><label>Element symbol</label><input type="text" id="t_sym" value="B" maxlength="3"></div>
+      <div class="ctrl" data-only="icon"><label>Label (bottom)</label><input type="text" id="t_label" value="Atoms" maxlength="16"></div>
       <div class="ctrl" data-only="lockup stacked"><label>Wordmark line 1</label><input type="text" id="t_word1" value="Blazor" maxlength="16"></div>
-      <div class="ctrl" data-only="lockup stacked"><label>Wordmark line 2</label><input type="text" id="t_word2" value="Elements" maxlength="16"></div>
+      <div class="ctrl" data-only="lockup stacked"><label>Wordmark line 2</label><input type="text" id="t_word2" value="Atoms" maxlength="16"></div>
     </div>
   </div>
 
@@ -181,7 +183,7 @@
   <div class="panel">
     <h2>Blazor component (.razor) &mdash; self-contained, drop into any Blazor project</h2>
     <div class="controls" style="margin-bottom:.7rem">
-      <div class="ctrl"><label>Component name</label><input type="text" id="compName" value="BeMark" maxlength="40"></div>
+      <div class="ctrl"><label>Component name</label><input type="text" id="compName" value="AtomsMark" maxlength="40"></div>
     </div>
     <div class="out">
       <div class="block">
@@ -495,6 +497,58 @@ function update(){
 
 IDS.forEach(id => { el[id].addEventListener('input', update); el[id].addEventListener('change', update); });
 
+// ---- Element presets (mirrors src/Icon-Roadmap.md "Element symbols" + category grouping).
+//      Row = [library, symbol, Z, tile-label]. Selecting one fills Atomic number / Element symbol,
+//      and sets BOTH Label (icon tile) and Wordmark line 2 (lockup+stacked) to the same short
+//      tile-label (~8 chars, fits the tile) so every layout shows identical text. All stay
+//      editable and the Label / Wordmark-2 pair mirror each other on manual edits.
+//      Atomic number = the symbol's real element Z. Coined symbols borrow the nearest real
+//      element: roadmap alt where named (Bc→Ba 56, Ch→C 6, Bt→B 5, Tt→Tl 81, Ic→I 53,
+//      Ov→O 8, Nv→Na 11), else closest match (Sk→Sc 21, Ty→Ti 22, Av→Ag 47, Pk→Pt 78,
+//      Bg→Bk 97). Edit freely if you adopt a different scheme (e.g. build sequence). ----
+const ELEMENT_PRESETS = [
+  ['Feedback & status',   [['BusyIndicators','Bi','83','BUSY'], ['Progress','Pr','59','PROGRESS'], ['Skeletons','Sk','21','SKELETON'], ['Alerts','Al','13','ALERTS']]],
+  ['Data & viz',          [['Charts','Ch','6','CHARTS'], ['Barcodes','Bc','56','BARCODES'], ['Ratings','Ra','88','RATINGS']]],
+  ['Forms & input',       [['Inputs','In','49','INPUTS'], ['Buttons','Bt','5','BUTTONS'], ['Pickers','Pk','78','PICKERS']]],
+  ['Layout & containers', [['Layout','La','57','LAYOUT'], ['Cards','Cd','48','CARDS'], ['Tabs','Tb','65','TABS'], ['Panels','Pa','91','PANELS'], ['Tables','Ta','73','TABLES']]],
+  ['Content & identity',  [['Typography','Ty','22','TYPE'], ['Icons','Ic','53','ICONS'], ['Avatars','Av','47','AVATARS'], ['Badges','Bg','97','BADGES']]],
+  ['Overlay & behavior',  [['Overlays','Ov','8','OVERLAYS'], ['Tooltips','Tt','81','TOOLTIPS'], ['Navigation','Nv','11','NAV'], ['Behaviors','Bh','107','BEHAVIOR'], ['Transitions','Ts','117','MOTION']]],
+];
+const presetSel = document.getElementById('t_preset');
+ELEMENT_PRESETS.forEach(([cat, items]) => {
+  const g = document.createElement('optgroup'); g.label = cat;
+  items.forEach(([lib, sym, num, label]) => {
+    const opt = document.createElement('option');
+    opt.value = lib;
+    opt.textContent = `${lib} — ${sym}${num ? ' (' + num + ')' : ''}`;
+    opt.dataset.num = num; opt.dataset.sym = sym; opt.dataset.label = label;
+    g.appendChild(opt);
+  });
+  presetSel.appendChild(g);
+});
+// umbrella / master mark — the family tile (B = Boron, Z 5, for "Blazor"). Default on load.
+const umb = document.createElement('option');
+umb.value = 'BlazorAtoms';
+umb.textContent = 'BlazorAtoms — B (5)';
+umb.dataset.num = '5'; umb.dataset.sym = 'B'; umb.dataset.label = 'Atoms';
+presetSel.insertBefore(umb, presetSel.children[1] || null);   // right after "Custom (manual)"
+presetSel.value = 'BlazorAtoms';                              // reflect the load default in the dropdown
+presetSel.addEventListener('change', () => {
+  const opt = presetSel.selectedOptions[0];
+  if (!opt || !opt.value) return;              // "Custom (manual)" — leave the fields alone
+  el.t_num.value = opt.dataset.num;
+  el.t_sym.value = opt.dataset.sym;
+  el.t_label.value = opt.dataset.label;        // short form → icon tile label
+  el.t_word2.value = opt.dataset.label;        // identical → lockup/stacked wordmark line 2
+  update();
+});
+// hand-editing any preset-driven field drops the dropdown back to "Custom"
+['t_num','t_sym','t_label','t_word2'].forEach(id => el[id].addEventListener('input', () => { presetSel.value = ''; }));
+// keep the icon Label and the lockup/stacked Wordmark line 2 in sync when typed by hand — both
+// are the "library name" slot, just for different layouts (only one is visible at a time).
+el.t_label.addEventListener('input', () => { if (el.t_word2.value !== el.t_label.value) { el.t_word2.value = el.t_label.value; update(); } });
+el.t_word2.addEventListener('input', () => { if (el.t_label.value !== el.t_word2.value) { el.t_label.value = el.t_word2.value; update(); } });
+
 // primary-color derivation (populate-then-tweak: writes into the individual pickers)
 el.c_primary = document.getElementById('c_primary');
 el.tintFlame = document.getElementById('tintFlame');
@@ -540,6 +594,7 @@ document.getElementById('btnDownload').addEventListener('click', () => {
 document.getElementById('btnReset').addEventListener('click', () => {
   IDS.forEach(id => el[id].value = DEFAULTS[id]);
   el.c_primary.value = '#F97316'; el.tintFlame.checked = false;
+  document.getElementById('t_preset').value = 'BlazorAtoms';
   document.getElementById('v_primary').textContent = el.c_primary.value;
   update();
 });
