@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <Import Project="$(RepoRoot)build\Packable.props" />
+  <Import Project="$(RepoRoot)build\Shared.props" />
+
+  <PropertyGroup>
+    <PackageId>BlazorAtoms.Avatars</PackageId>
+    <Title>Blazor Avatars</Title>
+    <Description>Avatar for Blazor — a head/shoulders silhouette (solid or gradient fill) or an image, cropped to a selectable shape (circle, square, rounded, squircle, hexagon) with corner radius, a color/gradient background (with angle), and an optional border ring. Server or WebAssembly, no JS.</Description>
+    <PackageTags>Blazor;Avatar;Profile;Image;Silhouette;Gradient;WebAssembly;Server</PackageTags>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+  </ItemGroup>
+
+</Project>

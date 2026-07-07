@@ -1,0 +1,122 @@
+@using BlazorAtoms.Avatars
+
+<PageTitle>AtomAvatar Playground</PageTitle>
+
+<style>
+    .tt-stage-outer { display:flex; align-items:center; justify-content:center; gap:2.5rem; min-height:220px;
+        background: radial-gradient(ellipse at center,#0b1019 0%,#07090d 100%); border:1px solid #1b2330;
+        border-radius:12px; padding:1.5rem; margin-bottom:1.5rem; }
+    .tt-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:1rem 1.5rem;
+        background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; }
+    .tt-ctrl { display:flex; flex-direction:column; gap:.35rem; }
+    .tt-ctrl label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; gap:.5rem; }
+    .tt-ctrl label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
+    .tt-controls input[type=text], .tt-controls input[type=number], .tt-controls select { width:100%; accent-color:#00b3c4; }
+    .tt-controls input[type=color] { width:100%; height:32px; background:none; border:1px solid #1b2330; border-radius:6px; padding:2px; }
+    .tt-ctrl .row { display:flex; align-items:center; gap:.5rem; }
+    .tt-ctrl .row input[type=checkbox] { accent-color:#00b3c4; width:16px; height:16px; }
+    .tt-ctrl .row label { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; justify-content:flex-start; }
+</style>
+
+<h1>AtomAvatar playground</h1>
+<p>Head/shoulders silhouette (solid or gradient) or an image, cropped to a shape. Background color/gradient/angle + optional border ring.</p>
+<p><a href="demo">&larr; Back to demo</a></p>
+
+<div class="tt-stage-outer">
+    <AtomAvatar Src="@Blank(Src)" Alt="@Blank(Alt)" Shape="@Shape" Radius="@Radius" Size="@Size"
+                Background="@(UseBgGradient ? null : BgSolid)"
+                BackgroundGradientFrom="@(UseBgGradient ? BgFrom : null)"
+                BackgroundGradientTo="@(UseBgGradient ? BgTo : null)"
+                BackgroundGradientAngle="@BgAngle"
+                FigureColor="@(UseFigGradient ? null : FigSolid)"
+                FigureGradientFrom="@(UseFigGradient ? FigFrom : null)"
+                FigureGradientTo="@(UseFigGradient ? FigTo : null)"
+                FigureGradientAngle="@FigAngle"
+                BorderColor="@(UseBorder ? BorderColor : null)" BorderWidth="@BorderWidth" />
+</div>
+
+<div class="tt-controls">
+    <div class="tt-ctrl"><label>Image URL (blank = silhouette)</label><input type="text" @bind="Src" @bind:event="oninput" placeholder="/users/ada.jpg" /></div>
+    <div class="tt-ctrl"><label>Alt / label</label><input type="text" @bind="Alt" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Shape</label><select @bind="Shape">@foreach (var s in Enum.GetValues<Shape>()){<option value="@s">@s</option>}</select></div>
+    <div class="tt-ctrl"><label>Size (px) <span class="val">@Size</span></label><input type="number" min="24" max="160" @bind="Size" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Radius px (Rounded) <span class="val">@Radius</span></label><input type="number" min="0" max="60" @bind="Radius" @bind:event="oninput" /></div>
+
+    <div class="tt-ctrl"><label>Background</label>
+        <div class="row"><input type="checkbox" id="bgg" @bind="UseBgGradient" /><label for="bgg">Gradient</label></div>
+        <input type="color" @bind="BgSolid" @bind:event="oninput" disabled="@UseBgGradient" />
+    </div>
+    <div class="tt-ctrl"><label>BG from → to</label>
+        <div class="row"><input type="color" @bind="BgFrom" @bind:event="oninput" disabled="@(!UseBgGradient)" /><input type="color" @bind="BgTo" @bind:event="oninput" disabled="@(!UseBgGradient)" /></div>
+    </div>
+    <div class="tt-ctrl"><label>BG angle <span class="val">@(BgAngle)&deg;</span></label><input type="number" min="0" max="360" step="5" @bind="BgAngle" @bind:event="oninput" disabled="@(!UseBgGradient)" /></div>
+
+    <div class="tt-ctrl"><label>Silhouette</label>
+        <div class="row"><input type="checkbox" id="figg" @bind="UseFigGradient" /><label for="figg">Gradient</label></div>
+        <input type="color" @bind="FigSolid" @bind:event="oninput" disabled="@UseFigGradient" />
+    </div>
+    <div class="tt-ctrl"><label>Figure from → to</label>
+        <div class="row"><input type="color" @bind="FigFrom" @bind:event="oninput" disabled="@(!UseFigGradient)" /><input type="color" @bind="FigTo" @bind:event="oninput" disabled="@(!UseFigGradient)" /></div>
+    </div>
+    <div class="tt-ctrl"><label>Figure angle <span class="val">@(FigAngle)&deg;</span></label><input type="number" min="0" max="360" step="5" @bind="FigAngle" @bind:event="oninput" disabled="@(!UseFigGradient)" /></div>
+
+    <div class="tt-ctrl"><label>Border</label>
+        <div class="row"><input type="checkbox" id="bd" @bind="UseBorder" /><input type="color" @bind="BorderColor" @bind:event="oninput" disabled="@(!UseBorder)" /></div>
+    </div>
+    <div class="tt-ctrl"><label>Border width <span class="val">@BorderWidth</span></label><input type="number" min="0" max="12" @bind="BorderWidth" @bind:event="oninput" disabled="@(!UseBorder)" /></div>
+</div>
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomAvatarExample.razor" />
+
+@code {
+    private string Src = "";
+    private string Alt = "";
+    private Shape Shape = Shape.Circle;
+    private double Size = 96;
+    private double Radius = 16;
+
+    private bool UseBgGradient = true;
+    private string BgSolid = "#e5e7eb";
+    private string BgFrom = "#0ea5e9";
+    private string BgTo = "#7c3aed";
+    private double BgAngle = 135;
+
+    private bool UseFigGradient;
+    private string FigSolid = "#ffffff";
+    private string FigFrom = "#ffffff";
+    private string FigTo = "#c7d2fe";
+    private double FigAngle = 135;
+
+    private bool UseBorder;
+    private string BorderColor = "#22d3ee";
+    private double BorderWidth = 3;
+
+    private static string? Blank(string s) => string.IsNullOrWhiteSpace(s) ? null : s;
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder("<AtomAvatar");
+            if (!string.IsNullOrWhiteSpace(Src)) sb.Append($" Src=\"{Src}\"");
+            if (!string.IsNullOrWhiteSpace(Alt)) sb.Append($" Alt=\"{Alt}\"");
+            if (Shape != Shape.Circle) sb.Append($" Shape=\"Shape.{Shape}\"");
+            sb.Append($" Size=\"{Size}\"");
+            if (Shape == Shape.Rounded) sb.Append($" Radius=\"{Radius}\"");
+            if (UseBgGradient)
+                sb.Append($" BackgroundGradientFrom=\"{BgFrom}\" BackgroundGradientTo=\"{BgTo}\" BackgroundGradientAngle=\"{BgAngle}\"");
+            else
+                sb.Append($" Background=\"{BgSolid}\"");
+            if (string.IsNullOrWhiteSpace(Src))
+            {
+                if (UseFigGradient)
+                    sb.Append($" FigureGradientFrom=\"{FigFrom}\" FigureGradientTo=\"{FigTo}\" FigureGradientAngle=\"{FigAngle}\"");
+                else
+                    sb.Append($" FigureColor=\"{FigSolid}\"");
+            }
+            if (UseBorder) sb.Append($" BorderColor=\"{BorderColor}\" BorderWidth=\"{BorderWidth}\"");
+            sb.Append(" />");
+            return sb.ToString();
+        }
+    }
+}

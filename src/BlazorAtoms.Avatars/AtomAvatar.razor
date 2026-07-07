@@ -1,0 +1,35 @@
+@inherits AtomComponentBase
+
+@*
+    AtomAvatar.razor
+    ----------------
+    Shows an <img> (cropped to the shape) when Src is set, else a head/shoulders silhouette drawn
+    as inline SVG (authored here, not MarkupString, so Blazor scoped CSS applies). The silhouette
+    fills with a solid color or a per-instance <linearGradient>. The container carries the shape
+    crop (border-radius / clip-path) + background + optional border ring.
+*@
+
+<div class="atom-avatar" role="img" aria-label="@AccessibleLabel" data-shape="@ShapeValue" style="@RootStyle">
+    @if (HasImage)
+    {
+        <img class="atom-avatar-img" src="@Src" alt="@(Alt ?? "")" loading="lazy" />
+    }
+    else
+    {
+        <svg class="atom-avatar-figure" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            @if (UseFigureGradient)
+            {
+                <defs>
+                    <linearGradient id="@FigId" gradientTransform="rotate(@N(FigureGradientAngle) 0.5 0.5)">
+                        <stop offset="0%" stop-color="@FigureGradientFrom" />
+                        <stop offset="100%" stop-color="@FigureGradientTo" />
+                    </linearGradient>
+                </defs>
+            }
+            <g fill="@FigureFill">
+                <circle cx="50" cy="34" r="20" />
+                <path d="M12 100 C12 71 31 61 50 61 C69 61 88 71 88 100 Z" />
+            </g>
+        </svg>
+    }
+</div>
