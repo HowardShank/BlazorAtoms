@@ -36,11 +36,18 @@ else if (ShowBadge && !CancellationToken.IsCancellationRequested)
              data-variant="@VariantValue"
              data-anim="@AnimValue"
              data-trigger="@TriggerValue"
+             data-svg="@(IsSvgShape ? "true" : null)"
              data-dot="@(Dot ? "true" : null)"
              style="@(ChildContent is null ? RootStyle : null)">
         @if (Animation == BadgeAnimation.Ping)
         {
             <span class="atom-badge-ring" aria-hidden="true"></span>
+        }
+        @if (IsSvgShape)
+        {
+            <svg class="atom-badge-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                <path class="badge-path" d="@CurrentPath" vector-effect="non-scaling-stroke" />
+            </svg>
         }
         @if (!Dot)
         {

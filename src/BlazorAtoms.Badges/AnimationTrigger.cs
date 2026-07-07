@@ -1,4 +1,4 @@
-namespace BlazorAtoms.AnimatedBadges;
+namespace BlazorAtoms.Badges;
 
 /// <summary>When the badge's <see cref="BadgeAnimation"/> plays.</summary>
 public enum AnimationTrigger

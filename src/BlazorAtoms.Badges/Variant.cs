@@ -1,4 +1,4 @@
-namespace BlazorAtoms.StaticBadges;
+namespace BlazorAtoms.Badges;
 
 /// <summary>Preset color scheme for the badge. Sets the default background/text/border tokens;
 /// explicit <c>Background</c>/<c>TextColor</c>/<c>BorderColor</c> parameters still override it.</summary>

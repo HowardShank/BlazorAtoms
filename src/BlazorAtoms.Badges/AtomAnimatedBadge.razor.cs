@@ -2,21 +2,19 @@ using System;
 using System.ComponentModel;
 using System.Globalization;
 using System.Reflection;
-using System.Text;
 using Microsoft.AspNetCore.Components;
 using BlazorAtoms.Shared;
 
-namespace BlazorAtoms.StaticBadges;
+namespace BlazorAtoms.Badges;
 
 /// <summary>
-/// A static (no-animation) badge: a small label/count in a rich variety of shapes. Pill, circle,
-/// square and rounded are pure-CSS boxes; star, hexagon, diamond, shield, starburst and ribbon are
-/// drawn as inline SVG so fill and border apply to every shape. When wrapped around a host element
-/// (<see cref="ChildContent"/>) it overlays a corner (notification style); otherwise it renders
-/// inline. Accepts any <see cref="object"/> value with type-aware formatting (or a
-/// <see cref="Formatter"/> override). No JS.
+/// An animated badge: a small label/count that pops in when it has a value. When wrapped around a
+/// host element (<see cref="ChildContent"/>) it overlays a corner (notification-count style);
+/// otherwise it renders inline. Accepts any <see cref="object"/> value with type-aware formatting
+/// (or a <see cref="Formatter"/> override), and can Pop / Bounce / Spin / Pulse / Ping. Pure CSS —
+/// no JS. All motion is disabled under <c>prefers-reduced-motion: reduce</c>.
 /// </summary>
-public partial class AtomStaticBadge : AtomComponentBase
+public partial class AtomAnimatedBadge : AtomComponentBase
 {
     /// <summary>Optional host element the badge overlays. When null, the badge renders inline.</summary>
     [Parameter] public RenderFragment? ChildContent { get; set; }
@@ -46,38 +44,67 @@ public partial class AtomStaticBadge : AtomComponentBase
     /// <summary>Preset color scheme (overridden by explicit color params).</summary>
     [Parameter] public Variant Variant { get; set; } = Variant.Default;
 
-    /// <summary>Background / SVG fill. Sets <c>--sb-bg</c>. Null = variant/scheme default.</summary>
+    /// <summary>Motion applied to the badge.</summary>
+    [Parameter] public BadgeAnimation Animation { get; set; } = BadgeAnimation.Pop;
+
+    /// <summary>When the animation plays.</summary>
+    [Parameter] public AnimationTrigger Trigger { get; set; } = AnimationTrigger.Appear;
+
+    /// <summary>Background color. Sets <c>--badge-bg</c>. Null = variant/scheme default.</summary>
     [Parameter] public string? Background { get; set; }
 
-    /// <summary>Text color. Sets <c>--sb-color</c>. Null = variant/scheme default.</summary>
+    /// <summary>Text color. Sets <c>--badge-color</c>. Null = variant/scheme default.</summary>
     [Parameter] public string? TextColor { get; set; }
 
-    /// <summary>Border / SVG stroke color. Sets <c>--sb-border</c>. Null = variant/scheme default.</summary>
+    /// <summary>Border color. Sets <c>--badge-border</c>. Null = variant/scheme default.</summary>
     [Parameter] public string? BorderColor { get; set; }
 
-    /// <summary>Border / stroke width in px. Sets <c>--sb-border-width</c>.</summary>
+    /// <summary>Border width in px. Sets <c>--badge-border-width</c>.</summary>
     [Parameter] public double? BorderWidth { get; set; }
 
-    /// <summary>Badge size in px (drives height, min-width, font-size). Sets <c>--sb-size</c>.</summary>
+    /// <summary>Badge size in px (drives height, min-width, font-size). Sets <c>--badge-size</c>.</summary>
     [Parameter] public double? Size { get; set; }
 
-    /// <summary>Explicit width (any CSS length). Overrides the size-driven default. Sets <c>--sb-width</c>.</summary>
+    /// <summary>Explicit width (any CSS length). Overrides the size-driven min-width. Sets <c>--badge-width</c>.</summary>
     [Parameter] public string? Width { get; set; }
 
-    /// <summary>Explicit height (any CSS length). Overrides the size-driven default. Sets <c>--sb-height</c>.</summary>
+    /// <summary>Explicit height (any CSS length). Overrides the size-driven height. Sets <c>--badge-height</c>.</summary>
     [Parameter] public string? Height { get; set; }
 
-    /// <summary>Corner radius in px for <see cref="Shape.Rounded"/>. Sets <c>--sb-radius</c>.</summary>
+    /// <summary>Corner radius in px for <see cref="Shape.Rounded"/>. Sets <c>--badge-radius</c>.</summary>
     [Parameter] public double? Radius { get; set; }
 
-    /// <summary>Gap the badge is nudged outward from the host corner, in px. Sets <c>--sb-offset</c>.</summary>
+    /// <summary>Animation duration in seconds. Overrides the per-animation default. Sets <c>--badge-anim-duration</c>.</summary>
+    [Parameter] public double? Duration { get; set; }
+
+    /// <summary>Animation start delay in seconds. Sets <c>--badge-anim-delay</c>.</summary>
+    [Parameter] public double? Delay { get; set; }
+
+    /// <summary>Gap the badge is nudged outward from the host corner, in px. Sets <c>--badge-offset</c>.</summary>
     [Parameter] public double? Offset { get; set; }
 
-    /// <summary>Max width (any CSS length); longer text truncates with an ellipsis. Sets <c>--sb-max-width</c>.</summary>
+    /// <summary>Max width (any CSS length); longer text truncates with an ellipsis. Sets <c>--badge-max-width</c>.</summary>
     [Parameter] public string? MaxWidth { get; set; }
 
-    /// <summary>Accessible label. Falls back to the display string.</summary>
+    /// <summary>Accessible label. Falls back to the display string. The badge is a <c>role="status"</c>
+    /// live region so changes are announced.</summary>
     [Parameter] public string? AriaLabel { get; set; }
+
+    // Bumped when Value changes; used as @key on the badge to remount it so a one-shot
+    // (Appear/OnChange) animation replays. Only advanced for the OnChange trigger.
+    private int _animKey;
+    private object? _prevValue;
+    private bool _hasPrev;
+
+    protected override void OnParametersSet()
+    {
+        if (Trigger == AnimationTrigger.OnChange && _hasPrev && !Equals(_prevValue, Value))
+        {
+            _animKey++;
+        }
+        _prevValue = Value;
+        _hasPrev = true;
+    }
 
     /// <summary>The formatted text (may be empty — e.g. for Dot or bool values).</summary>
     private string Display
@@ -132,10 +159,6 @@ public partial class AtomStaticBadge : AtomComponentBase
 
     private string EffectiveAriaLabel => AriaLabel ?? (Dot ? "" : Display);
 
-    // Star/Hexagon/Diamond/Shield/Burst/Ribbon are drawn as an SVG path; the rest are CSS boxes.
-    private bool IsSvgShape => Shape is Shape.Star or Shape.Hexagon or Shape.Diamond
-        or Shape.Shield or Shape.Burst or Shape.Ribbon;
-
     private string PlacementValue => Placement switch
     {
         Placement.TopEnd => "top-end",
@@ -146,6 +169,10 @@ public partial class AtomStaticBadge : AtomComponentBase
         Placement.BottomCenter => "bottom-center",
         _ => "top-end",
     };
+
+    // Star/Hexagon/Diamond/Shield/Burst/Ribbon are drawn as an SVG path; the rest are CSS boxes.
+    private bool IsSvgShape => Shape is Shape.Star or Shape.Hexagon or Shape.Diamond
+        or Shape.Shield or Shape.Burst or Shape.Ribbon;
 
     private string ShapeValue => Shape switch
     {
@@ -169,6 +196,24 @@ public partial class AtomStaticBadge : AtomComponentBase
         Variant.Warning => "warning",
         Variant.Danger => "danger",
         _ => "default",
+    };
+
+    private string AnimValue => Animation switch
+    {
+        BadgeAnimation.Pop => "pop",
+        BadgeAnimation.Bounce => "bounce",
+        BadgeAnimation.Spin => "spin",
+        BadgeAnimation.Pulse => "pulse",
+        BadgeAnimation.Ping => "ping",
+        _ => "none",
+    };
+
+    private string TriggerValue => Trigger switch
+    {
+        AnimationTrigger.Loop => "loop",
+        AnimationTrigger.OnChange => "onchange",
+        AnimationTrigger.Hover => "hover",
+        _ => "appear",
     };
 
     // --- SVG path geometry (viewBox 0 0 100 100, drawn with preserveAspectRatio="none"). ---
@@ -204,7 +249,7 @@ public partial class AtomStaticBadge : AtomComponentBase
     private static string BuildBurstPath()
     {
         const double shrink = 0.94;
-        var sb = new StringBuilder();
+        var sb = new System.Text.StringBuilder();
         for (var i = 0; i < BurstPoints.Length; i++)
         {
             var (x, y) = BurstPoints[i];
@@ -218,14 +263,16 @@ public partial class AtomStaticBadge : AtomComponentBase
     private static string N(double v) => v.ToString(CultureInfo.InvariantCulture);
 
     private string RootStyle => string.Concat(
-        Background is null ? "" : $"--sb-bg:{Background};",
-        TextColor is null ? "" : $"--sb-color:{TextColor};",
-        BorderColor is null ? "" : $"--sb-border:{BorderColor};",
-        BorderWidth is null ? "" : $"--sb-border-width:{N(BorderWidth.Value)}px;",
-        Size is null ? "" : $"--sb-size:{N(Size.Value)}px;",
-        Width is null ? "" : $"--sb-width:{Width};",
-        Height is null ? "" : $"--sb-height:{Height};",
-        Radius is null ? "" : $"--sb-radius:{N(Radius.Value)}px;",
-        Offset is null ? "" : $"--sb-offset:{N(Offset.Value)}px;",
-        MaxWidth is null ? "" : $"--sb-max-width:{MaxWidth};");
+        Background is null ? "" : $"--badge-bg:{Background};",
+        TextColor is null ? "" : $"--badge-color:{TextColor};",
+        BorderColor is null ? "" : $"--badge-border:{BorderColor};",
+        BorderWidth is null ? "" : $"--badge-border-width:{N(BorderWidth.Value)}px;",
+        Size is null ? "" : $"--badge-size:{N(Size.Value)}px;",
+        Width is null ? "" : $"--badge-width:{Width};",
+        Height is null ? "" : $"--badge-height:{Height};",
+        Radius is null ? "" : $"--badge-radius:{N(Radius.Value)}px;",
+        Offset is null ? "" : $"--badge-offset:{N(Offset.Value)}px;",
+        Duration is null ? "" : $"--badge-anim-duration:{N(Duration.Value)}s;",
+        Delay is null ? "" : $"--badge-anim-delay:{N(Delay.Value)}s;",
+        MaxWidth is null ? "" : $"--badge-max-width:{MaxWidth};");
 }

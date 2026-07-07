@@ -12,8 +12,7 @@
     <ProjectReference Include="..\src\BlazorAtoms.Tooltips\BlazorAtoms.Tooltips.csproj" />
     <ProjectReference Include="..\src\BlazorAtoms.ShapedTooltips\BlazorAtoms.ShapedTooltips.csproj" />
     <ProjectReference Include="..\src\BlazorAtoms.PaintedTooltips\BlazorAtoms.PaintedTooltips.csproj" />
-    <ProjectReference Include="..\src\BlazorAtoms.AnimatedBadges\BlazorAtoms.AnimatedBadges.csproj" />
-    <ProjectReference Include="..\src\BlazorAtoms.StaticBadges\BlazorAtoms.StaticBadges.csproj" />
+    <ProjectReference Include="..\src\BlazorAtoms.Badges\BlazorAtoms.Badges.csproj" />
     <ProjectReference Include="..\src\BlazorAtoms.Avatars\BlazorAtoms.Avatars.csproj" />
     <ProjectReference Include="..\branding\BlazorAtoms.Branding\BlazorAtoms.Branding.csproj" />
     <ProjectReference Include="..\samples\Demos.Shared\Demos.Shared.csproj" />

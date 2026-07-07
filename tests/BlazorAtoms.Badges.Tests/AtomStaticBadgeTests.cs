@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace BlazorAtoms.StaticBadges.Tests;
+namespace BlazorAtoms.Badges.Tests;
 
 public class AtomStaticBadgeTests : TestContext
 {

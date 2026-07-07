@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace BlazorAtoms.AnimatedBadges.Tests;
+namespace BlazorAtoms.Badges.Tests;
 
 public class AtomAnimatedBadgeTests : TestContext
 {
@@ -157,5 +157,29 @@ public class AtomAnimatedBadgeTests : TestContext
             .Add(c => c.Value, 3)
             .Add(c => c.Animation, BadgeAnimation.Ping));
         Assert.NotNull(cut.Find(".atom-badge-ring"));
+    }
+
+    [Fact]
+    public void Svg_shape_draws_path_and_flags_data_svg()
+    {
+        var cut = RenderComponent<AtomAnimatedBadge>(p => p
+            .Add(c => c.Value, 5)
+            .Add(c => c.Shape, Shape.Star));
+
+        var badge = cut.Find(".atom-badge");
+        Assert.Equal("star", badge.GetAttribute("data-shape"));
+        Assert.Equal("true", badge.GetAttribute("data-svg"));
+        Assert.NotEmpty(cut.Find(".badge-path").GetAttribute("d") ?? "");
+    }
+
+    [Fact]
+    public void Css_shape_has_no_svg()
+    {
+        var cut = RenderComponent<AtomAnimatedBadge>(p => p
+            .Add(c => c.Value, 5)
+            .Add(c => c.Shape, Shape.Pill));
+
+        Assert.Null(cut.Find(".atom-badge").GetAttribute("data-svg"));
+        Assert.Empty(cut.FindAll(".badge-path"));
     }
 }

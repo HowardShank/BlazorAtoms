@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\BlazorAtoms.AnimatedBadges\BlazorAtoms.AnimatedBadges.csproj" />
+    <ProjectReference Include="..\..\src\BlazorAtoms.Badges\BlazorAtoms.Badges.csproj" />
   </ItemGroup>
 
 </Project>

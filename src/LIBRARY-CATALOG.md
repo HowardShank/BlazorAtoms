@@ -65,9 +65,7 @@ rating icons, QR/barcodes, skeleton shapes, and icons.
 | `BlazorAtoms.Progress` | AtomProgressBar, AtomProgressRing, AtomProgressSteps, AtomMeter |
 | `BlazorAtoms.Skeletons` | AtomSkeletonText, AtomSkeletonBlock, AtomSkeletonAvatar, AtomSkeletonCard |
 | `BlazorAtoms.Charts` | AtomSparkline, AtomBarChart, AtomLineChart, AtomDonut, AtomGauge |
-| `BlazorAtoms.Badges` | AtomBadge, AtomChip, AtomTag, AtomPill, AtomCountBadge |
-| `BlazorAtoms.AnimatedBadges` *(shipped)* | AtomAnimatedBadge — count/label badge that pops in on value; overlays a host corner or inline; Pop/Bounce/Spin/Pulse/Ping; any object value w/ type-aware formatting |
-| `BlazorAtoms.StaticBadges` *(shipped)* | AtomStaticBadge — no-animation count/label badge in many shapes (pill/circle/square/rounded + SVG star/hexagon/diamond/shield/burst/ribbon); overlays a host corner or inline; any object value w/ type-aware formatting |
+| `BlazorAtoms.Badges` *(shipped)* | AtomStaticBadge — no-animation count/label badge in many shapes (pill/circle/square/rounded + SVG star/hexagon/diamond/shield/burst/ribbon) · AtomAnimatedBadge — badge that pops in on value with Pop/Bounce/Spin/Pulse/Ping motion. Both overlay a host corner or render inline; any object value w/ type-aware formatting. *Future: AtomChip/AtomTag/AtomPill in this same lib.* |
 | `BlazorAtoms.Avatars` *(shipped)* | AtomAvatar — silhouette (solid/gradient) or image, cropped to circle/square/rounded/squircle/hexagon, bg color/gradient+angle, border ring · AtomInitialsAvatar — initials from name w/ deterministic palette color · AtomAvatarGroup — overlapping stack from names w/ "+N" overflow |
 | `BlazorAtoms.Ratings` | AtomRating (stars/hearts), AtomRatingInput |
 | `BlazorAtoms.Layout` | AtomStack, AtomGrid, AtomDivider, AtomSpacer, AtomCenter, AtomAspectRatio |

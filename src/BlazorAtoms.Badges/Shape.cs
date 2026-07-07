@@ -1,4 +1,4 @@
-namespace BlazorAtoms.StaticBadges;
+namespace BlazorAtoms.Badges;
 
 /// <summary>Badge outline shape. The first four are pure-CSS boxes; the rest are drawn as inline
 /// SVG paths so fill <em>and</em> border apply to every shape (no <c>clip-path</c> limitation).</summary>

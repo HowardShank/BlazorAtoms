@@ -1,4 +1,4 @@
-namespace BlazorAtoms.AnimatedBadges;
+namespace BlazorAtoms.Badges;
 
 /// <summary>Motion applied to the badge. Pair with <see cref="AnimationTrigger"/> to control when
 /// it plays. All animation is disabled under <c>prefers-reduced-motion: reduce</c>.</summary>

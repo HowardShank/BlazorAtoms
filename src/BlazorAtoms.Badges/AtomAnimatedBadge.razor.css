@@ -19,6 +19,7 @@
 .atom-badge {
     --_size: var(--badge-size, 1.25rem);
     box-sizing: border-box;
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -38,16 +39,48 @@
 }
 
 .atom-badge-text {
+    position: relative;
+    z-index: 1;
     display: inline-block;
     max-width: var(--badge-max-width, none);
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* Shapes */
+/* CSS-box shapes */
 .atom-badge[data-shape="circle"]  { padding: 0; width: var(--badge-width, var(--_size)); height: var(--badge-height, var(--_size)); border-radius: 50%; }
 .atom-badge[data-shape="square"]  { border-radius: 0; }
 .atom-badge[data-shape="rounded"] { border-radius: var(--badge-radius, 6px); }
+
+/* --- SVG shapes: a path paints fill + stroke; the box carries no CSS bg/border. --- */
+.atom-badge[data-svg] {
+    width: var(--badge-width, var(--_size));
+    height: var(--badge-height, var(--_size));
+    min-width: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 0;
+}
+/* Ribbon is naturally wide. */
+.atom-badge[data-shape="ribbon"] {
+    width: var(--badge-width, calc(var(--_size) * 2.2));
+}
+.atom-badge-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    overflow: visible;
+}
+.badge-path {
+    fill: var(--badge-bg, var(--badge-bg-d));
+    stroke: var(--badge-border, var(--badge-border-d));
+    stroke-width: var(--badge-border-width, 1px);
+    stroke-linejoin: round;
+}
+.atom-badge[data-dot="true"] .atom-badge-svg { display: none; }
 
 /* Dot — textless presence indicator. */
 .atom-badge[data-dot="true"] {
@@ -93,6 +126,11 @@
 }
 .atom-badge[data-anim="ping"] .atom-badge-ring {
     animation: atom-badge-ping var(--badge-anim-duration, 1.4s) cubic-bezier(0, 0, .2, 1) var(--badge-anim-delay, 0s) infinite;
+}
+/* SVG shapes can't wear a rounded-rect ring; drop it and pulse the shape itself instead. */
+.atom-badge[data-svg] .atom-badge-ring { display: none; }
+.atom-badge[data-svg][data-anim="ping"] {
+    animation: atom-badge-pulse var(--badge-anim-duration, 1.4s) cubic-bezier(0, 0, .2, 1) var(--badge-anim-delay, 0s) infinite;
 }
 
 @keyframes atom-badge-pop {
