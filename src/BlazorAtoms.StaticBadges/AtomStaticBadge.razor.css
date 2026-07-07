@@ -1,0 +1,116 @@
+/* Token model: --sb-* public knob → --sb-*-d scheme-aware default (same pattern as the
+   activity indicators' --ind-* and the tooltips' --tip-*). Variant presets set the -d values.
+   SVG shapes read --sb-bg (fill) and --sb-border (stroke); CSS shapes use them for background
+   and border. No animation. */
+.atom-sbadge {
+    --sb-bg-d: #ef4444;
+    --sb-color-d: #ffffff;
+    --sb-border-d: transparent;
+}
+.atom-sbadge[data-variant="info"]    { --sb-bg-d: #2563eb; --sb-color-d: #fff; }
+.atom-sbadge[data-variant="success"] { --sb-bg-d: #16a34a; --sb-color-d: #fff; }
+.atom-sbadge[data-variant="warning"] { --sb-bg-d: #d97706; --sb-color-d: #fff; }
+.atom-sbadge[data-variant="danger"]  { --sb-bg-d: #dc2626; --sb-color-d: #fff; }
+
+/* Host wrapper for the overlay (notification) mode. */
+.atom-sbadge-host {
+    position: relative;
+    display: inline-flex;
+}
+
+.atom-sbadge {
+    --_size: var(--sb-size, 1.5rem);
+    box-sizing: border-box;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--sb-height, var(--_size));
+    min-width: var(--sb-width, var(--_size));
+    padding: 0 .5em;
+    color: var(--sb-color, var(--sb-color-d));
+    font-size: calc(var(--_size) * .5);
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.atom-sbadge-text {
+    position: relative;
+    z-index: 1;
+    display: inline-block;
+    max-width: var(--sb-max-width, none);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* --- CSS-box shapes: fill + border straight from the tokens. --- */
+.atom-sbadge:not([data-svg]) {
+    width: var(--sb-width, auto);
+    background: var(--sb-bg, var(--sb-bg-d));
+    border: var(--sb-border-width, 0) solid var(--sb-border, var(--sb-border-d));
+    border-radius: 999px; /* pill default */
+}
+.atom-sbadge:not([data-svg])[data-shape="circle"]  { padding: 0; width: var(--sb-width, var(--_size)); border-radius: 50%; }
+.atom-sbadge:not([data-svg])[data-shape="square"]  { border-radius: 0; }
+.atom-sbadge:not([data-svg])[data-shape="rounded"] { border-radius: var(--sb-radius, 6px); }
+
+/* --- SVG shapes: a path paints fill + stroke; the box is square by default. --- */
+.atom-sbadge[data-svg] {
+    width: var(--sb-width, var(--_size));
+    height: var(--sb-height, var(--_size));
+    padding: 0;
+    background: none;
+    border: none;
+}
+/* Ribbon is naturally wide. */
+.atom-sbadge[data-shape="ribbon"] {
+    width: var(--sb-width, calc(var(--_size) * 2.2));
+}
+.atom-sbadge-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    overflow: visible;
+}
+.sb-path {
+    fill: var(--sb-bg, var(--sb-bg-d));
+    stroke: var(--sb-border, var(--sb-border-d));
+    stroke-width: var(--sb-border-width, 1px);
+    stroke-linejoin: round;
+}
+
+/* Dot — textless presence indicator (always a small circle). */
+.atom-sbadge[data-dot="true"] {
+    --_dot: calc(var(--sb-size, 1.5rem) * .42);
+    width: var(--_dot);
+    height: var(--_dot);
+    min-width: 0;
+    padding: 0;
+    border: var(--sb-border-width, 0) solid var(--sb-border, var(--sb-border-d));
+    border-radius: 50%;
+    background: var(--sb-bg, var(--sb-bg-d));
+}
+.atom-sbadge[data-dot="true"] .atom-sbadge-svg { display: none; }
+
+/* --- Overlay placement: only when inside a host wrapper. Inline badges keep static flow. --- */
+.atom-sbadge-host > .atom-sbadge {
+    position: absolute;
+    z-index: 1;
+}
+.atom-sbadge-host > .atom-sbadge[data-placement^="top"]    { top: 0; }
+.atom-sbadge-host > .atom-sbadge[data-placement^="bottom"] { bottom: 0; }
+.atom-sbadge-host > .atom-sbadge[data-placement$="end"]    { right: 0; }
+.atom-sbadge-host > .atom-sbadge[data-placement$="start"]  { left: 0; }
+.atom-sbadge-host > .atom-sbadge[data-placement$="center"] { left: 50%; }
+
+/* Nudge outward from the corner by --sb-offset (default: half the badge, i.e. straddle it). */
+.atom-sbadge-host > .atom-sbadge[data-placement="top-end"]      { transform: translate(var(--sb-offset, 50%), calc(-1 * var(--sb-offset, 50%))); }
+.atom-sbadge-host > .atom-sbadge[data-placement="top-start"]    { transform: translate(calc(-1 * var(--sb-offset, 50%)), calc(-1 * var(--sb-offset, 50%))); }
+.atom-sbadge-host > .atom-sbadge[data-placement="bottom-end"]   { transform: translate(var(--sb-offset, 50%), var(--sb-offset, 50%)); }
+.atom-sbadge-host > .atom-sbadge[data-placement="bottom-start"] { transform: translate(calc(-1 * var(--sb-offset, 50%)), var(--sb-offset, 50%)); }
+.atom-sbadge-host > .atom-sbadge[data-placement="top-center"]    { transform: translate(-50%, calc(-1 * var(--sb-offset, 50%))); }
+.atom-sbadge-host > .atom-sbadge[data-placement="bottom-center"] { transform: translate(-50%, var(--sb-offset, 50%)); }

@@ -1,0 +1,58 @@
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+
+@* Shows generated component markup with Copy-to-clipboard and Save-as-.razor actions.
+   Copy uses the builtin navigator.clipboard API (no custom JS module); Save is a pure
+   data-URI download anchor (no JS at all). *@
+<div class="dsb">
+    <div class="dsb-head">
+        <span class="dsb-title">Generated markup</span>
+        <div class="dsb-actions">
+            <button type="button" class="dsb-btn" @onclick="CopyAsync">@(_copied ? "Copied!" : "Copy")</button>
+            <a class="dsb-btn" download="@FileName" href="@DataUri">Save .razor</a>
+        </div>
+    </div>
+    <pre class="dsb-code"><code>@Code</code></pre>
+</div>
+
+<style>
+    .dsb { background:#0d1118; border:1px solid #1b2330; border-radius:12px; margin-top:1.5rem; overflow:hidden; }
+    .dsb-head { display:flex; align-items:center; justify-content:space-between; gap:1rem;
+        padding:.6rem 1rem; background:#111725; border-bottom:1px solid #1b2330; }
+    .dsb-title { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; }
+    .dsb-actions { display:flex; gap:.5rem; }
+    .dsb-btn { padding:.35rem .8rem; border-radius:6px; border:1px solid #2a3242; background:#161b26;
+        color:#e5e9f0; font-size:.8rem; cursor:pointer; text-decoration:none; line-height:1.4; }
+    .dsb-btn:hover { background:#1c2233; border-color:#3a4152; }
+    .dsb-code { margin:0; padding:1rem; overflow-x:auto; color:#cfd8e3;
+        font-family:ui-monospace,Consolas,monospace; font-size:.82rem; line-height:1.5; white-space:pre; }
+</style>
+
+@code {
+    [Parameter, EditorRequired] public string Code { get; set; } = "";
+    [Parameter] public string FileName { get; set; } = "Snippet.razor";
+
+    private bool _copied;
+    private string? _lastCode;
+
+    // data:text/plain URI so the Save anchor downloads without any JS.
+    private string DataUri => $"data:text/plain;charset=utf-8,{Uri.EscapeDataString(Code)}";
+
+    protected override void OnParametersSet()
+    {
+        if (_lastCode != Code) { _copied = false; _lastCode = Code; }
+    }
+
+    private async Task CopyAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", Code);
+            _copied = true;
+        }
+        catch
+        {
+            _copied = false; // clipboard blocked (e.g. non-secure context) — Save still works.
+        }
+    }
+}

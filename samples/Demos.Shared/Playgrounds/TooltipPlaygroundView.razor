@@ -188,6 +188,8 @@
     </div>
 </div>
 
+<CodeSnippetBox Code="@Snippet" FileName="AtomTooltipExample.razor" />
+
 @code {
     // AtomTooltip playground state — defaults match AtomTooltip.razor.cs / AtomTooltip.razor.css.
     private string Text = "I'm a tooltip";
@@ -206,4 +208,28 @@
     private double ArrowSize = 8;
     private double Offset = 8;
     private string MaxWidth = "16rem";
+
+    // Build a paste-ready <AtomTooltip> from current state; emit only params that differ from defaults.
+    private string Snippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder("<AtomTooltip");
+            sb.Append($" Text=\"{Text}\"");
+            if (Placement != Placement.Top) sb.Append($" Placement=\"Placement.{Placement}\"");
+            if (Shape != Shape.Rectangle) sb.Append($" Shape=\"Shape.{Shape}\"");
+            if (!ShowArrow) sb.Append(" ShowArrow=\"false\"");
+            if (Disabled) sb.Append(" Disabled=\"true\"");
+            if (OverrideBackground) sb.Append($" Background=\"{Background}\"");
+            if (OverrideTextColor) sb.Append($" TextColor=\"{TextColor}\"");
+            if (OverrideBorderColor) sb.Append($" BorderColor=\"{BorderColor}\"");
+            if (BorderWidth != 1) sb.Append($" BorderWidth=\"{BorderWidth}\"");
+            if (Radius != 6) sb.Append($" Radius=\"{Radius}\"");
+            if (ArrowSize != 8) sb.Append($" ArrowSize=\"{ArrowSize}\"");
+            if (Offset != 8) sb.Append($" Offset=\"{Offset}\"");
+            if (MaxWidth != "16rem") sb.Append($" MaxWidth=\"{MaxWidth}\"");
+            sb.Append(">\n    <button>Hover or Tab to me</button>\n</AtomTooltip>");
+            return sb.ToString();
+        }
+    }
 }

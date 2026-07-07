@@ -50,6 +50,8 @@
     </div>
 </div>
 
+<CodeSnippetBox Code="@Snippet" FileName="AtomShapedTooltipExample.razor" />
+
 @code {
     private string Text = "I'm a shaped tooltip";
     private Placement Placement = Placement.Top;
@@ -65,4 +67,27 @@
     private double Offset = 8;
     private string Width = "";
     private string Height = "";
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder("<AtomShapedTooltip");
+            sb.Append($" Text=\"{Text}\"");
+            if (Placement != Placement.Top) sb.Append($" Placement=\"Placement.{Placement}\"");
+            if (Shape != Shape.Rectangle) sb.Append($" Shape=\"Shape.{Shape}\"");
+            if (!ShowArrow) sb.Append(" ShowArrow=\"false\"");
+            if (Disabled) sb.Append(" Disabled=\"true\"");
+            if (OverrideBg) sb.Append($" Background=\"{Bg}\"");
+            if (OverrideBorder) sb.Append($" BorderColor=\"{Border}\"");
+            if (BorderWidth != 1) sb.Append($" BorderWidth=\"{BorderWidth}\"");
+            if (Radius != 12) sb.Append($" Radius=\"{Radius}\"");
+            if (ArrowSize != 8) sb.Append($" ArrowSize=\"{ArrowSize}\"");
+            if (Offset != 8) sb.Append($" Offset=\"{Offset}\"");
+            if (!string.IsNullOrWhiteSpace(Width)) sb.Append($" Width=\"{Width}\"");
+            if (!string.IsNullOrWhiteSpace(Height)) sb.Append($" Height=\"{Height}\"");
+            sb.Append(">\n    <button>Hover or Tab to me</button>\n</AtomShapedTooltip>");
+            return sb.ToString();
+        }
+    }
 }

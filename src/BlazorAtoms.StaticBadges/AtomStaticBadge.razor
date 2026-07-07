@@ -1,0 +1,49 @@
+@inherits AtomComponentBase
+
+@*
+    AtomStaticBadge.razor
+    ---------------------
+    A no-animation badge in a variety of shapes. CSS boxes (pill/circle/square/rounded) get their
+    fill+border from CSS; SVG shapes (star/hexagon/diamond/shield/burst/ribbon) draw an inline path
+    so border works on every shape. Overlays a host at a corner when ChildContent is given, else
+    renders inline. The SVG is authored here (not MarkupString) so Blazor scoped CSS applies.
+*@
+
+@if (ChildContent is not null)
+{
+    <span class="atom-sbadge-host" style="@RootStyle">
+        @ChildContent
+        @if (ShowBadge && !CancellationToken.IsCancellationRequested)
+        {
+            @Badge
+        }
+    </span>
+}
+else if (ShowBadge && !CancellationToken.IsCancellationRequested)
+{
+    @Badge
+}
+
+@code {
+    private RenderFragment Badge => @<span
+             class="atom-sbadge"
+             role="status"
+             aria-label="@EffectiveAriaLabel"
+             data-placement="@PlacementValue"
+             data-shape="@ShapeValue"
+             data-variant="@VariantValue"
+             data-svg="@(IsSvgShape ? "true" : null)"
+             data-dot="@(Dot ? "true" : null)"
+             style="@(ChildContent is null ? RootStyle : null)">
+        @if (IsSvgShape)
+        {
+            <svg class="atom-sbadge-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                <path class="sb-path" d="@CurrentPath" vector-effect="non-scaling-stroke" />
+            </svg>
+        }
+        @if (!Dot)
+        {
+            <span class="atom-sbadge-text">@Display</span>
+        }
+    </span>;
+}

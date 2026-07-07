@@ -56,6 +56,8 @@
     </div>
 </div>
 
+<CodeSnippetBox Code="@Snippet" FileName="AtomPaintedTooltipExample.razor" />
+
 @code {
     private string Text = "I'm painted";
     private Placement Placement = Placement.Top;
@@ -73,4 +75,34 @@
     private double Offset = 8;
     private string Width = "";
     private string Height = "";
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder("<AtomPaintedTooltip");
+            sb.Append($" Text=\"{Text}\"");
+            if (Placement != Placement.Top) sb.Append($" Placement=\"Placement.{Placement}\"");
+            if (Shape != Shape.Rectangle) sb.Append($" Shape=\"Shape.{Shape}\"");
+            if (!ShowArrow) sb.Append(" ShowArrow=\"false\"");
+            if (!Shadow) sb.Append(" Shadow=\"false\"");
+            if (UseGradient)
+            {
+                sb.Append($" GradientFrom=\"{GradFrom}\" GradientTo=\"{GradTo}\"");
+                if (GradAngle != 120) sb.Append($" GradientAngle=\"{GradAngle}\"");
+            }
+            else
+            {
+                sb.Append($" Background=\"{Bg}\"");
+            }
+            sb.Append($" BorderColor=\"{Border}\"");
+            if (BorderWidth != 1) sb.Append($" BorderWidth=\"{BorderWidth}\"");
+            if (ArrowSize != 8) sb.Append($" ArrowSize=\"{ArrowSize}\"");
+            if (Offset != 8) sb.Append($" Offset=\"{Offset}\"");
+            if (!string.IsNullOrWhiteSpace(Width)) sb.Append($" Width=\"{Width}\"");
+            if (!string.IsNullOrWhiteSpace(Height)) sb.Append($" Height=\"{Height}\"");
+            sb.Append(">\n    <button>Hover or Tab to me</button>\n</AtomPaintedTooltip>");
+            return sb.ToString();
+        }
+    }
 }

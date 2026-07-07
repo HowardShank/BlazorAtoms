@@ -66,6 +66,8 @@ rating icons, QR/barcodes, skeleton shapes, and icons.
 | `BlazorAtoms.Skeletons` | AtomSkeletonText, AtomSkeletonBlock, AtomSkeletonAvatar, AtomSkeletonCard |
 | `BlazorAtoms.Charts` | AtomSparkline, AtomBarChart, AtomLineChart, AtomDonut, AtomGauge |
 | `BlazorAtoms.Badges` | AtomBadge, AtomChip, AtomTag, AtomPill, AtomCountBadge |
+| `BlazorAtoms.AnimatedBadges` *(shipped)* | AtomAnimatedBadge — count/label badge that pops in on value; overlays a host corner or inline; Pop/Bounce/Spin/Pulse/Ping; any object value w/ type-aware formatting |
+| `BlazorAtoms.StaticBadges` *(shipped)* | AtomStaticBadge — no-animation count/label badge in many shapes (pill/circle/square/rounded + SVG star/hexagon/diamond/shield/burst/ribbon); overlays a host corner or inline; any object value w/ type-aware formatting |
 | `BlazorAtoms.Avatars` | AtomAvatar, AtomInitialsAvatar, AtomAvatarGroup |
 | `BlazorAtoms.Ratings` | AtomRating (stars/hearts), AtomRatingInput |
 | `BlazorAtoms.Layout` | AtomStack, AtomGrid, AtomDivider, AtomSpacer, AtomCenter, AtomAspectRatio |

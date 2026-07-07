@@ -1,0 +1,156 @@
+/* Token model: --badge-* public knob → --badge-*-d scheme-aware default (same pattern as the
+   activity indicators' --ind-* and the tooltips' --tip-*). Variant presets set the -d values. */
+.atom-badge {
+    --badge-bg-d: #ef4444;
+    --badge-color-d: #ffffff;
+    --badge-border-d: transparent;
+}
+.atom-badge[data-variant="info"]    { --badge-bg-d: #2563eb; --badge-color-d: #fff; }
+.atom-badge[data-variant="success"] { --badge-bg-d: #16a34a; --badge-color-d: #fff; }
+.atom-badge[data-variant="warning"] { --badge-bg-d: #d97706; --badge-color-d: #fff; }
+.atom-badge[data-variant="danger"]  { --badge-bg-d: #dc2626; --badge-color-d: #fff; }
+
+/* Host wrapper for the overlay (notification) mode. */
+.atom-badge-host {
+    position: relative;
+    display: inline-flex;
+}
+
+.atom-badge {
+    --_size: var(--badge-size, 1.25rem);
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--badge-height, var(--_size));
+    width: var(--badge-width, auto);
+    min-width: var(--badge-width, var(--_size));
+    padding: 0 .4em;
+    background: var(--badge-bg, var(--badge-bg-d));
+    color: var(--badge-color, var(--badge-color-d));
+    border: var(--badge-border-width, 0) solid var(--badge-border, var(--badge-border-d));
+    border-radius: 999px;
+    font-size: calc(var(--_size) * .62);
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.atom-badge-text {
+    display: inline-block;
+    max-width: var(--badge-max-width, none);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Shapes */
+.atom-badge[data-shape="circle"]  { padding: 0; width: var(--badge-width, var(--_size)); height: var(--badge-height, var(--_size)); border-radius: 50%; }
+.atom-badge[data-shape="square"]  { border-radius: 0; }
+.atom-badge[data-shape="rounded"] { border-radius: var(--badge-radius, 6px); }
+
+/* Dot — textless presence indicator. */
+.atom-badge[data-dot="true"] {
+    --_dot: calc(var(--badge-size, 1.25rem) * .5);
+    width: var(--_dot);
+    height: var(--_dot);
+    min-width: 0;
+    padding: 0;
+    border-radius: 50%;
+}
+
+/* --- Overlay placement: only when inside a host wrapper. Inline badges keep static flow. --- */
+.atom-badge-host > .atom-badge {
+    position: absolute;
+    z-index: 1;
+}
+.atom-badge-host > .atom-badge[data-placement^="top"]    { top: 0; }
+.atom-badge-host > .atom-badge[data-placement^="bottom"] { bottom: 0; }
+.atom-badge-host > .atom-badge[data-placement$="end"]    { right: 0; }
+.atom-badge-host > .atom-badge[data-placement$="start"]  { left: 0; }
+.atom-badge-host > .atom-badge[data-placement$="center"] { left: 50%; }
+
+/* Nudge outward from the corner by --badge-offset (default: half the badge, i.e. straddle it). */
+.atom-badge-host > .atom-badge[data-placement="top-end"]      { transform: translate(var(--badge-offset, 50%), calc(-1 * var(--badge-offset, 50%))); }
+.atom-badge-host > .atom-badge[data-placement="top-start"]    { transform: translate(calc(-1 * var(--badge-offset, 50%)), calc(-1 * var(--badge-offset, 50%))); }
+.atom-badge-host > .atom-badge[data-placement="bottom-end"]   { transform: translate(var(--badge-offset, 50%), var(--badge-offset, 50%)); }
+.atom-badge-host > .atom-badge[data-placement="bottom-start"] { transform: translate(calc(-1 * var(--badge-offset, 50%)), var(--badge-offset, 50%)); }
+.atom-badge-host > .atom-badge[data-placement="top-center"]    { transform: translate(-50%, calc(-1 * var(--badge-offset, 50%))); }
+.atom-badge-host > .atom-badge[data-placement="bottom-center"] { transform: translate(-50%, var(--badge-offset, 50%)); }
+
+/* =====================================================================================
+   Animations. data-anim selects the keyframes; data-trigger selects how they run.
+   ===================================================================================== */
+
+/* Ping ring — expanding fading ring behind the badge. */
+.atom-badge-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--badge-bg, var(--badge-bg-d));
+    z-index: -1;
+    opacity: 0;
+}
+.atom-badge[data-anim="ping"] .atom-badge-ring {
+    animation: atom-badge-ping var(--badge-anim-duration, 1.4s) cubic-bezier(0, 0, .2, 1) var(--badge-anim-delay, 0s) infinite;
+}
+
+@keyframes atom-badge-pop {
+    from { transform: scale(0); opacity: 0; }
+    60%  { transform: scale(1.15); }
+    to   { transform: scale(1); opacity: 1; }
+}
+@keyframes atom-badge-bounce {
+    0%, 100% { transform: translateY(0); }
+    30%      { transform: translateY(-35%); }
+    50%      { transform: translateY(0); }
+    65%      { transform: translateY(-15%); }
+}
+@keyframes atom-badge-spin { to { transform: rotate(360deg); } }
+@keyframes atom-badge-pulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.18); }
+}
+@keyframes atom-badge-ping {
+    0%   { transform: scale(1); opacity: .55; }
+    100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* NOTE: reference keyframes by their LITERAL name in each `animation` declaration. Blazor's CSS
+   isolation rewrites both the @keyframes name and any animation-name that references it with the
+   scope suffix — but only for direct references, NOT names hidden inside a var(). (Routing the
+   name through a custom property silently breaks the animation.) ping has no badge transform;
+   its ring animates separately above. */
+
+/* Appear + OnChange — one-shot. Duration/delay overridable via --badge-anim-*. */
+.atom-badge[data-anim="pop"][data-trigger="appear"],
+.atom-badge[data-anim="pop"][data-trigger="onchange"]    { animation: atom-badge-pop var(--badge-anim-duration, .5s) ease var(--badge-anim-delay, 0s) both; }
+.atom-badge[data-anim="bounce"][data-trigger="appear"],
+.atom-badge[data-anim="bounce"][data-trigger="onchange"] { animation: atom-badge-bounce var(--badge-anim-duration, .6s) ease var(--badge-anim-delay, 0s) both; }
+.atom-badge[data-anim="spin"][data-trigger="appear"],
+.atom-badge[data-anim="spin"][data-trigger="onchange"]   { animation: atom-badge-spin var(--badge-anim-duration, .7s) ease var(--badge-anim-delay, 0s) both; }
+.atom-badge[data-anim="pulse"][data-trigger="appear"],
+.atom-badge[data-anim="pulse"][data-trigger="onchange"]  { animation: atom-badge-pulse var(--badge-anim-duration, .5s) ease var(--badge-anim-delay, 0s) both; }
+
+/* Loop — continuous. */
+.atom-badge[data-anim="pop"][data-trigger="loop"]    { animation: atom-badge-pop var(--badge-anim-duration, 1.2s) ease-in-out var(--badge-anim-delay, 0s) infinite; }
+.atom-badge[data-anim="bounce"][data-trigger="loop"] { animation: atom-badge-bounce var(--badge-anim-duration, 1.2s) ease-in-out var(--badge-anim-delay, 0s) infinite; }
+.atom-badge[data-anim="pulse"][data-trigger="loop"]  { animation: atom-badge-pulse var(--badge-anim-duration, 1.2s) ease-in-out var(--badge-anim-delay, 0s) infinite; }
+.atom-badge[data-anim="spin"][data-trigger="loop"]   { animation: atom-badge-spin var(--badge-anim-duration, 1.1s) linear var(--badge-anim-delay, 0s) infinite; }
+
+/* Hover — play while the pointer is over the badge or its host. */
+.atom-badge[data-anim="pop"][data-trigger="hover"]:hover,
+.atom-badge-host:hover > .atom-badge[data-anim="pop"][data-trigger="hover"]    { animation: atom-badge-pop var(--badge-anim-duration, .8s) ease var(--badge-anim-delay, 0s); }
+.atom-badge[data-anim="bounce"][data-trigger="hover"]:hover,
+.atom-badge-host:hover > .atom-badge[data-anim="bounce"][data-trigger="hover"] { animation: atom-badge-bounce var(--badge-anim-duration, .8s) ease var(--badge-anim-delay, 0s) infinite; }
+.atom-badge[data-anim="pulse"][data-trigger="hover"]:hover,
+.atom-badge-host:hover > .atom-badge[data-anim="pulse"][data-trigger="hover"]  { animation: atom-badge-pulse var(--badge-anim-duration, .9s) ease-in-out var(--badge-anim-delay, 0s) infinite; }
+.atom-badge[data-anim="spin"][data-trigger="hover"]:hover,
+.atom-badge-host:hover > .atom-badge[data-anim="spin"][data-trigger="hover"]   { animation: atom-badge-spin var(--badge-anim-duration, .9s) linear var(--badge-anim-delay, 0s) infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-badge,
+    .atom-badge .atom-badge-ring {
+        animation: none !important;
+    }
+}
