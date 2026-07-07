@@ -9,6 +9,9 @@
   <ItemGroup>
     <ProjectReference Include="..\src\BlazorAtoms.ActivityIndicators\BlazorAtoms.ActivityIndicators.csproj" />
     <ProjectReference Include="..\src\BlazorAtoms.Barcodes\BlazorAtoms.Barcodes.csproj" />
+    <ProjectReference Include="..\src\BlazorAtoms.Tooltips\BlazorAtoms.Tooltips.csproj" />
+    <ProjectReference Include="..\src\BlazorAtoms.ShapedTooltips\BlazorAtoms.ShapedTooltips.csproj" />
+    <ProjectReference Include="..\src\BlazorAtoms.PaintedTooltips\BlazorAtoms.PaintedTooltips.csproj" />
     <ProjectReference Include="..\branding\BlazorAtoms.Branding\BlazorAtoms.Branding.csproj" />
     <ProjectReference Include="..\samples\Demos.Shared\Demos.Shared.csproj" />
   </ItemGroup>

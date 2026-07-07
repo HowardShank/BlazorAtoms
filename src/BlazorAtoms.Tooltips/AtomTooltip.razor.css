@@ -1,0 +1,244 @@
+/* Token model: --tip-* (public knob, unset by default) falls back to --tip-*-d (private,   */
+/* scheme-aware default). Same pattern as BlazorAtoms.ActivityIndicators' --ind-* tokens.     */
+.atom-tooltip {
+    --tip-bg-d: #1f2430;
+    --tip-color-d: #f2f4f8;
+    --tip-border-d: #3a4152;
+}
+@media (prefers-color-scheme: light) {
+    .atom-tooltip {
+        --tip-bg-d: #ffffff;
+        --tip-color-d: #1a1d24;
+        --tip-border-d: #d7dbe3;
+    }
+}
+
+.atom-tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.atom-tooltip-trigger {
+    display: inline-block;
+}
+
+.atom-tooltip-bubble {
+    position: absolute;
+    z-index: 1000;
+    box-sizing: border-box;
+    width: max-content;
+    max-width: var(--tip-max-width, 16rem);
+    padding: .4em .65em;
+    background: var(--tip-bg, var(--tip-bg-d));
+    color: var(--tip-color, var(--tip-color-d));
+    border: var(--tip-border-width, 1px) solid var(--tip-border, var(--tip-border-d));
+    border-radius: var(--tip-radius, 6px);
+    font-size: .85rem;
+    line-height: 1.35;
+    text-align: start;
+    white-space: normal;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .12s ease, visibility .12s ease;
+    transition-delay: .15s;
+}
+
+/* --- Placement: absolute offset from the trigger, relative to the .atom-tooltip wrapper
+       (position:relative). Pure CSS, works in every browser and every render mode. The bubble
+       is not clipped as long as no ancestor sets overflow:hidden/clip on the tooltip region. --- */
+.atom-tooltip-bubble[data-placement^="top"]    { bottom: calc(100% + var(--tip-offset, 8px)); }
+.atom-tooltip-bubble[data-placement^="bottom"] { top: calc(100% + var(--tip-offset, 8px)); }
+.atom-tooltip-bubble[data-placement="top"],
+.atom-tooltip-bubble[data-placement="bottom"]  { left: 50%; transform: translateX(-50%); }
+.atom-tooltip-bubble[data-placement="top-start"],
+.atom-tooltip-bubble[data-placement="bottom-start"] { left: 0; }
+.atom-tooltip-bubble[data-placement="top-end"],
+.atom-tooltip-bubble[data-placement="bottom-end"]   { right: 0; }
+
+.atom-tooltip-bubble[data-placement^="left"]  { right: calc(100% + var(--tip-offset, 8px)); }
+.atom-tooltip-bubble[data-placement^="right"] { left: calc(100% + var(--tip-offset, 8px)); }
+.atom-tooltip-bubble[data-placement="left"],
+.atom-tooltip-bubble[data-placement="right"]  { top: 50%; transform: translateY(-50%); }
+.atom-tooltip-bubble[data-placement="left-start"],
+.atom-tooltip-bubble[data-placement="right-start"] { top: 0; }
+.atom-tooltip-bubble[data-placement="left-end"],
+.atom-tooltip-bubble[data-placement="right-end"]   { bottom: 0; }
+
+/* Diagonal corner placements — bubble sits fully off the named corner of the trigger.
+   (The [data-placement^="top"|"bottom"] rules above already set the vertical edge for these.) */
+.atom-tooltip-bubble[data-placement="top-left"],
+.atom-tooltip-bubble[data-placement="bottom-left"]  { right: calc(100% + var(--tip-offset, 8px)); }
+.atom-tooltip-bubble[data-placement="top-right"],
+.atom-tooltip-bubble[data-placement="bottom-right"] { left: calc(100% + var(--tip-offset, 8px)); }
+
+/* Cursor mode — the bubble is fixed-positioned at the pointer (JS writes --tip-cursor-*),
+   nudged down-right so it doesn't sit under the cursor. Hidden off-screen until the first
+   pointer move so it never flashes at 0,0. */
+.atom-tooltip-bubble[data-placement="cursor"] {
+    position: fixed;
+    left: var(--tip-cursor-x, -9999px);
+    top: var(--tip-cursor-y, -9999px);
+    transform: translate(var(--tip-offset, 12px), var(--tip-offset, 12px));
+}
+
+/* --- Arrow: a rotated square, half hidden behind the bubble edge nearest the trigger. --- */
+.atom-tooltip-arrow {
+    position: absolute;
+    width: var(--tip-arrow-size, 8px);
+    height: var(--tip-arrow-size, 8px);
+    background: var(--tip-bg, var(--tip-bg-d));
+    border: var(--tip-border-width, 1px) solid var(--tip-border, var(--tip-border-d));
+    transform: rotate(45deg);
+}
+
+.atom-tooltip-bubble[data-placement^="top"] .atom-tooltip-arrow {
+    bottom: calc(var(--tip-arrow-size, 8px) / -2 - var(--tip-border-width, 1px));
+    left: calc(50% - var(--tip-arrow-size, 8px) / 2);
+    border-top: none;
+    border-left: none;
+}
+.atom-tooltip-bubble[data-placement^="bottom"] .atom-tooltip-arrow {
+    top: calc(var(--tip-arrow-size, 8px) / -2 - var(--tip-border-width, 1px));
+    left: calc(50% - var(--tip-arrow-size, 8px) / 2);
+    border-bottom: none;
+    border-right: none;
+}
+.atom-tooltip-bubble[data-placement^="left"] .atom-tooltip-arrow {
+    right: calc(var(--tip-arrow-size, 8px) / -2 - var(--tip-border-width, 1px));
+    top: calc(50% - var(--tip-arrow-size, 8px) / 2);
+    border-bottom: none;
+    border-left: none;
+}
+.atom-tooltip-bubble[data-placement^="right"] .atom-tooltip-arrow {
+    left: calc(var(--tip-arrow-size, 8px) / -2 - var(--tip-border-width, 1px));
+    top: calc(50% - var(--tip-arrow-size, 8px) / 2);
+    border-top: none;
+    border-right: none;
+}
+
+/* Corner arrows: keep the vertical edge + border cut from the [^="top"|"bottom"] rules above,
+   but move the arrow to the bubble corner nearest the trigger instead of the centre. */
+.atom-tooltip-bubble[data-placement="top-left"] .atom-tooltip-arrow,
+.atom-tooltip-bubble[data-placement="bottom-left"] .atom-tooltip-arrow {
+    left: auto;
+    right: var(--tip-arrow-size, 8px);
+}
+.atom-tooltip-bubble[data-placement="top-right"] .atom-tooltip-arrow,
+.atom-tooltip-bubble[data-placement="bottom-right"] .atom-tooltip-arrow {
+    left: var(--tip-arrow-size, 8px);
+}
+
+.atom-tooltip-content {
+    position: relative;
+}
+
+/* --- Show/hide: pure CSS, hover or keyboard focus on the trigger. A short hide-delay (set
+       above) gives the pointer time to travel from the trigger into the bubble's own hover
+       area, so links/buttons inside a rich TooltipContent stay reachable. --- */
+.atom-tooltip-trigger:hover ~ .atom-tooltip-bubble,
+.atom-tooltip-trigger:focus-within ~ .atom-tooltip-bubble,
+.atom-tooltip-bubble:hover {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition-delay: 0s;
+}
+
+/* =========================================================================================
+   Shapes (data-shape). Rectangle is the default and needs no rule (uses --tip-radius above).
+   ========================================================================================= */
+
+/* Pill — fully rounded ends. */
+.atom-tooltip-bubble[data-shape="pill"] {
+    border-radius: 999px;
+}
+
+/* Ellipse — extra inset so text stays inside the curve. */
+.atom-tooltip-bubble[data-shape="ellipse"] {
+    border-radius: 50%;
+    padding: .7em 1.2em;
+    text-align: center;
+}
+
+/* Burst — comic spiky star. clip-path clips the border + arrow away (fill only). */
+.atom-tooltip-bubble[data-shape="burst"] {
+    border: 0;
+    border-radius: 0;
+    padding: .75em 1.1em;
+    background: var(--tip-bg, var(--tip-bg-d));
+    clip-path: polygon(
+        50% 0%, 61% 12%, 77% 6%, 76% 24%, 94% 24%, 82% 38%, 100% 50%,
+        82% 62%, 94% 76%, 76% 76%, 77% 94%, 61% 88%, 50% 100%, 39% 88%,
+        23% 94%, 24% 76%, 6% 76%, 18% 62%, 0% 50%, 18% 38%, 6% 24%,
+        24% 24%, 23% 6%, 39% 12%);
+}
+
+/* Folded corner — dog-ear top-right. clip-path clips the border + arrow away (fill only). */
+.atom-tooltip-bubble[data-shape="folded"] {
+    border: 0;
+    background: var(--tip-bg, var(--tip-bg-d));
+    clip-path: polygon(0 0, calc(100% - 1.1em) 0, 100% 1.1em, 100% 100%, 0 100%);
+}
+
+/* Thought — rounded body; the arrow element becomes a trail of shrinking circles pointing
+   at the trigger. Circle sizes/offsets are in units of --tip-arrow-size (S). */
+.atom-tooltip-bubble[data-shape="thought"] {
+    border-radius: 1.2em;
+}
+.atom-tooltip-bubble[data-shape="thought"] .atom-tooltip-arrow {
+    width: var(--tip-arrow-size, 8px);
+    height: var(--tip-arrow-size, 8px);
+    background: var(--tip-bg, var(--tip-bg-d));
+    border: var(--tip-border-width, 1px) solid var(--tip-border, var(--tip-border-d));
+    border-radius: 50%;
+    transform: none;
+}
+.atom-tooltip-bubble[data-shape="thought"] .atom-tooltip-arrow::before,
+.atom-tooltip-bubble[data-shape="thought"] .atom-tooltip-arrow::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    background: var(--tip-bg, var(--tip-bg-d));
+    border: var(--tip-border-width, 1px) solid var(--tip-border, var(--tip-border-d));
+}
+.atom-tooltip-bubble[data-shape="thought"] .atom-tooltip-arrow::before {
+    width: calc(var(--tip-arrow-size, 8px) * .7);
+    height: calc(var(--tip-arrow-size, 8px) * .7);
+}
+.atom-tooltip-bubble[data-shape="thought"] .atom-tooltip-arrow::after {
+    width: calc(var(--tip-arrow-size, 8px) * .45);
+    height: calc(var(--tip-arrow-size, 8px) * .45);
+}
+
+/* Trail direction: circles march from the bubble edge toward the trigger. */
+.atom-tooltip-bubble[data-placement^="top"][data-shape="thought"] .atom-tooltip-arrow::before {
+    left: 50%; top: 120%; transform: translateX(-50%);
+}
+.atom-tooltip-bubble[data-placement^="top"][data-shape="thought"] .atom-tooltip-arrow::after {
+    left: 50%; top: 270%; transform: translateX(-50%);
+}
+.atom-tooltip-bubble[data-placement^="bottom"][data-shape="thought"] .atom-tooltip-arrow::before {
+    left: 50%; bottom: 120%; transform: translateX(-50%);
+}
+.atom-tooltip-bubble[data-placement^="bottom"][data-shape="thought"] .atom-tooltip-arrow::after {
+    left: 50%; bottom: 270%; transform: translateX(-50%);
+}
+.atom-tooltip-bubble[data-placement^="left"][data-shape="thought"] .atom-tooltip-arrow::before {
+    top: 50%; left: 120%; transform: translateY(-50%);
+}
+.atom-tooltip-bubble[data-placement^="left"][data-shape="thought"] .atom-tooltip-arrow::after {
+    top: 50%; left: 270%; transform: translateY(-50%);
+}
+.atom-tooltip-bubble[data-placement^="right"][data-shape="thought"] .atom-tooltip-arrow::before {
+    top: 50%; right: 120%; transform: translateY(-50%);
+}
+.atom-tooltip-bubble[data-placement^="right"][data-shape="thought"] .atom-tooltip-arrow::after {
+    top: 50%; right: 270%; transform: translateY(-50%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-tooltip-bubble {
+        transition: none;
+    }
+}

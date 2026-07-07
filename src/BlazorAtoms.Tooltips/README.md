@@ -1,0 +1,247 @@
+# BlazorAtoms.Tooltips
+
+A self-contained, pure-CSS **tooltip** for Blazor — **Server or WebAssembly**. No
+JavaScript, no dependencies. Ships as a Razor Class Library (RCL).
+
+[![.NET](https://github.com/HowardShank/BlazorAtoms/actions/workflows/dotnet.yml/badge.svg)](https://github.com/HowardShank/BlazorAtoms/actions/workflows/dotnet.yml)
+
+Shows a small bubble beside any trigger content on hover or keyboard focus. Configurable
+placement, colors, border, and attachment arrow.
+
+---
+
+## Package layout
+
+```
+BlazorAtoms.Tooltips/
+  AtomTooltip.razor / .razor.cs / .razor.css   <- the component
+  Placement.cs                                  <- Placement enum
+```
+
+| Type | Namespace |
+|---|---|
+| `AtomTooltip` | `BlazorAtoms.Tooltips` |
+| `Placement` | `BlazorAtoms.Tooltips` |
+
+---
+
+## Install
+
+1. Reference the library — NuGet:
+   ```xml
+   <PackageReference Include="BlazorAtoms.Tooltips" Version="0.1.0" />
+   ```
+   …or a project reference:
+   ```xml
+   <ProjectReference Include="..\BlazorAtoms.Tooltips\BlazorAtoms.Tooltips.csproj" />
+   ```
+2. Ensure your layout references the scoped-CSS bundle — modern templates already include
+   `<link rel="stylesheet" href="YourApp.styles.css" />`. An RCL's scoped CSS is bundled
+   into the **consuming app's** `{App}.styles.css` automatically; without that link the
+   tooltip renders unstyled/invisible.
+3. Add the namespace to `_Imports.razor`:
+   ```razor
+   @using BlazorAtoms.Tooltips
+   ```
+
+---
+
+## Basic usage
+
+```razor
+<AtomTooltip Text="Saves your changes">
+    <button>Save</button>
+</AtomTooltip>
+
+<AtomTooltip Text="Top-start placement" Placement="Placement.TopStart">
+    <span tabindex="0">Hover or Tab to me</span>
+</AtomTooltip>
+
+@* Rich content instead of plain text *@
+<AtomTooltip Placement="Placement.Right">
+    <a href="/docs">Docs</a>
+    <TooltipContent>
+        See the <strong>full reference</strong> for details.
+    </TooltipContent>
+</AtomTooltip>
+```
+
+The trigger (`ChildContent`) is shown as-is; the bubble appears on `:hover` or
+`:focus-within` of the trigger. **Give non-interactive triggers (a bare `<span>`, an icon)
+a `tabindex="0"`** so keyboard users can reach them — buttons/links already are focusable.
+
+---
+
+## Parameters
+
+| Parameter | Type | Default | Notes |
+|-----------|------|---------|-------|
+| `ChildContent` | `RenderFragment` | — | **Required.** The trigger content. |
+| `Text` | `string?` | `null` | Simple bubble content. Ignored if `TooltipContent` is set. |
+| `TooltipContent` | `RenderFragment?` | `null` | Rich bubble content; takes priority over `Text`. |
+| `Placement` | `Placement` | `Top` | Side (`Top`/`Bottom`/`Left`/`Right`, each with `…Start`/`…End`), diagonal corner (`TopLeft`/`TopRight`/`BottomLeft`/`BottomRight`), or `Cursor` (follows the pointer — see below). |
+| `Shape` | `Shape` | `Rectangle` | Bubble outline: `Rectangle` (rounded rect, uses `Radius`), `Pill`, `Ellipse`, `Thought`, `Burst`, `FoldedCorner`. See [Shapes](#shapes). |
+| `ShowArrow` | `bool` | `true` | Draw the attachment arrow pointing at the trigger. Ignored in `Cursor` mode and on `Burst`/`FoldedCorner` shapes. |
+| `Disabled` | `bool` | `false` | Suppresses the bubble entirely; trigger still renders. |
+| `Background` | `string?` | `null` | Sets `--tip-bg`. Any CSS color. |
+| `TextColor` | `string?` | `null` | Sets `--tip-color`. |
+| `BorderColor` | `string?` | `null` | Sets `--tip-border`. |
+| `BorderWidth` | `double?` | `null` | Sets `--tip-border-width` (px). |
+| `Radius` | `double?` | `null` | Sets `--tip-radius` (px). |
+| `ArrowSize` | `double?` | `null` | Sets `--tip-arrow-size` (px). |
+| `MaxWidth` | `string?` | `null` | Sets `--tip-max-width` (any CSS length, e.g. `"16rem"`). |
+| `Offset` | `double?` | `null` | Sets `--tip-offset` — gap between trigger and bubble (px). In `Cursor` mode, the gap between the pointer and the bubble (default 12). |
+| `Class` | `string?` | `null` | Extra CSS class(es) on the root element. |
+| `Style` | `string?` | `null` | Extra inline style appended after the built-in theme style. |
+
+---
+
+## Shapes
+
+Set `Shape` to change the bubble outline:
+
+| Shape | Notes |
+|-------|-------|
+| `Rectangle` *(default)* | Rounded rectangle; corner rounding via `Radius`. Keeps border + arrow. |
+| `Pill` | Fully rounded ends (stadium). Keeps border + arrow. |
+| `Ellipse` | Elliptical; content is inset + centered. Best for short text. Keeps border + arrow. |
+| `Thought` | "Thinking" bubble — rounded body; the arrow becomes a trail of shrinking circles pointing at the trigger (obeys `ShowArrow`). Keeps border. |
+| `Burst` | Comic spiky star. **Fill only** — `clip-path` removes the border + arrow. |
+| `FoldedCorner` | Dog-ear folded top-right corner. **Fill only** — `clip-path` removes the border + arrow. |
+
+```razor
+<AtomTooltip Text="Nice!" Shape="Shape.Pill"><button>Pill</button></AtomTooltip>
+<AtomTooltip Text="Hmm…" Shape="Shape.Thought" Placement="Placement.Top"><span tabindex="0">Think</span></AtomTooltip>
+<AtomTooltip Text="POW!" Shape="Shape.Burst"><button>Burst</button></AtomTooltip>
+```
+
+> **Border on `Burst`/`FoldedCorner`:** these use CSS `clip-path`, which clips the border away,
+> so `BorderColor`/`BorderWidth` have no visible effect and no arrow is drawn. A bordered,
+> crisper version of these shapes is planned via an SVG background.
+
+## Theming (CSS custom properties)
+
+Same token model as `BlazorAtoms.ActivityIndicators`: each token has a *public* name you can
+set, and a *private*, scheme-aware `-d` default the component falls back to.
+
+| Token | Role | Default (dark) | Default (light) |
+|---|---|---|---|
+| `--tip-bg` | Bubble background | `#1f2430` | `#ffffff` |
+| `--tip-color` | Bubble text | `#f2f4f8` | `#1a1d24` |
+| `--tip-border` | Bubble border | `#3a4152` | `#d7dbe3` |
+| `--tip-border-width` | Border width | `1px` | |
+| `--tip-radius` | Corner radius | `6px` | |
+| `--tip-arrow-size` | Arrow size | `8px` | |
+| `--tip-max-width` | Bubble max-width | `16rem` | |
+| `--tip-offset` | Trigger↔bubble gap | `8px` | |
+
+Three equivalent ways to theme:
+
+```razor
+@* 1. Parameters — per instance *@
+<AtomTooltip Text="Danger zone" Background="#7f1d1d" TextColor="#fff" BorderColor="#450a0a">
+    <button>Delete</button>
+</AtomTooltip>
+
+@* 2. Class + your own CSS rule — reusable named theme *@
+<AtomTooltip Text="Danger zone" Class="tip-danger">
+    <button>Delete</button>
+</AtomTooltip>
+```
+```css
+.tip-danger { --tip-bg: #7f1d1d; --tip-color: #fff; --tip-border: #450a0a; }
+```
+
+```razor
+@* 3. A CSS variable on any ancestor — themes every tooltip inside a region at once *@
+<div class="danger-panel">
+    <AtomTooltip Text="A"><button>A</button></AtomTooltip>
+    <AtomTooltip Text="B"><button>B</button></AtomTooltip>
+</div>
+```
+```css
+.danger-panel { --tip-bg: #7f1d1d; --tip-color: #fff; }
+```
+
+---
+
+## How positioning works
+
+`Placement` is applied via a `data-placement` attribute and resolved in pure CSS:
+`position:absolute` on the bubble, offset from the trigger's wrapper (which is
+`position:relative`) per placement. This is deterministic and works in **every browser and
+every render mode** — no JavaScript, no dependence on newer CSS features.
+
+Trade-offs of the JS-free approach (v1):
+- **No auto-flip** on viewport overflow — the bubble stays on the side you asked for. Pick a
+  `Placement` that has room, or leave margin around edge triggers.
+- The bubble is clipped by an ancestor with `overflow:hidden`/`clip`, since it lives inside
+  the trigger's wrapper. Keep the tooltip out of clipped/scrolling containers, or give that
+  container room.
+
+(An optional CSS Anchor Positioning enhancement for auto-flip may come later; it's browser-
+version-sensitive, so v1 sticks with the mechanism that works everywhere.)
+
+### Corner placements
+
+`TopLeft`, `TopRight`, `BottomLeft`, `BottomRight` place the bubble diagonally off the named
+corner of the trigger (e.g. `TopRight` = above-and-right). Same pure-CSS mechanism as the
+side placements.
+
+### Cursor mode (`Placement.Cursor`)
+
+The bubble follows the mouse pointer while hovering the trigger. CSS can't read the cursor
+position, so this one mode uses a tiny JS module — but it stays **invisible to you**: the
+component lazy-imports `_content/BlazorAtoms.Tooltips/atom-tooltip.js` itself via
+`IJSObjectReference` the first time a Cursor tooltip renders, attaches a `pointermove`
+listener, and disposes it (`IAsyncDisposable`) when the component goes away. No `<script>`
+tag, no DI registration, nothing to wire up.
+
+```razor
+<AtomTooltip Text="I follow your cursor" Placement="Placement.Cursor">
+    <span tabindex="0">Hover over me</span>
+</AtomTooltip>
+```
+
+Caveats specific to Cursor mode:
+- **Needs interactivity** — JS interop can't run during static SSR/prerender, so the bubble
+  won't position until the component is interactive (`InteractiveServer`/`WebAssembly`/`Auto`).
+- **No arrow** — there's no fixed edge to point from, so `ShowArrow` is ignored.
+- **`Offset`** sets the gap between the pointer and the bubble (default 12px).
+- Every other placement remains 100% JS-free; the module is never loaded unless a Cursor
+  tooltip is actually used.
+
+---
+
+## Accessibility
+
+- The bubble has `role="tooltip"` and a stable per-instance `id`; the trigger wrapper has
+  a matching `aria-describedby` — wired at render time in C#, no JS needed.
+- Shown on `:hover` **and** `:focus-within`, so keyboard users see it too. Give
+  non-interactive trigger elements a `tabindex="0"` so they're reachable.
+- A short hide-delay lets the pointer travel from the trigger into the bubble itself, so a
+  link/button inside `TooltipContent` stays reachable on hover.
+
+---
+
+## Reduced motion
+
+The show/hide fade is a CSS `transition`, not required for functionality — under
+`prefers-reduced-motion: reduce` the transition is removed and the bubble still
+shows/hides instantly.
+
+---
+
+## Server + WebAssembly
+
+Pure CSS, no JS, no DI — works unchanged under `InteractiveServer`,
+`InteractiveWebAssembly`, and `InteractiveAuto`, and even in static SSR (no JS interop to
+wait for).
+
+---
+
+## Notes & gotchas
+
+- **Scoped-CSS bundle must be linked** — the most common "it renders but isn't styled" cause.
+- **No auto-flip** — the bubble stays on the requested side; see "How positioning works".
+- **Give non-interactive triggers a `tabindex`** or keyboard users can't reveal the tooltip.

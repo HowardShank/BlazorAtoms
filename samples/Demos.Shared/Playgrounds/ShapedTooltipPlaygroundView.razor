@@ -1,0 +1,68 @@
+@using BlazorAtoms.ShapedTooltips
+
+<PageTitle>AtomShapedTooltip Playground</PageTitle>
+
+<style>
+    .tt-stage-outer { display:flex; align-items:center; justify-content:center; min-height:220px;
+        background: radial-gradient(ellipse at center,#0b1019 0%,#07090d 100%); border:1px solid #1b2330;
+        border-radius:12px; padding:1.5rem; margin-bottom:1.5rem; }
+    .tt-trigger-btn { padding:.6rem 1.1rem; border-radius:6px; border:1px solid #2a3242; background:#161b26; color:#e5e9f0; font-size:.95rem; cursor:pointer; }
+    .tt-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem 1.5rem;
+        background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; }
+    .tt-ctrl { display:flex; flex-direction:column; gap:.35rem; }
+    .tt-ctrl label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; gap:.5rem; }
+    .tt-ctrl label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
+    .tt-controls input[type=range], .tt-controls input[type=text], .tt-controls select { width:100%; accent-color:#00b3c4; }
+    .tt-controls input[type=color] { width:100%; height:32px; background:none; border:1px solid #1b2330; border-radius:6px; padding:2px; }
+    .tt-ctrl .row { display:flex; align-items:center; gap:.5rem; }
+    .tt-ctrl .row input[type=checkbox] { accent-color:#00b3c4; width:16px; height:16px; }
+    .tt-ctrl .row label { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; justify-content:flex-start; }
+</style>
+
+<h1>AtomShapedTooltip playground</h1>
+<p>SVG-drawn bubble outline — border works on <em>every</em> shape (incl. burst / folded / cloud). Color from CSS tokens.</p>
+<p><a href="demo">&larr; Back to demo</a></p>
+
+<div class="tt-stage-outer">
+    <AtomShapedTooltip Text="@Text" Placement="@Placement" Shape="@Shape" ShowArrow="@ShowArrow" Disabled="@Disabled"
+                       Background="@(OverrideBg ? Bg : null)" BorderColor="@(OverrideBorder ? Border : null)"
+                       BorderWidth="@BorderWidth" Radius="@Radius" ArrowSize="@ArrowSize" Offset="@Offset"
+                       Width="@(string.IsNullOrWhiteSpace(Width) ? null : Width)" Height="@(string.IsNullOrWhiteSpace(Height) ? null : Height)">
+        <button class="tt-trigger-btn">Hover or Tab to me</button>
+    </AtomShapedTooltip>
+</div>
+
+<div class="tt-controls">
+    <div class="tt-ctrl"><label>Text</label><input type="text" @bind="Text" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Placement</label><select @bind="Placement">@foreach (var p in Enum.GetValues<Placement>()){<option value="@p">@p</option>}</select></div>
+    <div class="tt-ctrl"><label>Shape</label><select @bind="Shape">@foreach (var s in Enum.GetValues<Shape>()){<option value="@s">@s</option>}</select></div>
+    <div class="tt-ctrl"><label>Background</label><div class="row"><input type="checkbox" @bind="OverrideBg" /><input type="color" @bind="Bg" @bind:event="oninput" disabled="@(!OverrideBg)" /></div></div>
+    <div class="tt-ctrl"><label>Border color</label><div class="row"><input type="checkbox" @bind="OverrideBorder" /><input type="color" @bind="Border" @bind:event="oninput" disabled="@(!OverrideBorder)" /></div></div>
+    <div class="tt-ctrl"><label>Border width <span class="val">@(BorderWidth)px</span></label><input type="range" min="0" max="6" step="1" @bind="BorderWidth" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Radius (rect) <span class="val">@Radius</span></label><input type="range" min="0" max="50" step="1" @bind="Radius" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Arrow size <span class="val">@(ArrowSize)px</span></label><input type="range" min="0" max="20" step="1" @bind="ArrowSize" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Offset <span class="val">@(Offset)px</span></label><input type="range" min="0" max="32" step="1" @bind="Offset" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Width (e.g. 160px)</label><input type="text" @bind="Width" @bind:event="oninput" placeholder="auto" /></div>
+    <div class="tt-ctrl"><label>Height (e.g. 90px)</label><input type="text" @bind="Height" @bind:event="oninput" placeholder="auto" /></div>
+    <div class="tt-ctrl"><label>Options</label>
+        <div class="row"><input type="checkbox" id="sa" @bind="ShowArrow" /><label for="sa">Show arrow</label></div>
+        <div class="row"><input type="checkbox" id="dis" @bind="Disabled" /><label for="dis">Disabled</label></div>
+    </div>
+</div>
+
+@code {
+    private string Text = "I'm a shaped tooltip";
+    private Placement Placement = Placement.Top;
+    private Shape Shape = Shape.Rectangle;
+    private bool ShowArrow = true;
+    private bool Disabled;
+    private bool OverrideBg, OverrideBorder;
+    private string Bg = "#1f2430";
+    private string Border = "#eab308";
+    private double BorderWidth = 1;
+    private double Radius = 12;
+    private double ArrowSize = 8;
+    private double Offset = 8;
+    private string Width = "";
+    private string Height = "";
+}

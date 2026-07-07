@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <Import Project="$(RepoRoot)build\Packable.props" />
+  <Import Project="$(RepoRoot)build\Shared.props" />
+
+  <PropertyGroup>
+    <PackageId>BlazorAtoms.Tooltips</PackageId>
+    <Title>Blazor Tooltips</Title>
+    <Description>Self-contained, CSS-only tooltip component for Blazor (Server or WebAssembly). Configurable placement, colors, border, and attachment arrow. No JS, no dependencies.</Description>
+    <PackageTags>Blazor;Tooltip;Popover;CSS;WebAssembly;Server</PackageTags>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+  </ItemGroup>
+
+</Project>

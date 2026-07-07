@@ -1,0 +1,195 @@
+/* Token model matches BlazorAtoms.Tooltips: --tip-* public knob, --tip-*-d scheme-aware default.
+   Here the SVG path reads --tip-bg (fill) and --tip-border (stroke); color stays in CSS. */
+.atom-stooltip {
+    --tip-bg-d: #1f2430;
+    --tip-color-d: #f2f4f8;
+    --tip-border-d: #3a4152;
+}
+@media (prefers-color-scheme: light) {
+    .atom-stooltip {
+        --tip-bg-d: #ffffff;
+        --tip-color-d: #1a1d24;
+        --tip-border-d: #d7dbe3;
+    }
+}
+
+.atom-stooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.atom-stooltip-trigger {
+    display: inline-block;
+}
+
+.atom-stooltip-bubble {
+    position: absolute;
+    z-index: 1000;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: max-content;
+    max-width: var(--tip-max-width, 16rem);
+    color: var(--tip-color, var(--tip-color-d));
+    font-size: .85rem;
+    line-height: 1.35;
+    text-align: start;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .12s ease, visibility .12s ease;
+    transition-delay: .15s;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .18));
+}
+
+/* SVG outline fills the whole bubble box; content sits on top. */
+.atom-stooltip-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    overflow: visible;
+}
+.ast-path {
+    fill: var(--tip-bg, var(--tip-bg-d));
+    stroke: var(--tip-border, var(--tip-border-d));
+    stroke-width: var(--tip-border-width, 1px);
+    stroke-linejoin: round;
+}
+.ast-fold {
+    fill: none;
+    stroke: var(--tip-border, var(--tip-border-d));
+    stroke-width: var(--tip-border-width, 1px);
+    stroke-linejoin: round;
+}
+
+.atom-stooltip-content {
+    position: relative;
+    z-index: 1;
+    display: block;
+    padding: .4em .65em;
+}
+
+/* Cloud/ellipse outlines don't reach the box corners, so give the content room to stay inside. */
+.atom-stooltip-bubble[data-shape="cloud"] .atom-stooltip-content,
+.atom-stooltip-bubble[data-shape="ellipse"] .atom-stooltip-content {
+    padding: .7em 1.4em;
+    text-align: center;
+}
+
+/* Placement — absolute offset from the trigger, relative to the .atom-stooltip wrapper. */
+.atom-stooltip-bubble[data-placement^="top"]    { bottom: calc(100% + var(--tip-offset, 8px)); }
+.atom-stooltip-bubble[data-placement^="bottom"] { top: calc(100% + var(--tip-offset, 8px)); }
+.atom-stooltip-bubble[data-placement="top"],
+.atom-stooltip-bubble[data-placement="bottom"]  { left: 50%; transform: translateX(-50%); }
+.atom-stooltip-bubble[data-placement="top-start"],
+.atom-stooltip-bubble[data-placement="bottom-start"] { left: 0; }
+.atom-stooltip-bubble[data-placement="top-end"],
+.atom-stooltip-bubble[data-placement="bottom-end"]   { right: 0; }
+
+.atom-stooltip-bubble[data-placement^="left"]  { right: calc(100% + var(--tip-offset, 8px)); }
+.atom-stooltip-bubble[data-placement^="right"] { left: calc(100% + var(--tip-offset, 8px)); }
+.atom-stooltip-bubble[data-placement="left"],
+.atom-stooltip-bubble[data-placement="right"]  { top: 50%; transform: translateY(-50%); }
+.atom-stooltip-bubble[data-placement="left-start"],
+.atom-stooltip-bubble[data-placement="right-start"] { top: 0; }
+.atom-stooltip-bubble[data-placement="left-end"],
+.atom-stooltip-bubble[data-placement="right-end"]   { bottom: 0; }
+
+.atom-stooltip-bubble[data-placement="top-left"],
+.atom-stooltip-bubble[data-placement="bottom-left"]  { right: calc(100% + var(--tip-offset, 8px)); }
+.atom-stooltip-bubble[data-placement="top-right"],
+.atom-stooltip-bubble[data-placement="bottom-right"] { left: calc(100% + var(--tip-offset, 8px)); }
+
+.atom-stooltip-bubble[data-placement="cursor"] {
+    position: fixed;
+    left: var(--tip-cursor-x, -9999px);
+    top: var(--tip-cursor-y, -9999px);
+    transform: translate(var(--tip-offset, 12px), var(--tip-offset, 12px));
+}
+
+/* Arrow — a rotated square painted from the same tokens as the SVG body. Used for
+   rectangle/pill/ellipse; Cloud restyles it into a circle trail below. */
+.atom-stooltip-arrow {
+    position: absolute;
+    z-index: 0;
+    width: var(--tip-arrow-size, 8px);
+    height: var(--tip-arrow-size, 8px);
+    background: var(--tip-bg, var(--tip-bg-d));
+    border: var(--tip-border-width, 1px) solid var(--tip-border, var(--tip-border-d));
+    transform: rotate(45deg);
+}
+.atom-stooltip-bubble[data-placement^="top"] .atom-stooltip-arrow {
+    bottom: calc(var(--tip-arrow-size, 8px) / -2 - var(--tip-border-width, 1px));
+    left: calc(50% - var(--tip-arrow-size, 8px) / 2);
+    border-top: none; border-left: none;
+}
+.atom-stooltip-bubble[data-placement^="bottom"] .atom-stooltip-arrow {
+    top: calc(var(--tip-arrow-size, 8px) / -2 - var(--tip-border-width, 1px));
+    left: calc(50% - var(--tip-arrow-size, 8px) / 2);
+    border-bottom: none; border-right: none;
+}
+.atom-stooltip-bubble[data-placement^="left"] .atom-stooltip-arrow {
+    right: calc(var(--tip-arrow-size, 8px) / -2 - var(--tip-border-width, 1px));
+    top: calc(50% - var(--tip-arrow-size, 8px) / 2);
+    border-bottom: none; border-left: none;
+}
+.atom-stooltip-bubble[data-placement^="right"] .atom-stooltip-arrow {
+    left: calc(var(--tip-arrow-size, 8px) / -2 - var(--tip-border-width, 1px));
+    top: calc(50% - var(--tip-arrow-size, 8px) / 2);
+    border-top: none; border-right: none;
+}
+.atom-stooltip-bubble[data-placement="top-left"] .atom-stooltip-arrow,
+.atom-stooltip-bubble[data-placement="bottom-left"] .atom-stooltip-arrow { left: auto; right: var(--tip-arrow-size, 8px); }
+.atom-stooltip-bubble[data-placement="top-right"] .atom-stooltip-arrow,
+.atom-stooltip-bubble[data-placement="bottom-right"] .atom-stooltip-arrow { left: var(--tip-arrow-size, 8px); }
+
+/* Cloud — arrow element becomes a shrinking-circle trail toward the trigger. */
+.atom-stooltip-bubble[data-shape="cloud"] .atom-stooltip-arrow {
+    width: var(--tip-arrow-size, 8px);
+    height: var(--tip-arrow-size, 8px);
+    background: var(--tip-bg, var(--tip-bg-d));
+    border: var(--tip-border-width, 1px) solid var(--tip-border, var(--tip-border-d));
+    border-radius: 50%;
+    transform: none;
+}
+.atom-stooltip-bubble[data-shape="cloud"] .atom-stooltip-arrow::before,
+.atom-stooltip-bubble[data-shape="cloud"] .atom-stooltip-arrow::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    background: var(--tip-bg, var(--tip-bg-d));
+    border: var(--tip-border-width, 1px) solid var(--tip-border, var(--tip-border-d));
+}
+.atom-stooltip-bubble[data-shape="cloud"] .atom-stooltip-arrow::before {
+    width: calc(var(--tip-arrow-size, 8px) * .7); height: calc(var(--tip-arrow-size, 8px) * .7);
+}
+.atom-stooltip-bubble[data-shape="cloud"] .atom-stooltip-arrow::after {
+    width: calc(var(--tip-arrow-size, 8px) * .45); height: calc(var(--tip-arrow-size, 8px) * .45);
+}
+.atom-stooltip-bubble[data-placement^="top"][data-shape="cloud"] .atom-stooltip-arrow::before { left: 50%; top: 120%; transform: translateX(-50%); }
+.atom-stooltip-bubble[data-placement^="top"][data-shape="cloud"] .atom-stooltip-arrow::after  { left: 50%; top: 270%; transform: translateX(-50%); }
+.atom-stooltip-bubble[data-placement^="bottom"][data-shape="cloud"] .atom-stooltip-arrow::before { left: 50%; bottom: 120%; transform: translateX(-50%); }
+.atom-stooltip-bubble[data-placement^="bottom"][data-shape="cloud"] .atom-stooltip-arrow::after  { left: 50%; bottom: 270%; transform: translateX(-50%); }
+.atom-stooltip-bubble[data-placement^="left"][data-shape="cloud"] .atom-stooltip-arrow::before { top: 50%; left: 120%; transform: translateY(-50%); }
+.atom-stooltip-bubble[data-placement^="left"][data-shape="cloud"] .atom-stooltip-arrow::after  { top: 50%; left: 270%; transform: translateY(-50%); }
+.atom-stooltip-bubble[data-placement^="right"][data-shape="cloud"] .atom-stooltip-arrow::before { top: 50%; right: 120%; transform: translateY(-50%); }
+.atom-stooltip-bubble[data-placement^="right"][data-shape="cloud"] .atom-stooltip-arrow::after  { top: 50%; right: 270%; transform: translateY(-50%); }
+
+/* Show/hide — hover or keyboard focus on the trigger; short hide-delay for pointer travel. */
+.atom-stooltip-trigger:hover ~ .atom-stooltip-bubble,
+.atom-stooltip-trigger:focus-within ~ .atom-stooltip-bubble,
+.atom-stooltip-bubble:hover {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition-delay: 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-stooltip-bubble {
+        transition: none;
+    }
+}
