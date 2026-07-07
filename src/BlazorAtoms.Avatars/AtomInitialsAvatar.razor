@@ -1,0 +1,21 @@
+@inherits AtomComponentBase
+
+@*
+    AtomInitialsAvatar.razor
+    ------------------------
+    Thin wrapper over AtomAvatar: computes initials (from Name or explicit) and a deterministic
+    palette background (unless one is supplied), then forwards everything to AtomAvatar.
+*@
+
+<AtomAvatar Initials="@ComputedInitials"
+            Alt="@EffectiveAlt"
+            Shape="@Shape"
+            Radius="@Radius"
+            Size="@Size"
+            TextColor="@TextColor"
+            Background="@(UseGradient ? null : EffectiveBackground)"
+            BackgroundGradientFrom="@(UseGradient ? BackgroundGradientFrom : null)"
+            BackgroundGradientTo="@(UseGradient ? BackgroundGradientTo : null)"
+            BackgroundGradientAngle="@BackgroundGradientAngle"
+            BorderColor="@BorderColor"
+            BorderWidth="@BorderWidth" />

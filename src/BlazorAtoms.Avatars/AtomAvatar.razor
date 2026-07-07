@@ -14,6 +14,10 @@
     {
         <img class="atom-avatar-img" src="@Src" alt="@(Alt ?? "")" loading="lazy" />
     }
+    else if (HasInitials)
+    {
+        <span class="atom-avatar-initials" aria-hidden="true">@Initials</span>
+    }
     else
     {
         <svg class="atom-avatar-figure" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true">

@@ -1,0 +1,17 @@
+/* Overlapping row. The avatars are rendered by child components (AtomAvatar /
+   AtomInitialsAvatar), so their root elements carry a DIFFERENT scope id than this component —
+   plain scoped selectors can't target them. ::deep drops scoping for what follows, so the
+   overlap + ring reach each direct child. */
+.atom-avatar-group {
+    display: inline-flex;
+    align-items: center;
+}
+
+.atom-avatar-group ::deep > * {
+    box-shadow: 0 0 0 var(--avg-ring, 2px) var(--avg-ring-color, #fff);
+    border-radius: inherit; /* keep the ring following circle/rounded shapes */
+}
+
+.atom-avatar-group ::deep > * + * {
+    margin-inline-start: calc(-1 * var(--avg-overlap, 12px));
+}

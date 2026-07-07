@@ -19,6 +19,13 @@ public partial class AtomAvatar : AtomComponentBase
     /// <summary>Alt text for the image / accessible label for the avatar.</summary>
     [Parameter] public string? Alt { get; set; }
 
+    /// <summary>Initials text. When set (and no <see cref="Src"/>), the initials are shown instead of
+    /// the silhouette. Usually set for you by <see cref="AtomInitialsAvatar"/>.</summary>
+    [Parameter] public string? Initials { get; set; }
+
+    /// <summary>Text color for initials. Sets <c>--av-color</c>. Default white.</summary>
+    [Parameter] public string? TextColor { get; set; }
+
     /// <summary>Crop shape.</summary>
     [Parameter] public Shape Shape { get; set; } = Shape.Circle;
 
@@ -63,6 +70,7 @@ public partial class AtomAvatar : AtomComponentBase
     private string FigId => "fig-" + _id;
 
     private bool HasImage => !string.IsNullOrWhiteSpace(Src);
+    private bool HasInitials => !string.IsNullOrWhiteSpace(Initials);
     private bool UseBackgroundGradient =>
         !string.IsNullOrWhiteSpace(BackgroundGradientFrom) && !string.IsNullOrWhiteSpace(BackgroundGradientTo);
     private bool UseFigureGradient =>
@@ -91,6 +99,7 @@ public partial class AtomAvatar : AtomComponentBase
     private string RootStyle => string.Concat(
         Size is null ? "" : $"--av-size:{N(Size.Value)}px;",
         Radius is null ? "" : $"--av-radius:{N(Radius.Value)}px;",
+        TextColor is null ? "" : $"--av-color:{TextColor};",
         $"background:{BackgroundCss};",
         BorderColor is null ? "" : $"border:{N(BorderWidth ?? 1)}px solid {BorderColor};");
 }

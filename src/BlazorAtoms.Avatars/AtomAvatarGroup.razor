@@ -1,0 +1,28 @@
+@inherits AtomComponentBase
+
+@*
+    AtomAvatarGroup.razor
+    ---------------------
+    Overlapping row of avatars. Names → generated initials avatars + a "+N" overflow chip;
+    otherwise renders ChildContent. Overlap + separating ring are applied to the direct children
+    via ::deep (they belong to a child component's scope, so plain scoped selectors won't reach them).
+*@
+
+<div class="atom-avatar-group" role="group" style="@RootStyle">
+    @if (Names is not null)
+    {
+        foreach (var name in VisibleNames)
+        {
+            <AtomInitialsAvatar Name="@name" Shape="@Shape" Size="@Size" />
+        }
+        @if (OverflowCount > 0)
+        {
+            <AtomInitialsAvatar Initials="@($"+{OverflowCount}")" Shape="@Shape" Size="@Size"
+                                Background="#6b7280" />
+        }
+    }
+    else
+    {
+        @ChildContent
+    }
+</div>

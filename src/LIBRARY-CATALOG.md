@@ -68,7 +68,7 @@ rating icons, QR/barcodes, skeleton shapes, and icons.
 | `BlazorAtoms.Badges` | AtomBadge, AtomChip, AtomTag, AtomPill, AtomCountBadge |
 | `BlazorAtoms.AnimatedBadges` *(shipped)* | AtomAnimatedBadge — count/label badge that pops in on value; overlays a host corner or inline; Pop/Bounce/Spin/Pulse/Ping; any object value w/ type-aware formatting |
 | `BlazorAtoms.StaticBadges` *(shipped)* | AtomStaticBadge — no-animation count/label badge in many shapes (pill/circle/square/rounded + SVG star/hexagon/diamond/shield/burst/ribbon); overlays a host corner or inline; any object value w/ type-aware formatting |
-| `BlazorAtoms.Avatars` *(shipped)* | AtomAvatar — head/shoulders silhouette (solid/gradient fill) or image, cropped to circle/square/rounded/squircle/hexagon; color/gradient background w/ angle; optional border ring. (AtomInitialsAvatar, AtomAvatarGroup still to come) |
+| `BlazorAtoms.Avatars` *(shipped)* | AtomAvatar — silhouette (solid/gradient) or image, cropped to circle/square/rounded/squircle/hexagon, bg color/gradient+angle, border ring · AtomInitialsAvatar — initials from name w/ deterministic palette color · AtomAvatarGroup — overlapping stack from names w/ "+N" overflow |
 | `BlazorAtoms.Ratings` | AtomRating (stars/hearts), AtomRatingInput |
 | `BlazorAtoms.Layout` | AtomStack, AtomGrid, AtomDivider, AtomSpacer, AtomCenter, AtomAspectRatio |
 | `BlazorAtoms.Transitions` | AtomFade, AtomSlide, AtomCollapse, AtomScale (CSS-only) |

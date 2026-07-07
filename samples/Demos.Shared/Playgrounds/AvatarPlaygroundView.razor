@@ -1,3 +1,4 @@
+@using System.Linq
 @using BlazorAtoms.Avatars
 
 <PageTitle>AtomAvatar Playground</PageTitle>
@@ -68,6 +69,34 @@
 
 <CodeSnippetBox Code="@Snippet" FileName="AtomAvatarExample.razor" />
 
+<h2 style="margin-top:2rem;">AtomInitialsAvatar</h2>
+<p>Initials from a name; background auto-picked from a palette by hashing the name (or set your own).</p>
+<div class="tt-stage-outer">
+    <AtomInitialsAvatar Name="@InitName" MaxInitials="@InitMax" Shape="@Shape" Size="@Size"
+                        Background="@(InitAutoColor ? null : InitBg)" />
+</div>
+<div class="tt-controls">
+    <div class="tt-ctrl"><label>Name</label><input type="text" @bind="InitName" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Max initials <span class="val">@InitMax</span></label><input type="number" min="1" max="3" @bind="InitMax" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Background</label>
+        <div class="row"><input type="checkbox" id="iac" @bind="InitAutoColor" /><label for="iac">Auto (hash)</label></div>
+        <input type="color" @bind="InitBg" @bind:event="oninput" disabled="@InitAutoColor" />
+    </div>
+</div>
+<CodeSnippetBox Code="@InitialsSnippet" FileName="AtomInitialsAvatarExample.razor" />
+
+<h2 style="margin-top:2rem;">AtomAvatarGroup</h2>
+<p>Overlapping row from a list of names; caps at Max with a "+N" overflow chip.</p>
+<div class="tt-stage-outer">
+    <AtomAvatarGroup Names="@GroupNames" Max="@GroupMax" Shape="@Shape" Size="@Size" Overlap="@GroupOverlap" />
+</div>
+<div class="tt-controls">
+    <div class="tt-ctrl"><label>Names (comma-separated)</label><input type="text" @bind="GroupNamesRaw" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Max (0=all) <span class="val">@GroupMax</span></label><input type="number" min="0" max="10" @bind="GroupMax" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Overlap px <span class="val">@GroupOverlap</span></label><input type="number" min="0" max="40" @bind="GroupOverlap" @bind:event="oninput" /></div>
+</div>
+<CodeSnippetBox Code="@GroupSnippet" FileName="AtomAvatarGroupExample.razor" />
+
 @code {
     private string Src = "";
     private string Alt = "";
@@ -92,6 +121,51 @@
     private double BorderWidth = 3;
 
     private static string? Blank(string s) => string.IsNullOrWhiteSpace(s) ? null : s;
+
+    // --- InitialsAvatar demo ---
+    private string InitName = "Ada Lovelace";
+    private int InitMax = 2;
+    private bool InitAutoColor = true;
+    private string InitBg = "#2563eb";
+
+    // --- AvatarGroup demo ---
+    private string GroupNamesRaw = "Ada Lovelace, Grace Hopper, Alan Turing, Katherine Johnson, Edsger Dijkstra";
+    private int GroupMax = 3;
+    private double GroupOverlap = 12;
+    private System.Collections.Generic.List<string> GroupNames =>
+        GroupNamesRaw.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0).ToList();
+
+    private string InitialsSnippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder("<AtomInitialsAvatar");
+            sb.Append($" Name=\"{InitName}\"");
+            if (InitMax != 2) sb.Append($" MaxInitials=\"{InitMax}\"");
+            if (Shape != Shape.Circle) sb.Append($" Shape=\"Shape.{Shape}\"");
+            sb.Append($" Size=\"{Size}\"");
+            if (!InitAutoColor) sb.Append($" Background=\"{InitBg}\"");
+            sb.Append(" />");
+            return sb.ToString();
+        }
+    }
+
+    private string GroupSnippet
+    {
+        get
+        {
+            var quoted = string.Join(", ", GroupNames.Select(n => $"\"{n}\""));
+            var sb = new System.Text.StringBuilder("<AtomAvatarGroup Names=\"@(new[] { ");
+            sb.Append(quoted);
+            sb.Append(" })\"");
+            if (GroupMax > 0) sb.Append($" Max=\"{GroupMax}\"");
+            if (Shape != Shape.Circle) sb.Append($" Shape=\"Shape.{Shape}\"");
+            sb.Append($" Size=\"{Size}\"");
+            if (GroupOverlap != 12) sb.Append($" Overlap=\"{GroupOverlap}\"");
+            sb.Append(" />");
+            return sb.ToString();
+        }
+    }
 
     private string Snippet
     {
