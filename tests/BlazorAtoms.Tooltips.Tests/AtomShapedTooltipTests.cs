@@ -87,6 +87,46 @@ public class AtomShapedTooltipTests : TestContext
     }
 
     [Fact]
+    public void No_alignment_set_omits_align_attributes()
+    {
+        var cut = RenderComponent<AtomShapedTooltip>(p => p
+            .Add(c => c.Text, "Hello")
+            .AddChildContent("<button>Trigger</button>"));
+
+        var bubble = cut.Find("[role='tooltip']");
+        Assert.False(bubble.HasAttribute("data-halign"));
+        Assert.False(bubble.HasAttribute("data-valign"));
+    }
+
+    [Theory]
+    [InlineData(TooltipTextAlign.Start, "start")]
+    [InlineData(TooltipTextAlign.Center, "center")]
+    [InlineData(TooltipTextAlign.End, "end")]
+    public void TextAlign_sets_data_halign(TooltipTextAlign align, string expected)
+    {
+        var cut = RenderComponent<AtomShapedTooltip>(p => p
+            .Add(c => c.TextAlign, align)
+            .Add(c => c.Text, "Hello")
+            .AddChildContent("<button>Trigger</button>"));
+
+        Assert.Equal(expected, cut.Find("[role='tooltip']").GetAttribute("data-halign"));
+    }
+
+    [Theory]
+    [InlineData(TooltipVerticalAlign.Top, "top")]
+    [InlineData(TooltipVerticalAlign.Center, "center")]
+    [InlineData(TooltipVerticalAlign.Bottom, "bottom")]
+    public void VerticalAlign_sets_data_valign(TooltipVerticalAlign align, string expected)
+    {
+        var cut = RenderComponent<AtomShapedTooltip>(p => p
+            .Add(c => c.VerticalAlign, align)
+            .Add(c => c.Text, "Hello")
+            .AddChildContent("<button>Trigger</button>"));
+
+        Assert.Equal(expected, cut.Find("[role='tooltip']").GetAttribute("data-valign"));
+    }
+
+    [Fact]
     public void Cursor_placement_loads_js_module()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;

@@ -78,6 +78,19 @@
     text-align: center;
 }
 
+/* Content alignment — opt-in via data-halign / data-valign. Only emitted when the consumer sets
+   TextAlign / VerticalAlign; otherwise the shape defaults above stand. Placed after the cloud/
+   ellipse rule so an explicit horizontal choice wins over their centered default. */
+.atom-ptooltip-bubble[data-halign="start"]  { justify-content: flex-start; }
+.atom-ptooltip-bubble[data-halign="center"] { justify-content: center; }
+.atom-ptooltip-bubble[data-halign="end"]    { justify-content: flex-end; }
+.atom-ptooltip-bubble[data-halign="start"]  .atom-ptooltip-content { text-align: start; }
+.atom-ptooltip-bubble[data-halign="center"] .atom-ptooltip-content { text-align: center; }
+.atom-ptooltip-bubble[data-halign="end"]    .atom-ptooltip-content { text-align: end; }
+.atom-ptooltip-bubble[data-valign="top"]    { align-items: flex-start; }
+.atom-ptooltip-bubble[data-valign="center"] { align-items: center; }
+.atom-ptooltip-bubble[data-valign="bottom"] { align-items: flex-end; }
+
 /* Placement */
 .atom-ptooltip-bubble[data-placement^="top"]    { bottom: calc(100% + var(--tip-offset, 8px)); }
 .atom-ptooltip-bubble[data-placement^="bottom"] { top: calc(100% + var(--tip-offset, 8px)); }

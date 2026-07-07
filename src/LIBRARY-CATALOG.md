@@ -95,9 +95,7 @@ On-brand standout: **`Charts`** — SVG, JS-free, same DNA as the activity indic
 | `BlazorAtoms.Cards` | AtomCard, AtomCardHeader, AtomCardBody, AtomCardFooter | JS-free |
 | `BlazorAtoms.Tabs` | AtomTabs, AtomTab, AtomTabPanel | JS-free |
 | `BlazorAtoms.Panels` | AtomAccordion, AtomCollapse, AtomPanel, AtomSplitter | accordion/collapse via native `<details>`; splitter uses pointer events — no JS |
-| `BlazorAtoms.Tooltips` *(shipped)* | AtomTooltip | CSS placement + `:hover`/`:focus-within`; JS-free except the opt-in `Cursor` follow mode (self-loaded module) |
-| `BlazorAtoms.ShapedTooltips` *(shipped)* | AtomShapedTooltip | Bubble outline drawn as inline SVG (rect/pill/ellipse/cloud/burst/folded) so border works on every shape; color from CSS tokens |
-| `BlazorAtoms.PaintedTooltips` *(shipped)* | AtomPaintedTooltip | SVG shapes that also paint — gradient fill, SVG stroke, optional shadow — across every shape |
+| `BlazorAtoms.Tooltips` *(shipped)* | AtomTooltip — pure-CSS bubble (rect/pill/ellipse/thought/burst/folded); CSS placement + `:hover`/`:focus-within` · AtomShapedTooltip — outline drawn as inline SVG so border works on every shape (adds cloud) · AtomPaintedTooltip — SVG that also paints (gradient fill, SVG stroke, optional shadow). Shared `Placement`; per-component `Shape` enums. JS-free except the opt-in `Cursor` follow mode (self-loaded module). |
 | `BlazorAtoms.Alerts` | AtomAlert, AtomToast, AtomBanner, AtomCallout | toast timing via C# timer |
 | `BlazorAtoms.Icons` | AtomIcon (+ optional curated SVG set) | renderer is 0-dep; a bundled icon set is larger |
 | `BlazorAtoms.Typography` | AtomHeading, AtomText, AtomCode, AtomKbd, AtomTruncate | JS-free |

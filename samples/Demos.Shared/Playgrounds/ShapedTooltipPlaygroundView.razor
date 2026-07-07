@@ -27,6 +27,7 @@
     <AtomShapedTooltip Text="@Text" Placement="@Placement" Shape="@Shape" ShowArrow="@ShowArrow" Disabled="@Disabled"
                        Background="@(OverrideBg ? Bg : null)" BorderColor="@(OverrideBorder ? Border : null)"
                        BorderWidth="@BorderWidth" Radius="@Radius" ArrowSize="@ArrowSize" Offset="@Offset"
+                       TextAlign="@TextAlign" VerticalAlign="@VerticalAlign"
                        Width="@(string.IsNullOrWhiteSpace(Width) ? null : Width)" Height="@(string.IsNullOrWhiteSpace(Height) ? null : Height)">
         <button class="tt-trigger-btn">Hover or Tab to me</button>
     </AtomShapedTooltip>
@@ -44,6 +45,8 @@
     <div class="tt-ctrl"><label>Offset <span class="val">@(Offset)px</span></label><input type="range" min="0" max="32" step="1" @bind="Offset" @bind:event="oninput" /></div>
     <div class="tt-ctrl"><label>Width (e.g. 160px)</label><input type="text" @bind="Width" @bind:event="oninput" placeholder="auto" /></div>
     <div class="tt-ctrl"><label>Height (e.g. 90px)</label><input type="text" @bind="Height" @bind:event="oninput" placeholder="auto" /></div>
+    <div class="tt-ctrl"><label>Text align (H)</label><select @bind="TextAlign"><option value="">(default)</option>@foreach (var a in Enum.GetValues<TooltipTextAlign>()){<option value="@a">@a</option>}</select></div>
+    <div class="tt-ctrl"><label>Vertical align</label><select @bind="VerticalAlign"><option value="">(default)</option>@foreach (var a in Enum.GetValues<TooltipVerticalAlign>()){<option value="@a">@a</option>}</select></div>
     <div class="tt-ctrl"><label>Options</label>
         <div class="row"><input type="checkbox" id="sa" @bind="ShowArrow" /><label for="sa">Show arrow</label></div>
         <div class="row"><input type="checkbox" id="dis" @bind="Disabled" /><label for="dis">Disabled</label></div>
@@ -67,6 +70,8 @@
     private double Offset = 8;
     private string Width = "";
     private string Height = "";
+    private TooltipTextAlign? TextAlign;
+    private TooltipVerticalAlign? VerticalAlign;
 
     private string Snippet
     {
@@ -86,6 +91,8 @@
             if (Offset != 8) sb.Append($" Offset=\"{Offset}\"");
             if (!string.IsNullOrWhiteSpace(Width)) sb.Append($" Width=\"{Width}\"");
             if (!string.IsNullOrWhiteSpace(Height)) sb.Append($" Height=\"{Height}\"");
+            if (TextAlign is not null) sb.Append($" TextAlign=\"TooltipTextAlign.{TextAlign}\"");
+            if (VerticalAlign is not null) sb.Append($" VerticalAlign=\"TooltipVerticalAlign.{VerticalAlign}\"");
             sb.Append(">\n    <button>Hover or Tab to me</button>\n</AtomShapedTooltip>");
             return sb.ToString();
         }

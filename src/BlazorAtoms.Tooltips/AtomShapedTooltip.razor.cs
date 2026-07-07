@@ -60,6 +60,13 @@ public partial class AtomShapedTooltip : AtomComponentBase, IAsyncDisposable
     /// <summary>Explicit bubble height (any CSS length). Null = fit content.</summary>
     [Parameter] public string? Height { get; set; }
 
+    /// <summary>Horizontal alignment of the text/content. Null keeps the shape default
+    /// (start, or centered for Cloud/Ellipse).</summary>
+    [Parameter] public TooltipTextAlign? TextAlign { get; set; }
+
+    /// <summary>Vertical alignment of the content within a fixed-<see cref="Height"/> bubble. Null = centered.</summary>
+    [Parameter] public TooltipVerticalAlign? VerticalAlign { get; set; }
+
     /// <summary>Gap between trigger and bubble (px); in Cursor mode, gap from the pointer. Sets <c>--tip-offset</c>.</summary>
     [Parameter] public double? Offset { get; set; }
 
@@ -120,6 +127,23 @@ public partial class AtomShapedTooltip : AtomComponentBase, IAsyncDisposable
         ShapedTooltipShape.Burst => "burst",
         ShapedTooltipShape.FoldedCorner => "folded",
         _ => "rectangle",
+    };
+
+    // Null → attribute omitted → shape default stands.
+    private string? HAlignValue => TextAlign switch
+    {
+        TooltipTextAlign.Start => "start",
+        TooltipTextAlign.Center => "center",
+        TooltipTextAlign.End => "end",
+        _ => null,
+    };
+
+    private string? VAlignValue => VerticalAlign switch
+    {
+        TooltipVerticalAlign.Top => "top",
+        TooltipVerticalAlign.Center => "center",
+        TooltipVerticalAlign.Bottom => "bottom",
+        _ => null,
     };
 
     private static string N(double v) => v.ToString(CultureInfo.InvariantCulture);

@@ -1,12 +1,22 @@
 # BlazorAtoms.Tooltips
 
-A self-contained, pure-CSS **tooltip** for Blazor — **Server or WebAssembly**. No
-JavaScript, no dependencies. Ships as a Razor Class Library (RCL).
+Self-contained **tooltip** components for Blazor — **Server or WebAssembly** — in one library.
+No dependencies; the only JavaScript is an opt-in cursor-follow module each component loads
+itself. Ships as a Razor Class Library (RCL).
 
 [![.NET](https://github.com/HowardShank/BlazorAtoms/actions/workflows/dotnet.yml/badge.svg)](https://github.com/HowardShank/BlazorAtoms/actions/workflows/dotnet.yml)
 
-Shows a small bubble beside any trigger content on hover or keyboard focus. Configurable
-placement, colors, border, and attachment arrow.
+Three components, same trigger/placement/theming model, different bubble rendering:
+
+- **`AtomTooltip`** — pure-CSS bubble. Rounded rect / pill / ellipse / thought / burst /
+  folded-corner via CSS. Lightest; `Burst`/`FoldedCorner` are fill-only (clip-path drops the border).
+- **`AtomShapedTooltip`** — bubble outline drawn as an inline **SVG path**, so **border works on
+  every shape** (incl. cloud / burst / folded). Color from the same CSS tokens.
+- **`AtomPaintedTooltip`** — SVG that also **paints** the bubble: linear-gradient fill, SVG stroke
+  border, optional soft shadow — across every shape.
+
+All three anchor to arbitrary trigger content, show on `:hover`/`:focus-within`, share the
+`Placement` set (sides + corners + `Cursor`), and theme via `--tip-*` tokens.
 
 ---
 
@@ -14,14 +24,22 @@ placement, colors, border, and attachment arrow.
 
 ```
 BlazorAtoms.Tooltips/
-  AtomTooltip.razor / .razor.cs / .razor.css   <- the component
-  Placement.cs                                  <- Placement enum
+  AtomTooltip.razor / .razor.cs / .razor.css          <- pure-CSS tooltip
+  AtomShapedTooltip.razor / .razor.cs / .razor.css     <- SVG-outline (border on every shape)
+  AtomPaintedTooltip.razor / .razor.cs / .razor.css    <- SVG paints fill/stroke/shadow
+  Placement.cs                                          <- shared Placement enum
+  TooltipShape.cs / ShapedTooltipShape.cs / PaintedTooltipShape.cs  <- per-component shape enums
+  wwwroot/atom-tooltip.js / atom-shaped-tooltip.js / atom-painted-tooltip.js  <- cursor-follow modules
 ```
 
 | Type | Namespace |
 |---|---|
-| `AtomTooltip` | `BlazorAtoms.Tooltips` |
-| `Placement` | `BlazorAtoms.Tooltips` |
+| `AtomTooltip`, `AtomShapedTooltip`, `AtomPaintedTooltip` | `BlazorAtoms.Tooltips` |
+| `Placement` (shared) | `BlazorAtoms.Tooltips` |
+| `TooltipShape` / `ShapedTooltipShape` / `PaintedTooltipShape` | `BlazorAtoms.Tooltips` |
+
+Each component keeps its own `Shape` enum because the shape sets differ slightly (`AtomTooltip`
+has `Thought`; the SVG components have `Cloud`). `Placement` is shared.
 
 ---
 
@@ -80,7 +98,7 @@ a `tabindex="0"`** so keyboard users can reach them — buttons/links already ar
 | `Text` | `string?` | `null` | Simple bubble content. Ignored if `TooltipContent` is set. |
 | `TooltipContent` | `RenderFragment?` | `null` | Rich bubble content; takes priority over `Text`. |
 | `Placement` | `Placement` | `Top` | Side (`Top`/`Bottom`/`Left`/`Right`, each with `…Start`/`…End`), diagonal corner (`TopLeft`/`TopRight`/`BottomLeft`/`BottomRight`), or `Cursor` (follows the pointer — see below). |
-| `Shape` | `Shape` | `Rectangle` | Bubble outline: `Rectangle` (rounded rect, uses `Radius`), `Pill`, `Ellipse`, `Thought`, `Burst`, `FoldedCorner`. See [Shapes](#shapes). |
+| `Shape` | `TooltipShape` | `Rectangle` | Bubble outline: `Rectangle` (rounded rect, uses `Radius`), `Pill`, `Ellipse`, `Thought`, `Burst`, `FoldedCorner`. See [Shapes](#shapes). |
 | `ShowArrow` | `bool` | `true` | Draw the attachment arrow pointing at the trigger. Ignored in `Cursor` mode and on `Burst`/`FoldedCorner` shapes. |
 | `Disabled` | `bool` | `false` | Suppresses the bubble entirely; trigger still renders. |
 | `Background` | `string?` | `null` | Sets `--tip-bg`. Any CSS color. |
@@ -110,9 +128,9 @@ Set `Shape` to change the bubble outline:
 | `FoldedCorner` | Dog-ear folded top-right corner. **Fill only** — `clip-path` removes the border + arrow. |
 
 ```razor
-<AtomTooltip Text="Nice!" Shape="Shape.Pill"><button>Pill</button></AtomTooltip>
-<AtomTooltip Text="Hmm…" Shape="Shape.Thought" Placement="Placement.Top"><span tabindex="0">Think</span></AtomTooltip>
-<AtomTooltip Text="POW!" Shape="Shape.Burst"><button>Burst</button></AtomTooltip>
+<AtomTooltip Text="Nice!" Shape="TooltipShape.Pill"><button>Pill</button></AtomTooltip>
+<AtomTooltip Text="Hmm…" Shape="TooltipShape.Thought" Placement="Placement.Top"><span tabindex="0">Think</span></AtomTooltip>
+<AtomTooltip Text="POW!" Shape="TooltipShape.Burst"><button>Burst</button></AtomTooltip>
 ```
 
 > **Border on `Burst`/`FoldedCorner`:** these use CSS `clip-path`, which clips the border away,
@@ -240,8 +258,75 @@ wait for).
 
 ---
 
+## AtomShapedTooltip — SVG outline (border on every shape)
+
+`AtomTooltip`'s `Burst`/`FoldedCorner` are `clip-path` shapes, which clip the border and arrow
+away. `AtomShapedTooltip` draws the bubble outline as an inline **SVG path** instead, so **fill
+and border (SVG `stroke`) apply uniformly on every shape** — including cloud, burst, and folded
+corner. Color still comes from the `--tip-bg` / `--tip-border` tokens; positioning, show/hide,
+and `Cursor` mode are the same as `AtomTooltip`.
+
+```razor
+<AtomShapedTooltip Text="Bordered burst!" Shape="ShapedTooltipShape.Burst"
+                   BorderColor="#eab308" BorderWidth="2">
+    <button>Hover me</button>
+</AtomShapedTooltip>
+
+<AtomShapedTooltip Text="A thought…" Shape="ShapedTooltipShape.Cloud" Width="160px" Height="90px">
+    <span tabindex="0">Think</span>
+</AtomShapedTooltip>
+```
+
+`Shape` is a `ShapedTooltipShape`: `Rectangle` (default; `Radius` in viewBox units 0–50), `Pill`,
+`Ellipse`, `Cloud` (thinking-cloud outline + circle trail), `Burst`, `FoldedCorner`. Shares the
+`AtomTooltip` parameters plus explicit `Width`/`Height` (any CSS length — useful for `Cloud`/
+`Ellipse`, whose outlines need room). `BorderWidth` is a uniform, non-scaling SVG stroke.
+
+Content alignment (shared by `AtomShapedTooltip` and `AtomPaintedTooltip`):
+
+| Parameter | Type | Default | Notes |
+|-----------|------|---------|-------|
+| `TextAlign` | `TooltipTextAlign?` | `null` | Horizontal align of the text/content: `Start` / `Center` / `End`. `null` keeps each shape's default (start; centered for `Cloud`/`Ellipse`). |
+| `VerticalAlign` | `TooltipVerticalAlign?` | `null` | Vertical align of the content: `Top` / `Center` / `Bottom`. Only visible when `Height` gives the bubble more room than the content needs. `null` = centered. |
+
+```razor
+<AtomShapedTooltip Text="Bottom-right aligned" Width="200px" Height="110px"
+                   TextAlign="TooltipTextAlign.End" VerticalAlign="TooltipVerticalAlign.Bottom">
+    <button>Hover me</button>
+</AtomShapedTooltip>
+```
+
+## AtomPaintedTooltip — SVG that also paints
+
+`AtomPaintedTooltip` extends the SVG-outline idea by **painting** the bubble in the SVG: an optional
+linear-gradient fill, an SVG stroke border, and an optional soft drop shadow — across every shape.
+With no gradient set it falls back to the solid `--tip-bg` token, so it also works as a plain shaped
+tooltip.
+
+```razor
+<AtomPaintedTooltip Text="Gradient!" Shape="PaintedTooltipShape.Rectangle"
+                    GradientFrom="#f97316" GradientTo="#7c3aed" GradientAngle="120"
+                    BorderColor="#f8fafc" BorderWidth="1">
+    <button>Hover me</button>
+</AtomPaintedTooltip>
+```
+
+Distinctive parameters (on top of the `AtomShapedTooltip` set):
+
+| Parameter | Type | Default | Notes |
+|-----------|------|---------|-------|
+| `GradientFrom` / `GradientTo` | `string?` | `null` | Set both to paint a linear-gradient fill (overrides `Background`). |
+| `GradientAngle` | `double` | `90` | Gradient direction in degrees (0 = left→right, 90 = top→bottom). |
+| `Shadow` | `bool` | `true` | Draw a soft drop shadow behind the bubble. |
+
+`Shape` is a `PaintedTooltipShape` (same members as `ShapedTooltipShape`).
+
+---
+
 ## Notes & gotchas
 
 - **Scoped-CSS bundle must be linked** — the most common "it renders but isn't styled" cause.
 - **No auto-flip** — the bubble stays on the requested side; see "How positioning works".
 - **Give non-interactive triggers a `tabindex`** or keyboard users can't reveal the tooltip.
+- **Per-component `Shape` enums** — `TooltipShape` / `ShapedTooltipShape` / `PaintedTooltipShape`.
+  `Placement` is shared across all three.
