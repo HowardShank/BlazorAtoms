@@ -1,4 +1,4 @@
-namespace BlazorAtoms.ShapedTooltips.Tests;
+namespace BlazorAtoms.Tooltips.Tests;
 
 public class AtomShapedTooltipTests : TestContext
 {
@@ -43,13 +43,13 @@ public class AtomShapedTooltipTests : TestContext
     }
 
     [Theory]
-    [InlineData(Shape.Rectangle, "rectangle")]
-    [InlineData(Shape.Pill, "pill")]
-    [InlineData(Shape.Ellipse, "ellipse")]
-    [InlineData(Shape.Cloud, "cloud")]
-    [InlineData(Shape.Burst, "burst")]
-    [InlineData(Shape.FoldedCorner, "folded")]
-    public void Shape_sets_data_shape_and_renders_svg_path(Shape shape, string expected)
+    [InlineData(ShapedTooltipShape.Rectangle, "rectangle")]
+    [InlineData(ShapedTooltipShape.Pill, "pill")]
+    [InlineData(ShapedTooltipShape.Ellipse, "ellipse")]
+    [InlineData(ShapedTooltipShape.Cloud, "cloud")]
+    [InlineData(ShapedTooltipShape.Burst, "burst")]
+    [InlineData(ShapedTooltipShape.FoldedCorner, "folded")]
+    public void Shape_sets_data_shape_and_renders_svg_path(ShapedTooltipShape shape, string expected)
     {
         var cut = RenderComponent<AtomShapedTooltip>(p => p
             .Add(c => c.Shape, shape)
@@ -62,9 +62,9 @@ public class AtomShapedTooltipTests : TestContext
     }
 
     [Theory]
-    [InlineData(Shape.Burst)]
-    [InlineData(Shape.FoldedCorner)]
-    public void Clip_style_shapes_have_no_separate_arrow(Shape shape)
+    [InlineData(ShapedTooltipShape.Burst)]
+    [InlineData(ShapedTooltipShape.FoldedCorner)]
+    public void Clip_style_shapes_have_no_separate_arrow(ShapedTooltipShape shape)
     {
         var cut = RenderComponent<AtomShapedTooltip>(p => p
             .Add(c => c.Shape, shape)
@@ -100,6 +100,6 @@ public class AtomShapedTooltipTests : TestContext
         Assert.Contains(JSInterop.Invocations, i =>
             i.Identifier == "import" &&
             i.Arguments.Count > 0 &&
-            (i.Arguments[0] as string) == "./_content/BlazorAtoms.ShapedTooltips/atom-shaped-tooltip.js");
+            (i.Arguments[0] as string) == "./_content/BlazorAtoms.Tooltips/atom-shaped-tooltip.js");
     }
 }

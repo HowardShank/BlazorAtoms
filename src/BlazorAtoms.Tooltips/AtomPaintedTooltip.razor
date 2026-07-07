@@ -34,19 +34,19 @@
                 }
                 @switch (Shape)
                 {
-                    case Shape.Pill:
+                    case PaintedTooltipShape.Pill:
                         <rect class="apt-path" style="@PathFillStyle" x="1.5" y="1.5" width="97" height="97" rx="50" ry="50" vector-effect="non-scaling-stroke" />
                         break;
-                    case Shape.Ellipse:
+                    case PaintedTooltipShape.Ellipse:
                         <ellipse class="apt-path" style="@PathFillStyle" cx="50" cy="50" rx="48.5" ry="48.5" vector-effect="non-scaling-stroke" />
                         break;
-                    case Shape.Cloud:
+                    case PaintedTooltipShape.Cloud:
                         <path class="apt-path" style="@PathFillStyle" d="@CloudPath" vector-effect="non-scaling-stroke" />
                         break;
-                    case Shape.Burst:
+                    case PaintedTooltipShape.Burst:
                         <path class="apt-path" style="@PathFillStyle" d="@BurstPath" vector-effect="non-scaling-stroke" />
                         break;
-                    case Shape.FoldedCorner:
+                    case PaintedTooltipShape.FoldedCorner:
                         <path class="apt-path" style="@PathFillStyle" d="M1.5 1.5 H74 L98.5 26 V98.5 H1.5 Z" vector-effect="non-scaling-stroke" />
                         <path class="apt-fold" d="M74 1.5 V26 H98.5" vector-effect="non-scaling-stroke" />
                         break;

@@ -6,8 +6,8 @@
   <PropertyGroup>
     <PackageId>BlazorAtoms.Tooltips</PackageId>
     <Title>Blazor Tooltips</Title>
-    <Description>Self-contained, CSS-only tooltip component for Blazor (Server or WebAssembly). Configurable placement, colors, border, and attachment arrow. No JS, no dependencies.</Description>
-    <PackageTags>Blazor;Tooltip;Popover;CSS;WebAssembly;Server</PackageTags>
+    <Description>Self-contained tooltip components for Blazor (Server or WebAssembly): AtomTooltip (CSS-only placement + arrow), AtomShapedTooltip (SVG bubble outline so border works on every shape — rect/pill/ellipse/cloud/burst/folded), and AtomPaintedTooltip (SVG that also paints — gradient fill, stroke border, optional shadow). Pure CSS + inline SVG; the only JS is an opt-in cursor-follow module each loads itself. No dependencies.</Description>
+    <PackageTags>Blazor;Tooltip;Popover;SVG;Shape;Gradient;CSS;WebAssembly;Server</PackageTags>
     <Version>0.1.0</Version>
   </PropertyGroup>
 

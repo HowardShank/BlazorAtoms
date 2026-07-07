@@ -1,8 +1,9 @@
-namespace BlazorAtoms.PaintedTooltips;
+namespace BlazorAtoms.Tooltips;
 
-/// <summary>Outline shape of the tooltip bubble. Every shape is an inline SVG path, painted by
-/// the SVG itself (gradient or solid fill, gradient or solid stroke, optional shadow).</summary>
-public enum Shape
+/// <summary>Outline shape of the <see cref="AtomPaintedTooltip"/> bubble. Every shape is an inline
+/// SVG path, painted by the SVG itself (gradient or solid fill, gradient or solid stroke, optional
+/// shadow).</summary>
+public enum PaintedTooltipShape
 {
     /// <summary>Rounded rectangle (default). Corner rounding via <c>Radius</c> (viewBox units).</summary>
     Rectangle,

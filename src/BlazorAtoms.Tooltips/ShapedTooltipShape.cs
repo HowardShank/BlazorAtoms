@@ -1,8 +1,9 @@
-namespace BlazorAtoms.ShapedTooltips;
+namespace BlazorAtoms.Tooltips;
 
-/// <summary>Outline shape of the tooltip bubble. Every shape is drawn as an inline SVG path,
-/// so border (stroke) and fill apply uniformly — including on Burst, FoldedCorner, and Cloud.</summary>
-public enum Shape
+/// <summary>Outline shape of the <see cref="AtomShapedTooltip"/> bubble. Every shape is drawn as an
+/// inline SVG path, so border (stroke) and fill apply uniformly — including on Burst, FoldedCorner,
+/// and Cloud.</summary>
+public enum ShapedTooltipShape
 {
     /// <summary>Rounded rectangle (default). Corner rounding via <c>Radius</c> (viewBox units).</summary>
     Rectangle,

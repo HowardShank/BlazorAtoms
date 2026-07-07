@@ -1,20 +1,19 @@
-using System;
 using System.Globalization;
 using System.Text;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using BlazorAtoms.Shared;
 
-namespace BlazorAtoms.PaintedTooltips;
+namespace BlazorAtoms.Tooltips;
 
 /// <summary>
-/// Tooltip whose bubble is both shaped <em>and painted</em> by inline SVG: a linear-gradient fill
-/// (when <see cref="GradientFrom"/>/<see cref="GradientTo"/> are set), SVG stroke border, and an
-/// optional soft drop shadow — across every shape. Falls back to the solid <c>--tip-bg</c> token
-/// when no gradient is given, so it also works as a plain shaped tooltip. Positioning + show/hide
-/// are pure CSS; only <see cref="Placement.Cursor"/> uses a tiny self-loaded JS module.
+/// Tooltip whose bubble outline is drawn with an inline SVG path (rectangle, pill, ellipse,
+/// cloud, burst, folded corner). Because the outline is an SVG shape, <em>border and fill apply
+/// to every shape</em> — the <c>clip-path</c> limitation of the CSS-only tooltip is gone. Color
+/// still comes from CSS tokens (<c>--tip-bg</c>/<c>--tip-border</c>). Positioning and show/hide
+/// are the same pure-CSS mechanism; only <see cref="Placement.Cursor"/> uses a tiny JS module.
 /// </summary>
-public partial class AtomPaintedTooltip : AtomComponentBase, IAsyncDisposable
+public partial class AtomShapedTooltip : AtomComponentBase, IAsyncDisposable
 {
     [Inject] private IJSRuntime JS { get; set; } = default!;
 
@@ -31,34 +30,21 @@ public partial class AtomPaintedTooltip : AtomComponentBase, IAsyncDisposable
     [Parameter] public Placement Placement { get; set; } = Placement.Top;
 
     /// <summary>Bubble outline shape (drawn as SVG).</summary>
-    [Parameter] public Shape Shape { get; set; } = Shape.Rectangle;
+    [Parameter] public ShapedTooltipShape Shape { get; set; } = ShapedTooltipShape.Rectangle;
 
-    /// <summary>Solid fill when no gradient is set. Sets <c>--tip-bg</c>.</summary>
+    /// <summary>Bubble fill. Sets <c>--tip-bg</c> (SVG path fill reads it). Null = built-in default.</summary>
     [Parameter] public string? Background { get; set; }
 
-    /// <summary>Gradient start color. Set together with <see cref="GradientTo"/> to paint a
-    /// linear-gradient fill (overrides <see cref="Background"/>).</summary>
-    [Parameter] public string? GradientFrom { get; set; }
-
-    /// <summary>Gradient end color. See <see cref="GradientFrom"/>.</summary>
-    [Parameter] public string? GradientTo { get; set; }
-
-    /// <summary>Gradient direction in degrees (0 = left→right, 90 = top→bottom). Default 90.</summary>
-    [Parameter] public double GradientAngle { get; set; } = 90;
-
-    /// <summary>Draw a soft drop shadow behind the bubble.</summary>
-    [Parameter] public bool Shadow { get; set; } = true;
-
-    /// <summary>Bubble text color. Sets <c>--tip-color</c>.</summary>
+    /// <summary>Bubble text color. Sets <c>--tip-color</c>. Null = built-in default.</summary>
     [Parameter] public string? TextColor { get; set; }
 
-    /// <summary>Border (SVG stroke) color. Sets <c>--tip-border</c>.</summary>
+    /// <summary>Bubble border color. Sets <c>--tip-border</c> (SVG path stroke). Null = default.</summary>
     [Parameter] public string? BorderColor { get; set; }
 
     /// <summary>Border (SVG stroke) width in px. Sets <c>--tip-border-width</c>. Uniform (non-scaling).</summary>
     [Parameter] public double? BorderWidth { get; set; }
 
-    /// <summary>Corner rounding for the <see cref="Shape.Rectangle"/> shape, in viewBox units (0–50).</summary>
+    /// <summary>Corner rounding for the <see cref="ShapedTooltipShape.Rectangle"/> shape, in viewBox units (0–50).</summary>
     [Parameter] public double Radius { get; set; } = 12;
 
     /// <summary>Arrow size in px. Sets <c>--tip-arrow-size</c>.</summary>
@@ -68,7 +54,7 @@ public partial class AtomPaintedTooltip : AtomComponentBase, IAsyncDisposable
     [Parameter] public string? MaxWidth { get; set; }
 
     /// <summary>Explicit bubble width (any CSS length). Null = fit content. Useful for
-    /// <see cref="Shape.Cloud"/>/<see cref="Shape.Ellipse"/>, whose outline needs room.</summary>
+    /// <see cref="ShapedTooltipShape.Cloud"/>/<see cref="ShapedTooltipShape.Ellipse"/>, whose outline needs room.</summary>
     [Parameter] public string? Width { get; set; }
 
     /// <summary>Explicit bubble height (any CSS length). Null = fit content.</summary>
@@ -89,23 +75,19 @@ public partial class AtomPaintedTooltip : AtomComponentBase, IAsyncDisposable
     /// <summary>Extra inline style appended after the built-in theme style.</summary>
     [Parameter] public string? Style { get; set; }
 
-    private readonly string _id = "pt" + Guid.NewGuid().ToString("N")[..8];
-    private string GradId => "grad-" + _id;
+    private readonly string _id = "st" + Guid.NewGuid().ToString("N")[..8];
 
     private ElementReference _triggerRef;
     private ElementReference _bubbleRef;
     private IJSObjectReference? _module;
     private bool _cursorActive;
 
-    private bool HasGradient => GradientFrom is not null && GradientTo is not null;
-
-    // Inline fill override so the gradient beats the stylesheet's fill:var(--tip-bg) on .app-path.
-    private string? PathFillStyle => HasGradient ? $"fill:url(#{GradId})" : null;
-
+    // Burst/FoldedCorner integrate no separate arrow; Cursor has no fixed edge. Cloud keeps the
+    // arrow element and restyles it into the circle trail (see CSS).
     private bool ShowsArrow => ShowArrow
         && Placement != Placement.Cursor
-        && Shape != Shape.Burst
-        && Shape != Shape.FoldedCorner;
+        && Shape != ShapedTooltipShape.Burst
+        && Shape != ShapedTooltipShape.FoldedCorner;
 
     private string PlacementValue => Placement switch
     {
@@ -131,36 +113,32 @@ public partial class AtomPaintedTooltip : AtomComponentBase, IAsyncDisposable
 
     private string ShapeValue => Shape switch
     {
-        Shape.Rectangle => "rectangle",
-        Shape.Pill => "pill",
-        Shape.Ellipse => "ellipse",
-        Shape.Cloud => "cloud",
-        Shape.Burst => "burst",
-        Shape.FoldedCorner => "folded",
+        ShapedTooltipShape.Rectangle => "rectangle",
+        ShapedTooltipShape.Pill => "pill",
+        ShapedTooltipShape.Ellipse => "ellipse",
+        ShapedTooltipShape.Cloud => "cloud",
+        ShapedTooltipShape.Burst => "burst",
+        ShapedTooltipShape.FoldedCorner => "folded",
         _ => "rectangle",
     };
 
     private static string N(double v) => v.ToString(CultureInfo.InvariantCulture);
 
+    // Rectangle corner radius, formatted invariant for the SVG rx/ry attributes.
     private string RxStr => N(Clamp(Radius, 0, 50));
 
     private static double Clamp(double v, double lo, double hi) => v < lo ? lo : (v > hi ? hi : v);
 
+    // Explicit bubble sizing (applied to the bubble element, not the root).
     private string? BubbleStyle => string.Concat(
         Width is null ? "" : $"width:{Width};",
         Height is null ? "" : $"height:{Height};") is { Length: > 0 } s ? s : null;
-
-    // Gradient vector across the object bounding box (0..1). 0deg = left→right, 90 = top→bottom.
-    private string GradX1 => N(Math.Round(0.5 - Math.Cos(Rad) * 0.5, 4));
-    private string GradY1 => N(Math.Round(0.5 - Math.Sin(Rad) * 0.5, 4));
-    private string GradX2 => N(Math.Round(0.5 + Math.Cos(Rad) * 0.5, 4));
-    private string GradY2 => N(Math.Round(0.5 + Math.Sin(Rad) * 0.5, 4));
-    private double Rad => GradientAngle * Math.PI / 180.0;
 
     private const string CloudPath =
         "M22 80 C9 80 6 61 17 56 C10 43 24 35 34 42 C38 27 62 27 66 42 " +
         "C79 35 92 46 85 58 C95 62 92 80 79 80 Z";
 
+    // 12-point starburst, shrunk 6% toward centre (50,50) so the uniform stroke isn't clipped.
     private static readonly (double X, double Y)[] BurstPoints =
     {
         (50,0),(61,12),(77,6),(76,24),(94,24),(82,38),(100,50),(82,62),(94,76),(76,76),
@@ -190,8 +168,6 @@ public partial class AtomPaintedTooltip : AtomComponentBase, IAsyncDisposable
         {
             var style = string.Concat(
                 Background is null ? "" : $"--tip-bg:{Background};",
-                // Arrow is a solid CSS square; match it to the gradient's start so it doesn't clash.
-                HasGradient ? $"--tip-arrow-fill:{GradientFrom};" : "",
                 TextColor is null ? "" : $"--tip-color:{TextColor};",
                 BorderColor is null ? "" : $"--tip-border:{BorderColor};",
                 BorderWidth is null ? "" : $"--tip-border-width:{N(BorderWidth.Value)}px;",
@@ -208,7 +184,7 @@ public partial class AtomPaintedTooltip : AtomComponentBase, IAsyncDisposable
         if (wantCursor && !_cursorActive)
         {
             _module ??= await JS.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorAtoms.PaintedTooltips/atom-painted-tooltip.js");
+                "import", "./_content/BlazorAtoms.Tooltips/atom-shaped-tooltip.js");
             await _module.InvokeVoidAsync("attach", _triggerRef, _bubbleRef);
             _cursorActive = true;
         }

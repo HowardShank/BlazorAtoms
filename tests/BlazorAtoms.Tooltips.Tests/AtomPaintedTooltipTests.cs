@@ -1,4 +1,4 @@
-namespace BlazorAtoms.PaintedTooltips.Tests;
+namespace BlazorAtoms.Tooltips.Tests;
 
 public class AtomPaintedTooltipTests : TestContext
 {
@@ -16,11 +16,11 @@ public class AtomPaintedTooltipTests : TestContext
     }
 
     [Theory]
-    [InlineData(Shape.Rectangle, "rectangle")]
-    [InlineData(Shape.Cloud, "cloud")]
-    [InlineData(Shape.Burst, "burst")]
-    [InlineData(Shape.FoldedCorner, "folded")]
-    public void Shape_sets_data_shape_and_renders_path(Shape shape, string expected)
+    [InlineData(PaintedTooltipShape.Rectangle, "rectangle")]
+    [InlineData(PaintedTooltipShape.Cloud, "cloud")]
+    [InlineData(PaintedTooltipShape.Burst, "burst")]
+    [InlineData(PaintedTooltipShape.FoldedCorner, "folded")]
+    public void Shape_sets_data_shape_and_renders_path(PaintedTooltipShape shape, string expected)
     {
         var cut = RenderComponent<AtomPaintedTooltip>(p => p
             .Add(c => c.Shape, shape)
@@ -97,6 +97,6 @@ public class AtomPaintedTooltipTests : TestContext
         Assert.Contains(JSInterop.Invocations, i =>
             i.Identifier == "import" &&
             i.Arguments.Count > 0 &&
-            (i.Arguments[0] as string) == "./_content/BlazorAtoms.PaintedTooltips/atom-painted-tooltip.js");
+            (i.Arguments[0] as string) == "./_content/BlazorAtoms.Tooltips/atom-painted-tooltip.js");
     }
 }

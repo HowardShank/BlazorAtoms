@@ -1,7 +1,7 @@
 namespace BlazorAtoms.Tooltips;
 
-/// <summary>Outline shape of the tooltip bubble.</summary>
-public enum Shape
+/// <summary>Outline shape of the <see cref="AtomTooltip"/> bubble (CSS-only rendering).</summary>
+public enum TooltipShape
 {
     /// <summary>Rounded rectangle (default). Corner rounding via <c>Radius</c>.</summary>
     Rectangle,
@@ -17,7 +17,7 @@ public enum Shape
     Thought,
 
     /// <summary>Comic burst / spiky star (via <c>clip-path</c>). Fill only — border and arrow
-    /// don't apply (the clip removes them); use the SVG-backed variant for a bordered burst.</summary>
+    /// don't apply (the clip removes them); use <see cref="AtomShapedTooltip"/> for a bordered burst.</summary>
     Burst,
 
     /// <summary>Rectangle with a folded top-right corner (via <c>clip-path</c>). Fill only —

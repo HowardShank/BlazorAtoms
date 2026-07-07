@@ -50,13 +50,13 @@ public class AtomTooltipTests : TestContext
     }
 
     [Theory]
-    [InlineData(Shape.Rectangle, "rectangle")]
-    [InlineData(Shape.Pill, "pill")]
-    [InlineData(Shape.Ellipse, "ellipse")]
-    [InlineData(Shape.Thought, "thought")]
-    [InlineData(Shape.Burst, "burst")]
-    [InlineData(Shape.FoldedCorner, "folded")]
-    public void Shape_sets_data_shape_attribute(Shape shape, string expected)
+    [InlineData(TooltipShape.Rectangle, "rectangle")]
+    [InlineData(TooltipShape.Pill, "pill")]
+    [InlineData(TooltipShape.Ellipse, "ellipse")]
+    [InlineData(TooltipShape.Thought, "thought")]
+    [InlineData(TooltipShape.Burst, "burst")]
+    [InlineData(TooltipShape.FoldedCorner, "folded")]
+    public void Shape_sets_data_shape_attribute(TooltipShape shape, string expected)
     {
         var cut = RenderComponent<AtomTooltip>(p => p
             .Add(c => c.Shape, shape)
@@ -67,9 +67,9 @@ public class AtomTooltipTests : TestContext
     }
 
     [Theory]
-    [InlineData(Shape.Burst)]
-    [InlineData(Shape.FoldedCorner)]
-    public void Clip_path_shapes_suppress_arrow(Shape shape)
+    [InlineData(TooltipShape.Burst)]
+    [InlineData(TooltipShape.FoldedCorner)]
+    public void Clip_path_shapes_suppress_arrow(TooltipShape shape)
     {
         // clip-path clips the arrow away, so it isn't rendered even with ShowArrow=true (default).
         var cut = RenderComponent<AtomTooltip>(p => p
@@ -84,7 +84,7 @@ public class AtomTooltipTests : TestContext
     public void Thought_shape_keeps_arrow_element_for_trail()
     {
         var cut = RenderComponent<AtomTooltip>(p => p
-            .Add(c => c.Shape, Shape.Thought)
+            .Add(c => c.Shape, TooltipShape.Thought)
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
 

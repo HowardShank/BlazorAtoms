@@ -1,4 +1,4 @@
-@using BlazorAtoms.PaintedTooltips
+@using BlazorAtoms.Tooltips
 
 <PageTitle>AtomPaintedTooltip Playground</PageTitle>
 
@@ -36,7 +36,7 @@
 <div class="tt-controls">
     <div class="tt-ctrl"><label>Text</label><input type="text" @bind="Text" @bind:event="oninput" /></div>
     <div class="tt-ctrl"><label>Placement</label><select @bind="Placement">@foreach (var p in Enum.GetValues<Placement>()){<option value="@p">@p</option>}</select></div>
-    <div class="tt-ctrl"><label>Shape</label><select @bind="Shape">@foreach (var s in Enum.GetValues<Shape>()){<option value="@s">@s</option>}</select></div>
+    <div class="tt-ctrl"><label>Shape</label><select @bind="Shape">@foreach (var s in Enum.GetValues<PaintedTooltipShape>()){<option value="@s">@s</option>}</select></div>
     <div class="tt-ctrl"><label>Fill</label>
         <div class="row"><input type="checkbox" id="ug" @bind="UseGradient" /><label for="ug">Use gradient</label></div>
     </div>
@@ -61,7 +61,7 @@
 @code {
     private string Text = "I'm painted";
     private Placement Placement = Placement.Top;
-    private Shape Shape = Shape.Rectangle;
+    private PaintedTooltipShape Shape = PaintedTooltipShape.Rectangle;
     private bool ShowArrow = true;
     private bool Shadow = true;
     private bool UseGradient = true;
@@ -83,7 +83,7 @@
             var sb = new System.Text.StringBuilder("<AtomPaintedTooltip");
             sb.Append($" Text=\"{Text}\"");
             if (Placement != Placement.Top) sb.Append($" Placement=\"Placement.{Placement}\"");
-            if (Shape != Shape.Rectangle) sb.Append($" Shape=\"Shape.{Shape}\"");
+            if (Shape != PaintedTooltipShape.Rectangle) sb.Append($" Shape=\"PaintedTooltipShape.{Shape}\"");
             if (!ShowArrow) sb.Append(" ShowArrow=\"false\"");
             if (!Shadow) sb.Append(" Shadow=\"false\"");
             if (UseGradient)

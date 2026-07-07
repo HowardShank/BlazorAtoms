@@ -27,9 +27,9 @@ public partial class AtomTooltip : AtomComponentBase, IAsyncDisposable
     /// <summary>Side, corner, or cursor mode the bubble is placed by, relative to the trigger.</summary>
     [Parameter] public Placement Placement { get; set; } = Placement.Top;
 
-    /// <summary>Outline shape of the bubble. <see cref="Shape.Burst"/> and
-    /// <see cref="Shape.FoldedCorner"/> are fill-only (clip-path removes border + arrow).</summary>
-    [Parameter] public Shape Shape { get; set; } = Shape.Rectangle;
+    /// <summary>Outline shape of the bubble. <see cref="TooltipShape.Burst"/> and
+    /// <see cref="TooltipShape.FoldedCorner"/> are fill-only (clip-path removes border + arrow).</summary>
+    [Parameter] public TooltipShape Shape { get; set; } = TooltipShape.Rectangle;
 
     /// <summary>Bubble background. Falls back to the built-in light/dark default when null. Sets <c>--tip-bg</c>.</summary>
     [Parameter] public string? Background { get; set; }
@@ -81,17 +81,17 @@ public partial class AtomTooltip : AtomComponentBase, IAsyncDisposable
     // element but restyles it into the circle trail (see the CSS).
     private bool ShowsArrow => ShowArrow
         && Placement != Placement.Cursor
-        && Shape != Shape.Burst
-        && Shape != Shape.FoldedCorner;
+        && Shape != TooltipShape.Burst
+        && Shape != TooltipShape.FoldedCorner;
 
     private string ShapeValue => Shape switch
     {
-        Shape.Rectangle => "rectangle",
-        Shape.Pill => "pill",
-        Shape.Ellipse => "ellipse",
-        Shape.Thought => "thought",
-        Shape.Burst => "burst",
-        Shape.FoldedCorner => "folded",
+        TooltipShape.Rectangle => "rectangle",
+        TooltipShape.Pill => "pill",
+        TooltipShape.Ellipse => "ellipse",
+        TooltipShape.Thought => "thought",
+        TooltipShape.Burst => "burst",
+        TooltipShape.FoldedCorner => "folded",
         _ => "rectangle",
     };
 
