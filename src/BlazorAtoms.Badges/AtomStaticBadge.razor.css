@@ -107,10 +107,11 @@
 .atom-sbadge-host > .atom-sbadge[data-placement$="start"]  { left: 0; }
 .atom-sbadge-host > .atom-sbadge[data-placement$="center"] { left: 50%; }
 
-/* Nudge outward from the corner by --sb-offset (default: half the badge, i.e. straddle it). */
-.atom-sbadge-host > .atom-sbadge[data-placement="top-end"]      { transform: translate(var(--sb-offset, 50%), calc(-1 * var(--sb-offset, 50%))); }
-.atom-sbadge-host > .atom-sbadge[data-placement="top-start"]    { transform: translate(calc(-1 * var(--sb-offset, 50%)), calc(-1 * var(--sb-offset, 50%))); }
-.atom-sbadge-host > .atom-sbadge[data-placement="bottom-end"]   { transform: translate(var(--sb-offset, 50%), var(--sb-offset, 50%)); }
-.atom-sbadge-host > .atom-sbadge[data-placement="bottom-start"] { transform: translate(calc(-1 * var(--sb-offset, 50%)), var(--sb-offset, 50%)); }
-.atom-sbadge-host > .atom-sbadge[data-placement="top-center"]    { transform: translate(-50%, calc(-1 * var(--sb-offset, 50%))); }
-.atom-sbadge-host > .atom-sbadge[data-placement="bottom-center"] { transform: translate(-50%, var(--sb-offset, 50%)); }
+/* Nudge outward from the corner by --sb-offset (default: half the badge, i.e. straddle it).
+   --sb-offset-x / --sb-offset-y add an extra absolute-direction nudge (+x right, +y down). */
+.atom-sbadge-host > .atom-sbadge[data-placement="top-end"]      { transform: translate(calc(var(--sb-offset, 50%) + var(--sb-offset-x, 0px)), calc(-1 * var(--sb-offset, 50%) + var(--sb-offset-y, 0px))); }
+.atom-sbadge-host > .atom-sbadge[data-placement="top-start"]    { transform: translate(calc(-1 * var(--sb-offset, 50%) + var(--sb-offset-x, 0px)), calc(-1 * var(--sb-offset, 50%) + var(--sb-offset-y, 0px))); }
+.atom-sbadge-host > .atom-sbadge[data-placement="bottom-end"]   { transform: translate(calc(var(--sb-offset, 50%) + var(--sb-offset-x, 0px)), calc(var(--sb-offset, 50%) + var(--sb-offset-y, 0px))); }
+.atom-sbadge-host > .atom-sbadge[data-placement="bottom-start"] { transform: translate(calc(-1 * var(--sb-offset, 50%) + var(--sb-offset-x, 0px)), calc(var(--sb-offset, 50%) + var(--sb-offset-y, 0px))); }
+.atom-sbadge-host > .atom-sbadge[data-placement="top-center"]    { transform: translate(calc(-50% + var(--sb-offset-x, 0px)), calc(-1 * var(--sb-offset, 50%) + var(--sb-offset-y, 0px))); }
+.atom-sbadge-host > .atom-sbadge[data-placement="bottom-center"] { transform: translate(calc(-50% + var(--sb-offset-x, 0px)), calc(var(--sb-offset, 50%) + var(--sb-offset-y, 0px))); }

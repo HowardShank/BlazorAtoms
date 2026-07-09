@@ -103,13 +103,17 @@
 .atom-badge-host > .atom-badge[data-placement$="start"]  { left: 0; }
 .atom-badge-host > .atom-badge[data-placement$="center"] { left: 50%; }
 
-/* Nudge outward from the corner by --badge-offset (default: half the badge, i.e. straddle it). */
-.atom-badge-host > .atom-badge[data-placement="top-end"]      { transform: translate(var(--badge-offset, 50%), calc(-1 * var(--badge-offset, 50%))); }
-.atom-badge-host > .atom-badge[data-placement="top-start"]    { transform: translate(calc(-1 * var(--badge-offset, 50%)), calc(-1 * var(--badge-offset, 50%))); }
-.atom-badge-host > .atom-badge[data-placement="bottom-end"]   { transform: translate(var(--badge-offset, 50%), var(--badge-offset, 50%)); }
-.atom-badge-host > .atom-badge[data-placement="bottom-start"] { transform: translate(calc(-1 * var(--badge-offset, 50%)), var(--badge-offset, 50%)); }
-.atom-badge-host > .atom-badge[data-placement="top-center"]    { transform: translate(-50%, calc(-1 * var(--badge-offset, 50%))); }
-.atom-badge-host > .atom-badge[data-placement="bottom-center"] { transform: translate(-50%, var(--badge-offset, 50%)); }
+/* Nudge outward from the corner by --badge-offset (default: half the badge, i.e. straddle it).
+   --badge-offset-x / --badge-offset-y add an extra absolute-direction nudge (+x right, +y down).
+   Placement lives on the `translate:` individual property (NOT `transform:`) so the keyframe
+   animations — which drive `transform:` (scale/rotate/translateY) with fill-mode both — compose on
+   top instead of overwriting the placement. translate is applied first, then transform. */
+.atom-badge-host > .atom-badge[data-placement="top-end"]      { translate: calc(var(--badge-offset, 50%) + var(--badge-offset-x, 0px)) calc(-1 * var(--badge-offset, 50%) + var(--badge-offset-y, 0px)); }
+.atom-badge-host > .atom-badge[data-placement="top-start"]    { translate: calc(-1 * var(--badge-offset, 50%) + var(--badge-offset-x, 0px)) calc(-1 * var(--badge-offset, 50%) + var(--badge-offset-y, 0px)); }
+.atom-badge-host > .atom-badge[data-placement="bottom-end"]   { translate: calc(var(--badge-offset, 50%) + var(--badge-offset-x, 0px)) calc(var(--badge-offset, 50%) + var(--badge-offset-y, 0px)); }
+.atom-badge-host > .atom-badge[data-placement="bottom-start"] { translate: calc(-1 * var(--badge-offset, 50%) + var(--badge-offset-x, 0px)) calc(var(--badge-offset, 50%) + var(--badge-offset-y, 0px)); }
+.atom-badge-host > .atom-badge[data-placement="top-center"]    { translate: calc(-50% + var(--badge-offset-x, 0px)) calc(-1 * var(--badge-offset, 50%) + var(--badge-offset-y, 0px)); }
+.atom-badge-host > .atom-badge[data-placement="bottom-center"] { translate: calc(-50% + var(--badge-offset-x, 0px)) calc(var(--badge-offset, 50%) + var(--badge-offset-y, 0px)); }
 
 /* =====================================================================================
    Animations. data-anim selects the keyframes; data-trigger selects how they run.

@@ -31,7 +31,8 @@
             <AtomStaticBadge Value="@BadgeValue" Max="@Max" ShowZero="@ShowZero" Dot="@Dot"
                              Placement="@Placement" Shape="@Shape" Variant="@Variant"
                              Background="@(OverrideBg ? Bg : null)" Size="@Size"
-                             Width="@Blank(Width)" Height="@Blank(Height)" Radius="@Radius">
+                             Width="@Blank(Width)" Height="@Blank(Height)" Radius="@Radius"
+                             OffsetX="@OffsetX" OffsetY="@OffsetY">
                 <div class="tt-host">🔔</div>
             </AtomStaticBadge>
         }
@@ -56,6 +57,8 @@
     <div class="tt-ctrl"><label>Width (e.g. 40px)</label><input type="text" @bind="Width" @bind:event="oninput" placeholder="auto" /></div>
     <div class="tt-ctrl"><label>Height (e.g. 24px)</label><input type="text" @bind="Height" @bind:event="oninput" placeholder="auto" /></div>
     <div class="tt-ctrl"><label>Radius px (Rounded) <span class="val">@Radius</span></label><input type="number" min="0" max="30" @bind="Radius" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Offset X px <span class="val">@OffsetX</span></label><input type="number" min="-40" max="40" @bind="OffsetX" @bind:event="oninput" disabled="@(!Overlay)" /></div>
+    <div class="tt-ctrl"><label>Offset Y px <span class="val">@OffsetY</span></label><input type="number" min="-40" max="40" @bind="OffsetY" @bind:event="oninput" disabled="@(!Overlay)" /></div>
     <div class="tt-ctrl"><label>Background</label><div class="row"><input type="checkbox" @bind="OverrideBg" /><input type="color" @bind="Bg" @bind:event="oninput" disabled="@(!OverrideBg)" /></div></div>
     <div class="tt-ctrl"><label>Options</label>
         <div class="row"><input type="checkbox" id="ov" @bind="Overlay" /><label for="ov">Overlay a host</label></div>
@@ -79,6 +82,8 @@
     private string Width = "";
     private string Height = "";
     private double Radius = 6;
+    private double OffsetX;
+    private double OffsetY;
     private bool OverrideBg;
     private string Bg = "#7c3aed";
 
@@ -104,6 +109,8 @@
             if (!string.IsNullOrWhiteSpace(Width)) sb.Append($" Width=\"{Width}\"");
             if (!string.IsNullOrWhiteSpace(Height)) sb.Append($" Height=\"{Height}\"");
             if (Shape == Shape.Rounded) sb.Append($" Radius=\"{Radius}\"");
+            if (Overlay && OffsetX != 0) sb.Append($" OffsetX=\"{OffsetX}\"");
+            if (Overlay && OffsetY != 0) sb.Append($" OffsetY=\"{OffsetY}\"");
             if (Overlay)
                 sb.Append(">\n    <span>🔔</span>\n</AtomStaticBadge>");
             else

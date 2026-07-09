@@ -73,6 +73,14 @@ public partial class AtomStaticBadge : AtomComponentBase
     /// <summary>Gap the badge is nudged outward from the host corner, in px. Sets <c>--sb-offset</c>.</summary>
     [Parameter] public double? Offset { get; set; }
 
+    /// <summary>Extra horizontal nudge in px, added on top of the corner straddle (+ = right, − = left).
+    /// Overlay mode only. Sets <c>--sb-offset-x</c>.</summary>
+    [Parameter] public double? OffsetX { get; set; }
+
+    /// <summary>Extra vertical nudge in px, added on top of the corner straddle (+ = down, − = up).
+    /// Overlay mode only. Sets <c>--sb-offset-y</c>.</summary>
+    [Parameter] public double? OffsetY { get; set; }
+
     /// <summary>Max width (any CSS length); longer text truncates with an ellipsis. Sets <c>--sb-max-width</c>.</summary>
     [Parameter] public string? MaxWidth { get; set; }
 
@@ -227,5 +235,7 @@ public partial class AtomStaticBadge : AtomComponentBase
         Height is null ? "" : $"--sb-height:{Height};",
         Radius is null ? "" : $"--sb-radius:{N(Radius.Value)}px;",
         Offset is null ? "" : $"--sb-offset:{N(Offset.Value)}px;",
+        OffsetX is null ? "" : $"--sb-offset-x:{N(OffsetX.Value)}px;",
+        OffsetY is null ? "" : $"--sb-offset-y:{N(OffsetY.Value)}px;",
         MaxWidth is null ? "" : $"--sb-max-width:{MaxWidth};");
 }

@@ -182,4 +182,27 @@ public class AtomAnimatedBadgeTests : TestContext
         Assert.Null(cut.Find(".atom-badge").GetAttribute("data-svg"));
         Assert.Empty(cut.FindAll(".badge-path"));
     }
+
+    [Fact]
+    public void Offset_xy_tokens_emitted_when_set()
+    {
+        var cut = RenderComponent<AtomAnimatedBadge>(p => p
+            .Add(c => c.Value, 3)
+            .Add(c => c.OffsetX, -4)
+            .Add(c => c.OffsetY, 6));
+
+        var style = cut.Find(".atom-badge").GetAttribute("style") ?? "";
+        Assert.Contains("--badge-offset-x:-4px", style);
+        Assert.Contains("--badge-offset-y:6px", style);
+    }
+
+    [Fact]
+    public void Offset_xy_tokens_absent_when_unset()
+    {
+        var cut = RenderComponent<AtomAnimatedBadge>(p => p.Add(c => c.Value, 3));
+
+        var style = cut.Find(".atom-badge").GetAttribute("style") ?? "";
+        Assert.DoesNotContain("--badge-offset-x", style);
+        Assert.DoesNotContain("--badge-offset-y", style);
+    }
 }

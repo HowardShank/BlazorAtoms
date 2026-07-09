@@ -161,4 +161,27 @@ public class AtomStaticBadgeTests : TestContext
         Assert.Contains("--sb-bg:#7c3aed", style);
         Assert.Contains("--sb-width:60px", style);
     }
+
+    [Fact]
+    public void Offset_xy_tokens_emitted_when_set()
+    {
+        var cut = RenderComponent<AtomStaticBadge>(p => p
+            .Add(c => c.Value, 3)
+            .Add(c => c.OffsetX, -4)
+            .Add(c => c.OffsetY, 6));
+
+        var style = cut.Find(".atom-sbadge").GetAttribute("style") ?? "";
+        Assert.Contains("--sb-offset-x:-4px", style);
+        Assert.Contains("--sb-offset-y:6px", style);
+    }
+
+    [Fact]
+    public void Offset_xy_tokens_absent_when_unset()
+    {
+        var cut = RenderComponent<AtomStaticBadge>(p => p.Add(c => c.Value, 3));
+
+        var style = cut.Find(".atom-sbadge").GetAttribute("style") ?? "";
+        Assert.DoesNotContain("--sb-offset-x", style);
+        Assert.DoesNotContain("--sb-offset-y", style);
+    }
 }

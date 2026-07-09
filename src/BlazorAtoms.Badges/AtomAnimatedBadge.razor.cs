@@ -83,6 +83,14 @@ public partial class AtomAnimatedBadge : AtomComponentBase
     /// <summary>Gap the badge is nudged outward from the host corner, in px. Sets <c>--badge-offset</c>.</summary>
     [Parameter] public double? Offset { get; set; }
 
+    /// <summary>Extra horizontal nudge in px, added on top of the corner straddle (+ = right, − = left).
+    /// Overlay mode only. Sets <c>--badge-offset-x</c>.</summary>
+    [Parameter] public double? OffsetX { get; set; }
+
+    /// <summary>Extra vertical nudge in px, added on top of the corner straddle (+ = down, − = up).
+    /// Overlay mode only. Sets <c>--badge-offset-y</c>.</summary>
+    [Parameter] public double? OffsetY { get; set; }
+
     /// <summary>Max width (any CSS length); longer text truncates with an ellipsis. Sets <c>--badge-max-width</c>.</summary>
     [Parameter] public string? MaxWidth { get; set; }
 
@@ -272,6 +280,8 @@ public partial class AtomAnimatedBadge : AtomComponentBase
         Height is null ? "" : $"--badge-height:{Height};",
         Radius is null ? "" : $"--badge-radius:{N(Radius.Value)}px;",
         Offset is null ? "" : $"--badge-offset:{N(Offset.Value)}px;",
+        OffsetX is null ? "" : $"--badge-offset-x:{N(OffsetX.Value)}px;",
+        OffsetY is null ? "" : $"--badge-offset-y:{N(OffsetY.Value)}px;",
         Duration is null ? "" : $"--badge-anim-duration:{N(Duration.Value)}s;",
         Delay is null ? "" : $"--badge-anim-delay:{N(Delay.Value)}s;",
         MaxWidth is null ? "" : $"--badge-max-width:{MaxWidth};");
