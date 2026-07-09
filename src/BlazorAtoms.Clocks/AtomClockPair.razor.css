@@ -1,0 +1,23 @@
+/* Two clocks + a divider. Side-by-side = flex row (vertical divider stretches to full height);
+   stacked = flex column (horizontal divider). Children are AtomClock roots (own scope) but they're
+   direct flex items here, so plain flex layout reaches them — no ::deep needed. */
+.atom-clock-pair {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--clkp-gap, .9em);
+}
+.atom-clock-pair[data-layout="stacked"] {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.atom-clock-divider {
+    align-self: stretch;
+    width: 1px;
+    background: currentColor;
+    opacity: .2;
+}
+.atom-clock-pair[data-layout="stacked"] .atom-clock-divider {
+    width: 100%;
+    height: 1px;
+}

@@ -1,0 +1,17 @@
+@inherits AtomComponentBase
+
+@*
+    AtomClockPair.razor
+    -------------------
+    Two AtomClocks shown together — by default the server zone and the browser-local zone — laid out
+    side-by-side (with a divider) or stacked. Shared Format/Live/Size flow to both; each side has its
+    own Kind/Label/TimeZone. For anything more bespoke, compose two <AtomClock> yourself.
+*@
+
+<div class="atom-clock-pair" data-layout="@LayoutValue" role="group" style="@RootStyle">
+    <AtomClock Kind="@PrimaryKind" TimeZone="@PrimaryTimeZone" Label="@PrimaryLabel"
+               Format="@Format" Live="@Live" Size="@Size" />
+    <span class="atom-clock-divider" aria-hidden="true"></span>
+    <AtomClock Kind="@SecondaryKind" TimeZone="@SecondaryTimeZone" Label="@SecondaryLabel"
+               Format="@Format" Live="@Live" Size="@Size" />
+</div>

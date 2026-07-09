@@ -18,6 +18,7 @@
     <ProjectReference Include="..\..\src\BlazorAtoms.Tooltips\BlazorAtoms.Tooltips.csproj" />
     <ProjectReference Include="..\..\src\BlazorAtoms.Badges\BlazorAtoms.Badges.csproj" />
     <ProjectReference Include="..\..\src\BlazorAtoms.Avatars\BlazorAtoms.Avatars.csproj" />
+    <ProjectReference Include="..\..\src\BlazorAtoms.Clocks\BlazorAtoms.Clocks.csproj" />
     <ProjectReference Include="..\..\branding\BlazorAtoms.Branding\BlazorAtoms.Branding.csproj" />
     <ProjectReference Include="..\..\samples\Demos.Shared\Demos.Shared.csproj" />
   </ItemGroup>

@@ -1,0 +1,25 @@
+@inherits AtomComponentBase
+@implements IAsyncDisposable
+
+@*
+    AtomClock.razor
+    ---------------
+    A live clock for one time source (server host / UTC / auto-detected browser timezone). Ticks
+    once a second by default (Live="false" freezes to a snapshot). Renders a semantic <time> element.
+    Browser-timezone detection uses a tiny self-loaded JS module and only kicks in for Kind="Browser";
+    every other mode is JS-free. During static SSR/prerender the browser clock shows UTC, then
+    enhances to the real zone once interactive.
+*@
+
+@if (!CancellationToken.IsCancellationRequested)
+{
+    var now = CurrentTime;
+
+    <span class="atom-clock" data-kind="@KindValue" aria-label="@AriaLabel" style="@RootStyle">
+        @if (!string.IsNullOrEmpty(Label))
+        {
+            <span class="atom-clock-label">@Label</span>
+        }
+        <time class="atom-clock-time" datetime="@IsoOf(now)">@FormatTime(now)</time>
+    </span>
+}

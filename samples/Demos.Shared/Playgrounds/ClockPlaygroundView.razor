@@ -1,0 +1,87 @@
+@using BlazorAtoms.Clocks
+
+<PageTitle>AtomClock / AtomClockPair Playground</PageTitle>
+
+<style>
+    .tt-stage-outer { display:flex; align-items:center; justify-content:center; gap:2.5rem; min-height:200px;
+        background: radial-gradient(ellipse at center,#0b1019 0%,#07090d 100%); border:1px solid #1b2330;
+        border-radius:12px; padding:1.5rem; margin-bottom:1.5rem; flex-wrap:wrap; color:#e5e9f0; }
+    .tt-cell { display:flex; flex-direction:column; align-items:center; gap:.75rem; }
+    .tt-cell .cap { font:600 .75rem/1 ui-monospace,Consolas,monospace; color:#5fb7c9; letter-spacing:.05em; }
+    .tt-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:1rem 1.5rem;
+        background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; }
+    .tt-ctrl { display:flex; flex-direction:column; gap:.35rem; }
+    .tt-ctrl label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; gap:.5rem; }
+    .tt-ctrl label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
+    .tt-controls input[type=text], .tt-controls input[type=number], .tt-controls select { width:100%; accent-color:#00b3c4; }
+    .tt-ctrl .row { display:flex; align-items:center; gap:.5rem; }
+    .tt-ctrl .row input[type=checkbox] { accent-color:#00b3c4; width:16px; height:16px; }
+    .tt-ctrl .row label { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; justify-content:flex-start; }
+</style>
+
+<h1>AtomClock / AtomClockPair playground</h1>
+<p>Live clocks. <b>AtomClock</b> shows one source (server / browser / UTC / explicit zone);
+   <b>AtomClockPair</b> shows two, side-by-side or stacked. Ticks each second (opt-out via Live).
+   Browser zone is auto-detected via a tiny self-loaded JS module.</p>
+<p><a href="demo">&larr; Back to demo</a></p>
+
+<div class="tt-stage-outer">
+    <div class="tt-cell">
+        <span class="cap">AtomClock</span>
+        <AtomClock Kind="@Kind" Label="@Blank(Label)" Format="@Format" Live="@Live" Size="@Size" />
+    </div>
+    <div class="tt-cell">
+        <span class="cap">AtomClockPair (Server + Local)</span>
+        <AtomClockPair Layout="@Layout" Format="@Format" Live="@Live" Size="@Size" />
+    </div>
+</div>
+
+<div class="tt-controls">
+    <div class="tt-ctrl"><label>Clock kind</label><select @bind="Kind">@foreach (var k in Enum.GetValues<ClockKind>()){<option value="@k">@k</option>}</select></div>
+    <div class="tt-ctrl"><label>Label</label><input type="text" @bind="Label" @bind:event="oninput" placeholder="(none)" /></div>
+    <div class="tt-ctrl"><label>Format</label><select @bind="Format">@foreach (var f in Formats){<option value="@f.Value">@f.Key</option>}</select></div>
+    <div class="tt-ctrl"><label>Pair layout</label><select @bind="Layout">@foreach (var l in Enum.GetValues<ClockLayout>()){<option value="@l">@l</option>}</select></div>
+    <div class="tt-ctrl"><label>Size px <span class="val">@Size</span></label><input type="number" min="10" max="48" @bind="Size" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Options</label>
+        <div class="row"><input type="checkbox" id="live" @bind="Live" /><label for="live">Live (tick each second)</label></div>
+    </div>
+</div>
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomClockExample.razor" />
+
+@code {
+    private ClockKind Kind = ClockKind.Server;
+    private string Label = "Server";
+    private string Format = "h:mm:ss tt";
+    private ClockLayout Layout = ClockLayout.SideBySide;
+    private double Size = 20;
+    private bool Live = true;
+
+    private static readonly Dictionary<string, string> Formats = new()
+    {
+        ["12-hour w/ seconds"] = "h:mm:ss tt",
+        ["24-hour w/ seconds"] = "HH:mm:ss",
+        ["12-hour"] = "h:mm tt",
+        ["24-hour"] = "HH:mm",
+        ["Day + time"] = "ddd h:mm tt",
+        ["Full timestamp"] = "yyyy-MM-dd HH:mm:ss",
+    };
+
+    private static string? Blank(string s) => string.IsNullOrWhiteSpace(s) ? null : s;
+
+    private string Snippet
+    {
+        get
+        {
+            var live = Live ? "" : " Live=\"false\"";
+            var size = Size != 20 ? $" Size=\"{Size}\"" : "";
+            var fmt = Format != "h:mm:ss tt" ? $" Format=\"{Format}\"" : "";
+            var kind = Kind != ClockKind.Server ? $" Kind=\"ClockKind.{Kind}\"" : "";
+            var lbl = string.IsNullOrWhiteSpace(Label) ? "" : $" Label=\"{Label}\"";
+            var layout = Layout != ClockLayout.SideBySide ? $" Layout=\"ClockLayout.{Layout}\"" : "";
+
+            return $"<AtomClock{kind}{lbl}{fmt}{live}{size} />\n"
+                 + $"<AtomClockPair{layout}{fmt}{live}{size} />";
+        }
+    }
+}

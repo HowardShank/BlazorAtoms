@@ -99,6 +99,7 @@ On-brand standout: **`Charts`** — SVG, JS-free, same DNA as the activity indic
 | `BlazorAtoms.Alerts` | AtomAlert, AtomToast, AtomBanner, AtomCallout | toast timing via C# timer |
 | `BlazorAtoms.Icons` | AtomIcon (+ optional curated SVG set) | renderer is 0-dep; a bundled icon set is larger |
 | `BlazorAtoms.Typography` | AtomHeading, AtomText, AtomCode, AtomKbd, AtomTruncate | JS-free |
+| `BlazorAtoms.Clocks` *(shipped)* | AtomClock — live single-zone clock (server/browser/UTC or explicit zone), opt-out ticking, semantic `<time>` · AtomClockPair — two clocks (e.g. server + local) side-by-side or stacked | browser-tz detect via self-loaded JS module (opt-in `Kind=Browser`); ticking via C# `PeriodicTimer`; else JS-free |
 
 **What each does:**
 - **Inputs** — the core form fields (text, number, checkbox, radio, switch, slider, select), two-way bound to your data.
@@ -110,6 +111,7 @@ On-brand standout: **`Charts`** — SVG, JS-free, same DNA as the activity indic
 - **Alerts** — messages to the user: inline alert/callout, a page banner, and toast (an auto-dismissing popup notification).
 - **Icons** — an `AtomIcon` renderer for SVG glyphs, optionally paired with a bundled icon set.
 - **Typography** — text primitives: headings, body text, inline code, keyboard keys, truncation.
+- **Clocks** — live time displays: `AtomClock` ticks a single zone (server, UTC, browser-local, or an explicit `TimeZoneInfo`); `AtomClockPair` shows two (e.g. server + local) side-by-side or stacked. Browser zone is auto-detected via a tiny self-loaded JS module.
 
 ## Tier C — heavier (needs JS interop or a dependency). Decide later; may dent the 0-dep goal.
 

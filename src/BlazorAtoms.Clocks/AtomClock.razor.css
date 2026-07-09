@@ -1,0 +1,27 @@
+/* Token model: --clk-* public knob → scheme default. Single-line inline clock; the label sits
+   before the time. Tabular figures keep the digits from jittering as they tick. */
+.atom-clock {
+    --_size: var(--clk-size, 1rem);
+    display: inline-flex;
+    align-items: baseline;
+    gap: .5em;
+    font-size: var(--_size);
+    line-height: 1.2;
+    color: var(--clk-color, inherit);
+    background: var(--clk-bg, transparent);
+}
+
+.atom-clock-label {
+    font-size: .78em;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    opacity: .7;
+}
+
+.atom-clock-time {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    white-space: nowrap;
+}
