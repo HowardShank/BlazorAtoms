@@ -1,0 +1,51 @@
+@inherits ClockBase
+
+@*
+    AtomAnalogClock.razor
+    ---------------------
+    A live analog clock face for one time source (server host / UTC / auto-detected browser zone).
+    Shares its time/tick/timezone plumbing with AtomClock through ClockBase, so it works identically
+    under interactive server and WebAssembly. Ticks once a second by default (Live="false" freezes).
+    The dial is a scalable SVG (viewBox 0 0 100, center 50 50); hands are vertical lines rotated
+    about the center, so no trig is needed for them.
+*@
+
+@if (!CancellationToken.IsCancellationRequested)
+{
+    _now = CurrentTime;
+
+    <figure class="atom-analog-clock" data-kind="@KindValue" style="@RootStyle"
+            role="img" aria-label="@EffectiveAriaLabel">
+        <svg class="atom-analog-clock-face" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <circle class="aclk-dial" cx="50" cy="50" r="48" />
+
+            @foreach (var m in Minutes)
+            {
+                var hour = IsHourTick(m);
+                @if (hour || ShowMinuteTicks)
+                {
+                    <line class="@(hour ? "aclk-tick-hour" : "aclk-tick-min")"
+                          x1="50" y1="4" x2="50" y2="@(hour ? "10" : "7")"
+                          transform="@Rotate(m * 6)" />
+                }
+            }
+
+            @if (ShowNumerals)
+            {
+                @NumeralsMarkup
+            }
+
+            <line class="aclk-hand-hour" x1="50" y1="50" x2="50" y2="26" transform="@Rotate(HourAngle)" />
+            <line class="aclk-hand-min" x1="50" y1="50" x2="50" y2="14" transform="@Rotate(MinuteAngle)" />
+            @if (ShowSeconds)
+            {
+                <line class="aclk-hand-sec" x1="50" y1="56" x2="50" y2="12" transform="@Rotate(SecondAngle)" />
+            }
+            <circle class="aclk-cap" cx="50" cy="50" r="2.5" />
+        </svg>
+        @if (!string.IsNullOrEmpty(Label))
+        {
+            <figcaption class="atom-analog-clock-label">@Label</figcaption>
+        }
+    </figure>
+}

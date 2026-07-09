@@ -1,12 +1,17 @@
 # BlazorAtoms.Clocks
 
-Live time-display components for Blazor — one library, two components:
+Live time-display components for Blazor — one library, three components:
 
-- **`AtomClock`** — a ticking clock for a single time source: the **server/host** zone, **UTC**, or
-  the **auto-detected browser** zone (or any explicit `TimeZoneInfo`). Configurable format/culture,
-  optional label, opt-out ticking.
-- **`AtomClockPair`** — two clocks together (by default **server + local**), **side-by-side** or
-  **stacked**.
+- **`AtomClock`** — a ticking digital clock for a single time source: the **server/host** zone,
+  **UTC**, or the **auto-detected browser** zone (or any explicit `TimeZoneInfo`). Configurable
+  format/culture, optional label, opt-out ticking.
+- **`AtomAnalogClock`** — the same time sources on a scalable **SVG dial** with hour / minute /
+  (optional) second hands, optional minute ticks and numerals.
+- **`AtomClockPair`** — two `AtomClock`s together (by default **server + local**), **side-by-side**
+  or **stacked**.
+
+`AtomClock` and `AtomAnalogClock` share their time-source, tick, and browser-timezone plumbing
+(`ClockBase`), so `Kind` / `TimeZone` / `Live` behave identically across both.
 
 Renders a semantic `<time datetime="…">` element. Ticks once a second via a C# `PeriodicTimer`.
 Browser-timezone detection uses a tiny **self-loaded JS module** — no `<script>` tag, no DI, and
@@ -46,6 +51,31 @@ Link `{App}.styles.css` (scoped-CSS bundle), as with any RCL.
 | `Live` | `bool` | Tick every second (default true); false = snapshot. |
 | `Size` | `double?` | px → font-size (`--clk-size`). |
 | `Background` / `TextColor` | `string?` | `--clk-bg` / `--clk-color`. |
+
+## AtomAnalogClock
+
+```razor
+@* Server time, analog face, live *@
+<AtomAnalogClock Label="Server" />
+
+@* Browser-local, larger face with numerals, no second hand *@
+<AtomAnalogClock Kind="ClockKind.Browser" Label="Local"
+                 Size="220" ShowNumerals="true" ShowSeconds="false" />
+```
+
+| Parameter | Type | Notes |
+|-----------|------|-------|
+| `Kind` / `TimeZone` / `Live` | — | Same as `AtomClock` (shared via `ClockBase`). |
+| `Size` | `double` | Face diameter px (default 160; `--aclk-size`). |
+| `ShowSeconds` | `bool` | Draw the second hand (default true). |
+| `ShowMinuteTicks` | `bool` | Draw the 60 minute ticks (default true; hour ticks always show). |
+| `ShowNumerals` | `bool` | Draw 1–12 numerals (default false). |
+| `Label` | `string?` | Caption under the dial. |
+| `FaceColor` / `HandColor` / `AccentColor` | `string?` | `--aclk-face` / `--aclk-hand` / `--aclk-accent` (second hand + cap). |
+
+The dial is a `viewBox="0 0 100 100"` SVG scaled by `Size`; hands are vertical lines rotated about
+the center. Hour numerals are injected as raw SVG (Razor reserves the `<text>` tag) and carry inline
+presentation attributes.
 
 ## AtomClockPair
 

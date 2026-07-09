@@ -1,0 +1,73 @@
+/* Token model: --aclk-* public knob → scheme default. The dial is a square SVG sized by
+   --aclk-size; hand/tick geometry is in viewBox units so it scales with the box. */
+.atom-analog-clock {
+    --_size: var(--aclk-size, 160px);
+    --_hand: var(--aclk-hand, currentColor);
+    --_accent: var(--aclk-accent, #e5484d);
+    --_face: var(--aclk-face, transparent);
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .4em;
+    color: inherit;
+}
+
+.atom-analog-clock-face {
+    display: block;
+    width: var(--_size);
+    height: var(--_size);
+}
+
+.aclk-dial {
+    fill: var(--_face);
+    stroke: var(--_hand);
+    stroke-width: 2;
+    opacity: 1;
+}
+
+.aclk-tick-hour {
+    stroke: var(--_hand);
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
+.aclk-tick-min {
+    stroke: var(--_hand);
+    stroke-width: .75;
+    opacity: .55;
+    stroke-linecap: round;
+}
+
+/* Hour numerals are injected as raw SVG (Razor reserves <text>), so they carry their own inline
+   presentation attributes and aren't styled here. */
+
+.aclk-hand-hour {
+    stroke: var(--_hand);
+    stroke-width: 3.2;
+    stroke-linecap: round;
+}
+
+.aclk-hand-min {
+    stroke: var(--_hand);
+    stroke-width: 2.2;
+    stroke-linecap: round;
+}
+
+.aclk-hand-sec {
+    stroke: var(--_accent);
+    stroke-width: 1;
+    stroke-linecap: round;
+}
+
+.aclk-cap {
+    fill: var(--_accent);
+}
+
+.atom-analog-clock-label {
+    font-size: calc(var(--_size) * .09);
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    opacity: .7;
+    margin: 0;
+}

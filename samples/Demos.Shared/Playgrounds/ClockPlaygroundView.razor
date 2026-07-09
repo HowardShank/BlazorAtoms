@@ -31,6 +31,11 @@
         <AtomClock Kind="@Kind" Label="@Blank(Label)" Format="@Format" Live="@Live" Size="@Size" />
     </div>
     <div class="tt-cell">
+        <span class="cap">AtomAnalogClock</span>
+        <AtomAnalogClock Kind="@Kind" Label="@Blank(Label)" Live="@Live" Size="@AnalogSize"
+                         ShowSeconds="@ShowSeconds" ShowMinuteTicks="@MinuteTicks" ShowNumerals="@Numerals" />
+    </div>
+    <div class="tt-cell">
         <span class="cap">AtomClockPair (Server + Local)</span>
         <AtomClockPair Layout="@Layout" Format="@Format" Live="@Live" Size="@Size" />
     </div>
@@ -41,9 +46,13 @@
     <div class="tt-ctrl"><label>Label</label><input type="text" @bind="Label" @bind:event="oninput" placeholder="(none)" /></div>
     <div class="tt-ctrl"><label>Format</label><select @bind="Format">@foreach (var f in Formats){<option value="@f.Value">@f.Key</option>}</select></div>
     <div class="tt-ctrl"><label>Pair layout</label><select @bind="Layout">@foreach (var l in Enum.GetValues<ClockLayout>()){<option value="@l">@l</option>}</select></div>
-    <div class="tt-ctrl"><label>Size px <span class="val">@Size</span></label><input type="number" min="10" max="48" @bind="Size" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Digital size px <span class="val">@Size</span></label><input type="number" min="10" max="48" @bind="Size" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Analog size px <span class="val">@AnalogSize</span></label><input type="number" min="60" max="320" step="10" @bind="AnalogSize" @bind:event="oninput" /></div>
     <div class="tt-ctrl"><label>Options</label>
         <div class="row"><input type="checkbox" id="live" @bind="Live" /><label for="live">Live (tick each second)</label></div>
+        <div class="row"><input type="checkbox" id="sec" @bind="ShowSeconds" /><label for="sec">Analog second hand</label></div>
+        <div class="row"><input type="checkbox" id="mt" @bind="MinuteTicks" /><label for="mt">Analog minute ticks</label></div>
+        <div class="row"><input type="checkbox" id="num" @bind="Numerals" /><label for="num">Analog numerals</label></div>
     </div>
 </div>
 
@@ -55,7 +64,11 @@
     private string Format = "h:mm:ss tt";
     private ClockLayout Layout = ClockLayout.SideBySide;
     private double Size = 20;
+    private double AnalogSize = 160;
     private bool Live = true;
+    private bool ShowSeconds = true;
+    private bool MinuteTicks = true;
+    private bool Numerals = false;
 
     private static readonly Dictionary<string, string> Formats = new()
     {
@@ -80,7 +93,13 @@
             var lbl = string.IsNullOrWhiteSpace(Label) ? "" : $" Label=\"{Label}\"";
             var layout = Layout != ClockLayout.SideBySide ? $" Layout=\"ClockLayout.{Layout}\"" : "";
 
+            var asize = AnalogSize != 160 ? $" Size=\"{AnalogSize}\"" : "";
+            var asec = ShowSeconds ? "" : " ShowSeconds=\"false\"";
+            var amt = MinuteTicks ? "" : " ShowMinuteTicks=\"false\"";
+            var anum = Numerals ? " ShowNumerals=\"true\"" : "";
+
             return $"<AtomClock{kind}{lbl}{fmt}{live}{size} />\n"
+                 + $"<AtomAnalogClock{kind}{lbl}{live}{asize}{asec}{amt}{anum} />\n"
                  + $"<AtomClockPair{layout}{fmt}{live}{size} />";
         }
     }
