@@ -1,0 +1,103 @@
+@using BlazorAtoms.Clocks
+
+<PageTitle>AtomTimeZoneMap Playground</PageTitle>
+
+<style>
+    .tt-stage-outer { display:flex; align-items:center; justify-content:center; min-height:200px;
+        background: radial-gradient(ellipse at center,#0b1019 0%,#07090d 100%); border:1px solid #1b2330;
+        border-radius:12px; padding:1.5rem; margin-bottom:1.5rem; color:#e5e9f0; }
+    .tt-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:1rem 1.5rem;
+        background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; }
+    .tt-ctrl { display:flex; flex-direction:column; gap:.35rem; }
+    .tt-ctrl label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; gap:.5rem; }
+    .tt-ctrl label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
+    .tt-controls input[type=text], .tt-controls input[type=number], .tt-controls select { width:100%; accent-color:#00b3c4; }
+    .tt-ctrl .row { display:flex; align-items:center; gap:.5rem; }
+    .tt-ctrl .row input[type=checkbox] { accent-color:#00b3c4; width:16px; height:16px; }
+    .tt-ctrl .row label { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; justify-content:flex-start; }
+    .tt-picked { margin:.75rem 0 0; color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; font-size:.85rem; min-height:1.2em; }
+</style>
+
+<h1>AtomTimeZoneMap playground</h1>
+<p>A world timezone map drawn entirely inline &mdash; no map service, no CDN, no raster. Continents,
+   24 nominal <b>UTC&plusmn;N</b> bands, a live day/night terminator + sun marker, and accurate city
+   pins whose local times come from <code>TimeZoneInfo</code> (DST-aware, zero bundled tz data). Ticks
+   each second; highlights your own zone once detected.</p>
+<p><a href="demo">&larr; Back to demo</a></p>
+
+<div class="tt-stage-outer">
+    <AtomTimeZoneMap Width="@Width" Live="@Live"
+                     ShowContinents="@Continents" ShowBands="@Bands" ShowBandLabels="@BandLabels"
+                     ShowPins="@Pins" ShowPinLabels="@PinLabels" ShowTerminator="@Terminator"
+                     ShowSunMarker="@Sun" ShowGraticule="@Graticule" HighlightViewerZone="@Viewer"
+                     Selectable="@Selectable" TimeFormat="@Format"
+                     OnBandSelect="OnBand" OnCitySelect="OnCity" />
+</div>
+
+<p class="tt-picked">@Picked</p>
+
+<div class="tt-controls">
+    <div class="tt-ctrl"><label>Width px <span class="val">@Width</span></label><input type="number" min="280" max="1200" step="20" @bind="Width" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Time format</label><select @bind="Format">@foreach (var f in Formats){<option value="@f.Value">@f.Key</option>}</select></div>
+    <div class="tt-ctrl"><label>Layers</label>
+        <div class="row"><input type="checkbox" id="cont" @bind="Continents" /><label for="cont">Continents</label></div>
+        <div class="row"><input type="checkbox" id="bands" @bind="Bands" /><label for="bands">Timezone bands</label></div>
+        <div class="row"><input type="checkbox" id="blbl" @bind="BandLabels" /><label for="blbl">Band labels</label></div>
+        <div class="row"><input type="checkbox" id="grat" @bind="Graticule" /><label for="grat">Graticule</label></div>
+    </div>
+    <div class="tt-ctrl"><label>Cities &amp; sun</label>
+        <div class="row"><input type="checkbox" id="pins" @bind="Pins" /><label for="pins">City pins</label></div>
+        <div class="row"><input type="checkbox" id="plbl" @bind="PinLabels" /><label for="plbl">Pin labels</label></div>
+        <div class="row"><input type="checkbox" id="term" @bind="Terminator" /><label for="term">Day/night terminator</label></div>
+        <div class="row"><input type="checkbox" id="sun" @bind="Sun" /><label for="sun">Sun marker</label></div>
+    </div>
+    <div class="tt-ctrl"><label>Behavior</label>
+        <div class="row"><input type="checkbox" id="live" @bind="Live" /><label for="live">Live (tick each second)</label></div>
+        <div class="row"><input type="checkbox" id="viewer" @bind="Viewer" /><label for="viewer">Highlight my zone</label></div>
+        <div class="row"><input type="checkbox" id="sel" @bind="Selectable" /><label for="sel">Selectable (click)</label></div>
+    </div>
+</div>
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomTimeZoneMapExample.razor" />
+
+@code {
+    private double Width = 640;
+    private string Format = "h:mm tt";
+    private bool Continents = true, Bands = true, BandLabels = true, Graticule = false;
+    private bool Pins = true, PinLabels = true, Terminator = true, Sun = true;
+    private bool Live = true, Viewer = true, Selectable = false;
+    private string Picked = "";
+
+    private static readonly Dictionary<string, string> Formats = new()
+    {
+        ["12-hour"] = "h:mm tt",
+        ["24-hour"] = "HH:mm",
+        ["12-hour w/ seconds"] = "h:mm:ss tt",
+        ["24-hour w/ seconds"] = "HH:mm:ss",
+    };
+
+    private void OnBand(int offset) => Picked = $"Selected band: UTC{(offset >= 0 ? "+" : "")}{offset}";
+    private void OnCity(MapCity c) => Picked = $"Selected city: {c.Name} ({c.TimeZoneId})";
+
+    private string Snippet
+    {
+        get
+        {
+            var w = Width != 640 ? $" Width=\"{Width}\"" : "";
+            var fmt = Format != "h:mm tt" ? $" TimeFormat=\"{Format}\"" : "";
+            var off = new List<string>();
+            if (!Continents) off.Add(" ShowContinents=\"false\"");
+            if (!Bands) off.Add(" ShowBands=\"false\"");
+            if (!BandLabels) off.Add(" ShowBandLabels=\"false\"");
+            if (!Pins) off.Add(" ShowPins=\"false\"");
+            if (!PinLabels) off.Add(" ShowPinLabels=\"false\"");
+            if (!Terminator) off.Add(" ShowTerminator=\"false\"");
+            if (!Sun) off.Add(" ShowSunMarker=\"false\"");
+            if (Graticule) off.Add(" ShowGraticule=\"true\"");
+            if (!Viewer) off.Add(" HighlightViewerZone=\"false\"");
+            if (!Live) off.Add(" Live=\"false\"");
+            if (Selectable) off.Add(" Selectable=\"true\"");
+            return $"<AtomTimeZoneMap{w}{fmt}{string.Concat(off)} />";
+        }
+    }
+}

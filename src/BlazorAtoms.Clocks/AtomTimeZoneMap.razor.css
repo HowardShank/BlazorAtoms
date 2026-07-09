@@ -1,0 +1,84 @@
+/* Token model: --tzm-* public knobs → dark-map defaults. The SVG is a 2:1 equirectangular box
+   scaled by --tzm-width; all geometry is in viewBox units so it scales cleanly. */
+.atom-tz-map {
+    --_ocean: var(--tzm-ocean, #0b1b2b);
+    --_land: var(--tzm-land, #24405c);
+    --_band: var(--tzm-band, #5fb7c9);
+    --_night: var(--tzm-night, #05070d);
+    --_pin: var(--tzm-pin, #ffd166);
+    --_accent: var(--tzm-accent, #ffb020);
+    --_highlight: var(--tzm-highlight, #00e5ff);
+    display: inline-block;
+    width: var(--tzm-width, 640px);
+    max-width: 100%;
+    line-height: 0;
+}
+
+.tz-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 2 / 1;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.tz-ocean { fill: var(--_ocean); }
+
+.tz-land {
+    fill: var(--_land);
+    stroke: color-mix(in srgb, var(--_land) 60%, #000);
+    stroke-width: .25;
+}
+
+/* Timezone bands: near-invisible fill, alternating parity, brighter when highlighted/selected. */
+.tz-band rect {
+    fill: var(--_band);
+    opacity: .06;
+    stroke: var(--_band);
+    stroke-width: .12;
+    stroke-opacity: .35;
+}
+
+.tz-band.even rect { opacity: .12; }
+.tz-band:hover rect { opacity: .28; }
+.tz-band.is-viewer rect { fill: var(--_highlight); opacity: .34; }
+.tz-band.is-selected rect { fill: var(--_accent); opacity: .4; }
+
+.atom-tz-map[data-selectable="True"] .tz-band,
+.atom-tz-map[data-selectable="True"] .tz-pin { cursor: pointer; }
+
+/* Night hemisphere — a soft translucent shade so land/bands still read through it. */
+.tz-night {
+    fill: var(--_night);
+    opacity: .42;
+    pointer-events: none;
+}
+
+.tz-graticule line {
+    stroke: #ffffff;
+    stroke-width: .12;
+    stroke-opacity: .18;
+}
+
+.tz-sun {
+    pointer-events: none;
+}
+.tz-sun line {
+    stroke: var(--_accent);
+    stroke-width: .35;
+    stroke-dasharray: 1.5 1.5;
+    opacity: .8;
+}
+.tz-sun circle {
+    fill: var(--_accent);
+    stroke: #fff;
+    stroke-width: .4;
+}
+
+.tz-pin circle {
+    fill: var(--_pin);
+    stroke: #000;
+    stroke-width: .4;
+}
+.tz-pin:hover circle { fill: var(--_highlight); }

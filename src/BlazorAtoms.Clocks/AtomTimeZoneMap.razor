@@ -1,0 +1,80 @@
+@inherits ClockInfraBase
+
+@*
+    AtomTimeZoneMap.razor
+    ---------------------
+    A world timezone map drawn entirely inline (no map service, no CDN, no raster). Equirectangular
+    projection in a 0 0 360 180 viewBox (1 unit = 1°): X = lon+180, Y = 90-lat. Layers back-to-front:
+    ocean, continents, 24 meridian bands, day/night terminator, optional graticule, sun marker, city
+    pins, then all text labels (built as a MarkupString because Razor reserves the <text> tag).
+    Times come from TimeZoneInfo in C# — accurate and DST-aware, with zero bundled tz data. Ticks via
+    ClockInfraBase; highlights the viewer's own band once the browser zone is detected.
+*@
+
+@if (!CancellationToken.IsCancellationRequested)
+{
+    _nowUtc = DateTimeOffset.UtcNow;
+
+    <div class="atom-tz-map" style="@RootStyle" role="img" aria-label="@EffectiveAriaLabel"
+         data-selectable="@Selectable">
+        <svg class="tz-svg" viewBox="0 0 360 180" xmlns="http://www.w3.org/2000/svg">
+            <rect class="tz-ocean" x="0" y="0" width="360" height="180" />
+
+            @if (ShowContinents)
+            {
+                <path class="tz-land" d="@LandPath" />
+            }
+
+            @if (ShowGraticule)
+            {
+                <g class="tz-graticule">
+                    @foreach (var lon in Meridians)
+                    {
+                        <line x1="@N(lon + 180)" y1="0" x2="@N(lon + 180)" y2="180" />
+                    }
+                    @foreach (var lat in Parallels)
+                    {
+                        <line x1="0" y1="@N(90 - lat)" x2="360" y2="@N(90 - lat)" />
+                    }
+                </g>
+            }
+
+            @if (ShowBands)
+            {
+                @foreach (var o in Offsets)
+                {
+                    <g class="@BandClass(o)" data-offset="@o" @onclick="() => SelectBand(o)">
+                        <rect x="@N(BandX(o))" y="0" width="15" height="180" />
+                        <title>@BandTitle(o)</title>
+                    </g>
+                }
+            }
+
+            @if (ShowTerminator)
+            {
+                <polygon class="tz-night" points="@TerminatorPoints" />
+            }
+
+            @if (ShowSunMarker)
+            {
+                <g class="tz-sun">
+                    <line x1="@N(SunX)" y1="0" x2="@N(SunX)" y2="180" />
+                    <circle cx="@N(SunX)" cy="@N(SunY)" r="3" />
+                </g>
+            }
+
+            @if (ShowPins)
+            {
+                @foreach (var c in EffectiveCities)
+                {
+                    <g class="tz-pin" @onclick="() => SelectCity(c)">
+                        <circle cx="@N(c.Lon + 180)" cy="@N(90 - c.Lat)" r="1.8" />
+                        <title>@PinTitle(c)</title>
+                    </g>
+                }
+            }
+
+            @LabelsMarkup
+        </svg>
+    </div>
+}

@@ -1,6 +1,6 @@
 # BlazorAtoms.Clocks
 
-Live time-display components for Blazor — one library, three components:
+Live time-display components for Blazor — one library, four components:
 
 - **`AtomClock`** — a ticking digital clock for a single time source: the **server/host** zone,
   **UTC**, or the **auto-detected browser** zone (or any explicit `TimeZoneInfo`). Configurable
@@ -9,9 +9,13 @@ Live time-display components for Blazor — one library, three components:
   (optional) second hands, optional minute ticks and numerals.
 - **`AtomClockPair`** — two `AtomClock`s together (by default **server + local**), **side-by-side**
   or **stacked**.
+- **`AtomTimeZoneMap`** — a **world timezone map**: an inline-SVG earth with continents, 24 nominal
+  `UTC±N` bands, a live day/night terminator + sun marker, and accurate city pins. No map service,
+  no CDN, no raster.
 
-`AtomClock` and `AtomAnalogClock` share their time-source, tick, and browser-timezone plumbing
-(`ClockBase`), so `Kind` / `TimeZone` / `Live` behave identically across both.
+All four share their tick + browser-timezone plumbing (`ClockInfraBase`); the single-zone clocks
+add `Kind` / `TimeZone` / `CurrentTime` on top (`ClockBase`), so `Live` behaves identically across
+every component.
 
 Renders a semantic `<time datetime="…">` element. Ticks once a second via a C# `PeriodicTimer`.
 Browser-timezone detection uses a tiny **self-loaded JS module** — no `<script>` tag, no DI, and
@@ -92,6 +96,48 @@ presentation attributes.
 `Layout`: `SideBySide` (default) / `Stacked`. Shared `Format` / `Live` / `Size` flow to both sides;
 `PrimaryKind`/`PrimaryLabel`/`PrimaryTimeZone` and the `Secondary*` trio configure each side. `Gap`
 (px) sets the spacing (`--clkp-gap`).
+
+## AtomTimeZoneMap
+
+A whole-earth timezone map, drawn **entirely inline** — no map tiles, no CDN, no raster, no bundled
+timezone-polygon data. It combines a nominal band ruler (approximate, longitude-based) with accurate
+per-city times from `TimeZoneInfo` (DST-aware; the tz database already in the .NET runtime).
+
+```razor
+@* Full live map: continents, bands, terminator, sun, default city pins, viewer highlight *@
+<AtomTimeZoneMap />
+
+@* Wider, click-selectable, own city list, no graticule *@
+<AtomTimeZoneMap Width="900" Selectable="true"
+                 Cities="MyCities" OnCitySelect="c => _picked = c.Name" />
+```
+
+| Parameter | Type | Notes |
+|-----------|------|-------|
+| `Live` | `bool` | Tick every second (default true; from `ClockInfraBase`). |
+| `Width` | `double` | Rendered px width, 2:1 aspect (default 640; `--tzm-width`). |
+| `Cities` | `IReadOnlyList<MapCity>?` | Pins to plot. Null = built-in spread of ~13 major cities. |
+| `ShowContinents` / `ShowBands` / `ShowBandLabels` | `bool` | Layer toggles (all default true). |
+| `ShowPins` / `ShowPinLabels` | `bool` | City markers + their labels (default true). |
+| `ShowTerminator` / `ShowSunMarker` | `bool` | Day/night shading + subsolar marker (default true). |
+| `ShowGraticule` | `bool` | Light lat/long grid (default false). |
+| `HighlightViewerZone` | `bool` | Detect the browser zone and highlight its band (default true). |
+| `Selectable` | `bool` | Make bands/pins clickable (default false). |
+| `SelectedOffset` | `int?` | Controlled selected band (UTC±N). |
+| `OnBandSelect` / `OnCitySelect` | `EventCallback<int>` / `EventCallback<MapCity>` | Click events. |
+| `TimeFormat` / `DateFormat` / `Culture` | — | Label formatting. |
+| `Ocean` / `Land` / `BandColor` / `NightColor` / `PinColor` / `AccentColor` / `HighlightColor` / `InkColor` | `string?` | `--tzm-*` color overrides. |
+
+`public sealed record MapCity(string Name, double Lon, double Lat, string TimeZoneId);`
+
+**How it stays dependency-free.** The map is an equirectangular SVG (`viewBox="0 0 360 180"`,
+`X = lon+180`, `Y = 90-lat`). Bands, graticule, the day/night terminator (a solar-declination sine
+curve) and the sun marker are all plain C# geometry. Continents are a compact, low-poly public-domain
+outline baked in as an inline `<path>`. City times are `TimeZoneInfo.ConvertTime(...)`. The **only**
+JS is the shared browser-timezone probe, and only when `HighlightViewerZone` is on — during static
+SSR/prerender the map renders correctly without it and simply skips the highlight until interactive.
+Approximate by design: the bands are nominal whole-hour meridians, not political tz borders — the
+city pins carry the exact, DST-correct local times.
 
 ## Render modes & the browser zone
 
