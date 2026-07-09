@@ -1,0 +1,70 @@
+/* Status pill — fully rounded, soft-tinted by default. --pill-accent-d is the variant color; the dot
+   and (in soft/outline) the text use it. Solid flips to an accent fill with --pill-on-d text. */
+.atom-pill {
+    --pill-accent-d: #64748b;
+    --pill-on-d: #ffffff;
+}
+.atom-pill[data-variant="info"]    { --pill-accent-d: #2563eb; }
+.atom-pill[data-variant="success"] { --pill-accent-d: #16a34a; }
+.atom-pill[data-variant="warning"] { --pill-accent-d: #d97706; }
+.atom-pill[data-variant="danger"]  { --pill-accent-d: #dc2626; }
+
+.atom-pill {
+    --_size: var(--pill-size, 1.5rem);
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    gap: .45em;
+    height: var(--_size);
+    padding: 0 calc(var(--_size) * .42);
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: calc(var(--_size) * .48);
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.atom-pill[data-appearance="solid"] {
+    background: var(--pill-bg, var(--pill-accent-d));
+    color: var(--pill-color, var(--pill-on-d));
+    border-color: var(--pill-border, transparent);
+}
+.atom-pill[data-appearance="soft"] {
+    background: var(--pill-bg, color-mix(in srgb, var(--pill-accent-d) 15%, transparent));
+    color: var(--pill-color, var(--pill-accent-d));
+    border-color: var(--pill-border, transparent);
+}
+.atom-pill[data-appearance="outline"] {
+    background: var(--pill-bg, transparent);
+    color: var(--pill-color, var(--pill-accent-d));
+    border-color: var(--pill-border, var(--pill-accent-d));
+}
+
+/* Status dot — always the accent color (readable on both soft tint and solid fill). */
+.atom-pill-dot {
+    flex: none;
+    width: .5em;
+    height: .5em;
+    border-radius: 50%;
+    background: var(--pill-dot, var(--pill-accent-d));
+}
+/* On a solid fill the accent dot would vanish into the background — use the text color instead. */
+.atom-pill[data-appearance="solid"] .atom-pill-dot {
+    background: var(--pill-dot, var(--pill-color, var(--pill-on-d)));
+}
+
+.atom-pill-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05em;
+    line-height: 0;
+}
+.atom-pill-label {
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: var(--pill-max-width, none);
+}

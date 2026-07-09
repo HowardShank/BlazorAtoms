@@ -1,0 +1,29 @@
+@inherits AtomComponentBase
+
+@*
+    AtomPill.razor
+    --------------
+    A status pill: a fully-rounded, soft-tinted label with a leading status dot (e.g. "Active",
+    "Pending", "Failed"). Display-only — the simplest member of the chip/tag/pill family. The dot and
+    text share the color Variant. A custom Icon slot replaces the dot when supplied. No JS.
+*@
+
+@if (!CancellationToken.IsCancellationRequested)
+{
+    <span class="atom-pill"
+          role="status"
+          aria-label="@AriaLabel"
+          data-variant="@VariantValue"
+          data-appearance="@AppearanceValue"
+          style="@RootStyle">
+        @if (Icon is not null)
+        {
+            <span class="atom-pill-icon" aria-hidden="true">@Icon</span>
+        }
+        else if (Dot)
+        {
+            <span class="atom-pill-dot" aria-hidden="true"></span>
+        }
+        <span class="atom-pill-label">@Label</span>
+    </span>
+}

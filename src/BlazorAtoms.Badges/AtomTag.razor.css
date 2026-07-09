@@ -1,0 +1,85 @@
+/* Token model mirrors AtomChip: --tag-accent-d is the variant color, --tag-on-d the text on a solid
+   fill; the appearance rules turn those into background/color/border. Tag is squarer and lighter
+   than a chip — smaller default height, small corner radius. */
+.atom-tag {
+    --tag-accent-d: #64748b;
+    --tag-on-d: #ffffff;
+}
+.atom-tag[data-variant="info"]    { --tag-accent-d: #2563eb; }
+.atom-tag[data-variant="success"] { --tag-accent-d: #16a34a; }
+.atom-tag[data-variant="warning"] { --tag-accent-d: #d97706; }
+.atom-tag[data-variant="danger"]  { --tag-accent-d: #dc2626; }
+
+.atom-tag {
+    --_size: var(--tag-size, 1.5rem);
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    gap: .35em;
+    height: var(--_size);
+    padding: 0 calc(var(--_size) * .3);
+    border: 1px solid transparent;
+    border-radius: var(--tag-radius, 5px);
+    font-size: calc(var(--_size) * .5);
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.atom-tag[data-appearance="solid"] {
+    background: var(--tag-bg, var(--tag-accent-d));
+    color: var(--tag-color, var(--tag-on-d));
+    border-color: var(--tag-border, transparent);
+}
+.atom-tag[data-appearance="soft"] {
+    background: var(--tag-bg, color-mix(in srgb, var(--tag-accent-d) 16%, transparent));
+    color: var(--tag-color, var(--tag-accent-d));
+    border-color: var(--tag-border, transparent);
+}
+.atom-tag[data-appearance="outline"] {
+    background: var(--tag-bg, transparent);
+    color: var(--tag-color, var(--tag-accent-d));
+    border-color: var(--tag-border, var(--tag-accent-d));
+}
+
+.atom-tag-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1em;
+    line-height: 0;
+}
+.atom-tag-label {
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: var(--tag-max-width, none);
+}
+
+.atom-tag-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1em;
+    height: 1.1em;
+    margin-right: -.1em;
+    padding: 0;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    opacity: .7;
+    transition: opacity .12s ease, background-color .12s ease;
+}
+.atom-tag-remove:hover { opacity: 1; background: color-mix(in srgb, currentColor 22%, transparent); }
+.atom-tag-remove:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; opacity: 1; }
+.atom-tag-remove svg {
+    width: 64%;
+    height: 64%;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    fill: none;
+}

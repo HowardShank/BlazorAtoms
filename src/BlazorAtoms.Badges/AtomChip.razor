@@ -1,0 +1,43 @@
+@inherits AtomComponentBase
+
+@*
+    AtomChip.razor
+    --------------
+    The interactive member of the chip/tag/pill family. Optional leading icon/avatar slot, a label
+    (ChildContent or Text), and an optional trailing remove (×) button. Becomes a keyboard-operable
+    button (role="button", Enter/Space, aria-pressed) when OnClick has a handler — use for filter /
+    selectable / choice chips. Solid / Soft / Outline appearance × color Variant. No JS.
+*@
+
+@if (!CancellationToken.IsCancellationRequested)
+{
+    <span class="atom-chip"
+          role="@(Clickable ? "button" : null)"
+          tabindex="@(Clickable && !Disabled ? "0" : null)"
+          aria-pressed="@(Clickable ? (Selected ? "true" : "false") : null)"
+          aria-disabled="@(Disabled ? "true" : null)"
+          aria-label="@AriaLabel"
+          data-variant="@VariantValue"
+          data-appearance="@AppearanceValue"
+          data-selected="@(Selected ? "true" : null)"
+          data-disabled="@(Disabled ? "true" : null)"
+          data-clickable="@(Clickable ? "true" : null)"
+          style="@RootStyle"
+          @onclick="HandleClick"
+          @onkeydown="HandleKey">
+        @if (Icon is not null)
+        {
+            <span class="atom-chip-icon" aria-hidden="true">@Icon</span>
+        }
+        <span class="atom-chip-label">@Label</span>
+        @if (Removable)
+        {
+            <button type="button" class="atom-chip-remove" aria-label="@RemoveLabel"
+                    disabled="@Disabled" @onclick="HandleRemove" @onclick:stopPropagation="true">
+                <svg viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M4 4 L12 12 M12 4 L4 12" />
+                </svg>
+            </button>
+        }
+    </span>
+}

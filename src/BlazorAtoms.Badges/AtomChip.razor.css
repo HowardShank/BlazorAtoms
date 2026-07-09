@@ -1,0 +1,113 @@
+/* Token model: --chip-* public knob → --chip-*-d scheme-aware default (same pattern as the badges'
+   --badge-* / --sb-*). Variant presets set --chip-accent-d (the color) and --chip-on-d (text on a
+   solid fill); the appearance rules below turn those into background/color/border. */
+.atom-chip {
+    --chip-accent-d: #64748b;
+    --chip-on-d: #ffffff;
+}
+.atom-chip[data-variant="info"]    { --chip-accent-d: #2563eb; }
+.atom-chip[data-variant="success"] { --chip-accent-d: #16a34a; }
+.atom-chip[data-variant="warning"] { --chip-accent-d: #d97706; }
+.atom-chip[data-variant="danger"]  { --chip-accent-d: #dc2626; }
+
+.atom-chip {
+    --_size: var(--chip-size, 2rem);
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    gap: .4em;
+    height: var(--_size);
+    padding: 0 calc(var(--_size) * .34);
+    border: 1px solid transparent;
+    border-radius: var(--chip-radius, 999px);
+    font-size: calc(var(--_size) * .4375);
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    vertical-align: middle;
+    user-select: none;
+}
+
+/* --- Appearance: how the accent paints. Explicit color overrides (--chip-bg/color/border) win. --- */
+.atom-chip[data-appearance="solid"] {
+    background: var(--chip-bg, var(--chip-accent-d));
+    color: var(--chip-color, var(--chip-on-d));
+    border-color: var(--chip-border, transparent);
+}
+.atom-chip[data-appearance="soft"] {
+    background: var(--chip-bg, color-mix(in srgb, var(--chip-accent-d) 16%, transparent));
+    color: var(--chip-color, var(--chip-accent-d));
+    border-color: var(--chip-border, transparent);
+}
+.atom-chip[data-appearance="outline"] {
+    background: var(--chip-bg, transparent);
+    color: var(--chip-color, var(--chip-accent-d));
+    border-color: var(--chip-border, var(--chip-accent-d));
+}
+
+/* Selected — accent emphasis regardless of appearance (filter/choice chip active state). */
+.atom-chip[data-selected="true"] {
+    background: var(--chip-bg, var(--chip-accent-d));
+    color: var(--chip-color, var(--chip-on-d));
+    border-color: var(--chip-border, transparent);
+}
+
+/* Clickable affordances. */
+.atom-chip[data-clickable="true"] {
+    cursor: pointer;
+    transition: filter .12s ease, background-color .12s ease;
+}
+.atom-chip[data-clickable="true"]:hover { filter: brightness(1.08); }
+.atom-chip[data-clickable="true"]:focus-visible {
+    outline: 2px solid var(--chip-accent-d);
+    outline-offset: 2px;
+}
+
+.atom-chip[data-disabled="true"] {
+    opacity: .5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.atom-chip-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1em;
+    line-height: 0;
+}
+.atom-chip-label {
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: var(--chip-max-width, none);
+}
+
+/* Trailing remove (×) button — its own focusable control. */
+.atom-chip-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.15em;
+    height: 1.15em;
+    margin-right: -.15em;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    opacity: .7;
+    transition: opacity .12s ease, background-color .12s ease;
+}
+.atom-chip-remove:hover { opacity: 1; background: color-mix(in srgb, currentColor 22%, transparent); }
+.atom-chip-remove:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; opacity: 1; }
+.atom-chip-remove:disabled { cursor: not-allowed; }
+.atom-chip-remove svg {
+    width: 62%;
+    height: 62%;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    fill: none;
+}

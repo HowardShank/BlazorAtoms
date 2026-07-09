@@ -1,0 +1,34 @@
+@inherits AtomComponentBase
+
+@*
+    AtomTag.razor
+    -------------
+    A display-oriented categorization label (think GitHub-style labels): optional leading icon slot,
+    a label (ChildContent or Text), and an optional trailing remove (×) button. Rounded-rectangle by
+    default (squarer than a chip/pill). Solid / Soft / Outline appearance × color Variant. Not
+    clickable/selectable — for interaction use AtomChip. No JS.
+*@
+
+@if (!CancellationToken.IsCancellationRequested)
+{
+    <span class="atom-tag"
+          aria-label="@AriaLabel"
+          data-variant="@VariantValue"
+          data-appearance="@AppearanceValue"
+          style="@RootStyle">
+        @if (Icon is not null)
+        {
+            <span class="atom-tag-icon" aria-hidden="true">@Icon</span>
+        }
+        <span class="atom-tag-label">@Label</span>
+        @if (Removable)
+        {
+            <button type="button" class="atom-tag-remove" aria-label="@RemoveLabel"
+                    @onclick="HandleRemove">
+                <svg viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M4 4 L12 12 M12 4 L4 12" />
+                </svg>
+            </button>
+        }
+    </span>
+}

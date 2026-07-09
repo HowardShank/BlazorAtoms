@@ -1,11 +1,20 @@
 # BlazorAtoms.Badges
 
-Badge components for Blazor — one library, two components:
+Badge, chip, tag and pill components for Blazor — one library, five components:
 
 - **`AtomStaticBadge`** — a no-animation label / count in a rich variety of shapes: pill, circle,
   square, rounded, plus SVG-drawn **star, hexagon, diamond, shield, starburst, ribbon**.
 - **`AtomAnimatedBadge`** — a badge that **pops in** when it has a value and can draw attention with
   **Pop / Bounce / Spin / Pulse / Ping** motion (disabled under `prefers-reduced-motion`).
+- **`AtomChip`** — an **interactive** chip: leading icon/avatar slot, label, optional remove (×)
+  button; keyboard-operable (click / select) when given an `OnClick` handler.
+- **`AtomTag`** — a display-oriented **categorization label** (GitHub-style), rounded rectangle,
+  optional icon + remove button. No interaction.
+- **`AtomPill`** — a **status pill**: fully-rounded, soft-tinted, with a leading status dot.
+
+The chip family (`AtomChip` / `AtomTag` / `AtomPill`) shares a color `Variant` and a Solid / Soft /
+Outline `Appearance`; they form an interactivity gradient — Chip (interactive) → Tag (label) →
+Pill (status).
 
 Both overlay a host element at a corner (`ChildContent` given) or render inline, are fully styleable
 via `--sb-*` / `--badge-*` tokens, and accept any object `Value` with type-aware formatting
@@ -72,6 +81,41 @@ entrance only — hiding is immediate (CSS can't animate an unmounting node).
 `Diamond` / `Shield` / `Burst` / `Ribbon`), which draw an inline path so fill **and** border apply.
 Animations transform the whole badge, SVG or box. For `Ping` on an SVG shape the ring is dropped
 (a rounded rect can't trace a star) and the shape pulses instead.
+
+## AtomChip / AtomTag / AtomPill
+
+```razor
+@* Interactive filter chip — toggles Selected, keyboard-operable, removable *@
+<AtomChip Text="Blazor" Variant="Variant.Info" Selected="@on" OnClick="() => on = !on"
+          Removable="true" OnRemove="Remove">
+    <Icon><span>★</span></Icon>
+</AtomChip>
+
+@* Categorization tags (GitHub-style labels) *@
+<AtomTag Text="bug" Variant="Variant.Danger" />
+<AtomTag Text="wontfix" Appearance="Appearance.Outline" Removable="true" OnRemove="Remove" />
+
+@* Status pills — soft tint + leading dot *@
+<AtomPill Text="Active"  Variant="Variant.Success" />
+<AtomPill Text="Pending" Variant="Variant.Warning" />
+<AtomPill Text="Failed"  Variant="Variant.Danger" Appearance="Appearance.Solid" />
+```
+
+| | `AtomChip` | `AtomTag` | `AtomPill` |
+|---|---|---|---|
+| Role | interactive | display label | status |
+| Default shape | stadium (pill) | rounded rect | stadium (pill) |
+| Default `Appearance` | `Soft` | `Solid` | `Soft` |
+| Leading `Icon` slot | ✓ | ✓ | ✓ (replaces the dot) |
+| Remove (×) button | ✓ | ✓ | — |
+| `OnClick`/`Selected`/`Disabled` | ✓ | — | — |
+| Leading status `Dot` | — | — | ✓ (default on) |
+
+`Appearance`: `Solid` (accent fill + contrasting text) / `Soft` (low-opacity accent tint + accent
+text) / `Outline` (transparent + accent border/text). `Variant` picks the accent color; explicit
+`Background` / `TextColor` / `BorderColor` still override. `Size` (px) drives height and font;
+`AtomChip`/`AtomTag` also take a `Radius`. `AtomChip` becomes a `role="button"` (Enter/Space,
+`aria-pressed`) only when `OnClick` has a handler — otherwise it is a static label.
 
 ## Shared parameters
 

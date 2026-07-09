@@ -1,0 +1,134 @@
+@using BlazorAtoms.Badges
+
+<PageTitle>AtomChip / AtomTag / AtomPill Playground</PageTitle>
+
+<style>
+    .tt-stage-outer { display:flex; align-items:center; justify-content:center; gap:2.5rem; min-height:200px;
+        background: radial-gradient(ellipse at center,#0b1019 0%,#07090d 100%); border:1px solid #1b2330;
+        border-radius:12px; padding:1.5rem; margin-bottom:1.5rem; flex-wrap:wrap; }
+    .tt-cell { display:flex; flex-direction:column; align-items:center; gap:.75rem; }
+    .tt-cell .cap { font:600 .75rem/1 ui-monospace,Consolas,monospace; color:#5fb7c9; letter-spacing:.05em; }
+    .tt-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:1rem 1.5rem;
+        background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; }
+    .tt-ctrl { display:flex; flex-direction:column; gap:.35rem; }
+    .tt-ctrl label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; gap:.5rem; }
+    .tt-ctrl label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
+    .tt-controls input[type=text], .tt-controls input[type=number], .tt-controls select { width:100%; accent-color:#00b3c4; }
+    .tt-controls input[type=color] { width:100%; height:32px; background:none; border:1px solid #1b2330; border-radius:6px; padding:2px; }
+    .tt-ctrl .row { display:flex; align-items:center; gap:.5rem; }
+    .tt-ctrl .row input[type=checkbox] { accent-color:#00b3c4; width:16px; height:16px; }
+    .tt-ctrl .row label { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; justify-content:flex-start; }
+    .tt-note { color:#8794a3; font-size:.8rem; }
+</style>
+
+<h1>AtomChip / AtomTag / AtomPill playground</h1>
+<p>One family, three tiers. <b>Chip</b> is interactive (click/select/remove); <b>Tag</b> is a display
+   label (rounded-rect); <b>Pill</b> is a status marker (fully rounded, leading dot). Pure CSS + SVG.</p>
+<p><a href="demo">&larr; Back to demo</a></p>
+
+<div class="tt-stage-outer">
+    <div class="tt-cell">
+        <span class="cap">AtomChip</span>
+        @if (Removed)
+        {
+            <span class="tt-note">removed — <a href="javascript:void(0)" @onclick="Reset">reset</a></span>
+        }
+        else
+        {
+            <AtomChip Text="@Text" Variant="@Variant" Appearance="@Appearance" Size="@Size" Radius="@Radius"
+                      Selected="@Selected" Disabled="@Disabled"
+                      OnClick="@ChipClick"
+                      Removable="@Removable" OnRemove="OnChipRemove"
+                      Icon="@(ShowIcon ? IconFragment : null)" />
+        }
+    </div>
+    <div class="tt-cell">
+        <span class="cap">AtomTag</span>
+        <AtomTag Text="@Text" Variant="@Variant" Appearance="@Appearance" Size="@Size" Radius="@Radius"
+                 Removable="@Removable" Icon="@(ShowIcon ? IconFragment : null)" />
+    </div>
+    <div class="tt-cell">
+        <span class="cap">AtomPill</span>
+        <AtomPill Text="@Text" Variant="@Variant" Appearance="@Appearance" Size="@Size"
+                  Dot="@(!ShowIcon)" Icon="@(ShowIcon ? IconFragment : null)" />
+    </div>
+</div>
+
+<div class="tt-controls">
+    <div class="tt-ctrl"><label>Text</label><input type="text" @bind="Text" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Variant</label><select @bind="Variant">@foreach (var v in Enum.GetValues<Variant>()){<option value="@v">@v</option>}</select></div>
+    <div class="tt-ctrl"><label>Appearance</label><select @bind="Appearance">@foreach (var a in Enum.GetValues<Appearance>()){<option value="@a">@a</option>}</select></div>
+    <div class="tt-ctrl"><label>Size px <span class="val">@Size</span></label><input type="number" min="16" max="56" @bind="Size" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Radius px (Chip/Tag) <span class="val">@Radius</span></label><input type="number" min="0" max="30" @bind="Radius" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Chip interaction</label>
+        <div class="row"><input type="checkbox" id="clk" @bind="Clickable" /><label for="clk">Clickable</label></div>
+        <div class="row"><input type="checkbox" id="sel" @bind="Selected" /><label for="sel">Selected</label></div>
+        <div class="row"><input type="checkbox" id="dis" @bind="Disabled" /><label for="dis">Disabled</label></div>
+    </div>
+    <div class="tt-ctrl"><label>Options</label>
+        <div class="row"><input type="checkbox" id="rm" @bind="Removable" /><label for="rm">Removable (× on Chip/Tag)</label></div>
+        <div class="row"><input type="checkbox" id="ic" @bind="ShowIcon" /><label for="ic">Leading icon</label></div>
+    </div>
+</div>
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomChipFamilyExample.razor" />
+
+@code {
+    private string Text = "Label";
+    private Variant Variant = Variant.Info;
+    private Appearance Appearance = Appearance.Soft;
+    private double Size = 32;
+    private double Radius = 999;
+    private bool Clickable = true;
+    private bool Selected;
+    private bool Disabled;
+    private bool Removable;
+    private bool ShowIcon;
+    private bool Removed;
+
+    private RenderFragment IconFragment => builder => builder.AddContent(0, "★");
+
+    // Only hand the chip a click delegate when "Clickable" is on, so its interactive affordances
+    // (role=button, keyboard, hover) toggle with the checkbox. default = no delegate = static label.
+    private EventCallback ChipClick => Clickable
+        ? EventCallback.Factory.Create(this, OnChipClick)
+        : default;
+
+    private void OnChipClick() => Selected = !Selected;
+    private void OnChipRemove() => Removed = true;
+    private void Reset() => Removed = false;
+
+    // Chip default appearance is Soft; Tag default is Solid; Pill Soft. Emit Appearance only when it
+    // differs from each component's own default so the snippet stays minimal.
+    private string V => Variant != Variant.Default ? $" Variant=\"Variant.{Variant}\"" : "";
+    private string SizeAttr => Size != 32 ? $" Size=\"{Size}\"" : "";
+    private string Icn => ShowIcon ? "\n    <Icon><span>★</span></Icon>\n" : "";
+
+    private string Snippet
+    {
+        get
+        {
+            var chip = $"<AtomChip Text=\"{Text}\"{V}"
+                + (Appearance != Appearance.Soft ? $" Appearance=\"Appearance.{Appearance}\"" : "")
+                + (Clickable ? " OnClick=\"Toggle\"" : "")
+                + (Selected ? " Selected=\"true\"" : "")
+                + (Disabled ? " Disabled=\"true\"" : "")
+                + (Removable ? " Removable=\"true\" OnRemove=\"Remove\"" : "")
+                + SizeAttr + Close("AtomChip");
+
+            var tag = $"<AtomTag Text=\"{Text}\"{V}"
+                + (Appearance != Appearance.Solid ? $" Appearance=\"Appearance.{Appearance}\"" : "")
+                + (Removable ? " Removable=\"true\" OnRemove=\"Remove\"" : "")
+                + SizeAttr + Close("AtomTag");
+
+            var pill = $"<AtomPill Text=\"{Text}\"{V}"
+                + (Appearance != Appearance.Soft ? $" Appearance=\"Appearance.{Appearance}\"" : "")
+                + (ShowIcon ? " Dot=\"false\"" : "")
+                + SizeAttr + Close("AtomPill");
+
+            return $"{chip}\n{tag}\n{pill}";
+        }
+    }
+
+    private string Close(string tag) => ShowIcon ? $">{Icn}</{tag}>" : " />";
+}
