@@ -1,0 +1,38 @@
+@inherits ClockInfraBase
+
+@*
+    AtomClockStrip.razor
+    --------------------
+    A world-clock strip: one cell per timezone. Each cell reuses AtomClock (digital) or
+    AtomAnalogClock (analog) with Live="false" — the strip owns the single tick (ClockInfraBase) and
+    its per-second re-render cascades to the cells, which recompute their time each render. So N zones
+    cost one PeriodicTimer, not N. Snapshot _nowUtc once per render so sort/offset math is consistent.
+*@
+
+@if (!CancellationToken.IsCancellationRequested)
+{
+    _nowUtc = DateTimeOffset.UtcNow;
+
+    <div class="atom-clock-strip" data-layout="@LayoutValue" data-face="@FaceValue"
+         data-selectable="@Selectable" role="group" aria-label="@EffectiveAriaLabel" style="@RootStyle">
+        @foreach (var z in OrderedZones)
+        {
+            <div class="cstrip-cell@(CellClass(z))" @onclick="() => Select(z)">
+                @if (Face == ClockFace.Analog)
+                {
+                    <AtomAnalogClock TimeZone="Resolve(z)" Label="@z.Label" Live="false" Size="ResolvedSize"
+                                     ShowSeconds="@ShowSeconds" ShowMinuteTicks="@ShowMinuteTicks" ShowNumerals="@ShowNumerals" />
+                }
+                else
+                {
+                    <AtomClock TimeZone="Resolve(z)" Label="@z.Label" Format="@Format"
+                               Culture="@Culture" Live="false" Size="ResolvedSize" />
+                }
+                @if (ShowRelativeOffset)
+                {
+                    <span class="cstrip-offset">@RelText(z)</span>
+                }
+            </div>
+        }
+    </div>
+}

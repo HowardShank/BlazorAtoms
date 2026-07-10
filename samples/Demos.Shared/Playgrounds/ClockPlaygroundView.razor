@@ -28,17 +28,36 @@
 <div class="tt-stage-outer">
     <div class="tt-cell">
         <span class="cap">AtomClock</span>
-        <AtomClock Kind="@Kind" Label="@Blank(Label)" Format="@Format" Live="@Live" Size="@Size" />
+        <AtomClock Kind="@Kind" Label="@Blank(Label)" Format="@Format" Live="@Live" Size="@Size"
+                   Background="@Blank(ClockBg)" TextColor="@Blank(ClockColor)" />
     </div>
     <div class="tt-cell">
         <span class="cap">AtomAnalogClock</span>
         <AtomAnalogClock Kind="@Kind" Label="@Blank(Label)" Live="@Live" Size="@AnalogSize"
-                         ShowSeconds="@ShowSeconds" ShowMinuteTicks="@MinuteTicks" ShowNumerals="@Numerals" />
+                         ShowSeconds="@ShowSeconds" ShowMinuteTicks="@MinuteTicks" ShowNumerals="@Numerals"
+                         FaceColor="@Blank(FaceColor)" HandColor="@Blank(HandColor)" AccentColor="@Blank(AccentColor)" />
     </div>
     <div class="tt-cell">
-        <span class="cap">AtomClockPair (Server + Local)</span>
-        <AtomClockPair Layout="@Layout" Format="@Format" Live="@Live" Size="@Size" />
+        <span class="cap">AtomClockPair</span>
+        <AtomClockPair Layout="@Layout" Format="@Format" Live="@Live" Size="@Size" Gap="@PairGap"
+                       PrimaryKind="@PairPrimaryKind" PrimaryLabel="@Blank(PairPrimaryLabel)"
+                       SecondaryKind="@PairSecondaryKind" SecondaryLabel="@Blank(PairSecondaryLabel)" />
     </div>
+</div>
+
+<div class="tt-stage-outer" style="justify-content:flex-start; flex-direction:column; align-items:stretch;">
+    <span class="cap" style="margin-bottom:1rem;">AtomClockStrip (@StripFace, @StripLayout)
+        @if (StripSelect && StripSelected is not null)
+        {
+            <span style="color:#e5e9f0; margin-left:1rem;">Selected: <b>@StripSelected</b></span>
+        }
+    </span>
+    <AtomClockStrip Face="@StripFace" Layout="@StripLayout" Live="@Live" Format="@Format"
+                    Size="@(StripFace == ClockFace.Analog ? AnalogSize : Size)"
+                    ShowSeconds="@ShowSeconds" ShowMinuteTicks="@MinuteTicks" ShowNumerals="@Numerals"
+                    SortByOffset="@StripSort" ShowRelativeOffset="@StripRel"
+                    HighlightViewerZone="@StripViewer" Selectable="@StripSelect" OnSelect="OnStripSelect"
+                    Gap="@StripGap" HighlightColor="@Blank(StripHighlight)" ReferenceTimeZoneId="@Blank(StripRef)" />
 </div>
 
 <div class="tt-controls">
@@ -46,13 +65,34 @@
     <div class="tt-ctrl"><label>Label</label><input type="text" @bind="Label" @bind:event="oninput" placeholder="(none)" /></div>
     <div class="tt-ctrl"><label>Format</label><select @bind="Format">@foreach (var f in Formats){<option value="@f.Value">@f.Key</option>}</select></div>
     <div class="tt-ctrl"><label>Pair layout</label><select @bind="Layout">@foreach (var l in Enum.GetValues<ClockLayout>()){<option value="@l">@l</option>}</select></div>
+    <div class="tt-ctrl"><label>Pair gap px <span class="val">@PairGap</span></label><input type="number" min="0" max="80" @bind="PairGap" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Pair primary kind</label><select @bind="PairPrimaryKind">@foreach (var k in Enum.GetValues<ClockKind>()){<option value="@k">@k</option>}</select></div>
+    <div class="tt-ctrl"><label>Pair primary label</label><input type="text" @bind="PairPrimaryLabel" @bind:event="oninput" placeholder="(none)" /></div>
+    <div class="tt-ctrl"><label>Pair secondary kind</label><select @bind="PairSecondaryKind">@foreach (var k in Enum.GetValues<ClockKind>()){<option value="@k">@k</option>}</select></div>
+    <div class="tt-ctrl"><label>Pair secondary label</label><input type="text" @bind="PairSecondaryLabel" @bind:event="oninput" placeholder="(none)" /></div>
     <div class="tt-ctrl"><label>Digital size px <span class="val">@Size</span></label><input type="number" min="10" max="48" @bind="Size" @bind:event="oninput" /></div>
     <div class="tt-ctrl"><label>Analog size px <span class="val">@AnalogSize</span></label><input type="number" min="60" max="320" step="10" @bind="AnalogSize" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Clock background</label><input type="text" @bind="ClockBg" @bind:event="oninput" placeholder="(default)" /></div>
+    <div class="tt-ctrl"><label>Clock text color</label><input type="text" @bind="ClockColor" @bind:event="oninput" placeholder="(default)" /></div>
+    <div class="tt-ctrl"><label>Analog face color</label><input type="text" @bind="FaceColor" @bind:event="oninput" placeholder="(default)" /></div>
+    <div class="tt-ctrl"><label>Analog hand color</label><input type="text" @bind="HandColor" @bind:event="oninput" placeholder="(default)" /></div>
+    <div class="tt-ctrl"><label>Analog accent color</label><input type="text" @bind="AccentColor" @bind:event="oninput" placeholder="(default)" /></div>
     <div class="tt-ctrl"><label>Options</label>
         <div class="row"><input type="checkbox" id="live" @bind="Live" /><label for="live">Live (tick each second)</label></div>
         <div class="row"><input type="checkbox" id="sec" @bind="ShowSeconds" /><label for="sec">Analog second hand</label></div>
         <div class="row"><input type="checkbox" id="mt" @bind="MinuteTicks" /><label for="mt">Analog minute ticks</label></div>
         <div class="row"><input type="checkbox" id="num" @bind="Numerals" /><label for="num">Analog numerals</label></div>
+    </div>
+    <div class="tt-ctrl"><label>Strip face</label><select @bind="StripFace">@foreach (var f in Enum.GetValues<ClockFace>()){<option value="@f">@f</option>}</select></div>
+    <div class="tt-ctrl"><label>Strip layout</label><select @bind="StripLayout">@foreach (var l in Enum.GetValues<ClockStripLayout>()){<option value="@l">@l</option>}</select></div>
+    <div class="tt-ctrl"><label>Strip gap px <span class="val">@(StripGap?.ToString() ?? "auto")</span></label><input type="number" min="0" max="48" @bind="StripGap" @bind:event="oninput" placeholder="auto" /></div>
+    <div class="tt-ctrl"><label>Strip highlight color</label><input type="text" @bind="StripHighlight" @bind:event="oninput" placeholder="(default)" /></div>
+    <div class="tt-ctrl"><label>Strip offset reference</label><select @bind="StripRef"><option value="">(viewer zone)</option>@foreach (var z in ClockZone.Default){<option value="@z.TimeZoneId">@z.Label</option>}</select></div>
+    <div class="tt-ctrl"><label>Strip options</label>
+        <div class="row"><input type="checkbox" id="ssort" @bind="StripSort" /><label for="ssort">Sort by offset</label></div>
+        <div class="row"><input type="checkbox" id="srel" @bind="StripRel" /><label for="srel">Relative offset</label></div>
+        <div class="row"><input type="checkbox" id="sview" @bind="StripViewer" /><label for="sview">Highlight my zone</label></div>
+        <div class="row"><input type="checkbox" id="ssel" @bind="StripSelect" /><label for="ssel">Selectable</label></div>
     </div>
 </div>
 
@@ -65,10 +105,34 @@
     private ClockLayout Layout = ClockLayout.SideBySide;
     private double Size = 20;
     private double AnalogSize = 160;
+    private double PairGap = 16;
     private bool Live = true;
     private bool ShowSeconds = true;
     private bool MinuteTicks = true;
     private bool Numerals = false;
+    private ClockFace StripFace = ClockFace.Digital;
+    private ClockStripLayout StripLayout = ClockStripLayout.Row;
+    private bool StripSort = false;
+    private bool StripRel = false;
+    private bool StripViewer = true;
+    private bool StripSelect = false;
+    private double? StripGap = null;
+    private string StripHighlight = "";
+    private string StripRef = "";
+    private string? StripSelected = null;
+
+    private ClockKind PairPrimaryKind = ClockKind.Server;
+    private string PairPrimaryLabel = "Server";
+    private ClockKind PairSecondaryKind = ClockKind.Browser;
+    private string PairSecondaryLabel = "Local";
+
+    private string ClockBg = "";
+    private string ClockColor = "";
+    private string FaceColor = "";
+    private string HandColor = "";
+    private string AccentColor = "";
+
+    private void OnStripSelect(ClockZone z) => StripSelected = z.Label;
 
     private static readonly Dictionary<string, string> Formats = new()
     {
@@ -92,15 +156,43 @@
             var kind = Kind != ClockKind.Server ? $" Kind=\"ClockKind.{Kind}\"" : "";
             var lbl = string.IsNullOrWhiteSpace(Label) ? "" : $" Label=\"{Label}\"";
             var layout = Layout != ClockLayout.SideBySide ? $" Layout=\"ClockLayout.{Layout}\"" : "";
+            var pgap = PairGap != 16 ? $" Gap=\"{PairGap}\"" : "";
+            var ppk = PairPrimaryKind != ClockKind.Server ? $" PrimaryKind=\"ClockKind.{PairPrimaryKind}\"" : "";
+            var ppl = PairPrimaryLabel != "Server" ? $" PrimaryLabel=\"{PairPrimaryLabel}\"" : "";
+            var psk = PairSecondaryKind != ClockKind.Browser ? $" SecondaryKind=\"ClockKind.{PairSecondaryKind}\"" : "";
+            var psl = PairSecondaryLabel != "Local" ? $" SecondaryLabel=\"{PairSecondaryLabel}\"" : "";
+
+            var cbg = string.IsNullOrWhiteSpace(ClockBg) ? "" : $" Background=\"{ClockBg}\"";
+            var ctc = string.IsNullOrWhiteSpace(ClockColor) ? "" : $" TextColor=\"{ClockColor}\"";
 
             var asize = AnalogSize != 160 ? $" Size=\"{AnalogSize}\"" : "";
             var asec = ShowSeconds ? "" : " ShowSeconds=\"false\"";
             var amt = MinuteTicks ? "" : " ShowMinuteTicks=\"false\"";
             var anum = Numerals ? " ShowNumerals=\"true\"" : "";
+            var afc = string.IsNullOrWhiteSpace(FaceColor) ? "" : $" FaceColor=\"{FaceColor}\"";
+            var ahc = string.IsNullOrWhiteSpace(HandColor) ? "" : $" HandColor=\"{HandColor}\"";
+            var aac = string.IsNullOrWhiteSpace(AccentColor) ? "" : $" AccentColor=\"{AccentColor}\"";
 
-            return $"<AtomClock{kind}{lbl}{fmt}{live}{size} />\n"
-                 + $"<AtomAnalogClock{kind}{lbl}{live}{asize}{asec}{amt}{anum} />\n"
-                 + $"<AtomClockPair{layout}{fmt}{live}{size} />";
+            var ssizeVal = StripFace == ClockFace.Analog ? AnalogSize : Size;
+            var ssizeDefault = StripFace == ClockFace.Analog ? 120d : 20d;
+            var ssize = ssizeVal != ssizeDefault ? $" Size=\"{ssizeVal}\"" : "";
+            var sasec = StripFace == ClockFace.Analog && !ShowSeconds ? " ShowSeconds=\"false\"" : "";
+            var samt = StripFace == ClockFace.Analog && !MinuteTicks ? " ShowMinuteTicks=\"false\"" : "";
+            var sanum = StripFace == ClockFace.Analog && Numerals ? " ShowNumerals=\"true\"" : "";
+            var sface = StripFace != ClockFace.Digital ? $" Face=\"ClockFace.{StripFace}\"" : "";
+            var slayout = StripLayout != ClockStripLayout.Row ? $" Layout=\"ClockStripLayout.{StripLayout}\"" : "";
+            var ssort = StripSort ? " SortByOffset=\"true\"" : "";
+            var srel = StripRel ? " ShowRelativeOffset=\"true\"" : "";
+            var sview = StripViewer ? "" : " HighlightViewerZone=\"false\"";
+            var ssel = StripSelect ? " Selectable=\"true\"" : "";
+            var sgap = StripGap is null ? "" : $" Gap=\"{StripGap}\"";
+            var shl = string.IsNullOrWhiteSpace(StripHighlight) ? "" : $" HighlightColor=\"{StripHighlight}\"";
+            var sref = string.IsNullOrWhiteSpace(StripRef) ? "" : $" ReferenceTimeZoneId=\"{StripRef}\"";
+
+            return $"<AtomClock{kind}{lbl}{fmt}{live}{size}{cbg}{ctc} />\n"
+                 + $"<AtomAnalogClock{kind}{lbl}{live}{asize}{asec}{amt}{anum}{afc}{ahc}{aac} />\n"
+                 + $"<AtomClockPair{layout}{fmt}{live}{size}{pgap}{ppk}{ppl}{psk}{psl} />\n"
+                 + $"<AtomClockStrip{sface}{slayout}{fmt}{ssize}{sasec}{samt}{sanum}{live}{ssort}{srel}{sview}{ssel}{sgap}{shl}{sref} />";
         }
     }
 }

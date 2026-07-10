@@ -92,6 +92,26 @@ public class AtomClockTests : TestContext
     }
 
     [Fact]
+    public void Switching_kind_to_browser_at_runtime_detects_zone()
+    {
+        // Regression: Kind=Server first, then flipped to Browser after the first interactive render
+        // (a bound dropdown). Detection must fire on that switch, not only on the first render —
+        // otherwise the zone stays null and ResolvedZone silently falls back to UTC.
+        var module = JSInterop.SetupModule("./_content/BlazorAtoms.Clocks/atom-clocks.js");
+        module.Setup<string?>("timezoneId").SetResult("");   // no IANA id → use the offset
+        module.Setup<int>("timezoneOffset").SetResult(300);  // UTC+05:00
+
+        var cut = RenderComponent<AtomClock>(p => p
+            .Add(c => c.Kind, ClockKind.Server)
+            .Add(c => c.Live, false));
+
+        cut.SetParametersAndRender(p => p.Add(c => c.Kind, ClockKind.Browser));
+
+        Assert.Equal("browser", cut.Find(".atom-clock").GetAttribute("data-kind"));
+        Assert.EndsWith("+05:00", cut.Find(".atom-clock-time").GetAttribute("datetime"));
+    }
+
+    [Fact]
     public void Browser_kind_falls_back_gracefully_when_js_yields_nothing()
     {
         // Loose interop = JS is "present" but the module returns nothing (like prerender/SSR where

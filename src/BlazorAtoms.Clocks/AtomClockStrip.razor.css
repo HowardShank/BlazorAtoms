@@ -1,0 +1,63 @@
+/* Token model: --cstrip-* public knobs. The strip is a flex/grid of cells; each cell wraps one
+   child clock (own scoped id) plus an optional relative-offset badge. */
+.atom-clock-strip {
+    --_gap: var(--cstrip-gap, 1rem);
+    --_hl: var(--cstrip-highlight, #00e5ff);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--_gap);
+    align-items: flex-start;
+}
+
+.atom-clock-strip[data-layout="grid"] {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+}
+
+.atom-clock-strip[data-layout="stacked"] {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+}
+
+.cstrip-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .25rem;
+    padding: .5rem .7rem;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    transition: border-color .15s, background-color .15s;
+}
+
+/* Stacked cells read as a list row: label/clock left, offset right. */
+.atom-clock-strip[data-layout="stacked"] .cstrip-cell {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.atom-clock-strip[data-selectable="True"] .cstrip-cell { cursor: pointer; }
+.atom-clock-strip[data-selectable="True"] .cstrip-cell:hover {
+    background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.cstrip-cell.is-viewer {
+    border-color: var(--_hl);
+    background: color-mix(in srgb, var(--_hl) 12%, transparent);
+}
+
+.cstrip-cell.is-selected {
+    border-color: var(--_hl);
+    box-shadow: 0 0 0 1px var(--_hl);
+}
+
+.cstrip-offset {
+    font: 600 .72rem/1 ui-monospace, Consolas, monospace;
+    letter-spacing: .03em;
+    opacity: .7;
+    padding: .1em .4em;
+    border-radius: 4px;
+    background: color-mix(in srgb, currentColor 10%, transparent);
+}

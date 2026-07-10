@@ -55,8 +55,11 @@ public abstract class ClockInfraBase : AtomComponentBase, IAsyncDisposable
         {
             _module ??= await JS.InvokeAsync<IJSObjectReference>(
                 "import", "./_content/BlazorAtoms.Clocks/atom-clocks.js");
-            var tz = await _module.InvokeAsync<BrowserTz>("timezone");
-            BrowserZone = ResolveZone(tz);
+            // Fetch primitives (string + int) rather than deserializing an object — object mapping
+            // was silently yielding an empty id and collapsing the zone to UTC.
+            var id = await _module.InvokeAsync<string?>("timezoneId");
+            var offsetMinutes = await _module.InvokeAsync<int>("timezoneOffset");
+            BrowserZone = ResolveZone(id, offsetMinutes);
             StateHasChanged();
         }
         catch (JSDisconnectedException) { }
@@ -95,19 +98,21 @@ public abstract class ClockInfraBase : AtomComponentBase, IAsyncDisposable
         catch (ObjectDisposedException) { }
     }
 
-    private static TimeZoneInfo ResolveZone(BrowserTz tz)
+    private static TimeZoneInfo ResolveZone(string? id, int offsetMinutes)
     {
-        if (tz is null || string.IsNullOrEmpty(tz.Id)) return TimeZoneInfo.Utc;
-        try
+        // Prefer the real IANA zone (DST-aware). .NET 6+ resolves IANA ids on every OS via ICU.
+        if (!string.IsNullOrEmpty(id))
         {
-            return TimeZoneInfo.FindSystemTimeZoneById(tz.Id);
+            try { return TimeZoneInfo.FindSystemTimeZoneById(id); }
+            catch { /* unknown id on this host — fall through to the fixed-offset zone below */ }
         }
-        catch
-        {
-            // Unknown IANA id on this host — synthesize a fixed-offset zone from the reported offset.
-            var offset = TimeSpan.FromMinutes(tz.OffsetMinutes);
-            return TimeZoneInfo.CreateCustomTimeZone(tz.Id, offset, tz.Id, tz.Id);
-        }
+
+        // Fall back to a fixed-offset zone built from the reported offset. This is the key fix: even
+        // with no/unknown id we honor the browser's actual offset instead of silently using UTC.
+        var offset = TimeSpan.FromMinutes(offsetMinutes);
+        if (offset == TimeSpan.Zero) return TimeZoneInfo.Utc;
+        var label = $"UTC{(offset < TimeSpan.Zero ? "-" : "+")}{offset.Duration():hh\\:mm}";
+        return TimeZoneInfo.CreateCustomTimeZone(label, offset, label, label);
     }
 
     public async ValueTask DisposeAsync()
@@ -125,7 +130,4 @@ public abstract class ClockInfraBase : AtomComponentBase, IAsyncDisposable
         }
         GC.SuppressFinalize(this);
     }
-
-    // Shape of the JS timezone() return value. Blazor's JSON interop maps camelCase → these props.
-    private sealed record BrowserTz(string Id, int OffsetMinutes);
 }

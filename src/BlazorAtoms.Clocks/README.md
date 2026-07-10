@@ -1,6 +1,6 @@
 # BlazorAtoms.Clocks
 
-Live time-display components for Blazor — one library, four components:
+Live time-display components for Blazor — one library, five components:
 
 - **`AtomClock`** — a ticking digital clock for a single time source: the **server/host** zone,
   **UTC**, or the **auto-detected browser** zone (or any explicit `TimeZoneInfo`). Configurable
@@ -9,6 +9,8 @@ Live time-display components for Blazor — one library, four components:
   (optional) second hands, optional minute ticks and numerals.
 - **`AtomClockPair`** — two `AtomClock`s together (by default **server + local**), **side-by-side**
   or **stacked**.
+- **`AtomClockStrip`** — a **world-clock strip**: N zones as a wrapping row / grid / list, each a
+  digital or analog cell. Highlights your zone, shows relative offsets, sorts by offset, selectable.
 - **`AtomTimeZoneMap`** — a **world timezone map**: an inline-SVG earth with continents, 24 nominal
   `UTC±N` bands, a live day/night terminator + sun marker, and accurate city pins. No map service,
   no CDN, no raster.
@@ -96,6 +98,42 @@ presentation attributes.
 `Layout`: `SideBySide` (default) / `Stacked`. Shared `Format` / `Live` / `Size` flow to both sides;
 `PrimaryKind`/`PrimaryLabel`/`PrimaryTimeZone` and the `Secondary*` trio configure each side. `Gap`
 (px) sets the spacing (`--clkp-gap`).
+
+## AtomClockStrip
+
+A row/grid/list of clocks — the N-zone case of `AtomClockPair`. Each cell reuses `AtomClock` or
+`AtomAnalogClock`.
+
+```razor
+@* Default world cities, digital, wrapping row *@
+<AtomClockStrip />
+
+@* Custom zones, analog, sorted, with offsets relative to London *@
+<AtomClockStrip Face="ClockFace.Analog" Layout="ClockStripLayout.Grid"
+                Zones="MyZones" SortByOffset="true"
+                ShowRelativeOffset="true" ReferenceTimeZoneId="Europe/London" />
+```
+
+| Parameter | Type | Notes |
+|-----------|------|-------|
+| `Zones` | `IReadOnlyList<ClockZone>?` | Null = built-in spread of major cities. |
+| `Face` | `ClockFace` | `Digital` (default) / `Analog`. |
+| `Layout` | `ClockStripLayout` | `Row` (default) / `Grid` / `Stacked`. |
+| `Format` / `Culture` | — | Passed to digital cells. |
+| `Size` | `double?` | Per-cell px; null → face default (analog 120, digital 20). |
+| `ShowSeconds` / `ShowMinuteTicks` / `ShowNumerals` | `bool` | Analog cells only (passed to `AtomAnalogClock`); ignored for digital. |
+| `HighlightViewerZone` | `bool` | Detect + highlight the browser's zone (default true). |
+| `ShowRelativeOffset` | `bool` | Show each zone's offset vs `ReferenceTimeZoneId`. |
+| `ReferenceTimeZoneId` | `string?` | Reference for offsets; null = viewer zone, else UTC. |
+| `SortByOffset` | `bool` | Order cells west→east by current UTC offset. |
+| `Selectable` / `SelectedTimeZoneId` / `OnSelect` | `bool` / `string?` / `EventCallback<ClockZone>` | Click a cell. |
+| `Gap` / `HighlightColor` | `double?` / `string?` | `--cstrip-gap` / `--cstrip-highlight`. |
+
+`public sealed record ClockZone(string Label, string TimeZoneId);` — `ClockZone.Default` is the
+built-in set.
+
+**One timer for the whole strip.** Cells render with `Live="false"`; the strip owns the single tick
+and its per-second re-render refreshes every cell. N zones cost **one** `PeriodicTimer`, not N.
 
 ## AtomTimeZoneMap
 

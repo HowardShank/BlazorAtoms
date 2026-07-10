@@ -38,9 +38,15 @@ public abstract class ClockBase : ClockInfraBase
         _ => "server",
     };
 
-    protected override async Task OnFirstInteractiveAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (Kind == ClockKind.Browser && TimeZone is null)
+        await base.OnAfterRenderAsync(firstRender);
+
+        // Detect the browser zone whenever we're in Browser mode and haven't resolved it yet — not
+        // only on the first render. Kind can flip to Browser at runtime (e.g. a bound dropdown), and
+        // that switch happens after the first interactive render; without this the zone stays null
+        // and ResolvedZone falls back to UTC. EnsureBrowserZoneAsync is idempotent.
+        if (Kind == ClockKind.Browser && TimeZone is null && BrowserZone is null)
             await EnsureBrowserZoneAsync();
     }
 }
