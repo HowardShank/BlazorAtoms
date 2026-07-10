@@ -1,6 +1,6 @@
 # BlazorAtoms.Clocks
 
-Live time-display components for Blazor — one library, five components:
+Live time-display components for Blazor — one library, six components:
 
 - **`AtomClock`** — a ticking digital clock for a single time source: the **server/host** zone,
   **UTC**, or the **auto-detected browser** zone (or any explicit `TimeZoneInfo`). Configurable
@@ -14,6 +14,9 @@ Live time-display components for Blazor — one library, five components:
 - **`AtomTimeZoneMap`** — a **world timezone map**: an inline-SVG earth with continents, 24 nominal
   `UTC±N` bands, a live day/night terminator + sun marker, and accurate city pins. No map service,
   no CDN, no raster.
+- **`AtomTimeZonePicker`** — a **searchable timezone picker** over *every* system zone: type to
+  filter, grouped by region, current UTC offset per zone, and a "use my zone" auto-detect.
+  Two-way bound on the IANA id (`@bind-Value`).
 
 All four share their tick + browser-timezone plumbing (`ClockInfraBase`); the single-zone clocks
 add `Kind` / `TimeZone` / `CurrentTime` on top (`ClockBase`), so `Live` behaves identically across
@@ -176,6 +179,41 @@ JS is the shared browser-timezone probe, and only when `HighlightViewerZone` is 
 SSR/prerender the map renders correctly without it and simply skips the highlight until interactive.
 Approximate by design: the bands are nominal whole-hour meridians, not political tz borders — the
 city pins carry the exact, DST-correct local times.
+
+## AtomTimeZonePicker
+
+A searchable combobox over **every** zone the runtime knows
+(`TimeZoneInfo.GetSystemTimeZones()` — IANA ids resolved via ICU, no bundled data). Two-way bound on
+the selected IANA id, so it drops straight into `AtomClock`'s `TimeZone` / the strip's
+`ReferenceTimeZoneId`.
+
+```razor
+@* Bound to an id; feed the pick to a clock *@
+<AtomTimeZonePicker @bind-Value="_zone" />
+@if (_zone is not null)
+{
+    <AtomClock TimeZone="TimeZoneInfo.FindSystemTimeZoneById(_zone)" Label="@_zone" />
+}
+@code { private string? _zone; }
+```
+
+| Parameter | Type | Notes |
+|-----------|------|-------|
+| `Value` / `ValueChanged` | `string?` | Selected IANA id — `@bind-Value`. |
+| `Zones` | `IEnumerable<TimeZoneInfo>?` | Zones to offer. Null = every system zone. |
+| `ShowOffset` | `bool` | Show each zone's current (DST-aware) UTC offset (default true). |
+| `ShowRegionGroups` | `bool` | Group the list by region — the id prefix, e.g. "Asia" (default true). |
+| `AllowDetect` | `bool` | Offer a "use my timezone" auto-detect button (default true). |
+| `Placeholder` / `SearchPlaceholder` | `string` | Trigger / filter-box placeholder text. |
+| `Disabled` | `bool` | Disable the control. |
+| `Width` | `double?` | Control width px (`--tzp-width`). |
+| `AriaLabel` | `string?` | Accessible label. |
+
+Keyboard: type to filter, `↑`/`↓` to move the highlight, `Enter` to pick, `Esc` to close. Styling
+uses CSS **system colors** (`Field`/`Canvas`/`AccentColor`…) so it's theme-correct in light and dark
+out of the box; override via the `--tzp-*` tokens. The auto-detect reuses this library's shared
+`atom-clocks.js` probe and is loaded **only** when the detect button is clicked — an untouched picker
+loads no JS.
 
 ## Render modes & the browser zone
 

@@ -1,0 +1,65 @@
+@inherits AtomComponentBase
+@using Microsoft.AspNetCore.Components.Web
+
+@*
+    AtomTimeZonePicker.razor
+    ------------------------
+    A searchable combobox over every system timezone (TimeZoneInfo.GetSystemTimeZones — IANA ids via
+    ICU, no bundled data). Two-way bound on the IANA id (@bind-Value). The trigger shows the current
+    selection; opening reveals a filter box + a scrollable, region-grouped list. Keyboard: type to
+    filter, ↑/↓ to move, Enter to pick, Esc to close. Offsets are current (DST-aware). The optional
+    "detect" button reuses the shared atom-clocks.js probe — no JS loads unless it's clicked.
+*@
+
+@if (!CancellationToken.IsCancellationRequested)
+{
+    <div class="@RootClass" style="@RootStyle" role="combobox"
+         aria-expanded="@_open" aria-haspopup="listbox" aria-label="@AriaLabel">
+
+        <button type="button" class="tzp-trigger" @onclick="Toggle" disabled="@Disabled">
+            <span class="@ValueClass">@SelectedDisplay</span>
+            <span class="tzp-caret" aria-hidden="true">▾</span>
+        </button>
+
+        @if (_open)
+        {
+            <div class="tzp-panel">
+                <div class="tzp-search-row">
+                    <input class="tzp-search" type="text" placeholder="@SearchPlaceholder"
+                           @bind="_query" @bind:event="oninput" @onkeydown="OnKey" autofocus />
+                    @if (AllowDetect)
+                    {
+                        <button type="button" class="tzp-detect" @onclick="DetectAsync"
+                                title="Use my timezone" aria-label="Use my timezone">📍</button>
+                    }
+                </div>
+
+                <ul class="tzp-list" role="listbox">
+                    @{ var rows = Filtered(); }
+                    @if (rows.Count == 0)
+                    {
+                        <li class="tzp-empty">No matches</li>
+                    }
+                    @for (var idx = 0; idx < rows.Count; idx++)
+                    {
+                        var r = rows[idx];
+                        if (ShowRegionGroups && (idx == 0 || rows[idx - 1].Region != r.Region))
+                        {
+                            <li class="tzp-group" aria-hidden="true">@r.Region</li>
+                        }
+                        var selected = r.Id == Value;
+                        var isActive = idx == _active;
+                        <li class="@OptionClass(selected, isActive)"
+                            role="option" aria-selected="@selected" @onclick="() => Select(r.Id)">
+                            <span class="tzp-city">@r.City</span>
+                            @if (ShowOffset)
+                            {
+                                <span class="tzp-offset">@OffsetText(r.Offset)</span>
+                            }
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+}
