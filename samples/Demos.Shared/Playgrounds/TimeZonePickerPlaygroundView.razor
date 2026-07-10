@@ -1,0 +1,84 @@
+@using BlazorAtoms.Clocks
+
+<PageTitle>AtomTimeZonePicker Playground</PageTitle>
+
+<style>
+    .tt-stage-outer { display:flex; align-items:center; justify-content:flex-start; gap:2rem; min-height:120px;
+        background: radial-gradient(ellipse at center,#0b1019 0%,#07090d 100%); border:1px solid #1b2330;
+        border-radius:12px; padding:1.5rem; margin-bottom:1.5rem; flex-wrap:wrap; color:#e5e9f0; }
+    .tt-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:1rem 1.5rem;
+        background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; }
+    .tt-ctrl { display:flex; flex-direction:column; gap:.35rem; }
+    .tt-ctrl label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; gap:.5rem; }
+    .tt-ctrl label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
+    .tt-controls input[type=number] { width:100%; accent-color:#00b3c4; }
+    .tt-ctrl .row { display:flex; align-items:center; gap:.5rem; }
+    .tt-ctrl .row input[type=checkbox] { accent-color:#00b3c4; width:16px; height:16px; }
+    .tt-ctrl .row label { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; justify-content:flex-start; }
+    .tt-picked { margin:0; color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; font-size:.85rem; }
+</style>
+
+<h1>AtomTimeZonePicker playground</h1>
+<p>A searchable dropdown over <b>every</b> zone the runtime knows
+   (<code>TimeZoneInfo.GetSystemTimeZones()</code> &mdash; IANA ids via ICU, zero bundled data). Type
+   to filter, grouped by region, current (DST-aware) UTC offset per zone, and a "use my zone"
+   auto-detect. Two-way bound on the IANA id; the pick drives the live clock beside it.</p>
+<p><a href="demo">&larr; Back to demo</a></p>
+
+<div class="tt-stage-outer">
+    <AtomTimeZonePicker @bind-Value="Zone" Width="@Width" ShowOffset="@ShowOffset"
+                        ShowRegionGroups="@Groups" AllowDetect="@Detect" Disabled="@Disabled" />
+    @if (Zone is not null && PickedTz is not null)
+    {
+        <AtomClock TimeZone="PickedTz" Label="@Zone" Format="h:mm:ss tt" />
+    }
+    else
+    {
+        <span class="tt-picked">Nothing selected yet.</span>
+    }
+</div>
+
+<div class="tt-controls">
+    <div class="tt-ctrl"><label>Width px <span class="val">@Width</span></label><input type="number" min="180" max="480" step="10" @bind="Width" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Options</label>
+        <div class="row"><input type="checkbox" id="off" @bind="ShowOffset" /><label for="off">Show UTC offset</label></div>
+        <div class="row"><input type="checkbox" id="grp" @bind="Groups" /><label for="grp">Group by region</label></div>
+        <div class="row"><input type="checkbox" id="det" @bind="Detect" /><label for="det">Allow "use my zone"</label></div>
+        <div class="row"><input type="checkbox" id="dis" @bind="Disabled" /><label for="dis">Disabled</label></div>
+    </div>
+    <div class="tt-ctrl"><label>Selected id</label><p class="tt-picked">@(Zone ?? "(none)")</p></div>
+</div>
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomTimeZonePickerExample.razor" />
+
+@code {
+    private string? Zone;
+    private double Width = 300;
+    private bool ShowOffset = true;
+    private bool Groups = true;
+    private bool Detect = true;
+    private bool Disabled = false;
+
+    private TimeZoneInfo? PickedTz
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(Zone)) return null;
+            try { return TimeZoneInfo.FindSystemTimeZoneById(Zone); }
+            catch { return TimeZoneInfo.Utc; }
+        }
+    }
+
+    private string Snippet
+    {
+        get
+        {
+            var w = Width != 300 ? $" Width=\"{Width}\"" : "";
+            var off = ShowOffset ? "" : " ShowOffset=\"false\"";
+            var grp = Groups ? "" : " ShowRegionGroups=\"false\"";
+            var det = Detect ? "" : " AllowDetect=\"false\"";
+            var dis = Disabled ? " Disabled=\"true\"" : "";
+            return $"<AtomTimeZonePicker @bind-Value=\"Zone\"{w}{off}{grp}{det}{dis} />";
+        }
+    }
+}
