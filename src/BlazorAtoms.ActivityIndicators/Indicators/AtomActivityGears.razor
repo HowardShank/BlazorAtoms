@@ -1,7 +1,7 @@
 @inherits AtomActivityIndicatorBase
 @if (!CancellationToken.IsCancellationRequested)
 {
-<svg viewBox="0 0 120 120" width="@Size" height="@Size" class="activity-gears @Class" style="@ThemeStyle">
+<svg @attributes="AdditionalAttributes" viewBox="0 0 120 120" width="@Size" height="@Size" class="@ClassAttr("activity-gears")" style="@StyleAttr(ThemeStyle)">
     <g class="gear-a">
         <circle class="teeth" cx="48" cy="52" r="17" stroke-width="7" stroke-dasharray="5 5.7" />
         <circle class="body"  cx="48" cy="52" r="13" />
@@ -30,9 +30,6 @@
 
     /// <summary>Gear body fill. Falls back to the built-in default when null.</summary>
     [Parameter] public string? Fill { get; set; }
-
-    /// <summary>Extra CSS class(es) on the root svg element.</summary>
-    [Parameter] public string? Class { get; set; }
 
     private string ThemeStyle => string.Concat(
         Blip is null ? "" : $"--ind-blip:{Blip};",

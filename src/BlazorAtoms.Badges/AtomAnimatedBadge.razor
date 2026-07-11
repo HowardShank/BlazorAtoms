@@ -10,7 +10,7 @@
 
 @if (ChildContent is not null)
 {
-    <span class="atom-badge-host" style="@RootStyle">
+    <span @attributes="AdditionalAttributes" class="@ClassAttr("atom-badge-host")" style="@StyleAttr(RootStyle)">
         @ChildContent
         @if (ShowBadge && !CancellationToken.IsCancellationRequested)
         {
@@ -27,7 +27,8 @@ else if (ShowBadge && !CancellationToken.IsCancellationRequested)
     // Authored here (not MarkupString) so Blazor scoped CSS applies. @key remounts the badge when
     // it changes, replaying one-shot (Appear/OnChange) animations.
     private RenderFragment Badge => @<span @key="_animKey"
-             class="atom-badge"
+             @attributes="@(ChildContent is null ? AdditionalAttributes : null)"
+             class="@(ChildContent is null ? ClassAttr("atom-badge") : "atom-badge")"
              role="status"
              aria-live="polite"
              aria-label="@EffectiveAriaLabel"
@@ -38,7 +39,7 @@ else if (ShowBadge && !CancellationToken.IsCancellationRequested)
              data-trigger="@TriggerValue"
              data-svg="@(IsSvgShape ? "true" : null)"
              data-dot="@(Dot ? "true" : null)"
-             style="@(ChildContent is null ? RootStyle : null)">
+             style="@(ChildContent is null ? StyleAttr(RootStyle) : null)">
         @if (Animation == BadgeAnimation.Ping)
         {
             <span class="atom-badge-ring" aria-hidden="true"></span>

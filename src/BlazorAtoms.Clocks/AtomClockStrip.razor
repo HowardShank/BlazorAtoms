@@ -13,8 +13,8 @@
 {
     _nowUtc = DateTimeOffset.UtcNow;
 
-    <div class="atom-clock-strip" data-layout="@LayoutValue" data-face="@FaceValue"
-         data-selectable="@Selectable" role="group" aria-label="@EffectiveAriaLabel" style="@RootStyle">
+    <div @attributes="AdditionalAttributes" class="@ClassAttr("atom-clock-strip")" data-layout="@LayoutValue" data-face="@FaceValue"
+         data-selectable="@Selectable" role="group" aria-label="@EffectiveAriaLabel" style="@StyleAttr(RootStyle)">
         @foreach (var z in OrderedZones)
         {
             <div class="cstrip-cell@(CellClass(z))" @onclick="() => Select(z)">

@@ -14,7 +14,7 @@
 {
     var now = CurrentTime;
 
-    <span class="atom-clock" data-kind="@KindValue" aria-label="@AriaLabel" style="@RootStyle">
+    <span @attributes="AdditionalAttributes" class="@ClassAttr("atom-clock")" data-kind="@KindValue" aria-label="@AriaLabel" style="@StyleAttr(RootStyle)">
         @if (!string.IsNullOrEmpty(Label))
         {
             <span class="atom-clock-label">@Label</span>

@@ -31,6 +31,7 @@
                      ShowPins="@Pins" ShowPinLabels="@PinLabels" ShowTerminator="@Terminator"
                      ShowSunMarker="@Sun" ShowGraticule="@Graticule" HighlightViewerZone="@Viewer"
                      Selectable="@Selectable" TimeFormat="@Format"
+                     CssClass="@Nz(HatchClass)" Style="@Nz(HatchStyle)" title="@Nz(HatchTitle)"
                      OnBandSelect="OnBand" OnCitySelect="OnCity" />
 </div>
 
@@ -56,6 +57,9 @@
         <div class="row"><input type="checkbox" id="viewer" @bind="Viewer" /><label for="viewer">Highlight my zone</label></div>
         <div class="row"><input type="checkbox" id="sel" @bind="Selectable" /><label for="sel">Selectable (click)</label></div>
     </div>
+    <div class="tt-ctrl"><label>Extra class (CssClass)</label><input type="text" @bind="HatchClass" @bind:event="oninput" placeholder="(none)" /></div>
+    <div class="tt-ctrl"><label>Extra style (Style)</label><input type="text" @bind="HatchStyle" @bind:event="oninput" placeholder="(none)" /></div>
+    <div class="tt-ctrl"><label>title attr (splat)</label><input type="text" @bind="HatchTitle" @bind:event="oninput" placeholder="(none)" /></div>
 </div>
 
 <CodeSnippetBox Code="@Snippet" FileName="AtomTimeZoneMapExample.razor" />
@@ -67,6 +71,12 @@
     private bool Pins = true, PinLabels = true, Terminator = true, Sun = true;
     private bool Live = true, Viewer = true, Selectable = false;
     private string Picked = "";
+
+    private string HatchClass = "";
+    private string HatchStyle = "";
+    private string HatchTitle = "";
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
 
     private static readonly Dictionary<string, string> Formats = new()
     {
@@ -97,7 +107,10 @@
             if (!Viewer) off.Add(" HighlightViewerZone=\"false\"");
             if (!Live) off.Add(" Live=\"false\"");
             if (Selectable) off.Add(" Selectable=\"true\"");
-            return $"<AtomTimeZoneMap{w}{fmt}{string.Concat(off)} />";
+            var hatch = (string.IsNullOrEmpty(HatchClass) ? "" : $" CssClass=\"{HatchClass}\"")
+                + (string.IsNullOrEmpty(HatchStyle) ? "" : $" Style=\"{HatchStyle}\"")
+                + (string.IsNullOrEmpty(HatchTitle) ? "" : $" title=\"{HatchTitle}\"");
+            return $"<AtomTimeZoneMap{w}{fmt}{string.Concat(off)}{hatch} />";
         }
     }
 }

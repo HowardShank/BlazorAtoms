@@ -1,4 +1,4 @@
-@inherits AtomComponentBase
+@inherits ChipFamilyBase
 
 @*
     AtomChip.razor
@@ -11,7 +11,8 @@
 
 @if (!CancellationToken.IsCancellationRequested)
 {
-    <span class="atom-chip"
+    <span @attributes="AdditionalAttributes"
+          class="@ClassAttr("atom-chip")"
           role="@(Clickable ? "button" : null)"
           tabindex="@(Clickable && !Disabled ? "0" : null)"
           aria-pressed="@(Clickable ? (Selected ? "true" : "false") : null)"
@@ -22,7 +23,7 @@
           data-selected="@(Selected ? "true" : null)"
           data-disabled="@(Disabled ? "true" : null)"
           data-clickable="@(Clickable ? "true" : null)"
-          style="@RootStyle"
+          style="@StyleAttr(RootStyle)"
           @onclick="HandleClick"
           @onkeydown="HandleKey">
         @if (Icon is not null)

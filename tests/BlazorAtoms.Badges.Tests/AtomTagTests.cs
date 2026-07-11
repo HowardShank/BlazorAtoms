@@ -87,4 +87,36 @@ public class AtomTagTests : TestContext
         Assert.Contains("--tag-size:22px", style);
         Assert.Contains("--tag-radius:3px", style);
     }
+
+    [Fact]
+    public void Height_token_emitted_independent_of_size()
+    {
+        var cut = RenderComponent<AtomTag>(p => p
+            .Add(c => c.Text, "t")
+            .Add(c => c.Size, 20)
+            .Add(c => c.Height, 34));
+        var style = cut.Find(".atom-tag").GetAttribute("style") ?? "";
+        Assert.Contains("--tag-size:20px", style);
+        Assert.Contains("--tag-height:34px", style);
+    }
+
+    [Fact]
+    public void Font_styling_tokens_emitted()
+    {
+        var cut = RenderComponent<AtomTag>(p => p
+            .Add(c => c.Text, "t")
+            .Add(c => c.FontFamily, "Inter")
+            .Add(c => c.FontSize, 15)
+            .Add(c => c.FontWeight, "700")
+            .Add(c => c.FontStyle, "italic")
+            .Add(c => c.LetterSpacing, ".05em")
+            .Add(c => c.TextTransform, "uppercase"));
+        var style = cut.Find(".atom-tag").GetAttribute("style") ?? "";
+        Assert.Contains("--tag-font-family:Inter", style);
+        Assert.Contains("--tag-font-size:15px", style);
+        Assert.Contains("--tag-font-weight:700", style);
+        Assert.Contains("--tag-font-style:italic", style);
+        Assert.Contains("--tag-letter-spacing:.05em", style);
+        Assert.Contains("--tag-text-transform:uppercase", style);
+    }
 }

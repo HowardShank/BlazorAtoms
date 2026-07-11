@@ -9,7 +9,7 @@
 
 @if (!CancellationToken.IsCancellationRequested)
 {
-    <div class="atom-qrcode">@((MarkupString)BuildSvg())</div>
+    <div @attributes="AdditionalAttributes" class="@ClassAttr("atom-qrcode")" style="@StyleAttr(null)">@((MarkupString)BuildSvg())</div>
 }
 
 @code {
@@ -31,8 +31,9 @@
     /// <summary>Quiet-zone border width, in modules (spec minimum is 4).</summary>
     [Parameter] public int QuietZone { get; set; } = 4;
 
-    /// <summary>Extra CSS class(es) on the root svg element.</summary>
-    [Parameter] public string? Class { get; set; }
+    /// <summary>Extra CSS class(es) on the generated <c>&lt;svg&gt;</c> element (not the root; use the
+    /// inherited <c>Class</c> for that).</summary>
+    [Parameter] public string? SvgClass { get; set; }
 
     private static string Esc(string s) => WebUtility.HtmlEncode(s);
 
@@ -53,7 +54,7 @@
         var n = m.GetLength(0);
         var q = QuietZone;
         var dim = n + 2 * q; // viewBox units = modules; svg scales to Size px
-        var cls = Class is null ? "atom-qrcode" : "atom-qrcode " + Esc(Class);
+        var cls = SvgClass is null ? "atom-qrcode" : "atom-qrcode " + Esc(SvgClass);
 
         var sb = new StringBuilder();
         sb.Append($"<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"{cls}\" role=\"img\" ")

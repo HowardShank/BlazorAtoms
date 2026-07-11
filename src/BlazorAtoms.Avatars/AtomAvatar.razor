@@ -9,7 +9,7 @@
     crop (border-radius / clip-path) + background + optional border ring.
 *@
 
-<div class="atom-avatar" role="img" aria-label="@AccessibleLabel" data-shape="@ShapeValue" style="@RootStyle">
+<div @attributes="AdditionalAttributes" class="@ClassAttr("atom-avatar")" role="img" aria-label="@AccessibleLabel" data-shape="@ShapeValue" style="@StyleAttr(RootStyle)">
     @if (HasImage)
     {
         <img class="atom-avatar-img" src="@Src" alt="@(Alt ?? "")" loading="lazy" />

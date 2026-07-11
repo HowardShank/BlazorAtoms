@@ -1,7 +1,7 @@
 @inherits AtomActivityIndicatorBase
 @if (!CancellationToken.IsCancellationRequested)
 {
-<svg viewBox="0 0 120 120" width="@Size" height="@Size" class="activity-swarm @Class" style="@ThemeStyle">
+<svg @attributes="AdditionalAttributes" viewBox="0 0 120 120" width="@Size" height="@Size" class="@ClassAttr("activity-swarm")" style="@StyleAttr(ThemeStyle)">
     <g class="swarm">
         <circle class="core" cx="60" cy="60" r="4" />
         @foreach (var d in Dots)
@@ -22,9 +22,6 @@
 
     /// <summary>Color of the pulsing core. Falls back to the built-in default when null.</summary>
     [Parameter] public string? Glow { get; set; }
-
-    /// <summary>Extra CSS class(es) applied to the root svg element.</summary>
-    [Parameter] public string? Class { get; set; }
 
     // Cx/Cy kept as strings so they render verbatim regardless of the server's culture.
     private record Dot(string Cx, string Cy, int Dx0, int Dy0, int Dx1, int Dy1);

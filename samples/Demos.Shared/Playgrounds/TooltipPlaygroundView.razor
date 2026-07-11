@@ -106,7 +106,8 @@
                  TextColor="@(OverrideTextColor ? TextColor : null)"
                  BorderColor="@(OverrideBorderColor ? BorderColor : null)"
                  BorderWidth="@BorderWidth" Radius="@Radius" ArrowSize="@ArrowSize"
-                 Offset="@Offset" MaxWidth="@MaxWidth">
+                 Offset="@Offset" MaxWidth="@MaxWidth"
+                 CssClass="@Nz(HatchClass)" Style="@Nz(HatchStyle)" title="@Nz(HatchTitle)">
         <button class="tt-trigger-btn">Hover or Tab to me</button>
     </AtomTooltip>
 </div>
@@ -186,6 +187,18 @@
             <label for="disabled">Disabled</label>
         </div>
     </div>
+    <div class="tt-ctrl">
+        <label>Extra class (CssClass)</label>
+        <input type="text" @bind="HatchClass" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="tt-ctrl">
+        <label>Extra style (Style)</label>
+        <input type="text" @bind="HatchStyle" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="tt-ctrl">
+        <label>title attr (splat)</label>
+        <input type="text" @bind="HatchTitle" @bind:event="oninput" placeholder="(none)" />
+    </div>
 </div>
 
 <CodeSnippetBox Code="@Snippet" FileName="AtomTooltipExample.razor" />
@@ -209,6 +222,12 @@
     private double Offset = 8;
     private string MaxWidth = "16rem";
 
+    private string HatchClass = "";
+    private string HatchStyle = "";
+    private string HatchTitle = "";
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
+
     // Build a paste-ready <AtomTooltip> from current state; emit only params that differ from defaults.
     private string Snippet
     {
@@ -228,6 +247,9 @@
             if (ArrowSize != 8) sb.Append($" ArrowSize=\"{ArrowSize}\"");
             if (Offset != 8) sb.Append($" Offset=\"{Offset}\"");
             if (MaxWidth != "16rem") sb.Append($" MaxWidth=\"{MaxWidth}\"");
+            if (!string.IsNullOrEmpty(HatchClass)) sb.Append($" CssClass=\"{HatchClass}\"");
+            if (!string.IsNullOrEmpty(HatchStyle)) sb.Append($" Style=\"{HatchStyle}\"");
+            if (!string.IsNullOrEmpty(HatchTitle)) sb.Append($" title=\"{HatchTitle}\"");
             sb.Append(">\n    <button>Hover or Tab to me</button>\n</AtomTooltip>");
             return sb.ToString();
         }

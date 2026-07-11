@@ -8,7 +8,7 @@
     own Kind/Label/TimeZone. For anything more bespoke, compose two <AtomClock> yourself.
 *@
 
-<div class="atom-clock-pair" data-layout="@LayoutValue" role="group" style="@RootStyle">
+<div @attributes="AdditionalAttributes" class="@ClassAttr("atom-clock-pair")" data-layout="@LayoutValue" role="group" style="@StyleAttr(RootStyle)">
     <AtomClock Kind="@PrimaryKind" TimeZone="@PrimaryTimeZone" Label="@PrimaryLabel"
                Format="@Format" Live="@Live" Size="@Size" />
     <span class="atom-clock-divider" aria-hidden="true"></span>

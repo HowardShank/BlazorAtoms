@@ -1,4 +1,3 @@
-using System.Globalization;
 using Microsoft.AspNetCore.Components;
 using BlazorAtoms.Shared;
 
@@ -9,9 +8,12 @@ namespace BlazorAtoms.Badges;
 /// label and an optional trailing remove button, in a rounded rectangle. Painted by a color
 /// <see cref="Variant"/> in a Solid / Soft / Outline <see cref="Appearance"/>. Not clickable or
 /// selectable — reach for <see cref="AtomChip"/> when you need interaction. Pure CSS + SVG.
+/// Common styling knobs (colors, size, height, font) come from <see cref="ChipFamilyBase"/>.
 /// </summary>
-public partial class AtomTag : AtomComponentBase
+public partial class AtomTag : ChipFamilyBase
 {
+    protected override string Prefix => "tag";
+
     /// <summary>Label content. Overrides <see cref="Text"/> when both are set.</summary>
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
@@ -36,29 +38,14 @@ public partial class AtomTag : AtomComponentBase
     /// <summary>Accessible label for the remove button. Default: "Remove".</summary>
     [Parameter] public string RemoveLabel { get; set; } = "Remove";
 
-    /// <summary>Tag height in px (drives font-size and padding). Sets <c>--tag-size</c>.</summary>
-    [Parameter] public double? Size { get; set; }
-
     /// <summary>Corner radius in px. Sets <c>--tag-radius</c>. Default is a small rounded rectangle.</summary>
     [Parameter] public double? Radius { get; set; }
 
-    /// <summary>Background / accent override. Sets <c>--tag-bg</c>. Null = variant default.</summary>
-    [Parameter] public string? Background { get; set; }
-
-    /// <summary>Text color override. Sets <c>--tag-color</c>. Null = variant default.</summary>
-    [Parameter] public string? TextColor { get; set; }
-
-    /// <summary>Border color override. Sets <c>--tag-border</c>. Null = variant/appearance default.</summary>
-    [Parameter] public string? BorderColor { get; set; }
-
-    /// <summary>Accessible label for the tag. Falls back to the visible label text.</summary>
-    [Parameter] public string? AriaLabel { get; set; }
+    protected override StyleVars Vars(StyleVars s) => s.Add("radius", Radius);
 
     private RenderFragment Label => ChildContent ?? (builder => builder.AddContent(0, Text));
 
     private async Task HandleRemove() => await OnRemove.InvokeAsync();
-
-    private static string N(double v) => v.ToString(CultureInfo.InvariantCulture);
 
     private string VariantValue => Variant switch
     {
@@ -75,11 +62,4 @@ public partial class AtomTag : AtomComponentBase
         Appearance.Outline => "outline",
         _ => "solid",
     };
-
-    private string RootStyle => string.Concat(
-        Background is null ? "" : $"--tag-bg:{Background};",
-        TextColor is null ? "" : $"--tag-color:{TextColor};",
-        BorderColor is null ? "" : $"--tag-border:{BorderColor};",
-        Size is null ? "" : $"--tag-size:{N(Size.Value)}px;",
-        Radius is null ? "" : $"--tag-radius:{N(Radius.Value)}px;");
 }

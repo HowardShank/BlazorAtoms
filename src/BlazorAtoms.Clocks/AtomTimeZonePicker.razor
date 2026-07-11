@@ -13,7 +13,7 @@
 
 @if (!CancellationToken.IsCancellationRequested)
 {
-    <div class="@RootClass" style="@RootStyle" role="combobox"
+    <div @attributes="AdditionalAttributes" class="@ClassAttr(RootClass)" style="@StyleAttr(RootStyle)" role="combobox"
          aria-expanded="@_open" aria-haspopup="listbox" aria-label="@AriaLabel">
 
         <button type="button" class="tzp-trigger" @onclick="Toggle" disabled="@Disabled">

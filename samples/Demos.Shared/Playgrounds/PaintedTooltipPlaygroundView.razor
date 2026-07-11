@@ -29,7 +29,8 @@
                         GradientAngle="@GradAngle" Background="@(UseGradient ? null : Bg)"
                         BorderColor="@Border" BorderWidth="@BorderWidth" ArrowSize="@ArrowSize" Offset="@Offset"
                         TextAlign="@TextAlign" VerticalAlign="@VerticalAlign"
-                        Width="@(string.IsNullOrWhiteSpace(Width) ? null : Width)" Height="@(string.IsNullOrWhiteSpace(Height) ? null : Height)">
+                        Width="@(string.IsNullOrWhiteSpace(Width) ? null : Width)" Height="@(string.IsNullOrWhiteSpace(Height) ? null : Height)"
+                        CssClass="@Nz(HatchClass)" Style="@Nz(HatchStyle)" title="@Nz(HatchTitle)">
         <button class="tt-trigger-btn">Hover or Tab to me</button>
     </AtomPaintedTooltip>
 </div>
@@ -57,6 +58,9 @@
         <div class="row"><input type="checkbox" id="sa" @bind="ShowArrow" /><label for="sa">Show arrow</label></div>
         <div class="row"><input type="checkbox" id="sh" @bind="Shadow" /><label for="sh">Shadow</label></div>
     </div>
+    <div class="tt-ctrl"><label>Extra class (CssClass)</label><input type="text" @bind="HatchClass" @bind:event="oninput" placeholder="(none)" /></div>
+    <div class="tt-ctrl"><label>Extra style (Style)</label><input type="text" @bind="HatchStyle" @bind:event="oninput" placeholder="(none)" /></div>
+    <div class="tt-ctrl"><label>title attr (splat)</label><input type="text" @bind="HatchTitle" @bind:event="oninput" placeholder="(none)" /></div>
 </div>
 
 <CodeSnippetBox Code="@Snippet" FileName="AtomPaintedTooltipExample.razor" />
@@ -80,6 +84,12 @@
     private string Height = "";
     private TooltipTextAlign? TextAlign;
     private TooltipVerticalAlign? VerticalAlign;
+
+    private string HatchClass = "";
+    private string HatchStyle = "";
+    private string HatchTitle = "";
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
 
     private string Snippet
     {
@@ -108,6 +118,9 @@
             if (!string.IsNullOrWhiteSpace(Height)) sb.Append($" Height=\"{Height}\"");
             if (TextAlign is not null) sb.Append($" TextAlign=\"TooltipTextAlign.{TextAlign}\"");
             if (VerticalAlign is not null) sb.Append($" VerticalAlign=\"TooltipVerticalAlign.{VerticalAlign}\"");
+            if (!string.IsNullOrEmpty(HatchClass)) sb.Append($" CssClass=\"{HatchClass}\"");
+            if (!string.IsNullOrEmpty(HatchStyle)) sb.Append($" Style=\"{HatchStyle}\"");
+            if (!string.IsNullOrEmpty(HatchTitle)) sb.Append($" title=\"{HatchTitle}\"");
             sb.Append(">\n    <button>Hover or Tab to me</button>\n</AtomPaintedTooltip>");
             return sb.ToString();
         }

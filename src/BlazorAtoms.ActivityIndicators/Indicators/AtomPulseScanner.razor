@@ -22,7 +22,7 @@
 
 @if (!CancellationToken.IsCancellationRequested)
 {
-    <div class="pulse-scanner">@((MarkupString)BuildSvg())</div>
+    <div @attributes="AdditionalAttributes" class="@ClassAttr("pulse-scanner")" style="@StyleAttr(null)">@((MarkupString)BuildSvg())</div>
 }
 
 @code {

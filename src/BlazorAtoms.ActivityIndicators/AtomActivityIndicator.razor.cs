@@ -53,9 +53,6 @@ public partial class AtomActivityIndicator : AtomComponentBase
     /// <summary>Faint body fill color. Forwarded only if the chosen indicator declares it.</summary>
     [Parameter] public string? Fill { get; set; }
 
-    /// <summary>Extra CSS class(es) applied to the chosen indicator's root svg element.</summary>
-    [Parameter] public string? Class { get; set; }
-
     /// <summary>Invoked with the requested <see cref="Name"/> when no indicator matches it,
     /// just before falling back to a random indicator. No-op if unbound.</summary>
     [Parameter] public EventCallback<string> OnUnknownName { get; set; }
@@ -118,7 +115,9 @@ public partial class AtomActivityIndicator : AtomComponentBase
         Add("Glow", Glow);
         Add("Line", Line);
         Add("Fill", Fill);
-        Add("Class", Class);
+        Add("CssClass", CssClass);
+        Add("Style", Style);
+        Add("AdditionalAttributes", AdditionalAttributes);
         return dict;
     }
 }

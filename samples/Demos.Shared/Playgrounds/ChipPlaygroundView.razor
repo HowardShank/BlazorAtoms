@@ -35,22 +35,33 @@
         }
         else
         {
-            <AtomChip Text="@Text" Variant="@Variant" Appearance="@Appearance" Size="@Size" Radius="@Radius"
+            <AtomChip Text="@Text" Variant="@Variant" Appearance="@Appearance" Size="@Size" Height="@Height" Radius="@Radius"
                       Selected="@Selected" Disabled="@Disabled"
                       OnClick="@ChipClick"
                       Removable="@Removable" OnRemove="OnChipRemove"
-                      Icon="@(ShowIcon ? IconFragment : null)" />
+                      Background="@Blank(Bg)" TextColor="@Blank(Fg)" BorderColor="@Blank(BorderCol)"
+                      FontFamily="@Blank(FontFam)" FontWeight="@Blank(FontWt)" FontStyle="@(Italic ? "italic" : null)" LetterSpacing="@Blank(Spacing)" TextTransform="@(Upper ? "uppercase" : null)"
+                      Icon="@(ShowIcon ? IconFragment : null)"
+                      CssClass="@Blank(HatchClass)" Style="@Blank(HatchStyle)" title="@Blank(HatchTitle)" />
         }
     </div>
     <div class="tt-cell">
         <span class="cap">AtomTag</span>
-        <AtomTag Text="@Text" Variant="@Variant" Appearance="@Appearance" Size="@Size" Radius="@Radius"
-                 Removable="@Removable" Icon="@(ShowIcon ? IconFragment : null)" />
+        <AtomTag Text="@Text" Variant="@Variant" Appearance="@Appearance" Size="@Size" Height="@Height" Radius="@Radius"
+                 Removable="@Removable"
+                 Background="@Blank(Bg)" TextColor="@Blank(Fg)" BorderColor="@Blank(BorderCol)"
+                 FontFamily="@Blank(FontFam)" FontWeight="@Blank(FontWt)" FontStyle="@(Italic ? "italic" : null)" LetterSpacing="@Blank(Spacing)" TextTransform="@(Upper ? "uppercase" : null)"
+                 Icon="@(ShowIcon ? IconFragment : null)"
+                 CssClass="@Blank(HatchClass)" Style="@Blank(HatchStyle)" title="@Blank(HatchTitle)" />
     </div>
     <div class="tt-cell">
         <span class="cap">AtomPill</span>
-        <AtomPill Text="@Text" Variant="@Variant" Appearance="@Appearance" Size="@Size"
-                  Dot="@(!ShowIcon)" Icon="@(ShowIcon ? IconFragment : null)" />
+        <AtomPill Text="@Text" Variant="@Variant" Appearance="@Appearance" Size="@Size" Height="@Height"
+                  Dot="@(ShowIcon ? false : ShowDot)" DotColor="@Blank(DotCol)"
+                  Background="@Blank(Bg)" TextColor="@Blank(Fg)" BorderColor="@Blank(BorderCol)"
+                  FontFamily="@Blank(FontFam)" FontWeight="@Blank(FontWt)" FontStyle="@(Italic ? "italic" : null)" LetterSpacing="@Blank(Spacing)" TextTransform="@(Upper ? "uppercase" : null)"
+                  Icon="@(ShowIcon ? IconFragment : null)"
+                  CssClass="@Blank(HatchClass)" Style="@Blank(HatchStyle)" title="@Blank(HatchTitle)" />
     </div>
 </div>
 
@@ -59,6 +70,7 @@
     <div class="tt-ctrl"><label>Variant</label><select @bind="Variant">@foreach (var v in Enum.GetValues<Variant>()){<option value="@v">@v</option>}</select></div>
     <div class="tt-ctrl"><label>Appearance</label><select @bind="Appearance">@foreach (var a in Enum.GetValues<Appearance>()){<option value="@a">@a</option>}</select></div>
     <div class="tt-ctrl"><label>Size px <span class="val">@Size</span></label><input type="number" min="16" max="56" @bind="Size" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Height px (vertical) <span class="val">@(Height?.ToString() ?? "auto")</span></label><input type="number" min="16" max="80" placeholder="(follows Size)" @bind="Height" @bind:event="oninput" /></div>
     <div class="tt-ctrl"><label>Radius px (Chip/Tag) <span class="val">@Radius</span></label><input type="number" min="0" max="30" @bind="Radius" @bind:event="oninput" /></div>
     <div class="tt-ctrl"><label>Chip interaction</label>
         <div class="row"><input type="checkbox" id="clk" @bind="Clickable" /><label for="clk">Clickable</label></div>
@@ -68,7 +80,22 @@
     <div class="tt-ctrl"><label>Options</label>
         <div class="row"><input type="checkbox" id="rm" @bind="Removable" /><label for="rm">Removable (× on Chip/Tag)</label></div>
         <div class="row"><input type="checkbox" id="ic" @bind="ShowIcon" /><label for="ic">Leading icon</label></div>
+        <div class="row"><input type="checkbox" id="dot" @bind="ShowDot" /><label for="dot">Status dot (Pill, no icon)</label></div>
     </div>
+    <div class="tt-ctrl"><label>Background</label><input type="text" placeholder="(variant default)" @bind="Bg" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Text color</label><input type="text" placeholder="(variant default)" @bind="Fg" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Border color</label><input type="text" placeholder="(variant/appearance default)" @bind="BorderCol" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Dot color (Pill)</label><input type="text" placeholder="(accent default)" @bind="DotCol" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Font family</label><input type="text" placeholder="(inherit)" @bind="FontFam" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Font weight</label><input type="text" placeholder="(default)" @bind="FontWt" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Letter spacing</label><input type="text" placeholder="(normal)" @bind="Spacing" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Text style</label>
+        <div class="row"><input type="checkbox" id="ital" @bind="Italic" /><label for="ital">Italic</label></div>
+        <div class="row"><input type="checkbox" id="upper" @bind="Upper" /><label for="upper">Uppercase</label></div>
+    </div>
+    <div class="tt-ctrl"><label>Extra class (CssClass)</label><input type="text" placeholder="(none)" @bind="HatchClass" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Extra style (Style)</label><input type="text" placeholder="(none)" @bind="HatchStyle" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>title attr (splat)</label><input type="text" placeholder="(none)" @bind="HatchTitle" @bind:event="oninput" /></div>
 </div>
 
 <CodeSnippetBox Code="@Snippet" FileName="AtomChipFamilyExample.razor" />
@@ -78,13 +105,29 @@
     private Variant Variant = Variant.Info;
     private Appearance Appearance = Appearance.Soft;
     private double Size = 32;
+    private double? Height;
     private double Radius = 999;
     private bool Clickable = true;
     private bool Selected;
     private bool Disabled;
     private bool Removable;
     private bool ShowIcon;
+    private bool ShowDot = true;
     private bool Removed;
+    private string Bg = "";
+    private string Fg = "";
+    private string BorderCol = "";
+    private string DotCol = "";
+    private string FontFam = "";
+    private string FontWt = "";
+    private string Spacing = "";
+    private bool Italic;
+    private bool Upper;
+    private string HatchClass = "";
+    private string HatchStyle = "";
+    private string HatchTitle = "";
+
+    private static string? Blank(string s) => string.IsNullOrWhiteSpace(s) ? null : s;
 
     private RenderFragment IconFragment => builder => builder.AddContent(0, "★");
 
@@ -102,6 +145,19 @@
     // differs from each component's own default so the snippet stays minimal.
     private string V => Variant != Variant.Default ? $" Variant=\"Variant.{Variant}\"" : "";
     private string SizeAttr => Size != 32 ? $" Size=\"{Size}\"" : "";
+    private string HeightAttr => Height is not null ? $" Height=\"{Height}\"" : "";
+    private string FontStyling =>
+          (Blank(FontFam) is null ? "" : $" FontFamily=\"{FontFam}\"")
+        + (Blank(FontWt) is null ? "" : $" FontWeight=\"{FontWt}\"")
+        + (Italic ? " FontStyle=\"italic\"" : "")
+        + (Blank(Spacing) is null ? "" : $" LetterSpacing=\"{Spacing}\"")
+        + (Upper ? " TextTransform=\"uppercase\"" : "");
+    private string Colors => (Blank(Bg) is null ? "" : $" Background=\"{Bg}\"")
+        + (Blank(Fg) is null ? "" : $" TextColor=\"{Fg}\"")
+        + (Blank(BorderCol) is null ? "" : $" BorderColor=\"{BorderCol}\"");
+    private string Hatch => (Blank(HatchClass) is null ? "" : $" CssClass=\"{HatchClass}\"")
+        + (Blank(HatchStyle) is null ? "" : $" Style=\"{HatchStyle}\"")
+        + (Blank(HatchTitle) is null ? "" : $" title=\"{HatchTitle}\"");
     private string Icn => ShowIcon ? "\n    <Icon><span>★</span></Icon>\n" : "";
 
     private string Snippet
@@ -114,17 +170,18 @@
                 + (Selected ? " Selected=\"true\"" : "")
                 + (Disabled ? " Disabled=\"true\"" : "")
                 + (Removable ? " Removable=\"true\" OnRemove=\"Remove\"" : "")
-                + SizeAttr + Close("AtomChip");
+                + Colors + FontStyling + SizeAttr + HeightAttr + Hatch + Close("AtomChip");
 
             var tag = $"<AtomTag Text=\"{Text}\"{V}"
                 + (Appearance != Appearance.Solid ? $" Appearance=\"Appearance.{Appearance}\"" : "")
                 + (Removable ? " Removable=\"true\" OnRemove=\"Remove\"" : "")
-                + SizeAttr + Close("AtomTag");
+                + Colors + FontStyling + SizeAttr + HeightAttr + Hatch + Close("AtomTag");
 
             var pill = $"<AtomPill Text=\"{Text}\"{V}"
                 + (Appearance != Appearance.Soft ? $" Appearance=\"Appearance.{Appearance}\"" : "")
-                + (ShowIcon ? " Dot=\"false\"" : "")
-                + SizeAttr + Close("AtomPill");
+                + ((ShowIcon || !ShowDot) ? " Dot=\"false\"" : "")
+                + (!ShowIcon && ShowDot && Blank(DotCol) is not null ? $" DotColor=\"{DotCol}\"" : "")
+                + Colors + FontStyling + SizeAttr + HeightAttr + Hatch + Close("AtomPill");
 
             return $"{chip}\n{tag}\n{pill}";
         }

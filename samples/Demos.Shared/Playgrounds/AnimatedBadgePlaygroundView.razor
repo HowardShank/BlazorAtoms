@@ -33,7 +33,8 @@
                                Animation="@Animation" Trigger="@Trigger"
                                Background="@(OverrideBg ? Bg : null)" Size="@Size"
                                Width="@Blank(Width)" Height="@Blank(Height)" Radius="@Radius"
-                               Duration="@Duration" Delay="@Delay" OffsetX="@OffsetX" OffsetY="@OffsetY">
+                               Duration="@Duration" Delay="@Delay" OffsetX="@OffsetX" OffsetY="@OffsetY"
+                               CssClass="@Blank(HatchClass)" Style="@Blank(HatchStyle)" title="@Blank(HatchTitle)">
                 <div class="tt-host">🔔</div>
             </AtomAnimatedBadge>
         }
@@ -43,7 +44,8 @@
                                Shape="@Shape" Variant="@Variant" Animation="@Animation" Trigger="@Trigger"
                                Background="@(OverrideBg ? Bg : null)" Size="@Size"
                                Width="@Blank(Width)" Height="@Blank(Height)" Radius="@Radius"
-                               Duration="@Duration" Delay="@Delay" />
+                               Duration="@Duration" Delay="@Delay"
+                               CssClass="@Blank(HatchClass)" Style="@Blank(HatchStyle)" title="@Blank(HatchTitle)" />
         }
     </div>
 </div>
@@ -72,6 +74,9 @@
         <div class="row"><input type="checkbox" id="dot" @bind="Dot" /><label for="dot">Dot</label></div>
         <div class="row"><input type="checkbox" id="sz" @bind="ShowZero" /><label for="sz">Show zero</label></div>
     </div>
+    <div class="tt-ctrl"><label>Extra class (CssClass)</label><input type="text" placeholder="(none)" @bind="HatchClass" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Extra style (Style)</label><input type="text" placeholder="(none)" @bind="HatchStyle" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>title attr (splat)</label><input type="text" placeholder="(none)" @bind="HatchTitle" @bind:event="oninput" /></div>
 </div>
 
 <CodeSnippetBox Code="@Snippet" FileName="AtomAnimatedBadgeExample.razor" />
@@ -97,6 +102,9 @@
     private double OffsetY;
     private bool OverrideBg;
     private string Bg = "#ef4444";
+    private string HatchClass = "";
+    private string HatchStyle = "";
+    private string HatchTitle = "";
 
     // Feed a number when the text parses as one (so Max/ShowZero behave), else the raw string.
     private object? BadgeValue => long.TryParse(RawValue, out var n) ? n : (object?)RawValue;
@@ -128,6 +136,9 @@
             if (Delay != 0) sb.Append($" Delay=\"{Delay}\"");
             if (Overlay && OffsetX != 0) sb.Append($" OffsetX=\"{OffsetX}\"");
             if (Overlay && OffsetY != 0) sb.Append($" OffsetY=\"{OffsetY}\"");
+            if (!string.IsNullOrEmpty(HatchClass)) sb.Append($" CssClass=\"{HatchClass}\"");
+            if (!string.IsNullOrEmpty(HatchStyle)) sb.Append($" Style=\"{HatchStyle}\"");
+            if (!string.IsNullOrEmpty(HatchTitle)) sb.Append($" title=\"{HatchTitle}\"");
             if (Overlay)
                 sb.Append(">\n    <span>🔔</span>\n</AtomAnimatedBadge>");
             else

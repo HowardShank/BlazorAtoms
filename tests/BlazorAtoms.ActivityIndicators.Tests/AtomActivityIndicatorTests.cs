@@ -49,4 +49,29 @@ public class AtomActivityIndicatorTests : TestContext
         Assert.Equal("DoesNotExist", requested);
         Assert.NotNull(cut.Find("svg"));   // still rendered something
     }
+
+    // --- Escape hatch on an SVG root + forwarding through the wrapper ---
+
+    [Fact]
+    public void Svg_root_class_appends_and_splat_passes_through()
+    {
+        var cut = RenderComponent<Indicators.AtomActivityDna>(p => p
+            .Add(c => c.CssClass, "brand")
+            .AddUnmatched("data-test", "z"));
+        var svg = cut.Find("svg");
+        Assert.Equal("activity-dna brand", svg.GetAttribute("class"));
+        Assert.Equal("z", svg.GetAttribute("data-test"));
+    }
+
+    [Fact]
+    public void Wrapper_forwards_class_and_splat_to_chosen_indicator()
+    {
+        var cut = RenderComponent<AtomActivityIndicator>(p => p
+            .Add(c => c.Name, "Gears")
+            .Add(c => c.CssClass, "brand")
+            .AddUnmatched("data-test", "z"));
+        var svg = cut.Find("svg");
+        Assert.Contains("brand", svg.GetAttribute("class"));
+        Assert.Equal("z", svg.GetAttribute("data-test"));
+    }
 }

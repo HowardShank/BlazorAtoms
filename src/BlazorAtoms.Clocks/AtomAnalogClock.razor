@@ -14,7 +14,7 @@
 {
     _now = CurrentTime;
 
-    <figure class="atom-analog-clock" data-kind="@KindValue" style="@RootStyle"
+    <figure @attributes="AdditionalAttributes" class="@ClassAttr("atom-analog-clock")" data-kind="@KindValue" style="@StyleAttr(RootStyle)"
             role="img" aria-label="@EffectiveAriaLabel">
         <svg class="atom-analog-clock-face" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
             <circle class="aclk-dial" cx="50" cy="50" r="48" />

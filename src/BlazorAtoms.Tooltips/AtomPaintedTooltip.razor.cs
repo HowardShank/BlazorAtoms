@@ -90,11 +90,6 @@ public partial class AtomPaintedTooltip : AtomComponentBase, IAsyncDisposable
     /// <summary>When true, the bubble never renders (trigger still renders).</summary>
     [Parameter] public bool Disabled { get; set; }
 
-    /// <summary>Extra CSS class(es) on the root element.</summary>
-    [Parameter] public string? Class { get; set; }
-
-    /// <summary>Extra inline style appended after the built-in theme style.</summary>
-    [Parameter] public string? Style { get; set; }
 
     private readonly string _id = "pt" + Guid.NewGuid().ToString("N")[..8];
     private string GradId => "grad-" + _id;
@@ -222,7 +217,7 @@ public partial class AtomPaintedTooltip : AtomComponentBase, IAsyncDisposable
                 ArrowSize is null ? "" : $"--tip-arrow-size:{N(ArrowSize.Value)}px;",
                 MaxWidth is null ? "" : $"--tip-max-width:{MaxWidth};",
                 Offset is null ? "" : $"--tip-offset:{N(Offset.Value)}px;");
-            return Style is null ? style : style + Style;
+            return style;
         }
     }
 

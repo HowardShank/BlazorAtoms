@@ -61,11 +61,6 @@ public partial class AtomTooltip : AtomComponentBase, IAsyncDisposable
     /// <summary>When true, the bubble never renders (trigger content still renders normally).</summary>
     [Parameter] public bool Disabled { get; set; }
 
-    /// <summary>Extra CSS class(es) applied to the root element.</summary>
-    [Parameter] public string? Class { get; set; }
-
-    /// <summary>Extra inline style appended to the root element's built-in theme style.</summary>
-    [Parameter] public string? Style { get; set; }
 
     // Unique per instance so multiple tooltips on a page never collide on ids.
     private readonly string _id = "tt" + Guid.NewGuid().ToString("N")[..8];
@@ -132,7 +127,7 @@ public partial class AtomTooltip : AtomComponentBase, IAsyncDisposable
                 ArrowSize is null ? "" : $"--tip-arrow-size:{F(ArrowSize.Value)}px;",
                 MaxWidth is null ? "" : $"--tip-max-width:{MaxWidth};",
                 Offset is null ? "" : $"--tip-offset:{F(Offset.Value)}px;");
-            return Style is null ? style : style + Style;
+            return style;
         }
     }
 

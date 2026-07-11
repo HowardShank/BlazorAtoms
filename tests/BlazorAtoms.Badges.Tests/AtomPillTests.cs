@@ -71,4 +71,45 @@ public class AtomPillTests : TestContext
         Assert.Contains("--pill-color:#eee", style);
         Assert.Contains("--pill-size:28px", style);
     }
+
+    [Fact]
+    public void Dot_color_token_emitted()
+    {
+        var cut = RenderComponent<AtomPill>(p => p
+            .Add(c => c.Text, "Active")
+            .Add(c => c.DotColor, "#0f0"));
+        Assert.Contains("--pill-dot:#0f0", cut.Find(".atom-pill").GetAttribute("style") ?? "");
+    }
+
+    [Fact]
+    public void Height_token_emitted_independent_of_size()
+    {
+        var cut = RenderComponent<AtomPill>(p => p
+            .Add(c => c.Text, "Active")
+            .Add(c => c.Size, 24)
+            .Add(c => c.Height, 40));
+        var style = cut.Find(".atom-pill").GetAttribute("style") ?? "";
+        Assert.Contains("--pill-size:24px", style);
+        Assert.Contains("--pill-height:40px", style);
+    }
+
+    [Fact]
+    public void Font_styling_tokens_emitted()
+    {
+        var cut = RenderComponent<AtomPill>(p => p
+            .Add(c => c.Text, "Active")
+            .Add(c => c.FontFamily, "Inter")
+            .Add(c => c.FontSize, 15)
+            .Add(c => c.FontWeight, "700")
+            .Add(c => c.FontStyle, "italic")
+            .Add(c => c.LetterSpacing, ".05em")
+            .Add(c => c.TextTransform, "uppercase"));
+        var style = cut.Find(".atom-pill").GetAttribute("style") ?? "";
+        Assert.Contains("--pill-font-family:Inter", style);
+        Assert.Contains("--pill-font-size:15px", style);
+        Assert.Contains("--pill-font-weight:700", style);
+        Assert.Contains("--pill-font-style:italic", style);
+        Assert.Contains("--pill-letter-spacing:.05em", style);
+        Assert.Contains("--pill-text-transform:uppercase", style);
+    }
 }

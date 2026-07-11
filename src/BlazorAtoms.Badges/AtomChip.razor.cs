@@ -1,4 +1,3 @@
-using System.Globalization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using BlazorAtoms.Shared;
@@ -11,9 +10,12 @@ namespace BlazorAtoms.Badges;
 /// keyboard-operable button (Enter/Space, <c>role="button"</c>, <c>aria-pressed</c>) — for filter,
 /// choice and selectable chips. Set <see cref="Removable"/> for a dismiss (×) affordance. Painted by
 /// a color <see cref="Variant"/> in a Solid / Soft / Outline <see cref="Appearance"/>. Pure CSS + SVG.
+/// Common styling knobs (colors, size, height, font) come from <see cref="ChipFamilyBase"/>.
 /// </summary>
-public partial class AtomChip : AtomComponentBase
+public partial class AtomChip : ChipFamilyBase
 {
+    protected override string Prefix => "chip";
+
     /// <summary>Label content. Overrides <see cref="Text"/> when both are set.</summary>
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
@@ -48,23 +50,10 @@ public partial class AtomChip : AtomComponentBase
     /// <summary>Accessible label for the remove button. Default: "Remove".</summary>
     [Parameter] public string RemoveLabel { get; set; } = "Remove";
 
-    /// <summary>Chip height in px (drives font-size and padding). Sets <c>--chip-size</c>.</summary>
-    [Parameter] public double? Size { get; set; }
-
     /// <summary>Corner radius in px. Sets <c>--chip-radius</c>. Default is a fully-rounded stadium.</summary>
     [Parameter] public double? Radius { get; set; }
 
-    /// <summary>Background / accent override. Sets <c>--chip-bg</c>. Null = variant default.</summary>
-    [Parameter] public string? Background { get; set; }
-
-    /// <summary>Text color override. Sets <c>--chip-color</c>. Null = variant default.</summary>
-    [Parameter] public string? TextColor { get; set; }
-
-    /// <summary>Border color override. Sets <c>--chip-border</c>. Null = variant/appearance default.</summary>
-    [Parameter] public string? BorderColor { get; set; }
-
-    /// <summary>Accessible label for the chip itself. Falls back to the visible label text.</summary>
-    [Parameter] public string? AriaLabel { get; set; }
+    protected override StyleVars Vars(StyleVars s) => s.Add("radius", Radius);
 
     private bool Clickable => OnClick.HasDelegate;
 
@@ -89,8 +78,6 @@ public partial class AtomChip : AtomComponentBase
         await OnRemove.InvokeAsync();
     }
 
-    private static string N(double v) => v.ToString(CultureInfo.InvariantCulture);
-
     private string VariantValue => Variant switch
     {
         Variant.Info => "info",
@@ -106,11 +93,4 @@ public partial class AtomChip : AtomComponentBase
         Appearance.Outline => "outline",
         _ => "soft",
     };
-
-    private string RootStyle => string.Concat(
-        Background is null ? "" : $"--chip-bg:{Background};",
-        TextColor is null ? "" : $"--chip-color:{TextColor};",
-        BorderColor is null ? "" : $"--chip-border:{BorderColor};",
-        Size is null ? "" : $"--chip-size:{N(Size.Value)}px;",
-        Radius is null ? "" : $"--chip-radius:{N(Radius.Value)}px;");
 }

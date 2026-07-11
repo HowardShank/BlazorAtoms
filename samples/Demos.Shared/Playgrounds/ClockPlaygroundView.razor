@@ -29,7 +29,8 @@
     <div class="tt-cell">
         <span class="cap">AtomClock</span>
         <AtomClock Kind="@Kind" Label="@Blank(Label)" Format="@Format" Live="@Live" Size="@Size"
-                   Background="@Blank(ClockBg)" TextColor="@Blank(ClockColor)" />
+                   Background="@Blank(ClockBg)" TextColor="@Blank(ClockColor)"
+                   CssClass="@Blank(HatchClass)" Style="@Blank(HatchStyle)" title="@Blank(HatchTitle)" />
     </div>
     <div class="tt-cell">
         <span class="cap">AtomAnalogClock</span>
@@ -77,6 +78,9 @@
     <div class="tt-ctrl"><label>Analog face color</label><input type="text" @bind="FaceColor" @bind:event="oninput" placeholder="(default)" /></div>
     <div class="tt-ctrl"><label>Analog hand color</label><input type="text" @bind="HandColor" @bind:event="oninput" placeholder="(default)" /></div>
     <div class="tt-ctrl"><label>Analog accent color</label><input type="text" @bind="AccentColor" @bind:event="oninput" placeholder="(default)" /></div>
+    <div class="tt-ctrl"><label>Extra class (CssClass)</label><input type="text" @bind="HatchClass" @bind:event="oninput" placeholder="(none)" /></div>
+    <div class="tt-ctrl"><label>Extra style (Style)</label><input type="text" @bind="HatchStyle" @bind:event="oninput" placeholder="(none)" /></div>
+    <div class="tt-ctrl"><label>title attr (splat)</label><input type="text" @bind="HatchTitle" @bind:event="oninput" placeholder="(none)" /></div>
     <div class="tt-ctrl"><label>Options</label>
         <div class="row"><input type="checkbox" id="live" @bind="Live" /><label for="live">Live (tick each second)</label></div>
         <div class="row"><input type="checkbox" id="sec" @bind="ShowSeconds" /><label for="sec">Analog second hand</label></div>
@@ -128,6 +132,10 @@
 
     private string ClockBg = "";
     private string ClockColor = "";
+
+    private string HatchClass = "";
+    private string HatchStyle = "";
+    private string HatchTitle = "";
     private string FaceColor = "";
     private string HandColor = "";
     private string AccentColor = "";
@@ -189,7 +197,10 @@
             var shl = string.IsNullOrWhiteSpace(StripHighlight) ? "" : $" HighlightColor=\"{StripHighlight}\"";
             var sref = string.IsNullOrWhiteSpace(StripRef) ? "" : $" ReferenceTimeZoneId=\"{StripRef}\"";
 
-            return $"<AtomClock{kind}{lbl}{fmt}{live}{size}{cbg}{ctc} />\n"
+            var hatch = (string.IsNullOrEmpty(HatchClass) ? "" : $" CssClass=\"{HatchClass}\"")
+                + (string.IsNullOrEmpty(HatchStyle) ? "" : $" Style=\"{HatchStyle}\"")
+                + (string.IsNullOrEmpty(HatchTitle) ? "" : $" title=\"{HatchTitle}\"");
+            return $"<AtomClock{kind}{lbl}{fmt}{live}{size}{cbg}{ctc}{hatch} />\n"
                  + $"<AtomAnalogClock{kind}{lbl}{live}{asize}{asec}{amt}{anum}{afc}{ahc}{aac} />\n"
                  + $"<AtomClockPair{layout}{fmt}{live}{size}{pgap}{ppk}{ppl}{psk}{psl} />\n"
                  + $"<AtomClockStrip{sface}{slayout}{fmt}{ssize}{sasec}{samt}{sanum}{live}{ssort}{srel}{sview}{ssel}{sgap}{shl}{sref} />";

@@ -7,7 +7,9 @@
 
 <div class="qr-stage">
     <AtomQrCode Value="@Value" Size="@Size" EcLevel="@EcLevel" Color="@Color"
-                Background="@(UseBackground ? Background : null)" QuietZone="@QuietZone" />
+                Background="@(UseBackground ? Background : null)" QuietZone="@QuietZone"
+                SvgClass="@Nz(SvgClass)"
+                CssClass="@Nz(HatchClass)" Style="@Nz(HatchStyle)" title="@Nz(HatchTitle)" />
 </div>
 
 <div class="qr-controls">
@@ -40,9 +42,27 @@
             <input type="color" @bind="Background" @bind:event="oninput" disabled="@(!UseBackground)" />
         </div>
     </div>
+    <div class="qr-ctrl">
+        <label>Svg class (SvgClass)</label>
+        <input type="text" @bind="SvgClass" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="qr-ctrl">
+        <label>Extra class (CssClass)</label>
+        <input type="text" @bind="HatchClass" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="qr-ctrl">
+        <label>Extra style (Style)</label>
+        <input type="text" @bind="HatchStyle" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="qr-ctrl">
+        <label>title attr (splat)</label>
+        <input type="text" @bind="HatchTitle" @bind:event="oninput" placeholder="(none)" />
+    </div>
 </div>
 
 <p class="qr-hint">Higher EC levels (Q/H) survive more damage but hold less data, so a long value may bump the version up.</p>
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomQrCodeExample.razor" />
 
 <style>
     .qr-stage { background:#fff; border:1px solid #d0d0d8; border-radius:12px; padding:1.5rem; text-align:center; margin-bottom:1.5rem; overflow-x:auto; }
@@ -70,4 +90,31 @@
     private string Color = "#111111";
     private bool UseBackground = true;
     private string Background = "#ffffff";
+
+    private string SvgClass = "";
+    private string HatchClass = "";
+    private string HatchStyle = "";
+    private string HatchTitle = "";
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder("<AtomQrCode");
+            sb.Append($" Value=\"{Value}\"");
+            if (Size != 160) sb.Append($" Size=\"{Size}\"");
+            if (EcLevel != QrErrorCorrection.M) sb.Append($" EcLevel=\"QrErrorCorrection.{EcLevel}\"");
+            if (Color != "#000000") sb.Append($" Color=\"{Color}\"");
+            if (UseBackground) sb.Append($" Background=\"{Background}\"");
+            if (QuietZone != 4) sb.Append($" QuietZone=\"{QuietZone}\"");
+            if (!string.IsNullOrEmpty(SvgClass)) sb.Append($" SvgClass=\"{SvgClass}\"");
+            if (!string.IsNullOrEmpty(HatchClass)) sb.Append($" CssClass=\"{HatchClass}\"");
+            if (!string.IsNullOrEmpty(HatchStyle)) sb.Append($" Style=\"{HatchStyle}\"");
+            if (!string.IsNullOrEmpty(HatchTitle)) sb.Append($" title=\"{HatchTitle}\"");
+            sb.Append(" />");
+            return sb.ToString();
+        }
+    }
 }

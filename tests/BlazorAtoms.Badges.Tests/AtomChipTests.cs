@@ -137,4 +137,76 @@ public class AtomChipTests : TestContext
         Assert.Contains("--chip-size:40px", style);
         Assert.Contains("--chip-radius:8px", style);
     }
+
+    [Fact]
+    public void Height_token_emitted_independent_of_size()
+    {
+        var cut = RenderComponent<AtomChip>(p => p
+            .Add(c => c.Text, "x")
+            .Add(c => c.Size, 30)
+            .Add(c => c.Height, 44));
+        var style = cut.Find(".atom-chip").GetAttribute("style") ?? "";
+        Assert.Contains("--chip-size:30px", style);
+        Assert.Contains("--chip-height:44px", style);
+    }
+
+    [Fact]
+    public void Font_styling_tokens_emitted()
+    {
+        var cut = RenderComponent<AtomChip>(p => p
+            .Add(c => c.Text, "x")
+            .Add(c => c.FontFamily, "Inter")
+            .Add(c => c.FontSize, 15)
+            .Add(c => c.FontWeight, "700")
+            .Add(c => c.FontStyle, "italic")
+            .Add(c => c.LetterSpacing, ".05em")
+            .Add(c => c.TextTransform, "uppercase"));
+        var style = cut.Find(".atom-chip").GetAttribute("style") ?? "";
+        Assert.Contains("--chip-font-family:Inter", style);
+        Assert.Contains("--chip-font-size:15px", style);
+        Assert.Contains("--chip-font-weight:700", style);
+        Assert.Contains("--chip-font-style:italic", style);
+        Assert.Contains("--chip-letter-spacing:.05em", style);
+        Assert.Contains("--chip-text-transform:uppercase", style);
+    }
+
+    // --- Escape hatch (AtomComponentBase: Class / Style / AdditionalAttributes) ---
+
+    [Fact]
+    public void Class_param_appends_after_root_class()
+    {
+        var cut = RenderComponent<AtomChip>(p => p.Add(c => c.Text, "x").Add(c => c.CssClass, "brand"));
+        var cls = cut.Find(".atom-chip").GetAttribute("class") ?? "";
+        Assert.Equal("atom-chip brand", cls);
+    }
+
+    [Fact]
+    public void Style_param_appends_after_root_style()
+    {
+        var cut = RenderComponent<AtomChip>(p => p
+            .Add(c => c.Text, "x")
+            .Add(c => c.Size, 40)
+            .Add(c => c.Style, "color:red"));
+        var style = cut.Find(".atom-chip").GetAttribute("style") ?? "";
+        Assert.Equal("--chip-size:40px;color:red", style);
+    }
+
+    [Fact]
+    public void No_empty_style_attribute_when_nothing_set()
+    {
+        var cut = RenderComponent<AtomChip>(p => p.Add(c => c.Text, "x"));
+        Assert.Null(cut.Find(".atom-chip").GetAttribute("style"));
+    }
+
+    [Fact]
+    public void Additional_attributes_splat_onto_root()
+    {
+        var cut = RenderComponent<AtomChip>(p => p
+            .Add(c => c.Text, "x")
+            .AddUnmatched("title", "hi")
+            .AddUnmatched("data-test", "42"));
+        var root = cut.Find(".atom-chip");
+        Assert.Equal("hi", root.GetAttribute("title"));
+        Assert.Equal("42", root.GetAttribute("data-test"));
+    }
 }

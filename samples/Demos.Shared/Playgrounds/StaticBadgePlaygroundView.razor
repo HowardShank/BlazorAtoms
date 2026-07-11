@@ -32,7 +32,8 @@
                              Placement="@Placement" Shape="@Shape" Variant="@Variant"
                              Background="@(OverrideBg ? Bg : null)" Size="@Size"
                              Width="@Blank(Width)" Height="@Blank(Height)" Radius="@Radius"
-                             OffsetX="@OffsetX" OffsetY="@OffsetY">
+                             OffsetX="@OffsetX" OffsetY="@OffsetY"
+                             CssClass="@Blank(HatchClass)" Style="@Blank(HatchStyle)" title="@Blank(HatchTitle)">
                 <div class="tt-host">🔔</div>
             </AtomStaticBadge>
         }
@@ -40,7 +41,8 @@
         {
             <AtomStaticBadge Value="@BadgeValue" Max="@Max" ShowZero="@ShowZero" Dot="@Dot"
                              Shape="@Shape" Variant="@Variant" Background="@(OverrideBg ? Bg : null)"
-                             Size="@Size" Width="@Blank(Width)" Height="@Blank(Height)" Radius="@Radius" />
+                             Size="@Size" Width="@Blank(Width)" Height="@Blank(Height)" Radius="@Radius"
+                             CssClass="@Blank(HatchClass)" Style="@Blank(HatchStyle)" title="@Blank(HatchTitle)" />
         }
     </div>
 </div>
@@ -65,6 +67,9 @@
         <div class="row"><input type="checkbox" id="dot" @bind="Dot" /><label for="dot">Dot</label></div>
         <div class="row"><input type="checkbox" id="sz" @bind="ShowZero" /><label for="sz">Show zero</label></div>
     </div>
+    <div class="tt-ctrl"><label>Extra class (CssClass)</label><input type="text" placeholder="(none)" @bind="HatchClass" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Extra style (Style)</label><input type="text" placeholder="(none)" @bind="HatchStyle" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>title attr (splat)</label><input type="text" placeholder="(none)" @bind="HatchTitle" @bind:event="oninput" /></div>
 </div>
 
 <CodeSnippetBox Code="@Snippet" FileName="AtomStaticBadgeExample.razor" />
@@ -86,6 +91,9 @@
     private double OffsetY;
     private bool OverrideBg;
     private string Bg = "#7c3aed";
+    private string HatchClass = "";
+    private string HatchStyle = "";
+    private string HatchTitle = "";
 
     // Feed a number when the text parses as one (so Max/ShowZero behave), else the raw string.
     private object? BadgeValue => long.TryParse(RawValue, out var n) ? n : (object?)RawValue;
@@ -111,6 +119,9 @@
             if (Shape == Shape.Rounded) sb.Append($" Radius=\"{Radius}\"");
             if (Overlay && OffsetX != 0) sb.Append($" OffsetX=\"{OffsetX}\"");
             if (Overlay && OffsetY != 0) sb.Append($" OffsetY=\"{OffsetY}\"");
+            if (!string.IsNullOrEmpty(HatchClass)) sb.Append($" CssClass=\"{HatchClass}\"");
+            if (!string.IsNullOrEmpty(HatchStyle)) sb.Append($" Style=\"{HatchStyle}\"");
+            if (!string.IsNullOrEmpty(HatchTitle)) sb.Append($" title=\"{HatchTitle}\"");
             if (Overlay)
                 sb.Append(">\n    <span>🔔</span>\n</AtomStaticBadge>");
             else

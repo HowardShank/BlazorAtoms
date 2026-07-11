@@ -101,7 +101,8 @@
     <div class="stage">
         <AtomPulseScanner Speed="@ScSpeed" Color="@ScColor" TailLength="@ScTailLength" TailSpread="@ScTailSpread"
                       HeadRadius="@ScHeadRadius" Width="@ScWidth" Height="@ScHeight"
-                      ShowTrack="@ScShowTrack" ShowCore="@ScShowCore" />
+                      ShowTrack="@ScShowTrack" ShowCore="@ScShowCore"
+                      CssClass="@Nz(HatchClass)" Style="@Nz(HatchStyle)" title="@Nz(HatchTitle)" />
     </div>
 </div>
 
@@ -151,7 +152,21 @@
             <label for="scShowCore">Show white core</label>
         </div>
     </div>
+    <div class="ctrl">
+        <label>Extra class (CssClass)</label>
+        <input type="text" @bind="HatchClass" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Extra style (Style)</label>
+        <input type="text" @bind="HatchStyle" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>title attr (splat)</label>
+        <input type="text" @bind="HatchTitle" @bind:event="oninput" placeholder="(none)" />
+    </div>
 </div>
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomPulseScannerExample.razor" />
 
 @code {
     private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
@@ -166,4 +181,32 @@
     private int ScHeight = 140;
     private bool ScShowTrack = true;
     private bool ScShowCore = true;
+
+    private string HatchClass = "";
+    private string HatchStyle = "";
+    private string HatchTitle = "";
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder("<AtomPulseScanner");
+            if (ScSpeed != 2.4) sb.Append($" Speed=\"{ScSpeed.ToString(Inv)}\"");
+            if (ScColor != "#00ffee") sb.Append($" Color=\"{ScColor}\"");
+            if (ScTailLength != 10) sb.Append($" TailLength=\"{ScTailLength}\"");
+            if (ScTailSpread != 0.22) sb.Append($" TailSpread=\"{ScTailSpread.ToString(Inv)}\"");
+            if (ScHeadRadius != 13) sb.Append($" HeadRadius=\"{ScHeadRadius.ToString(Inv)}\"");
+            if (ScWidth != 640) sb.Append($" Width=\"{ScWidth}\"");
+            if (ScHeight != 140) sb.Append($" Height=\"{ScHeight}\"");
+            if (!ScShowTrack) sb.Append(" ShowTrack=\"false\"");
+            if (!ScShowCore) sb.Append(" ShowCore=\"false\"");
+            if (!string.IsNullOrEmpty(HatchClass)) sb.Append($" CssClass=\"{HatchClass}\"");
+            if (!string.IsNullOrEmpty(HatchStyle)) sb.Append($" Style=\"{HatchStyle}\"");
+            if (!string.IsNullOrEmpty(HatchTitle)) sb.Append($" title=\"{HatchTitle}\"");
+            sb.Append(" />");
+            return sb.ToString();
+        }
+    }
 }

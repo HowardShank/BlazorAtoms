@@ -9,7 +9,7 @@
     self-loaded JS module.
 *@
 
-<span class="atom-ptooltip @Class" style="@RootStyle">
+<span @attributes="AdditionalAttributes" class="@ClassAttr("atom-ptooltip")" style="@StyleAttr(RootStyle)">
     <span @ref="_triggerRef" class="atom-ptooltip-trigger" aria-describedby="@(Disabled ? null : _id)">
         @ChildContent
     </span>

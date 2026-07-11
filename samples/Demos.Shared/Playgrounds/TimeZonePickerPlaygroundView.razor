@@ -11,7 +11,7 @@
     .tt-ctrl { display:flex; flex-direction:column; gap:.35rem; }
     .tt-ctrl label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; gap:.5rem; }
     .tt-ctrl label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
-    .tt-controls input[type=number] { width:100%; accent-color:#00b3c4; }
+    .tt-controls input[type=text], .tt-controls input[type=number] { width:100%; accent-color:#00b3c4; }
     .tt-ctrl .row { display:flex; align-items:center; gap:.5rem; }
     .tt-ctrl .row input[type=checkbox] { accent-color:#00b3c4; width:16px; height:16px; }
     .tt-ctrl .row label { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; justify-content:flex-start; }
@@ -27,7 +27,8 @@
 
 <div class="tt-stage-outer">
     <AtomTimeZonePicker @bind-Value="Zone" Width="@Width" ShowOffset="@ShowOffset"
-                        ShowRegionGroups="@Groups" AllowDetect="@Detect" Disabled="@Disabled" />
+                        ShowRegionGroups="@Groups" AllowDetect="@Detect" Disabled="@Disabled"
+                        CssClass="@Nz(HatchClass)" Style="@Nz(HatchStyle)" title="@Nz(HatchTitle)" />
     @if (Zone is not null && PickedTz is not null)
     {
         <AtomClock TimeZone="PickedTz" Label="@Zone" Format="h:mm:ss tt" />
@@ -47,6 +48,9 @@
         <div class="row"><input type="checkbox" id="dis" @bind="Disabled" /><label for="dis">Disabled</label></div>
     </div>
     <div class="tt-ctrl"><label>Selected id</label><p class="tt-picked">@(Zone ?? "(none)")</p></div>
+    <div class="tt-ctrl"><label>Extra class (CssClass)</label><input type="text" @bind="HatchClass" @bind:event="oninput" placeholder="(none)" /></div>
+    <div class="tt-ctrl"><label>Extra style (Style)</label><input type="text" @bind="HatchStyle" @bind:event="oninput" placeholder="(none)" /></div>
+    <div class="tt-ctrl"><label>title attr (splat)</label><input type="text" @bind="HatchTitle" @bind:event="oninput" placeholder="(none)" /></div>
 </div>
 
 <CodeSnippetBox Code="@Snippet" FileName="AtomTimeZonePickerExample.razor" />
@@ -58,6 +62,12 @@
     private bool Groups = true;
     private bool Detect = true;
     private bool Disabled = false;
+
+    private string HatchClass = "";
+    private string HatchStyle = "";
+    private string HatchTitle = "";
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
 
     private TimeZoneInfo? PickedTz
     {
@@ -78,7 +88,10 @@
             var grp = Groups ? "" : " ShowRegionGroups=\"false\"";
             var det = Detect ? "" : " AllowDetect=\"false\"";
             var dis = Disabled ? " Disabled=\"true\"" : "";
-            return $"<AtomTimeZonePicker @bind-Value=\"Zone\"{w}{off}{grp}{det}{dis} />";
+            var hatch = (string.IsNullOrEmpty(HatchClass) ? "" : $" CssClass=\"{HatchClass}\"")
+                + (string.IsNullOrEmpty(HatchStyle) ? "" : $" Style=\"{HatchStyle}\"")
+                + (string.IsNullOrEmpty(HatchTitle) ? "" : $" title=\"{HatchTitle}\"");
+            return $"<AtomTimeZonePicker @bind-Value=\"Zone\"{w}{off}{grp}{det}{dis}{hatch} />";
         }
     }
 }

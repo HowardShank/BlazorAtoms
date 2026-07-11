@@ -114,8 +114,14 @@ Animations transform the whole badge, SVG or box. For `Ping` on an SVG shape the
 `Appearance`: `Solid` (accent fill + contrasting text) / `Soft` (low-opacity accent tint + accent
 text) / `Outline` (transparent + accent border/text). `Variant` picks the accent color; explicit
 `Background` / `TextColor` / `BorderColor` still override. `Size` (px) drives height and font;
-`AtomChip`/`AtomTag` also take a `Radius`. `AtomChip` becomes a `role="button"` (Enter/Space,
-`aria-pressed`) only when `OnClick` has a handler — otherwise it is a static label.
+`Height` (px) overrides just the box height (vertical size) independent of `Size`; `AtomChip`/`AtomTag`
+also take a `Radius`. `AtomPill` additionally takes `DotColor` (status-dot color override). `AtomChip`
+becomes a `role="button"` (Enter/Space, `aria-pressed`) only when `OnClick` has a handler — otherwise
+it is a static label.
+
+All three take font-styling overrides: `FontFamily`, `FontSize` (px, overrides the `Size`-derived
+size), `FontWeight`, `FontStyle`, `LetterSpacing`, `TextTransform`. Each maps to a `--<name>-font-*`
+CSS token; null keeps the component default.
 
 ## Shared parameters
 

@@ -8,7 +8,7 @@
     via ::deep (they belong to a child component's scope, so plain scoped selectors won't reach them).
 *@
 
-<div class="atom-avatar-group" role="group" style="@RootStyle">
+<div @attributes="AdditionalAttributes" class="@ClassAttr("atom-avatar-group")" role="group" style="@StyleAttr(RootStyle)">
     @if (Names is not null)
     {
         foreach (var name in VisibleNames)

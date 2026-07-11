@@ -1,4 +1,3 @@
-using System.Globalization;
 using Microsoft.AspNetCore.Components;
 using BlazorAtoms.Shared;
 
@@ -8,10 +7,13 @@ namespace BlazorAtoms.Badges;
 /// A status pill: a fully-rounded, soft-tinted label with a leading status dot (e.g. "Active",
 /// "Pending", "Failed"). The simplest, display-only member of the chip/tag/pill family — the dot and
 /// text share the color <see cref="Variant"/>. Supply an <see cref="Icon"/> to replace the dot, or
-/// set <see cref="Dot"/> to false for a plain pill. Pure CSS.
+/// set <see cref="Dot"/> to false for a plain pill. Pure CSS. Common styling knobs (colors, size,
+/// height, font) come from <see cref="ChipFamilyBase"/>.
 /// </summary>
-public partial class AtomPill : AtomComponentBase
+public partial class AtomPill : ChipFamilyBase
 {
+    protected override string Prefix => "pill";
+
     /// <summary>Label content. Overrides <see cref="Text"/> when both are set.</summary>
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
@@ -30,24 +32,12 @@ public partial class AtomPill : AtomComponentBase
     /// <summary>Fill treatment: Soft (default) / Solid / Outline.</summary>
     [Parameter] public Appearance Appearance { get; set; } = Appearance.Soft;
 
-    /// <summary>Pill height in px (drives font-size and padding). Sets <c>--pill-size</c>.</summary>
-    [Parameter] public double? Size { get; set; }
+    /// <summary>Status-dot color override. Sets <c>--pill-dot</c>. Null = accent (text color on solid).</summary>
+    [Parameter] public string? DotColor { get; set; }
 
-    /// <summary>Background / accent override. Sets <c>--pill-bg</c>. Null = variant default.</summary>
-    [Parameter] public string? Background { get; set; }
-
-    /// <summary>Text color override. Sets <c>--pill-color</c>. Null = variant default.</summary>
-    [Parameter] public string? TextColor { get; set; }
-
-    /// <summary>Border color override. Sets <c>--pill-border</c>. Null = variant/appearance default.</summary>
-    [Parameter] public string? BorderColor { get; set; }
-
-    /// <summary>Accessible label for the pill. Falls back to the visible label text.</summary>
-    [Parameter] public string? AriaLabel { get; set; }
+    protected override StyleVars Vars(StyleVars s) => s.Add("dot", DotColor);
 
     private RenderFragment Label => ChildContent ?? (builder => builder.AddContent(0, Text));
-
-    private static string N(double v) => v.ToString(CultureInfo.InvariantCulture);
 
     private string VariantValue => Variant switch
     {
@@ -64,10 +54,4 @@ public partial class AtomPill : AtomComponentBase
         Appearance.Outline => "outline",
         _ => "soft",
     };
-
-    private string RootStyle => string.Concat(
-        Background is null ? "" : $"--pill-bg:{Background};",
-        TextColor is null ? "" : $"--pill-color:{TextColor};",
-        BorderColor is null ? "" : $"--pill-border:{BorderColor};",
-        Size is null ? "" : $"--pill-size:{N(Size.Value)}px;");
 }

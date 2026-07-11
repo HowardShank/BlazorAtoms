@@ -1,4 +1,4 @@
-@inherits AtomComponentBase
+@inherits ChipFamilyBase
 
 @*
     AtomPill.razor
@@ -10,12 +10,13 @@
 
 @if (!CancellationToken.IsCancellationRequested)
 {
-    <span class="atom-pill"
+    <span @attributes="AdditionalAttributes"
+          class="@ClassAttr("atom-pill")"
           role="status"
           aria-label="@AriaLabel"
           data-variant="@VariantValue"
           data-appearance="@AppearanceValue"
-          style="@RootStyle">
+          style="@StyleAttr(RootStyle)">
         @if (Icon is not null)
         {
             <span class="atom-pill-icon" aria-hidden="true">@Icon</span>

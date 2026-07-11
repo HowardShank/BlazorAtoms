@@ -9,7 +9,7 @@
 
 @if (!CancellationToken.IsCancellationRequested)
 {
-    <div class="atom-barcode">@((MarkupString)BuildSvg())</div>
+    <div @attributes="AdditionalAttributes" class="@ClassAttr("atom-barcode")" style="@StyleAttr(null)">@((MarkupString)BuildSvg())</div>
 }
 
 @code {
@@ -37,8 +37,9 @@
     /// <summary>Show the human-readable value beneath the bars.</summary>br
     [Parameter] public bool ShowText { get; set; } = true;
 
-    /// <summary>Extra CSS class(es) on the root svg element.</summary>
-    [Parameter] public string? Class { get; set; }
+    /// <summary>Extra CSS class(es) on the generated <c>&lt;svg&gt;</c> element (not the root; use the
+    /// inherited <c>Class</c> for that).</summary>
+    [Parameter] public string? SvgClass { get; set; }
 
     private static string F(double v) => v.ToString("0.###", CultureInfo.InvariantCulture);
     private static string Esc(string s) => WebUtility.HtmlEncode(s);
@@ -62,7 +63,7 @@
         var box = Height + textH;
         var totalMods = modules.Length + QuietZone * 2;
         var w = totalMods * mw;
-        var cls = Class is null ? "atom-barcode" : "atom-barcode " + Esc(Class);
+        var cls = SvgClass is null ? "atom-barcode" : "atom-barcode " + Esc(SvgClass);
 
         var sb = new StringBuilder();
         sb.Append($"<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"{cls}\" role=\"img\" ")

@@ -11,7 +11,7 @@
 
 @if (ChildContent is not null)
 {
-    <span class="atom-sbadge-host" style="@RootStyle">
+    <span @attributes="AdditionalAttributes" class="@ClassAttr("atom-sbadge-host")" style="@StyleAttr(RootStyle)">
         @ChildContent
         @if (ShowBadge && !CancellationToken.IsCancellationRequested)
         {
@@ -26,7 +26,8 @@ else if (ShowBadge && !CancellationToken.IsCancellationRequested)
 
 @code {
     private RenderFragment Badge => @<span
-             class="atom-sbadge"
+             @attributes="@(ChildContent is null ? AdditionalAttributes : null)"
+             class="@(ChildContent is null ? ClassAttr("atom-sbadge") : "atom-sbadge")"
              role="status"
              aria-label="@EffectiveAriaLabel"
              data-placement="@PlacementValue"
@@ -34,7 +35,7 @@ else if (ShowBadge && !CancellationToken.IsCancellationRequested)
              data-variant="@VariantValue"
              data-svg="@(IsSvgShape ? "true" : null)"
              data-dot="@(Dot ? "true" : null)"
-             style="@(ChildContent is null ? RootStyle : null)">
+             style="@(ChildContent is null ? StyleAttr(RootStyle) : null)">
         @if (IsSvgShape)
         {
             <svg class="atom-sbadge-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">

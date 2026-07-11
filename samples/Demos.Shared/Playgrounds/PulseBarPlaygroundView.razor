@@ -102,7 +102,8 @@
     <div class="stage" style="width:@(ContainerWidth)%">
         <AtomPulseBar Speed="@Speed" Color="@Color" TailLength="@TailLength" TailSpread="@TailSpread"
                   BlockWidth="@BlockWidth" HeadWidth="@EffectiveHeadWidth" Height="@Height"
-                  CornerRadius="@CornerRadius" ShowTrack="@ShowTrack" TrackOpacity="@TrackOpacity" />
+                  CornerRadius="@CornerRadius" ShowTrack="@ShowTrack" TrackOpacity="@TrackOpacity"
+                  CssClass="@Nz(HatchClass)" Style="@Nz(HatchStyle)" title="@Nz(HatchTitle)" />
     </div>
     <div class="stage-label">dashed outline = your container &middot; bar = 100% of its width</div>
 </div>
@@ -167,7 +168,21 @@
         <input type="range" min="40" max="100" step="1"
                @bind="ContainerWidth" @bind:event="oninput" />
     </div>
+    <div class="ctrl">
+        <label>Extra class (CssClass)</label>
+        <input type="text" @bind="HatchClass" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Extra style (Style)</label>
+        <input type="text" @bind="HatchStyle" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>title attr (splat)</label>
+        <input type="text" @bind="HatchTitle" @bind:event="oninput" placeholder="(none)" />
+    </div>
 </div>
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomPulseBarExample.razor" />
 
 @code {
     private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
@@ -186,6 +201,35 @@
     private bool ShowTrack = true;
     private int ContainerWidth = 100;
 
+    private string HatchClass = "";
+    private string HatchStyle = "";
+    private string HatchTitle = "";
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
+
     // When linked, pass null so AtomPulseBar falls back to BlockWidth for the head.
     private double? EffectiveHeadWidth => HeadLinked ? null : HeadWidth;
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder("<AtomPulseBar");
+            if (Speed != 2.0) sb.Append($" Speed=\"{Speed.ToString(Inv)}\"");
+            if (Color != "#00ffee") sb.Append($" Color=\"{Color}\"");
+            if (TailLength != 12) sb.Append($" TailLength=\"{TailLength}\"");
+            if (TailSpread != 0.22) sb.Append($" TailSpread=\"{TailSpread.ToString(Inv)}\"");
+            if (BlockWidth != 0.14) sb.Append($" BlockWidth=\"{BlockWidth.ToString(Inv)}\"");
+            if (!HeadLinked) sb.Append($" HeadWidth=\"{HeadWidth.ToString(Inv)}\"");
+            if (Height != 14) sb.Append($" Height=\"{Height.ToString(Inv)}\"");
+            if (CornerRadius != 16) sb.Append($" CornerRadius=\"{CornerRadius.ToString(Inv)}\"");
+            if (!ShowTrack) sb.Append(" ShowTrack=\"false\"");
+            if (TrackOpacity != 0.12) sb.Append($" TrackOpacity=\"{TrackOpacity.ToString(Inv)}\"");
+            if (!string.IsNullOrEmpty(HatchClass)) sb.Append($" CssClass=\"{HatchClass}\"");
+            if (!string.IsNullOrEmpty(HatchStyle)) sb.Append($" Style=\"{HatchStyle}\"");
+            if (!string.IsNullOrEmpty(HatchTitle)) sb.Append($" title=\"{HatchTitle}\"");
+            sb.Append(" />");
+            return sb.ToString();
+        }
+    }
 }

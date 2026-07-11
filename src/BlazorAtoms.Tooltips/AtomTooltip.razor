@@ -9,7 +9,7 @@
     (see AtomTooltip.razor.cs). Show/hide is plain :hover / :focus-within.
 *@
 
-<span class="atom-tooltip @Class" style="@RootStyle">
+<span @attributes="AdditionalAttributes" class="@ClassAttr("atom-tooltip")" style="@StyleAttr(RootStyle)">
     <span @ref="_triggerRef" class="atom-tooltip-trigger" aria-describedby="@(Disabled ? null : _id)">
         @ChildContent
     </span>

@@ -8,7 +8,9 @@
 
 <div class="ba-stage">
     <AtomBarcode Value="@Value" Symbology="@Symbology" Height="@Height" ModuleWidth="@ModuleWidth"
-                 Color="@Color" Background="@(UseBackground ? Background : null)" ShowText="@ShowText" />
+                 Color="@Color" Background="@(UseBackground ? Background : null)" ShowText="@ShowText"
+                 QuietZone="@QuietZone" SvgClass="@Nz(SvgClass)"
+                 CssClass="@Nz(HatchClass)" Style="@Nz(HatchStyle)" title="@Nz(HatchTitle)" />
 </div>
 
 <div class="ba-controls">
@@ -48,12 +50,34 @@
             <label for="baText" class="inline">Show human-readable value</label>
         </div>
     </div>
+    <div class="ba-ctrl">
+        <label>Quiet zone <span class="val">@QuietZone</span></label>
+        <input type="range" min="0" max="20" step="1" @bind="QuietZone" @bind:event="oninput" />
+    </div>
+    <div class="ba-ctrl">
+        <label>Svg class (SvgClass)</label>
+        <input type="text" @bind="SvgClass" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ba-ctrl">
+        <label>Extra class (CssClass)</label>
+        <input type="text" @bind="HatchClass" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ba-ctrl">
+        <label>Extra style (Style)</label>
+        <input type="text" @bind="HatchStyle" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ba-ctrl">
+        <label>title attr (splat)</label>
+        <input type="text" @bind="HatchTitle" @bind:event="oninput" placeholder="(none)" />
+    </div>
 </div>
 
 <p class="ba-hint">
     <code>Code128</code>: ASCII 32–126 · <code>Code39</code>: A–Z 0–9 and <code>- . $ / + %</code> ·
     <code>Ean13</code>/<code>UpcA</code>/<code>Itf</code>: digits · <code>Codabar</code>: digits and <code>- $ : / . +</code>.
 </p>
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomBarcodeExample.razor" />
 
 <style>
     .ba-stage { background:#fff; border:1px solid #d0d0d8; border-radius:12px; padding:1.5rem; text-align:center; margin-bottom:1.5rem; overflow-x:auto; }
@@ -84,4 +108,34 @@
     private bool UseBackground = true;
     private string Background = "#ffffff";
     private bool ShowText = true;
+    private int QuietZone = 10;
+
+    private string SvgClass = "";
+    private string HatchClass = "";
+    private string HatchStyle = "";
+    private string HatchTitle = "";
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder("<AtomBarcode");
+            sb.Append($" Value=\"{Value}\"");
+            if (Symbology != BarcodeSymbology.Code128) sb.Append($" Symbology=\"BarcodeSymbology.{Symbology}\"");
+            if (Height != 60) sb.Append($" Height=\"{Height.ToString(Inv)}\"");
+            if (ModuleWidth != 2) sb.Append($" ModuleWidth=\"{ModuleWidth.ToString(Inv)}\"");
+            if (QuietZone != 10) sb.Append($" QuietZone=\"{QuietZone}\"");
+            if (Color != "#000000") sb.Append($" Color=\"{Color}\"");
+            if (UseBackground) sb.Append($" Background=\"{Background}\"");
+            if (!ShowText) sb.Append(" ShowText=\"false\"");
+            if (!string.IsNullOrEmpty(SvgClass)) sb.Append($" SvgClass=\"{SvgClass}\"");
+            if (!string.IsNullOrEmpty(HatchClass)) sb.Append($" CssClass=\"{HatchClass}\"");
+            if (!string.IsNullOrEmpty(HatchStyle)) sb.Append($" Style=\"{HatchStyle}\"");
+            if (!string.IsNullOrEmpty(HatchTitle)) sb.Append($" title=\"{HatchTitle}\"");
+            sb.Append(" />");
+            return sb.ToString();
+        }
+    }
 }
