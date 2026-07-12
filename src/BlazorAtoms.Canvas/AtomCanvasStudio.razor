@@ -1,0 +1,176 @@
+@inherits AtomComponentBase
+@using Microsoft.AspNetCore.Components.Forms
+
+@*
+    AtomCanvasStudio.razor — a batteries-included canvas workbench over <AtomCanvas>.
+    Default chrome (toolbar / layers / status) renders when the matching slot is null.
+    The whole thing is wrapped in a CascadingValue of the studio context so custom
+    slot content (ToolbarStart/End, panels, overlay) can drive the canvas.
+*@
+
+<CascadingValue Value="_context" IsFixed="true">
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-canvas-studio")"
+     style="@StyleAttr(null)"
+     data-placement="@PlacementValue">
+
+    <div class="acs-main">
+
+        @* ---------------- toolbar ---------------- *@
+        @if (Toolbar is not null)
+        {
+            <div class="acs-toolbar">@Toolbar(_context!)</div>
+        }
+        else if (ShowToolbar)
+        {
+            <div class="acs-toolbar">
+                @if (ToolbarStart is not null) { @ToolbarStart(_context!) }
+
+                <div class="acs-group" role="group" aria-label="Tools">
+                    <button type="button" class="acs-btn @(_tool == CanvasTool.Select ? "is-active" : "")" title="Select / move" disabled="@Disabled" @onclick="() => SetToolAsync(CanvasTool.Select)">Select</button>
+                    <button type="button" class="acs-btn @(_tool == CanvasTool.Draw ? "is-active" : "")" title="Freehand draw" disabled="@Disabled" @onclick="() => SetToolAsync(CanvasTool.Draw)">Draw</button>
+                    <button type="button" class="acs-btn @(_tool == CanvasTool.Pan ? "is-active" : "")" title="Pan the view" disabled="@Disabled" @onclick="() => SetToolAsync(CanvasTool.Pan)">Pan</button>
+                    <button type="button" class="acs-btn @(_tool == CanvasTool.Erase ? "is-active" : "")" title="Click a shape to delete" disabled="@Disabled" @onclick="() => SetToolAsync(CanvasTool.Erase)">Erase</button>
+                </div>
+
+                <div class="acs-group" role="group" aria-label="Insert">
+                    <button type="button" class="acs-btn" title="Insert rectangle" disabled="@Disabled" @onclick="() => BeginInsert(MakeRect)">▭</button>
+                    <button type="button" class="acs-btn" title="Insert circle" disabled="@Disabled" @onclick="() => BeginInsert(MakeCircle)">◯</button>
+                    <button type="button" class="acs-btn" title="Insert line" disabled="@Disabled" @onclick="() => BeginInsert(MakeLine)">╱</button>
+                    <button type="button" class="acs-btn" title="Insert text" disabled="@Disabled" @onclick="() => BeginInsert(MakeText)">T</button>
+                    <details class="acs-flyout">
+                        <summary class="acs-btn" title="Stamps">Stamps ▾</summary>
+                        <div class="acs-flyout-menu">
+                            @foreach (var stamp in StampsValue)
+                            {
+                                <button type="button" class="acs-stamp" @key="stamp.Key" title="@stamp.Label" disabled="@Disabled"
+                                        @onclick="() => BeginInsert(stamp.Create)">@(stamp.Glyph ?? stamp.Label)</button>
+                            }
+                        </div>
+                    </details>
+                </div>
+
+                <div class="acs-group" role="group" aria-label="Style">
+                    <label class="acs-swatch" title="Pen color">
+                        <input type="color" value="@_penColor" @oninput="OnPenColorInput" disabled="@Disabled" aria-label="Pen color" />
+                    </label>
+                    <input class="acs-range" type="range" min="1" max="24" step="0.5" value="@Fmt(_penWidth)" @oninput="OnPenWidthInput" disabled="@Disabled" title="Pen width" aria-label="Pen width" />
+                    <label class="acs-swatch acs-fill" title="Fill">
+                        <input type="checkbox" checked="@(_fillColor is not null)" @onchange="OnFillToggle" disabled="@Disabled" aria-label="Enable fill" />
+                        <input type="color" value="@(_fillColor ?? "#93c5fd")" @oninput="OnFillColorInput" disabled="@(Disabled || _fillColor is null)" aria-label="Fill color" />
+                    </label>
+                    <label class="acs-swatch" title="Background">
+                        <input type="color" value="@(_background ?? "#ffffff")" @oninput="OnBackgroundInput" disabled="@Disabled" aria-label="Background color" />
+                    </label>
+                </div>
+
+                <div class="acs-group" role="group" aria-label="History">
+                    <button type="button" class="acs-btn" title="Undo" disabled="@(Disabled || !CanUndoValue)" @onclick="UndoAsync">↶</button>
+                    <button type="button" class="acs-btn" title="Redo" disabled="@(Disabled || !CanRedoValue)" @onclick="RedoAsync">↷</button>
+                    <button type="button" class="acs-btn" title="Delete selected" disabled="@(Disabled || _selectedId is null)" @onclick="DeleteSelectedAsync">🗑</button>
+                    <button type="button" class="acs-btn" title="Clear all" disabled="@(Disabled || ShapeCountValue == 0)" @onclick="ClearAsync">Clear</button>
+                </div>
+
+                <div class="acs-group" role="group" aria-label="View">
+                    <button type="button" class="acs-btn" title="Zoom out" @onclick="ZoomOut">−</button>
+                    <button type="button" class="acs-btn acs-zoom" title="Reset zoom" @onclick="ZoomReset">@((int)Math.Round(_scale * 100))%</button>
+                    <button type="button" class="acs-btn" title="Zoom in" @onclick="ZoomIn">+</button>
+                </div>
+
+                <div class="acs-group" role="group" aria-label="Export">
+                    <button type="button" class="acs-btn" title="Export PNG" @onclick="DoExportPngAsync">PNG</button>
+                    @if (!string.IsNullOrEmpty(_png))
+                    {
+                        <a class="acs-btn acs-dl" download="canvas.png" href="@_png">⤓ PNG</a>
+                    }
+                    <a class="acs-btn" download="canvas.svg" href="@ExportSvgDataUri" title="Export SVG">SVG</a>
+                    <a class="acs-btn" download="canvas.json" href="@ExportJsonDataUri" title="Save JSON">Save</a>
+                    <label class="acs-btn" title="Load JSON">Load<InputFile OnChange="OnLoadFileAsync" class="acs-file" accept=".json" /></label>
+                </div>
+
+                @if (ToolbarEnd is not null) { @ToolbarEnd(_context!) }
+            </div>
+        }
+
+        @* ---------------- body ---------------- *@
+        <div class="acs-body">
+            @if (StartPanel is not null)
+            {
+                <div class="acs-panel acs-panel-start">@StartPanel(_context!)</div>
+            }
+
+            <div class="acs-viewport" data-tool="@_tool.ToString().ToLowerInvariant()">
+                <AtomCanvas @ref="_canvas"
+                            Width="Width" Height="Height"
+                            Mode="CanvasModeForTool"
+                            BackgroundColor="@_background"
+                            Shapes="Current" ShapesChanged="OnCanvasShapesChanged"
+                            PenColor="@_penColor" PenWidth="_penWidth"
+                            Disabled="Disabled"
+                            SelectedId="@_selectedId"
+                            Scale="_scale" PanX="_panX" PanY="_panY"
+                            AriaLabel="@CanvasAriaLabel"
+                            OnShapeSelected="OnCanvasShapeSelected"
+                            OnCanvasClick="OnCanvasClickedEmpty"
+                            OnShapeClick="OnCanvasShapeClicked"
+                            OnViewChanged="OnCanvasViewChanged" />
+                @if (CanvasOverlay is not null)
+                {
+                    <div class="acs-overlay">@CanvasOverlay(_context!)</div>
+                }
+            </div>
+
+            @if (EndPanel is not null)
+            {
+                <div class="acs-panel acs-panel-end">@EndPanel(_context!)</div>
+            }
+            else if (ShowLayers)
+            {
+                <div class="acs-panel acs-panel-end acs-layers">
+                    <div class="acs-panel-title">Layers</div>
+                    @if (ShapeCountValue == 0)
+                    {
+                        <div class="acs-empty">No shapes yet.</div>
+                    }
+                    else
+                    {
+                        <ul class="acs-layer-list">
+                            @for (var i = Current.Count - 1; i >= 0; i--)
+                            {
+                                var s = Current[i];
+                                <li class="acs-layer @(s.Id == _selectedId ? "is-selected" : "")" @key="s.Id">
+                                    <button type="button" class="acs-layer-name" @onclick="() => SelectShape(s.Id)">@ShapeLabel(s)</button>
+                                    <div class="acs-layer-actions">
+                                        <button type="button" class="acs-mini" title="@(s.Visible ? "Hide" : "Show")" @onclick="() => ToggleVisibleAsync(s.Id)">@(s.Visible ? "👁" : "🚫")</button>
+                                        <button type="button" class="acs-mini" title="Bring forward" @onclick="() => BringForwardAsync(s.Id)">▲</button>
+                                        <button type="button" class="acs-mini" title="Send backward" @onclick="() => SendBackwardAsync(s.Id)">▼</button>
+                                        <button type="button" class="acs-mini" title="Delete" @onclick="async () => { SelectShape(s.Id); await DeleteSelectedAsync(); }">✕</button>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    @* ---------------- status bar ---------------- *@
+    @if (StatusBar is not null)
+    {
+        <div class="acs-status">@StatusBar(_context!)</div>
+    }
+    else if (ShowStatusBar)
+    {
+        <div class="acs-status">
+            <span>@ShapeCountValue shape@(ShapeCountValue == 1 ? "" : "s")</span>
+            <span>·</span>
+            <span>@(_selectedId is null ? "none selected" : "1 selected")</span>
+            <span>·</span>
+            <span>@((int)Math.Round(_scale * 100))%</span>
+            <span class="acs-status-tool">@_tool</span>
+        </div>
+    }
+
+</div>
+</CascadingValue>

@@ -11,4 +11,7 @@ public enum CanvasMode
 
     /// <summary>Pick the top-most shape under the pointer and drag it; the model is updated on release.</summary>
     Select,
+
+    /// <summary>Drag to pan the view; the pan offset is reported via <c>OnViewChanged</c> on release.</summary>
+    Pan,
 }

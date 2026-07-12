@@ -26,6 +26,7 @@ public class AtomCanvasTests : TestContext
     [InlineData(CanvasMode.Static, "static")]
     [InlineData(CanvasMode.Draw, "draw")]
     [InlineData(CanvasMode.Select, "select")]
+    [InlineData(CanvasMode.Pan, "pan")]
     public void Mode_sets_data_mode_attribute(CanvasMode mode, string expected)
     {
         var cut = RenderComponent<AtomCanvas>(p => p.Add(c => c.Mode, mode));
@@ -111,5 +112,46 @@ public class AtomCanvasTests : TestContext
         await cut.InvokeAsync(() => cut.Instance.OnShapeClicked("s123"));
 
         Assert.Equal("s123", clicked);
+    }
+
+    [Fact]
+    public async Task NotifyShapeSelected_raises_OnShapeSelected_including_null()
+    {
+        string? sel = "seed";
+        var cut = RenderComponent<AtomCanvas>(p => p
+            .Add(c => c.Mode, CanvasMode.Select)
+            .Add(c => c.OnShapeSelected, EventCallback.Factory.Create<string?>(this, id => sel = id)));
+
+        await cut.InvokeAsync(() => cut.Instance.NotifyShapeSelected("s7"));
+        Assert.Equal("s7", sel);
+
+        await cut.InvokeAsync(() => cut.Instance.NotifyShapeSelected(null));
+        Assert.Null(sel);
+    }
+
+    [Fact]
+    public async Task NotifyCanvasClick_raises_OnCanvasClick_with_world_point()
+    {
+        CanvasPoint? pt = null;
+        var cut = RenderComponent<AtomCanvas>(p => p
+            .Add(c => c.OnCanvasClick, EventCallback.Factory.Create<CanvasPoint>(this, w => pt = w)));
+
+        await cut.InvokeAsync(() => cut.Instance.NotifyCanvasClick(12, 34));
+
+        Assert.NotNull(pt);
+        Assert.Equal(12, pt!.Value.X);
+        Assert.Equal(34, pt.Value.Y);
+    }
+
+    [Fact]
+    public async Task NotifyViewChanged_raises_OnViewChanged()
+    {
+        CanvasView? v = null;
+        var cut = RenderComponent<AtomCanvas>(p => p
+            .Add(c => c.OnViewChanged, EventCallback.Factory.Create<CanvasView>(this, x => v = x)));
+
+        await cut.InvokeAsync(() => cut.Instance.NotifyViewChanged(5, 6, 2));
+
+        Assert.Equal(new CanvasView(5, 6, 2), v);
     }
 }

@@ -65,6 +65,18 @@ public partial class AtomCanvas : AtomComponentBase, IAsyncDisposable
     /// <summary>Accessible label. A canvas is opaque to assistive tech, so this is the only description AT gets.</summary>
     [Parameter] public string? AriaLabel { get; set; }
 
+    /// <summary>Id of the currently-selected shape (drawn with a highlight box). Null = nothing selected.</summary>
+    [Parameter] public string? SelectedId { get; set; }
+
+    /// <summary>Zoom factor of the view (1 = 100%). Combined with <see cref="PanX"/>/<see cref="PanY"/>.</summary>
+    [Parameter] public double Scale { get; set; } = 1;
+
+    /// <summary>Horizontal pan offset of the view, in CSS px.</summary>
+    [Parameter] public double PanX { get; set; }
+
+    /// <summary>Vertical pan offset of the view, in CSS px.</summary>
+    [Parameter] public double PanY { get; set; }
+
     /// <summary>Pre-interactive / fallback content rendered inside the canvas element.</summary>
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
@@ -81,6 +93,15 @@ public partial class AtomCanvas : AtomComponentBase, IAsyncDisposable
     /// survives redraws (queue ops on the context; the component flushes it for you).</summary>
     [Parameter] public EventCallback<Canvas2DContext> OnPaint { get; set; }
 
+    /// <summary>Raised with the selected shape id (or null) when selection changes in <see cref="CanvasMode.Select"/>.</summary>
+    [Parameter] public EventCallback<string?> OnShapeSelected { get; set; }
+
+    /// <summary>Raised (with world coordinates) when an empty part of the canvas is clicked. Backs click-to-place.</summary>
+    [Parameter] public EventCallback<CanvasPoint> OnCanvasClick { get; set; }
+
+    /// <summary>Raised when a <see cref="CanvasMode.Pan"/> drag ends, with the new pan/scale.</summary>
+    [Parameter] public EventCallback<CanvasView> OnViewChanged { get; set; }
+
     /// <summary>The shapes actually rendered — the bound <see cref="Shapes"/> when provided, else the internal model.</summary>
     private IReadOnlyList<CanvasShape> CurrentShapes => Shapes ?? _internal;
 
@@ -88,6 +109,7 @@ public partial class AtomCanvas : AtomComponentBase, IAsyncDisposable
     {
         CanvasMode.Draw => "draw",
         CanvasMode.Select => "select",
+        CanvasMode.Pan => "pan",
         _ => "static",
     };
 
@@ -107,6 +129,10 @@ public partial class AtomCanvas : AtomComponentBase, IAsyncDisposable
         smoothing = PenSmoothing,
         background = BackgroundColor,
         disabled = Disabled,
+        selectedId = SelectedId,
+        scale = Scale,
+        panX = PanX,
+        panY = PanY,
     };
 
     /// <inheritdoc />
@@ -190,6 +216,19 @@ public partial class AtomCanvas : AtomComponentBase, IAsyncDisposable
     /// <summary>Invoked by the engine when a shape is tapped in <see cref="CanvasMode.Static"/>.</summary>
     [JSInvokable]
     public async Task OnShapeClicked(string id) => await OnShapeClick.InvokeAsync(id);
+
+    /// <summary>Invoked by the engine when selection changes in <see cref="CanvasMode.Select"/>.</summary>
+    [JSInvokable]
+    public async Task NotifyShapeSelected(string? id) => await OnShapeSelected.InvokeAsync(id);
+
+    /// <summary>Invoked by the engine when an empty part of the canvas is clicked (world coords).</summary>
+    [JSInvokable]
+    public async Task NotifyCanvasClick(double x, double y) => await OnCanvasClick.InvokeAsync(new CanvasPoint(x, y));
+
+    /// <summary>Invoked by the engine when a pan gesture ends.</summary>
+    [JSInvokable]
+    public async Task NotifyViewChanged(double panX, double panY, double scale)
+        => await OnViewChanged.InvokeAsync(new CanvasView(panX, panY, scale));
 
     // --- Imperative escape hatch + export ---
 

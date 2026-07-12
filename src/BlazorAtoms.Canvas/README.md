@@ -1,14 +1,19 @@
 # BlazorAtoms.Canvas
 
 Native HTML `<canvas>` drawing for Blazor with a clean C# API — you never write JS interop. One library,
-two components:
+three components:
 
 - **`AtomCanvas`** — a drawing surface driven by a **declarative, serializable shape model** (line, rect,
-  circle, freehand path, text, image). A `Mode` switch turns the same canvas into three tools: **Static**
-  (render), **Draw** (freehand ink at 60 fps — this is signature capture), and **Select** (hit-test + drag
-  to move shapes). An imperative **`Canvas2DContext`** escape hatch exposes the raw 2D context in C#.
+  circle, freehand path, text, image). A `Mode` switch turns the same canvas into tools: **Static** (render),
+  **Draw** (freehand ink at 60 fps — this is signature capture), **Select** (hit-test + drag to move shapes),
+  and **Pan**; plus selection highlight and a `Scale`/`PanX`/`PanY` view. An imperative **`Canvas2DContext`**
+  escape hatch exposes the raw 2D context in C#.
 - **`AtomSignaturePad`** — a ready-made signature pad built over `AtomCanvas` freehand mode: bind `Value`
   (a PNG data URL), `Clear()` / `UndoAsync()`, export PNG or SVG.
+- **`AtomCanvasStudio`** — a batteries-included, extensible **workbench** over `AtomCanvas`: a full toolbar
+  (tools, shape/stamp insert with click-to-place, pen/fill/background, undo/redo, zoom/pan, PNG/SVG export),
+  a layers panel, and save/load JSON — all driving a two-way-bound model. Works zero-config, and is extensible
+  **without editing source** via `RenderFragment` slots + a cascading `AtomCanvasStudioContext` + a `Stamps` param.
 
 The component ships and **self-imports its own tiny JS module** (`_content/BlazorAtoms.Canvas/atom-canvas.js`)
 on first render — no `<script>` tag, no DI, no setup, no third-party runtime dependency. Server or WebAssembly.
@@ -111,6 +116,53 @@ Server):
 Or use `OnPaint` (fired with a context after each model redraw) to layer custom drawing that **survives**
 redraws. Mixing the raw context with `@bind-Shapes` on the same canvas otherwise fights the authoritative
 redraw — pick one per canvas, or paint via `OnPaint`.
+
+## AtomCanvasStudio
+
+A full drawing workbench you can drop in with zero config:
+
+```razor
+<AtomCanvasStudio @bind-Shapes="scene" Width="720" Height="460" />
+
+@code { List<CanvasShape> scene = new(); }
+```
+
+That renders the canvas plus a toolbar (Select / Draw / Pan / Erase, insert Rect/Circle/Line/Text, a stamp
+palette, pen color + width, fill, background, undo/redo, delete, clear, zoom, and PNG/SVG/JSON export), a
+layers panel, and a status bar. Everything drives a two-way-bound `Shapes` model with a full undo/redo history.
+
+**Extend it without editing source** — every region is a `RenderFragment<AtomCanvasStudioContext>` slot, and
+the same context is a `CascadingValue`. Inject your own tools that drive the canvas:
+
+```razor
+<AtomCanvasStudio @bind-Shapes="scene" Stamps="myStamps">
+    <ToolbarEnd Context="ctx">
+        <button @onclick="() => ctx.AddShape(CanvasStamps.Star(new CanvasPoint(360, 230)))">★ Star</button>
+        <button disabled="@(!ctx.CanUndo)" @onclick="ctx.Undo">Undo</button>
+    </ToolbarEnd>
+</AtomCanvasStudio>
+
+@code {
+    // A custom insert palette — the next canvas click drops the shape (click-to-place).
+    CanvasStamp[] myStamps =
+    {
+        new("box", "Box", p => new CanvasRect(p.X - 30, p.Y - 20, 60, 40, 4) { Fill = "#bfdbfe" }),
+        new("rocket", "Rocket", p => new CanvasText(p.X - 16, p.Y + 16, "🚀", 34), "🚀"),
+    };
+}
+```
+
+Slots: `Toolbar` (replaces the whole toolbar) · `ToolbarStart` / `ToolbarEnd` (inject beside the defaults) ·
+`StartPanel` / `EndPanel` (side rails; `EndPanel` replaces the default layers panel) · `StatusBar` ·
+`CanvasOverlay`. The `AtomCanvasStudioContext` exposes read state (`Tool`, `PenColor`, `SelectedId`,
+`ShapeCount`, `CanUndo`…) and actions (`SetTool`, `AddShape`, `BeginInsert`, `DeleteSelected`, `Undo`/`Redo`,
+`ZoomIn`/`Out`/`Reset`, `BringToFront`…, `ExportPngAsync`, `SaveJson`/`LoadJson`). The same methods are public
+on the component, so a `@ref` gives you the imperative API too. `ToolbarPlacement`, `ShowToolbar` /
+`ShowLayers` / `ShowStatusBar`, and `MaxHistory` tune the defaults.
+
+> Notes: shape insertion is **click-to-place** (pick a shape/stamp, then click the canvas). PNG export is the
+> current viewport (zoom/pan included); SVG export is the full vector model. Load reads a `.json` file via the
+> framework `InputFile` — no custom JS.
 
 ## Parameters
 

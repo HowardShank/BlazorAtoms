@@ -38,6 +38,9 @@ public abstract record CanvasShape
     /// <summary>When false, <see cref="CanvasMode.Select"/> will not pick this shape up for dragging.</summary>
     public bool Draggable { get; init; } = true;
 
+    /// <summary>When false, the shape is kept in the model but not drawn (backs a layers show/hide toggle).</summary>
+    public bool Visible { get; init; } = true;
+
     /// <summary>Return a copy of this shape translated by (<paramref name="dx"/>, <paramref name="dy"/>).</summary>
     public abstract CanvasShape Translate(double dx, double dy);
 }

@@ -1,0 +1,183 @@
+@using System.Globalization
+@using BlazorAtoms.Canvas
+
+<PageTitle>AtomCanvasStudio Playground</PageTitle>
+
+<h1>AtomCanvasStudio playground</h1>
+<p>The master workbench: <code>&lt;AtomCanvasStudio&gt;</code> wraps <code>AtomCanvas</code> with a full toolbar
+   (tools, shape/stamp insert, style, undo/redo, zoom, export), a layers panel, and save/load — all driving a
+   two-way-bound model. It works zero-config, and is extensible: the <code>ToolbarEnd</code> slot below injects
+   a custom button that drives the canvas through the cascading <code>AtomCanvasStudioContext</code>, and a
+   custom <code>Stamps</code> list is supplied when the toggle is on.</p>
+<p><a href="demo">&larr; Back to demo</a></p>
+
+<div class="cs-stage">
+    <AtomCanvasStudio @bind-Shapes="Shapes"
+                      Width="@WidthV" Height="@HeightV"
+                      Background="@Nz(BgColor)"
+                      PenColor="@PenColor" PenWidth="@PenWidthV" FillColor="@Nz(FillColor)"
+                      ShowToolbar="@ShowToolbar" ShowLayers="@ShowLayers" ShowStatusBar="@ShowStatus"
+                      ToolbarPlacement="@Placement"
+                      MaxHistory="@MaxHistory"
+                      Disabled="@Disabled"
+                      Stamps="@(UseCustomStamps ? CustomStamps : null)"
+                      CssClass="@Nz(HatchClass)" Style="@Nz(HatchStyle)">
+        <ToolbarEnd Context="ctx">
+            <button type="button" class="cs-slot-btn" title="Insert a star (via the context)"
+                    @onclick="() => ctx.AddShape(CanvasStamps.Star(new CanvasPoint(WidthV / 2, HeightV / 2)))">
+                ★ Add star
+            </button>
+        </ToolbarEnd>
+    </AtomCanvasStudio>
+    <div class="cs-readout">shapes = <code>@Shapes.Count</code></div>
+</div>
+
+<div class="cs-controls">
+    <div class="ctrl">
+        <label>Width (px) <span class="val">@WidthV.ToString(Inv)</span></label>
+        <input type="range" min="320" max="900" step="20" @bind="WidthV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Height (px) <span class="val">@HeightV.ToString(Inv)</span></label>
+        <input type="range" min="240" max="600" step="20" @bind="HeightV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Background</label>
+        <div class="row color">
+            <input type="color" @bind="BgColor" @bind:event="oninput" aria-label="Background color picker" />
+            <input type="text" @bind="BgColor" @bind:event="oninput" placeholder="(transparent)" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Initial pen color (PenColor)</label>
+        <div class="row color">
+            <input type="color" @bind="PenColor" @bind:event="oninput" aria-label="Pen color picker" />
+            <input type="text" @bind="PenColor" @bind:event="oninput" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Initial pen width (PenWidth) <span class="val">@PenWidthV.ToString(Inv)</span></label>
+        <input type="range" min="1" max="24" step="0.5" @bind="PenWidthV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Initial fill (FillColor)</label>
+        <div class="row color">
+            <input type="color" @bind="FillColor" @bind:event="oninput" aria-label="Fill color picker" />
+            <input type="text" @bind="FillColor" @bind:event="oninput" placeholder="(none)" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Toolbar placement</label>
+        <select @bind="Placement">
+            @foreach (var pl in Placements) { <option value="@pl">@pl</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Max history <span class="val">@MaxHistory</span></label>
+        <input type="range" min="1" max="200" step="1" @bind="MaxHistory" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>Panels</label>
+        <div class="row"><input type="checkbox" id="csTb" @bind="ShowToolbar" /><label for="csTb" class="inline">ShowToolbar</label></div>
+        <div class="row"><input type="checkbox" id="csLy" @bind="ShowLayers" /><label for="csLy" class="inline">ShowLayers</label></div>
+        <div class="row"><input type="checkbox" id="csSt" @bind="ShowStatus" /><label for="csSt" class="inline">ShowStatusBar</label></div>
+    </div>
+    <div class="ctrl">
+        <label>Options</label>
+        <div class="row"><input type="checkbox" id="csDis" @bind="Disabled" /><label for="csDis" class="inline">Disabled</label></div>
+        <div class="row"><input type="checkbox" id="csStamp" @bind="UseCustomStamps" /><label for="csStamp" class="inline">Custom stamps</label></div>
+    </div>
+    <div class="ctrl">
+        <label>Extra class (CssClass)</label>
+        <input type="text" @bind="HatchClass" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Extra style (Style)</label>
+        <input type="text" @bind="HatchStyle" @bind:event="oninput" placeholder="(none)" />
+    </div>
+</div>
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomCanvasStudioExample.razor" />
+
+<style>
+    .cs-stage { display:flex; flex-direction:column; align-items:center; gap:1rem; background:#eef2f7; border:1px solid #d0d0d8; border-radius:12px; padding:1.5rem; margin-bottom:1.5rem; }
+    .cs-readout { color:#6b7785; font-size:.85rem; }
+    .cs-readout code { color:#0a7ea4; }
+    .cs-slot-btn { height:30px; padding:0 .6rem; border:1px solid #d0d5dd; border-radius:6px; background:#fff7ed; color:#b45309; cursor:pointer; font:13px/1 system-ui,sans-serif; }
+    .cs-slot-btn:hover { background:#ffedd5; }
+    .cs-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem 1.5rem; background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; }
+    .cs-controls .ctrl { display:flex; flex-direction:column; gap:.4rem; }
+    .cs-controls label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; gap:.5rem; }
+    .cs-controls label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
+    .cs-controls input[type=range] { width:100%; accent-color:#2563eb; }
+    .cs-controls input[type=text], .cs-controls select { padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; }
+    .cs-controls .row { display:flex; align-items:center; gap:.5rem; }
+    .cs-controls .row.color { gap:.4rem; }
+    .cs-controls .row.color input[type=color] { flex:none; width:38px; height:32px; padding:2px; background:#070b10; border:1px solid #1b2330; border-radius:6px; cursor:pointer; }
+    .cs-controls .row.color input[type=text] { flex:1 1 auto; min-width:0; }
+    .cs-controls .row input[type=checkbox] { accent-color:#2563eb; width:16px; height:16px; }
+    .cs-controls .row label.inline { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; justify-content:flex-start; }
+</style>
+
+@code {
+    private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
+    private static readonly ToolbarPlacement[] Placements = (ToolbarPlacement[])Enum.GetValues(typeof(ToolbarPlacement));
+
+    private IReadOnlyList<CanvasShape> Shapes { get; set; } = new List<CanvasShape>();
+
+    private double WidthV = 640;
+    private double HeightV = 400;
+    private string BgColor = "#ffffff";
+    private string PenColor = "#111827";
+    private double PenWidthV = 3;
+    private string FillColor = "";
+    private ToolbarPlacement Placement = ToolbarPlacement.Top;
+    private int MaxHistory = 100;
+    private bool ShowToolbar = true;
+    private bool ShowLayers = true;
+    private bool ShowStatus = true;
+    private bool Disabled;
+    private bool UseCustomStamps;
+
+    private string HatchClass = "";
+    private string HatchStyle = "";
+
+    // A custom palette a 3rd party might supply — proves Stamps is extensible.
+    private static readonly IReadOnlyList<CanvasStamp> CustomStamps = new[]
+    {
+        new CanvasStamp("box", "Blue box", p => new CanvasRect(p.X - 30, p.Y - 20, 60, 40, 4) { Fill = "#bfdbfe", Stroke = "#2563eb", StrokeWidth = 2 }),
+        new CanvasStamp("dot", "Red dot", p => new CanvasCircle(p.X, p.Y, 18) { Fill = "#fecaca", Stroke = "#dc2626", StrokeWidth = 2 }, "●"),
+        new CanvasStamp("rocket", "Rocket", p => new CanvasText(p.X - 16, p.Y + 16, "🚀", 34), "🚀"),
+    };
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder("<AtomCanvasStudio @bind-Shapes=\"scene\"");
+            if (WidthV != 640) sb.Append($" Width=\"{WidthV.ToString(Inv)}\"");
+            if (HeightV != 420) sb.Append($" Height=\"{HeightV.ToString(Inv)}\"");
+            if (BgColor != "#ffffff") sb.Append($" Background=\"{BgColor}\"");
+            if (PenColor != "#111827") sb.Append($" PenColor=\"{PenColor}\"");
+            if (PenWidthV != 2) sb.Append($" PenWidth=\"{PenWidthV.ToString(Inv)}\"");
+            if (!string.IsNullOrEmpty(FillColor)) sb.Append($" FillColor=\"{FillColor}\"");
+            if (Placement != ToolbarPlacement.Top) sb.Append($" ToolbarPlacement=\"ToolbarPlacement.{Placement}\"");
+            if (MaxHistory != 100) sb.Append($" MaxHistory=\"{MaxHistory}\"");
+            if (!ShowToolbar) sb.Append(" ShowToolbar=\"false\"");
+            if (!ShowLayers) sb.Append(" ShowLayers=\"false\"");
+            if (!ShowStatus) sb.Append(" ShowStatusBar=\"false\"");
+            if (Disabled) sb.Append(" Disabled=\"true\"");
+            if (UseCustomStamps) sb.Append(" Stamps=\"myStamps\"");
+            if (!string.IsNullOrEmpty(HatchClass)) sb.Append($" CssClass=\"{HatchClass}\"");
+            if (!string.IsNullOrEmpty(HatchStyle)) sb.Append($" Style=\"{HatchStyle}\"");
+            sb.Append(">\n");
+            sb.Append("    <ToolbarEnd Context=\"ctx\">\n");
+            sb.Append("        <button @onclick=\"() => ctx.AddShape(CanvasStamps.Star(new CanvasPoint(320, 200)))\">★ Add star</button>\n");
+            sb.Append("    </ToolbarEnd>\n");
+            sb.Append("</AtomCanvasStudio>\n\n@code {\n    List<CanvasShape> scene = new();\n}");
+            return sb.ToString();
+        }
+    }
+}

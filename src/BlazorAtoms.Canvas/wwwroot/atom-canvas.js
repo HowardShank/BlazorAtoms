@@ -1,16 +1,19 @@
-// atom-canvas.js — the drawing engine for BlazorAtoms.Canvas (AtomCanvas / AtomSignaturePad).
+// atom-canvas.js — the drawing engine for BlazorAtoms.Canvas (AtomCanvas / AtomSignaturePad / AtomCanvasStudio).
 //
 // The library is otherwise data-driven from C#; this module is lazily imported by the component
 // (via IJSObjectReference) — no <script> tag, no DI, nothing for the consumer to wire up.
 //
-// Division of labor: C# owns the shape MODEL; JS owns the 60fps pointer GESTURE and the pixels.
-// Invariant: render() is authoritative — it clears and fully redraws from the serialized model.
-// C# mutates the model only at gesture commit (pointer-up), so render() never runs mid-gesture;
-// that keeps freehand drawing smooth even over a Blazor Server circuit (one callback per gesture).
+// Division of labor: C# owns the shape MODEL + the view (pan/scale); JS owns the 60fps pointer GESTURE
+// and the pixels. Invariant: render() is authoritative — it clears and fully redraws from the serialized
+// model. C# mutates model/view only at gesture commit (pointerup), so render() never runs mid-gesture.
+//
+// Coordinates: shapes live in WORLD space. The view transform maps world -> screen:
+//   ctx.setTransform(dpr*scale, 0, 0, dpr*scale, dpr*panX, dpr*panY)   (panX/panY are CSS px)
+// Pointer -> world: worldX = (clientX - rect.left - panX) / scale. Hit-test, freehand capture, and
+// click-to-place all work in world space so they stay correct under zoom/pan.
 
 const STATE = new WeakMap();
 
-// Context "state" names that are assignments (ctx.fillStyle = x), not method calls.
 const SETTERS = new Set([
     "fillStyle", "strokeStyle", "lineWidth", "lineCap", "lineJoin", "font",
     "globalAlpha", "textAlign", "textBaseline", "miterLimit",
@@ -26,9 +29,15 @@ export function init(el, dotNet, opts) {
         opts: opts || {},
         shapes: [],
         mode: (opts && opts.mode) || "static",
+        selectedId: (opts && opts.selectedId) || null,
+        scale: (opts && opts.scale) || 1,
+        panX: (opts && opts.panX) || 0,
+        panY: (opts && opts.panY) || 0,
         drawing: false,
-        current: null,   // in-progress freehand points
-        drag: null,      // { id, dx, dy, lastX, lastY }
+        current: null,   // in-progress freehand points (world)
+        drag: null,      // { id, dx, dy, lastX, lastY } (dx/dy world)
+        pan: null,       // { lastX, lastY } (screen)
+        click: null,     // { moved, lastX, lastY, world }
         images: new Map(),
         dpr: window.devicePixelRatio || 1,
         ctx: null,
@@ -44,7 +53,6 @@ export function init(el, dotNet, opts) {
     st.handlers = { onDown, onMove, onUp };
     el.addEventListener("pointerdown", onDown);
     el.addEventListener("pointermove", onMove);
-    // Listen for up on the window so a stroke that ends off-canvas still commits.
     window.addEventListener("pointerup", onUp);
 
     redraw(el, st);
@@ -61,7 +69,6 @@ function applySize(el, st) {
     el.style.width = w + "px";
     el.style.height = h + "px";
     const ctx = el.getContext("2d");
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS pixels; the backing store is hi-DPI
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     st.ctx = ctx;
@@ -74,6 +81,9 @@ export function render(el, shapesJson, opts) {
         const sizeChanged = opts.width !== st.cssW || opts.height !== st.cssH;
         st.opts = opts;
         st.mode = opts.mode || st.mode;
+        st.selectedId = opts.selectedId != null ? opts.selectedId : null;
+        st.scale = opts.scale || 1;
+        if (!st.drawing) { st.panX = opts.panX || 0; st.panY = opts.panY || 0; } // don't clobber an active pan
         if (sizeChanged) applySize(el, st);
     }
     try { st.shapes = shapesJson ? JSON.parse(shapesJson) : []; }
@@ -88,28 +98,61 @@ export function setMode(el, mode) {
 
 // ---- rendering ----
 
+function applyView(st) {
+    const dpr = st.dpr, s = st.scale || 1;
+    st.ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * st.panX, dpr * st.panY);
+}
+
+// Clear the whole device buffer in screen space, then paint the (screen-fixed) background.
 function clear(st) {
-    st.ctx.clearRect(0, 0, st.cssW, st.cssH);
+    const ctx = st.ctx, dpr = st.dpr;
+    ctx.save();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, st.cssW, st.cssH);
     if (st.opts && st.opts.background) {
-        st.ctx.fillStyle = st.opts.background;
-        st.ctx.fillRect(0, 0, st.cssW, st.cssH);
+        ctx.fillStyle = st.opts.background;
+        ctx.fillRect(0, 0, st.cssW, st.cssH);
     }
+    ctx.restore();
 }
 
 function redraw(el, st) {
     if (!st.ctx) return;
     clear(st);
-    for (const s of st.shapes) drawShape(el, st, s, 0, 0);
+    applyView(st);
+    for (const s of st.shapes) {
+        if (s.visible === false) continue;
+        drawShape(el, st, s, 0, 0);
+    }
+    drawSelection(st);
 }
 
-// Redraw with the currently-dragged shape offset by (drag.dx, drag.dy).
 function redrawWithDrag(el, st) {
     if (!st.ctx) return;
     clear(st);
+    applyView(st);
     for (const s of st.shapes) {
-        const isDragged = st.drag && s.id === st.drag.id;
-        drawShape(el, st, s, isDragged ? st.drag.dx : 0, isDragged ? st.drag.dy : 0);
+        if (s.visible === false) continue;
+        const dragged = st.drag && s.id === st.drag.id;
+        drawShape(el, st, s, dragged ? st.drag.dx : 0, dragged ? st.drag.dy : 0);
     }
+    drawSelection(st);
+}
+
+function drawSelection(st) {
+    if (!st.selectedId) return;
+    const sh = st.shapes.find(x => x.id === st.selectedId);
+    if (!sh || sh.visible === false) return;
+    const b = bounds(sh);
+    if (!b) return;
+    const inv = 1 / (st.scale || 1), pad = 4 * inv;
+    const ctx = st.ctx;
+    ctx.save();
+    ctx.strokeStyle = "#3b82f6";
+    ctx.lineWidth = 1.5 * inv;
+    ctx.setLineDash([6 * inv, 4 * inv]);
+    ctx.strokeRect(b.x - pad, b.y - pad, b.w + 2 * pad, b.h + 2 * pad);
+    ctx.restore();
 }
 
 function applyStyle(st, s) {
@@ -166,7 +209,6 @@ function tracePath(ctx, pts, smooth, closed) {
     if (!smooth || pts.length < 3) {
         for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
     } else {
-        // Quadratic smoothing through segment midpoints — the classic freehand look.
         for (let i = 1; i < pts.length - 1; i++) {
             const mx = (pts[i].x + pts[i + 1].x) / 2;
             const my = (pts[i].y + pts[i + 1].y) / 2;
@@ -205,42 +247,62 @@ function drawImage(el, st, s) {
 
 // ---- pointer gestures ----
 
-function localPos(el, e) {
-    const r = el.getBoundingClientRect();
-    return { x: e.clientX - r.left, y: e.clientY - r.top };
+function localPos(el, st, e) {
+    const r = el.getBoundingClientRect(), s = st.scale || 1;
+    return { x: (e.clientX - r.left - st.panX) / s, y: (e.clientY - r.top - st.panY) / s };
 }
+
+function capture(el, e) { if (el.setPointerCapture) { try { el.setPointerCapture(e.pointerId); } catch { } } }
 
 function pointerDown(el, st, e) {
     if (st.opts && st.opts.disabled) return;
-    if (st.mode === "draw") {
+    const m = st.mode;
+    if (m === "draw") {
         st.drawing = true;
-        st.current = [localPos(el, e)];
-        if (el.setPointerCapture) { try { el.setPointerCapture(e.pointerId); } catch { } }
+        st.current = [localPos(el, st, e)];
+        capture(el, e);
         if (st.dotNet) st.dotNet.invokeMethodAsync("NotifyDrawStart");
-    } else if (st.mode === "select") {
-        const hit = hitTest(st, localPos(el, e));
+    } else if (m === "select") {
+        const hit = hitTest(st, localPos(el, st, e));
+        st.selectedId = hit ? hit.id : null;
+        if (st.dotNet) st.dotNet.invokeMethodAsync("NotifyShapeSelected", st.selectedId);
         if (hit) {
             st.drawing = true;
             st.drag = { id: hit.id, dx: 0, dy: 0, lastX: e.clientX, lastY: e.clientY };
+            capture(el, e);
         }
-    } else if (st.mode === "static") {
-        const hit = hitTest(st, localPos(el, e), /*ignoreDraggable*/ true);
-        if (hit && st.dotNet) st.dotNet.invokeMethodAsync("OnShapeClicked", hit.id);
+        redraw(el, st); // reflect selection immediately
+    } else if (m === "pan") {
+        st.drawing = true;
+        st.pan = { lastX: e.clientX, lastY: e.clientY };
+        capture(el, e);
+    } else if (m === "static") {
+        st.drawing = true;
+        st.click = { moved: false, lastX: e.clientX, lastY: e.clientY, world: localPos(el, st, e) };
     }
 }
 
 function pointerMove(el, st, e) {
     if (!st.drawing) return;
     if (st.mode === "draw" && st.current) {
-        st.current.push(localPos(el, e));
+        st.current.push(localPos(el, st, e));
         redraw(el, st);
         strokeCurrent(st);
     } else if (st.mode === "select" && st.drag) {
-        st.drag.dx += (e.clientX - st.drag.lastX);
-        st.drag.dy += (e.clientY - st.drag.lastY);
+        const s = st.scale || 1;
+        st.drag.dx += (e.clientX - st.drag.lastX) / s;
+        st.drag.dy += (e.clientY - st.drag.lastY) / s;
         st.drag.lastX = e.clientX;
         st.drag.lastY = e.clientY;
         redrawWithDrag(el, st);
+    } else if (st.mode === "pan" && st.pan) {
+        st.panX += (e.clientX - st.pan.lastX);
+        st.panY += (e.clientY - st.pan.lastY);
+        st.pan.lastX = e.clientX;
+        st.pan.lastY = e.clientY;
+        redraw(el, st);
+    } else if (st.mode === "static" && st.click) {
+        if (Math.abs(e.clientX - st.click.lastX) > 3 || Math.abs(e.clientY - st.click.lastY) > 3) st.click.moved = true;
     }
 }
 
@@ -256,6 +318,21 @@ function pointerUp(el, st, e) {
         st.drag = null;
         st.drawing = false;
         if (st.dotNet && (d.dx || d.dy)) st.dotNet.invokeMethodAsync("OnShapeMoved", d.id, d.dx, d.dy);
+    } else if (st.mode === "pan" && st.pan) {
+        st.pan = null;
+        st.drawing = false;
+        if (st.dotNet) st.dotNet.invokeMethodAsync("NotifyViewChanged", st.panX, st.panY, st.scale);
+    } else if (st.mode === "static" && st.click) {
+        const c = st.click;
+        st.click = null;
+        st.drawing = false;
+        if (!c.moved && st.dotNet) {
+            const hit = hitTest(st, c.world, true);
+            if (hit) st.dotNet.invokeMethodAsync("OnShapeClicked", hit.id);
+            else st.dotNet.invokeMethodAsync("NotifyCanvasClick", c.world.x, c.world.y);
+        }
+    } else {
+        st.drawing = false;
     }
 }
 
@@ -269,10 +346,10 @@ function strokeCurrent(st) {
     ctx.restore();
 }
 
-// Top-most shape whose bounding box contains p. Honors `draggable` unless ignoreDraggable.
 function hitTest(st, p, ignoreDraggable) {
     for (let i = st.shapes.length - 1; i >= 0; i--) {
         const s = st.shapes[i];
+        if (s.visible === false) continue;
         if (!ignoreDraggable && s.draggable === false) continue;
         if (pointInBounds(s, p)) return s;
     }
@@ -282,7 +359,7 @@ function hitTest(st, p, ignoreDraggable) {
 function pointInBounds(s, p) {
     const b = bounds(s);
     if (!b) return false;
-    const pad = 6; // a little slop so thin strokes are grabbable
+    const pad = 6;
     return p.x >= b.x - pad && p.x <= b.x + b.w + pad &&
            p.y >= b.y - pad && p.y <= b.y + b.h + pad;
 }
@@ -318,11 +395,8 @@ export function runCommands(el, batch) {
     for (const row of batch) {
         const name = row[0];
         const args = row.slice(1);
-        if (SETTERS.has(name)) {
-            ctx[name] = args[0];
-        } else if (typeof ctx[name] === "function") {
-            ctx[name].apply(ctx, args);
-        }
+        if (SETTERS.has(name)) ctx[name] = args[0];
+        else if (typeof ctx[name] === "function") ctx[name].apply(ctx, args);
     }
 }
 

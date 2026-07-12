@@ -66,6 +66,16 @@ public class CanvasShapeTests
     }
 
     [Fact]
+    public void Visible_defaults_true_and_survives_translate()
+    {
+        var r = new CanvasRect(0, 0, 5, 5);
+        Assert.True(r.Visible);
+
+        var hidden = r with { Visible = false };
+        Assert.False(((CanvasRect)hidden.Translate(1, 1)).Visible);
+    }
+
+    [Fact]
     public void ToSvg_emits_shapes_and_background()
     {
         var svg = CanvasSvg.ToSvg(
