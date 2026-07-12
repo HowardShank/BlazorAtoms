@@ -117,6 +117,7 @@ On-brand standout: **`Charts`** — SVG, JS-free, same DNA as the activity indic
 
 | Library | Reason it's heavier |
 |---|---|
+| `BlazorAtoms.Canvas` *(shipped)* | AtomCanvas — declarative, serializable shape model (line/rect/circle/freehand path/text/image) with Static/Draw/Select modes + a batched imperative `Canvas2DContext` escape hatch · AtomSignaturePad — signature pad (`@bind-Value` PNG data-URL, Clear/Undo, PNG/SVG export). The family's first intentional `<canvas>` — justified by the Graphics-policy hard-perf carve-out (60 fps freehand ink + `toDataURL` raster export SVG can't do). Ships and self-imports its own `atom-canvas.js` (no `<script>`/DI); gesture stays in JS so it's smooth on Server. |
 | `BlazorAtoms.Overlays` (Modal, Drawer, Popover, Dropdown, Menu) | positioning + focus-trap + scroll-lock usually want JS |
 | `BlazorAtoms.Pickers` (Date / Time / Color) | popup/calendar logic; color picker is closer to JS-free |
 | `BlazorAtoms.Tables` / `DataGrid` | a simple table is JS-free; sorting/virtualization is heavy |
@@ -124,6 +125,7 @@ On-brand standout: **`Charts`** — SVG, JS-free, same DNA as the activity indic
 | `BlazorAtoms.Behaviors` (ClickOutside, FocusTrap, Clipboard, Portal) | headless, but several need JS interop |
 
 **What each does:**
+- **Canvas** — native `<canvas>` drawing behind a clean C# API: a declarative shape model, freehand ink (signature capture), and drag-to-move, plus a batched raw-2D-context escape hatch. The family's first raster surface; owns its own tiny JS module so consumers write no interop.
 - **Overlays** — things that float above the page: modal dialog, side drawer, popover, dropdown, menu.
 - **Pickers** — specialized value selectors for date, time, and color.
 - **Tables** — tabular data display, from a simple static table up to a sortable/virtualized data grid.

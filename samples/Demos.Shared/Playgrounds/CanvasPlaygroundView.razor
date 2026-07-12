@@ -1,0 +1,188 @@
+@using System.Globalization
+@using BlazorAtoms.Canvas
+
+<PageTitle>AtomCanvas Playground</PageTitle>
+
+<h1>AtomCanvas playground</h1>
+<p>Tune <code>&lt;AtomCanvas&gt;</code> live. One component, three <code>Mode</code>s: <strong>Static</strong>
+   renders the shape model (tap a shape to select it), <strong>Draw</strong> is freehand ink (this is signature
+   capture), and <strong>Select</strong> lets you drag shapes. Drawing runs entirely in the component's own JS —
+   the C# model updates once per gesture, so it stays smooth even on Blazor Server.</p>
+<p><a href="demo">&larr; Back to demo</a></p>
+
+<div class="cv-stage">
+    <AtomCanvas @ref="_canvas"
+                Width="@WidthV" Height="@HeightV"
+                BackgroundColor="@Nz(BgColor)"
+                Mode="@ModeSel"
+                @bind-Shapes="Shapes"
+                PenColor="@PenColor" PenWidth="@PenWidthV" PenSmoothing="@Smoothing"
+                Disabled="@Disabled"
+                AriaLabel="@Nz(AriaLabel)"
+                OnShapeClick="OnShapeClick"
+                CssClass="@Nz(HatchClass)" Style="@Nz(HatchStyle)" title="@Nz(HatchTitle)" />
+    <div class="cv-readout">
+        shapes = <code>@Shapes.Count</code>
+        @if (_lastClicked is not null) { <text> &middot; clicked <code>@_lastClicked</code></text> }
+    </div>
+    <div class="cv-actions">
+        <button class="cv-btn" @onclick="LoadSample">Sample scene</button>
+        <button class="cv-btn" @onclick="ClearShapes">Clear</button>
+        <button class="cv-btn" @onclick="ExportPng">Export PNG</button>
+    </div>
+    @if (!string.IsNullOrEmpty(_png))
+    {
+        <img class="cv-preview" src="@_png" alt="canvas export preview" />
+    }
+</div>
+
+<div class="cv-controls">
+    <div class="ctrl">
+        <label>Mode</label>
+        <select @bind="ModeSel">
+            @foreach (var m in Modes) { <option value="@m">@m</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Width (px) <span class="val">@WidthV.ToString(Inv)</span></label>
+        <input type="range" min="120" max="640" step="10" @bind="WidthV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Height (px) <span class="val">@HeightV.ToString(Inv)</span></label>
+        <input type="range" min="80" max="480" step="10" @bind="HeightV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Background (BackgroundColor)</label>
+        <div class="row color">
+            <input type="color" @bind="BgColor" @bind:event="oninput" aria-label="Background color picker" />
+            <input type="text" @bind="BgColor" @bind:event="oninput" placeholder="(transparent)" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Pen color (PenColor)</label>
+        <div class="row color">
+            <input type="color" @bind="PenColor" @bind:event="oninput" aria-label="Pen color picker" />
+            <input type="text" @bind="PenColor" @bind:event="oninput" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Pen width (PenWidth) <span class="val">@PenWidthV.ToString(Inv)</span></label>
+        <input type="range" min="1" max="24" step="0.5" @bind="PenWidthV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Flags</label>
+        <div class="row"><input type="checkbox" id="cvSmooth" @bind="Smoothing" /><label for="cvSmooth" class="inline">PenSmoothing</label></div>
+        <div class="row"><input type="checkbox" id="cvDis" @bind="Disabled" /><label for="cvDis" class="inline">Disabled</label></div>
+    </div>
+    <div class="ctrl">
+        <label>Aria label (AriaLabel)</label>
+        <input type="text" @bind="AriaLabel" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Extra class (CssClass)</label>
+        <input type="text" @bind="HatchClass" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Extra style (Style)</label>
+        <input type="text" @bind="HatchStyle" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>title attr (splat)</label>
+        <input type="text" @bind="HatchTitle" @bind:event="oninput" placeholder="(none)" />
+    </div>
+</div>
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomCanvasExample.razor" />
+
+<style>
+    .cv-stage { display:flex; flex-direction:column; align-items:center; gap:1rem; background:#fff; border:1px solid #d0d0d8; border-radius:12px; padding:2rem 1.5rem; margin-bottom:1.5rem; }
+    .cv-readout { color:#6b7785; font-size:.85rem; }
+    .cv-readout code { color:#0a7ea4; }
+    .cv-actions { display:flex; gap:.5rem; flex-wrap:wrap; }
+    .cv-btn { padding:.4rem .8rem; border:1px solid #d0d0d8; border-radius:6px; background:#f5f5f7; cursor:pointer; font-size:.85rem; }
+    .cv-btn:hover { background:#ececf0; }
+    .cv-preview { max-width:100%; border:1px dashed #c0c0c8; border-radius:8px; }
+    .cv-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem 1.5rem; background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; }
+    .cv-controls .ctrl { display:flex; flex-direction:column; gap:.4rem; }
+    .cv-controls label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; gap:.5rem; }
+    .cv-controls label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
+    .cv-controls input[type=range] { width:100%; accent-color:#22d3ee; }
+    .cv-controls input[type=text], .cv-controls select { padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; }
+    .cv-controls .row { display:flex; align-items:center; gap:.5rem; }
+    .cv-controls .row.color { gap:.4rem; }
+    .cv-controls .row.color input[type=color] { flex:none; width:38px; height:32px; padding:2px; background:#070b10; border:1px solid #1b2330; border-radius:6px; cursor:pointer; }
+    .cv-controls .row.color input[type=text] { flex:1 1 auto; min-width:0; }
+    .cv-controls .row input[type=checkbox] { accent-color:#22d3ee; width:16px; height:16px; }
+    .cv-controls .row label.inline { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; justify-content:flex-start; }
+</style>
+
+@code {
+    private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
+    private static readonly CanvasMode[] Modes = (CanvasMode[])Enum.GetValues(typeof(CanvasMode));
+
+    private AtomCanvas? _canvas;
+    private string? _png;
+    private string? _lastClicked;
+
+    private double WidthV = 360;
+    private double HeightV = 220;
+    private string BgColor = "#ffffff";
+    private CanvasMode ModeSel = CanvasMode.Draw;
+    private string PenColor = "#0ea5e9";
+    private double PenWidthV = 3;
+    private bool Smoothing = true;
+    private bool Disabled;
+    private string AriaLabel = "";
+
+    private string HatchClass = "";
+    private string HatchStyle = "";
+    private string HatchTitle = "";
+
+    private IReadOnlyList<CanvasShape> Shapes { get; set; } = new List<CanvasShape>();
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
+
+    private void OnShapeClick(string id) => _lastClicked = id;
+
+    private void LoadSample() => Shapes = new List<CanvasShape>
+    {
+        new CanvasRect(24, 24, 140, 90, Radius: 12) { Fill = "#fde68a", Stroke = "#f59e0b", StrokeWidth = 2 },
+        new CanvasCircle(250, 80, 45) { Fill = "#bfdbfe", Stroke = "#3b82f6", StrokeWidth = 2 },
+        new CanvasLine(24, 160, 320, 160) { Stroke = "#10b981", StrokeWidth = 3 },
+        new CanvasText(24, 200, "AtomCanvas", FontSize: 22) { Fill = "#111827" },
+    };
+
+    private void ClearShapes()
+    {
+        Shapes = new List<CanvasShape>();
+        _png = null;
+    }
+
+    private async Task ExportPng()
+    {
+        if (_canvas is not null) _png = await _canvas.ToDataUrlAsync();
+    }
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder("<AtomCanvas");
+            sb.Append($" Width=\"{WidthV.ToString(Inv)}\" Height=\"{HeightV.ToString(Inv)}\"");
+            if (ModeSel != CanvasMode.Static) sb.Append($" Mode=\"CanvasMode.{ModeSel}\"");
+            sb.Append(" @bind-Shapes=\"shapes\"");
+            if (!string.IsNullOrEmpty(BgColor)) sb.Append($" BackgroundColor=\"{BgColor}\"");
+            if (PenColor != "#111827") sb.Append($" PenColor=\"{PenColor}\"");
+            if (PenWidthV != 2) sb.Append($" PenWidth=\"{PenWidthV.ToString(Inv)}\"");
+            if (!Smoothing) sb.Append(" PenSmoothing=\"false\"");
+            if (Disabled) sb.Append(" Disabled=\"true\"");
+            if (!string.IsNullOrEmpty(AriaLabel)) sb.Append($" AriaLabel=\"{AriaLabel}\"");
+            if (!string.IsNullOrEmpty(HatchClass)) sb.Append($" CssClass=\"{HatchClass}\"");
+            if (!string.IsNullOrEmpty(HatchStyle)) sb.Append($" Style=\"{HatchStyle}\"");
+            if (!string.IsNullOrEmpty(HatchTitle)) sb.Append($" title=\"{HatchTitle}\"");
+            sb.Append(" />");
+            sb.Append("\n\n@code {\n    List<CanvasShape> shapes = new();\n}");
+            return sb.ToString();
+        }
+    }
+}

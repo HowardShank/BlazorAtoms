@@ -1,0 +1,23 @@
+.atom-canvas {
+    display: block;
+    width: var(--canvas-w, 300px);
+    height: var(--canvas-h, 150px);
+    background: var(--canvas-bg, transparent);
+    /* Let the engine own pointer gestures (no scroll/zoom hijacking touch drawing). */
+    touch-action: none;
+    /* JS re-sizes the backing store for devicePixelRatio; keep the box from overflowing meanwhile. */
+    max-width: 100%;
+}
+
+.atom-canvas[data-mode="draw"],
+.atom-canvas[data-mode="select"] {
+    cursor: crosshair;
+}
+
+.atom-canvas[data-mode="select"] {
+    cursor: grab;
+}
+
+.atom-canvas[data-disabled="true"] {
+    cursor: default;
+}

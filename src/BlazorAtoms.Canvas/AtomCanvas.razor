@@ -1,0 +1,22 @@
+@inherits AtomComponentBase
+
+@*
+    AtomCanvas.razor
+    ----------------
+    A single <canvas> element. All drawing is done by the component's own JS module
+    (atom-canvas.js), which the component lazy-imports itself — no <script> tag, no DI.
+    Modes: Static (render the shape model), Draw (freehand ink / signature), Select
+    (drag a shape). See AtomCanvas.razor.cs for the C# <-> JS contract.
+    Any child content is the pre-interactive / accessibility fallback inside the canvas.
+*@
+
+<canvas @ref="_ref"
+        @attributes="AdditionalAttributes"
+        class="@ClassAttr("atom-canvas")"
+        style="@StyleAttr(RootStyle)"
+        width="@((int)Math.Round(Width))"
+        height="@((int)Math.Round(Height))"
+        role="img"
+        aria-label="@AriaLabel"
+        data-mode="@ModeValue"
+        data-disabled="@(Disabled ? "true" : null)">@ChildContent</canvas>

@@ -1,0 +1,158 @@
+@using System.Globalization
+@using BlazorAtoms.Canvas
+
+<PageTitle>AtomSignaturePad Playground</PageTitle>
+
+<h1>AtomSignaturePad playground</h1>
+<p>Tune <code>&lt;AtomSignaturePad&gt;</code> live — a ready-made signature pad over <code>AtomCanvas</code>
+   freehand mode. Draw with mouse, pen, or touch. <code>@("@bind-Value")</code> gives you a PNG data URL
+   refreshed after every stroke (POST it or store it); <code>Clear()</code> / <code>UndoAsync()</code> and
+   PNG/SVG export are methods on the component.</p>
+<p><a href="demo">&larr; Back to demo</a></p>
+
+<div class="sg-stage">
+    <AtomSignaturePad @ref="_pad"
+                      @bind-Value="Value"
+                      PenColor="@PenColor" PenWidth="@PenWidthV"
+                      BackgroundColor="@BgColor"
+                      Width="@WidthV" Height="@HeightV"
+                      Disabled="@Disabled"
+                      AriaLabel="@AriaLabel"
+                      OnChange="StateHasChanged"
+                      CssClass="@Nz(HatchClass)" Style="@Nz(HatchStyle)" title="@Nz(HatchTitle)" />
+
+    <div class="sg-readout">
+        empty = <code>@(_pad?.IsEmpty ?? true)</code>
+        @if (!string.IsNullOrEmpty(Value)) { <text> &middot; Value = <code>@Value.Length</code> chars</text> }
+    </div>
+    <div class="sg-actions">
+        <button class="sg-btn" @onclick="Clear">Clear</button>
+        <button class="sg-btn" @onclick="Undo">Undo</button>
+    </div>
+    @if (!string.IsNullOrEmpty(Value))
+    {
+        <div class="sg-preview">
+            <span>Bound PNG preview:</span>
+            <img src="@Value" alt="signature preview" />
+        </div>
+    }
+</div>
+
+<div class="sg-controls">
+    <div class="ctrl">
+        <label>Pen color (PenColor)</label>
+        <div class="row color">
+            <input type="color" @bind="PenColor" @bind:event="oninput" aria-label="Pen color picker" />
+            <input type="text" @bind="PenColor" @bind:event="oninput" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Pen width (PenWidth) <span class="val">@PenWidthV.ToString(Inv)</span></label>
+        <input type="range" min="1" max="12" step="0.5" @bind="PenWidthV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Background (BackgroundColor)</label>
+        <div class="row color">
+            <input type="color" @bind="BgColor" @bind:event="oninput" aria-label="Background color picker" />
+            <input type="text" @bind="BgColor" @bind:event="oninput" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Width (px) <span class="val">@WidthV.ToString(Inv)</span></label>
+        <input type="range" min="200" max="640" step="10" @bind="WidthV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Height (px) <span class="val">@HeightV.ToString(Inv)</span></label>
+        <input type="range" min="100" max="360" step="10" @bind="HeightV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Flags</label>
+        <div class="row"><input type="checkbox" id="sgDis" @bind="Disabled" /><label for="sgDis" class="inline">Disabled</label></div>
+    </div>
+    <div class="ctrl">
+        <label>Aria label (AriaLabel)</label>
+        <input type="text" @bind="AriaLabel" @bind:event="oninput" placeholder="Signature" />
+    </div>
+    <div class="ctrl">
+        <label>Extra class (CssClass)</label>
+        <input type="text" @bind="HatchClass" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Extra style (Style)</label>
+        <input type="text" @bind="HatchStyle" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>title attr (splat)</label>
+        <input type="text" @bind="HatchTitle" @bind:event="oninput" placeholder="(none)" />
+    </div>
+</div>
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomSignaturePadExample.razor" />
+
+<style>
+    .sg-stage { display:flex; flex-direction:column; align-items:center; gap:1rem; background:#f4f6fa; border:1px solid #d0d0d8; border-radius:12px; padding:2rem 1.5rem; margin-bottom:1.5rem; }
+    .sg-readout { color:#6b7785; font-size:.85rem; }
+    .sg-readout code { color:#0a7ea4; }
+    .sg-actions { display:flex; gap:.5rem; flex-wrap:wrap; }
+    .sg-btn { padding:.4rem .8rem; border:1px solid #d0d0d8; border-radius:6px; background:#fff; cursor:pointer; font-size:.85rem; }
+    .sg-btn:hover { background:#ececf0; }
+    .sg-preview { display:flex; flex-direction:column; align-items:center; gap:.4rem; font-size:.8rem; color:#6b7785; }
+    .sg-preview img { max-width:100%; border:1px dashed #c0c0c8; border-radius:8px; background:#fff; }
+    .sg-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem 1.5rem; background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; }
+    .sg-controls .ctrl { display:flex; flex-direction:column; gap:.4rem; }
+    .sg-controls label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; gap:.5rem; }
+    .sg-controls label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
+    .sg-controls input[type=range] { width:100%; accent-color:#22d3ee; }
+    .sg-controls input[type=text] { padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; }
+    .sg-controls .row { display:flex; align-items:center; gap:.5rem; }
+    .sg-controls .row.color { gap:.4rem; }
+    .sg-controls .row.color input[type=color] { flex:none; width:38px; height:32px; padding:2px; background:#070b10; border:1px solid #1b2330; border-radius:6px; cursor:pointer; }
+    .sg-controls .row.color input[type=text] { flex:1 1 auto; min-width:0; }
+    .sg-controls .row input[type=checkbox] { accent-color:#22d3ee; width:16px; height:16px; }
+    .sg-controls .row label.inline { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; justify-content:flex-start; }
+</style>
+
+@code {
+    private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
+
+    private AtomSignaturePad? _pad;
+
+    private string? Value;
+    private string PenColor = "#111827";
+    private double PenWidthV = 2.5;
+    private string BgColor = "#ffffff";
+    private double WidthV = 420;
+    private double HeightV = 180;
+    private bool Disabled;
+    private string AriaLabel = "Signature";
+
+    private string HatchClass = "";
+    private string HatchStyle = "";
+    private string HatchTitle = "";
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
+
+    private async Task Clear() { if (_pad is not null) await _pad.Clear(); }
+    private async Task Undo() { if (_pad is not null) await _pad.UndoAsync(); }
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder("<AtomSignaturePad @bind-Value=\"png\"");
+            if (PenColor != "#111827") sb.Append($" PenColor=\"{PenColor}\"");
+            if (PenWidthV != 2.5) sb.Append($" PenWidth=\"{PenWidthV.ToString(Inv)}\"");
+            if (BgColor != "#ffffff") sb.Append($" BackgroundColor=\"{BgColor}\"");
+            if (WidthV != 400) sb.Append($" Width=\"{WidthV.ToString(Inv)}\"");
+            if (HeightV != 160) sb.Append($" Height=\"{HeightV.ToString(Inv)}\"");
+            if (Disabled) sb.Append(" Disabled=\"true\"");
+            if (AriaLabel != "Signature") sb.Append($" AriaLabel=\"{AriaLabel}\"");
+            if (!string.IsNullOrEmpty(HatchClass)) sb.Append($" CssClass=\"{HatchClass}\"");
+            if (!string.IsNullOrEmpty(HatchStyle)) sb.Append($" Style=\"{HatchStyle}\"");
+            if (!string.IsNullOrEmpty(HatchTitle)) sb.Append($" title=\"{HatchTitle}\"");
+            sb.Append(" />");
+            sb.Append("\n\n@code {\n    string? png;\n}");
+            return sb.ToString();
+        }
+    }
+}

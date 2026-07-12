@@ -1,0 +1,24 @@
+@inherits AtomComponentBase
+
+@*
+    AtomSignaturePad.razor
+    ----------------------
+    A ready-made signature pad: a thin preset over <AtomCanvas> in freehand (Draw) mode.
+    Two-way binds Value (a PNG data URL, refreshed after each stroke) and/or Strokes (the
+    vector model). Clear / Undo / export live in the code-behind.
+*@
+
+<div @attributes="AdditionalAttributes" class="@ClassAttr("atom-signature-pad")" style="@StyleAttr(null)">
+    <AtomCanvas @ref="_canvas"
+                Mode="CanvasMode.Draw"
+                Width="Width"
+                Height="Height"
+                BackgroundColor="@BackgroundColor"
+                PenColor="@PenColor"
+                PenWidth="@PenWidth"
+                Disabled="Disabled"
+                AriaLabel="@AriaLabel"
+                Shapes="CurrentStrokes"
+                ShapesChanged="OnStrokesChanged"
+                OnDrawStart="OnStart" />
+</div>

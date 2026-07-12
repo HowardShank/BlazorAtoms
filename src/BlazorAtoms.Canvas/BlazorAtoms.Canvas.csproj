@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <Import Project="$(RepoRoot)build\Packable.props" />
+  <Import Project="$(RepoRoot)build\Shared.props" />
+
+  <PropertyGroup>
+    <PackageId>BlazorAtoms.Canvas</PackageId>
+    <Title>Blazor Canvas</Title>
+    <Description>Native HTML5 canvas drawing for Blazor with a clean C# API — no hand-written JS interop. AtomCanvas renders a declarative, serializable shape model (line, rect, circle, freehand path, text, image) and switches between three modes: Static (draw), Draw (freehand ink / signature capture at 60fps), and Select (hit-test + drag to move shapes). A batched Canvas2DContext escape hatch exposes the raw 2D context in C# (one interop round-trip per frame — usable on Blazor Server). AtomSignaturePad is a ready-made signature pad (bind Value as a PNG data URL, Clear/Undo, PNG/SVG export). The component ships and self-imports its own tiny JS module — no script tag, no DI, no setup. Server or WebAssembly.</Description>
+    <PackageTags>Blazor;Canvas;Drawing;Signature;SignaturePad;Sketch;Paint;Ink;2D;Graphics;WebAssembly;Server</PackageTags>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+  </ItemGroup>
+
+</Project>

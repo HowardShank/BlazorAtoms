@@ -1,0 +1,8 @@
+.atom-signature-pad {
+    display: inline-block;
+    line-height: 0; /* kill descender gap under the inline canvas */
+    border: 1px solid var(--sig-border, #cbd5e1);
+    border-radius: var(--sig-radius, 8px);
+    overflow: hidden;
+    max-width: 100%;
+}

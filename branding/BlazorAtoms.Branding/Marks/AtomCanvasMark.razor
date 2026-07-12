@@ -1,0 +1,19 @@
+@* AtomCanvasMark.razor — BlazorAtoms "Canvas" brand mark. Thin wrapper over the shared AtomMark engine.
+   Payload (symbol / number / label / colors) is baked here; chrome (tile shape, flame, fonts, the
+   "Blazor" wordmark) is inherited from AtomMark's defaults. Needs AtomMark.razor in the same folder
+   (or @using its namespace). Override Layout (Icon|Lockup|Stacked) or Size; the brand payload is fixed.
+   Symbol "Ca" / 20 = Calcium. *@
+<AtomMark Layout="@Layout" Size="@Size"
+          Number="20" Symbol="Ca" Label="CANVAS" Word2="CANVAS"
+          TileTop="#a5f3fc" TileBottom="#22d3ee" Stroke="#0e7490" Ember="#cffafe" Cream="#ffffff"
+          FlameTip="#fce792" FlameMid="#fa9829" FlameBase="#f5450a"
+          InnerTop="#ffedb8" InnerBottom="#ffb13d"
+          Word2Top="#22d3ee" Word2Bottom="#0e7490" SymbolColor="#FFFFFF" />
+
+@code {
+    /// <summary>Layout arrangement — Icon (default), Lockup, or Stacked.</summary>
+    [Parameter] public AtomMark.MarkLayout Layout { get; set; } = AtomMark.MarkLayout.Icon;
+
+    /// <summary>Overall size in px — icon edge, or lockup/stacked height (width keeps aspect).</summary>
+    [Parameter] public int Size { get; set; } = 128;
+}
