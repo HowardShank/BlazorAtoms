@@ -8,13 +8,17 @@ using BlazorAtoms.Shared;
 namespace BlazorAtoms.Badges;
 
 /// <summary>
-/// An animated badge: a small label/count that pops in when it has a value. When wrapped around a
-/// host element (<see cref="ChildContent"/>) it overlays a corner (notification-count style);
-/// otherwise it renders inline. Accepts any <see cref="object"/> value with type-aware formatting
-/// (or a <see cref="Formatter"/> override), and can Pop / Bounce / Spin / Pulse / Ping. Pure CSS —
-/// no JS. All motion is disabled under <c>prefers-reduced-motion: reduce</c>.
+/// A badge: a small label/count in a rich variety of shapes that appears when it has a value. When
+/// wrapped around a host element (<see cref="ChildContent"/>) it overlays a corner (notification-count
+/// style); otherwise it renders inline. Pill, circle, square and rounded are pure-CSS boxes; star,
+/// hexagon, diamond, shield, starburst and ribbon are drawn as inline SVG so fill and border apply to
+/// every shape. Accepts any <see cref="object"/> value with type-aware formatting (or a
+/// <see cref="Formatter"/> override). Motion is opt-in via <see cref="Animation"/> (default
+/// <see cref="BadgeAnimation.None"/>): Pop / Bounce / Spin / Pulse / Ping, gated by
+/// <see cref="Trigger"/>. Pure CSS — no JS. All motion is disabled under
+/// <c>prefers-reduced-motion: reduce</c>.
 /// </summary>
-public partial class AtomAnimatedBadge : AtomComponentBase
+public partial class AtomBadge : AtomComponentBase
 {
     /// <summary>Optional host element the badge overlays. When null, the badge renders inline.</summary>
     [Parameter] public RenderFragment? ChildContent { get; set; }
@@ -44,22 +48,22 @@ public partial class AtomAnimatedBadge : AtomComponentBase
     /// <summary>Preset color scheme (overridden by explicit color params).</summary>
     [Parameter] public Variant Variant { get; set; } = Variant.Default;
 
-    /// <summary>Motion applied to the badge.</summary>
-    [Parameter] public BadgeAnimation Animation { get; set; } = BadgeAnimation.Pop;
+    /// <summary>Motion applied to the badge. Default <see cref="BadgeAnimation.None"/> (no motion).</summary>
+    [Parameter] public BadgeAnimation Animation { get; set; } = BadgeAnimation.None;
 
     /// <summary>When the animation plays.</summary>
     [Parameter] public AnimationTrigger Trigger { get; set; } = AnimationTrigger.Appear;
 
-    /// <summary>Background color. Sets <c>--badge-bg</c>. Null = variant/scheme default.</summary>
+    /// <summary>Background / SVG fill. Sets <c>--badge-bg</c>. Null = variant/scheme default.</summary>
     [Parameter] public string? Background { get; set; }
 
     /// <summary>Text color. Sets <c>--badge-color</c>. Null = variant/scheme default.</summary>
     [Parameter] public string? TextColor { get; set; }
 
-    /// <summary>Border color. Sets <c>--badge-border</c>. Null = variant/scheme default.</summary>
+    /// <summary>Border / SVG stroke color. Sets <c>--badge-border</c>. Null = variant/scheme default.</summary>
     [Parameter] public string? BorderColor { get; set; }
 
-    /// <summary>Border width in px. Sets <c>--badge-border-width</c>.</summary>
+    /// <summary>Border / stroke width in px. Sets <c>--badge-border-width</c>.</summary>
     [Parameter] public double? BorderWidth { get; set; }
 
     /// <summary>Badge size in px (drives height, min-width, font-size). Sets <c>--badge-size</c>.</summary>

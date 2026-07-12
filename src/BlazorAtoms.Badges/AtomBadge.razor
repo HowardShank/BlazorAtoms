@@ -1,11 +1,14 @@
 @inherits AtomComponentBase
 
 @*
-    AtomAnimatedBadge.razor
-    ------------------------
-    Pops in when the value is "present". Overlays a host at a corner when ChildContent is given,
-    else renders inline. Pure CSS; motion disabled under prefers-reduced-motion. See the
-    code-behind for value→string conversion and the popup gate (ShowBadge).
+    AtomBadge.razor
+    ---------------
+    A badge in a variety of shapes that pops in when the value is "present". Overlays a host at a
+    corner when ChildContent is given, else renders inline. CSS boxes (pill/circle/square/rounded)
+    get their fill+border from CSS; SVG shapes (star/hexagon/diamond/shield/burst/ribbon) draw an
+    inline path so border works on every shape. Motion is opt-in via Animation (default None) and is
+    disabled under prefers-reduced-motion. See the code-behind for value→string conversion and the
+    popup gate (ShowBadge).
 *@
 
 @if (ChildContent is not null)
