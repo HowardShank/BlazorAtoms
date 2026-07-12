@@ -2,13 +2,13 @@
    Payload (symbol / number / label / colors) is baked here; chrome (tile shape, flame, fonts, the
    "Blazor" wordmark) is inherited from AtomMark's defaults. Needs AtomMark.razor in the same folder
    (or @using its namespace). Override Layout (Icon|Lockup|Stacked) or Size; the brand payload is fixed.
-   Symbol "Ca" / 20 = Calcium. *@
+   Symbol "Ca" / 20 = Calcium. Data & viz category → blue hue, Primary #3AA0FF (see src/Icon-Roadmap.md). *@
 <AtomMark Layout="@Layout" Size="@Size"
           Number="20" Symbol="Ca" Label="CANVAS" Word2="CANVAS"
-          TileTop="#a5f3fc" TileBottom="#22d3ee" Stroke="#0e7490" Ember="#cffafe" Cream="#ffffff"
+          TileTop="#a9d2ff" TileBottom="#3aa0ff" Stroke="#0067d6" Ember="#bfdcff" Cream="#ffffff"
           FlameTip="#fce792" FlameMid="#fa9829" FlameBase="#f5450a"
           InnerTop="#ffedb8" InnerBottom="#ffb13d"
-          Word2Top="#22d3ee" Word2Bottom="#0e7490" SymbolColor="#FFFFFF" />
+          Word2Top="#fa9829" Word2Bottom="#3aa0ff" SymbolColor="#FFFFFF" />
 
 @code {
     /// <summary>Layout arrangement — Icon (default), Lockup, or Stacked.</summary>

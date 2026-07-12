@@ -40,7 +40,7 @@ tile stays distinct in NuGet search.
 | Category | Base hue | Libraries |
 |---|---|---|
 | Feedback & status | red `#E5484D` | ActivityIndicators, Progress, Skeletons, Alerts |
-| Data & viz | blue `#3B82F6` | Charts, Barcodes, Ratings |
+| Data & viz | blue `#3B82F6` | Charts, Barcodes, Ratings, Canvas |
 | Forms & input | green `#22C55E` | Inputs, Buttons, Pickers |
 | Layout & containers | violet `#7C5CFF` | Layout, Cards, Tabs, Panels, Tables |
 | Content & identity | teal `#14B8A6` | Typography, Icons, Avatars, Badges |
@@ -61,6 +61,7 @@ the hue instead — under evaluation.) The tile palette derives from one primary
 | Panels | Pa | 91 | PANELS | `#5B3FC4` | Protactinium ✓ |
 | Alerts | Al | 13 | ALERTS | `#FF6A6E` | Aluminium ✓ |
 | Ratings | Ra | 88 | RATINGS | `#5B9BFF` | Radium ✓ |
+| Canvas | Ca | 20 | CANVAS | `#3AA0FF` | Calcium ✓ |
 | Layout | La | 57 | LAYOUT | `#7C5CFF` | Lanthanum ✓ |
 | Tables | Ta | 73 | TABLES | `#9B82FF` | Tantalum ✓ |
 | Progress | Pr | 59 | PROGRESS | `#F0565B` | Praseodymium ✓ |
