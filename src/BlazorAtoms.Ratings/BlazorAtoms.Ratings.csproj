@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <Import Project="$(RepoRoot)build\Packable.props" />
+  <Import Project="$(RepoRoot)build\Shared.props" />
+
+  <PropertyGroup>
+    <PackageId>BlazorAtoms.Ratings</PackageId>
+    <Title>Blazor Ratings</Title>
+    <Description>Rating component for Blazor. AtomRating renders a star/heart/thumb/… scale as pure inline SVG — a read-only display with true fractional fill (e.g. 4.3 of 5) or an interactive input with hover preview, keyboard control, configurable Step (whole, half, or finer), a clearable "unrated" (null) state, a built-in icon-shape enum or a custom SVG path, per-instance colors, and an optional value/count label. Server or WebAssembly, no JS.</Description>
+    <PackageTags>Blazor;Rating;Stars;Star;Review;Feedback;SVG;Input;WebAssembly;Server</PackageTags>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+  </ItemGroup>
+
+</Project>

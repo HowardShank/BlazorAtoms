@@ -15,6 +15,9 @@
     .tt-ctrl label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
     .tt-controls input[type=text], .tt-controls input[type=number], .tt-controls select { width:100%; accent-color:#00b3c4; }
     .tt-ctrl .row { display:flex; align-items:center; gap:.5rem; }
+    .tt-ctrl .row.color { gap:.4rem; }
+    .tt-ctrl .row.color input[type=color] { flex:none; width:38px; height:32px; padding:2px; background:none; border:1px solid #1b2330; border-radius:6px; cursor:pointer; }
+    .tt-ctrl .row.color input[type=text] { flex:1 1 auto; min-width:0; }
     .tt-ctrl .row input[type=checkbox] { accent-color:#00b3c4; width:16px; height:16px; }
     .tt-ctrl .row label { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; justify-content:flex-start; }
 </style>
@@ -73,11 +76,11 @@
     <div class="tt-ctrl"><label>Pair secondary label</label><input type="text" @bind="PairSecondaryLabel" @bind:event="oninput" placeholder="(none)" /></div>
     <div class="tt-ctrl"><label>Digital size px <span class="val">@Size</span></label><input type="number" min="10" max="48" @bind="Size" @bind:event="oninput" /></div>
     <div class="tt-ctrl"><label>Analog size px <span class="val">@AnalogSize</span></label><input type="number" min="60" max="320" step="10" @bind="AnalogSize" @bind:event="oninput" /></div>
-    <div class="tt-ctrl"><label>Clock background</label><input type="text" @bind="ClockBg" @bind:event="oninput" placeholder="(default)" /></div>
-    <div class="tt-ctrl"><label>Clock text color</label><input type="text" @bind="ClockColor" @bind:event="oninput" placeholder="(default)" /></div>
-    <div class="tt-ctrl"><label>Analog face color</label><input type="text" @bind="FaceColor" @bind:event="oninput" placeholder="(default)" /></div>
-    <div class="tt-ctrl"><label>Analog hand color</label><input type="text" @bind="HandColor" @bind:event="oninput" placeholder="(default)" /></div>
-    <div class="tt-ctrl"><label>Analog accent color</label><input type="text" @bind="AccentColor" @bind:event="oninput" placeholder="(default)" /></div>
+    <div class="tt-ctrl"><label>Clock background</label><div class="row color"><input type="color" aria-label="Clock background picker" @bind="ClockBg" @bind:event="oninput" /><input type="text" @bind="ClockBg" @bind:event="oninput" placeholder="(default)" /></div></div>
+    <div class="tt-ctrl"><label>Clock text color</label><div class="row color"><input type="color" aria-label="Clock text color picker" @bind="ClockColor" @bind:event="oninput" /><input type="text" @bind="ClockColor" @bind:event="oninput" placeholder="(default)" /></div></div>
+    <div class="tt-ctrl"><label>Analog face color</label><div class="row color"><input type="color" aria-label="Analog face color picker" @bind="FaceColor" @bind:event="oninput" /><input type="text" @bind="FaceColor" @bind:event="oninput" placeholder="(default)" /></div></div>
+    <div class="tt-ctrl"><label>Analog hand color</label><div class="row color"><input type="color" aria-label="Analog hand color picker" @bind="HandColor" @bind:event="oninput" /><input type="text" @bind="HandColor" @bind:event="oninput" placeholder="(default)" /></div></div>
+    <div class="tt-ctrl"><label>Analog accent color</label><div class="row color"><input type="color" aria-label="Analog accent color picker" @bind="AccentColor" @bind:event="oninput" /><input type="text" @bind="AccentColor" @bind:event="oninput" placeholder="(default)" /></div></div>
     <div class="tt-ctrl"><label>Extra class (CssClass)</label><input type="text" @bind="HatchClass" @bind:event="oninput" placeholder="(none)" /></div>
     <div class="tt-ctrl"><label>Extra style (Style)</label><input type="text" @bind="HatchStyle" @bind:event="oninput" placeholder="(none)" /></div>
     <div class="tt-ctrl"><label>title attr (splat)</label><input type="text" @bind="HatchTitle" @bind:event="oninput" placeholder="(none)" /></div>
@@ -90,7 +93,7 @@
     <div class="tt-ctrl"><label>Strip face</label><select @bind="StripFace">@foreach (var f in Enum.GetValues<ClockFace>()){<option value="@f">@f</option>}</select></div>
     <div class="tt-ctrl"><label>Strip layout</label><select @bind="StripLayout">@foreach (var l in Enum.GetValues<ClockStripLayout>()){<option value="@l">@l</option>}</select></div>
     <div class="tt-ctrl"><label>Strip gap px <span class="val">@(StripGap?.ToString() ?? "auto")</span></label><input type="number" min="0" max="48" @bind="StripGap" @bind:event="oninput" placeholder="auto" /></div>
-    <div class="tt-ctrl"><label>Strip highlight color</label><input type="text" @bind="StripHighlight" @bind:event="oninput" placeholder="(default)" /></div>
+    <div class="tt-ctrl"><label>Strip highlight color</label><div class="row color"><input type="color" aria-label="Strip highlight color picker" @bind="StripHighlight" @bind:event="oninput" /><input type="text" @bind="StripHighlight" @bind:event="oninput" placeholder="(default)" /></div></div>
     <div class="tt-ctrl"><label>Strip offset reference</label><select @bind="StripRef"><option value="">(viewer zone)</option>@foreach (var z in ClockZone.Default){<option value="@z.TimeZoneId">@z.Label</option>}</select></div>
     <div class="tt-ctrl"><label>Strip options</label>
         <div class="row"><input type="checkbox" id="ssort" @bind="StripSort" /><label for="ssort">Sort by offset</label></div>

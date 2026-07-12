@@ -1,0 +1,45 @@
+@inherits AtomComponentBase
+
+<span @attributes="AdditionalAttributes"
+      class="@ClassAttr(RootClass)"
+      style="@StyleAttr(RootStyle)"
+      role="@Role"
+      tabindex="@TabIndex"
+      aria-label="@AriaLabelValue"
+      aria-valuemin="@(Interactive ? "0" : null)"
+      aria-valuemax="@(Interactive ? Max.ToString(System.Globalization.CultureInfo.InvariantCulture) : null)"
+      aria-valuenow="@AriaValueNow"
+      aria-disabled="@(Disabled ? "true" : null)"
+      aria-readonly="@(ReadOnly && !Disabled ? "true" : null)"
+      data-interactive="@(Interactive ? "true" : null)"
+      @onkeydown="OnKey"
+      @onmouseleave="OnLeave">
+
+    <span class="atom-rating-items">
+        @for (int i = 0; i < Max; i++)
+        {
+            var idx = i;
+            <span class="atom-rating-item"
+                  @onmousemove="e => OnMove(idx, e)"
+                  @onclick="e => OnClickItem(idx, e)">
+                <svg class="atom-rating-glyph atom-rating-empty" viewBox="@IconViewBox" aria-hidden="true">
+                    <path d="@EmptyPath" />
+                </svg>
+                <span class="atom-rating-fill" style="width:@FillWidth(idx)">
+                    <svg class="atom-rating-glyph atom-rating-full" viewBox="@IconViewBox" aria-hidden="true">
+                        <path d="@FilledPath" />
+                    </svg>
+                </span>
+            </span>
+        }
+    </span>
+
+    @if (ShowValue)
+    {
+        <span class="atom-rating-value">@ValueText</span>
+    }
+    @if (Count.HasValue)
+    {
+        <span class="atom-rating-count">(@Count.Value.ToString(CountFormat, System.Globalization.CultureInfo.InvariantCulture))</span>
+    }
+</span>

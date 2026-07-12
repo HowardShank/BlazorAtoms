@@ -16,6 +16,9 @@
     .tt-controls input[type=text], .tt-controls input[type=number], .tt-controls select { width:100%; accent-color:#00b3c4; }
     .tt-controls input[type=color] { width:100%; height:32px; background:none; border:1px solid #1b2330; border-radius:6px; padding:2px; }
     .tt-ctrl .row { display:flex; align-items:center; gap:.5rem; }
+    .tt-ctrl .row.color { gap:.4rem; }
+    .tt-ctrl .row.color input[type=color] { flex:none; width:38px; height:32px; padding:2px; cursor:pointer; }
+    .tt-ctrl .row.color input[type=text] { flex:1 1 auto; min-width:0; }
     .tt-ctrl .row input[type=checkbox] { accent-color:#00b3c4; width:16px; height:16px; }
     .tt-ctrl .row label { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; justify-content:flex-start; }
     .tt-note { color:#8794a3; font-size:.8rem; }
@@ -82,10 +85,10 @@
         <div class="row"><input type="checkbox" id="ic" @bind="ShowIcon" /><label for="ic">Leading icon</label></div>
         <div class="row"><input type="checkbox" id="dot" @bind="ShowDot" /><label for="dot">Status dot (Pill, no icon)</label></div>
     </div>
-    <div class="tt-ctrl"><label>Background</label><input type="text" placeholder="(variant default)" @bind="Bg" @bind:event="oninput" /></div>
-    <div class="tt-ctrl"><label>Text color</label><input type="text" placeholder="(variant default)" @bind="Fg" @bind:event="oninput" /></div>
-    <div class="tt-ctrl"><label>Border color</label><input type="text" placeholder="(variant/appearance default)" @bind="BorderCol" @bind:event="oninput" /></div>
-    <div class="tt-ctrl"><label>Dot color (Pill)</label><input type="text" placeholder="(accent default)" @bind="DotCol" @bind:event="oninput" /></div>
+    <div class="tt-ctrl"><label>Background</label><div class="row color"><input type="color" aria-label="Background picker" @bind="Bg" @bind:event="oninput" /><input type="text" placeholder="(variant default)" @bind="Bg" @bind:event="oninput" /></div></div>
+    <div class="tt-ctrl"><label>Text color</label><div class="row color"><input type="color" aria-label="Text color picker" @bind="Fg" @bind:event="oninput" /><input type="text" placeholder="(variant default)" @bind="Fg" @bind:event="oninput" /></div></div>
+    <div class="tt-ctrl"><label>Border color</label><div class="row color"><input type="color" aria-label="Border color picker" @bind="BorderCol" @bind:event="oninput" /><input type="text" placeholder="(variant/appearance default)" @bind="BorderCol" @bind:event="oninput" /></div></div>
+    <div class="tt-ctrl"><label>Dot color (Pill)</label><div class="row color"><input type="color" aria-label="Dot color picker" @bind="DotCol" @bind:event="oninput" /><input type="text" placeholder="(accent default)" @bind="DotCol" @bind:event="oninput" /></div></div>
     <div class="tt-ctrl"><label>Font family</label><input type="text" placeholder="(inherit)" @bind="FontFam" @bind:event="oninput" /></div>
     <div class="tt-ctrl"><label>Font weight</label><input type="text" placeholder="(default)" @bind="FontWt" @bind:event="oninput" /></div>
     <div class="tt-ctrl"><label>Letter spacing</label><input type="text" placeholder="(normal)" @bind="Spacing" @bind:event="oninput" /></div>

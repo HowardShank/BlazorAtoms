@@ -1,0 +1,88 @@
+.atom-rating {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--rating-gap, 6px);
+    line-height: 1;
+    color: inherit;
+    outline: none;
+    vertical-align: middle;
+}
+
+.atom-rating-items {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--rating-gap, 6px);
+}
+
+.atom-rating-item {
+    position: relative;
+    display: inline-block;
+    width: var(--rating-size, 24px);
+    height: var(--rating-size, 24px);
+    line-height: 0;
+}
+
+.atom-rating-glyph {
+    display: block;
+    width: var(--rating-size, 24px);
+    height: var(--rating-size, 24px);
+    transform: rotate(var(--rating-rotate, 0deg));
+    transform-box: fill-box;
+    transform-origin: center;
+}
+
+/* Empty portion defaults to a faint tint of the surrounding text color, so it reads
+   correctly in both light and dark themes. Override with --rating-empty. */
+.atom-rating-empty {
+    fill: var(--rating-empty, color-mix(in srgb, currentColor 25%, transparent));
+}
+
+.atom-rating-full {
+    fill: var(--rating-color, #f5a623);
+}
+
+/* The filled overlay is clipped to a fraction of the icon width (set inline per icon),
+   revealing exactly that much of the full-color glyph on top of the empty one. */
+.atom-rating-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* While previewing a hover/keyboard selection, the filled portion switches to the hover color. */
+.atom-rating-preview .atom-rating-full {
+    fill: var(--rating-hover, var(--rating-color, #f5a623));
+}
+
+.atom-rating[data-interactive="true"] {
+    touch-action: none;
+}
+
+.atom-rating[data-interactive="true"] .atom-rating-item {
+    cursor: pointer;
+}
+
+.atom-rating:focus-visible {
+    outline: 2px solid var(--rating-hover, var(--rating-color, #f5a623));
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+.atom-rating[aria-disabled="true"] {
+    opacity: var(--rating-disabled-opacity, .5);
+}
+
+.atom-rating[aria-disabled="true"] .atom-rating-item {
+    cursor: default;
+}
+
+.atom-rating-value {
+    font-weight: 600;
+    margin-inline-start: .15em;
+}
+
+.atom-rating-count {
+    font-size: .85em;
+    opacity: .65;
+}

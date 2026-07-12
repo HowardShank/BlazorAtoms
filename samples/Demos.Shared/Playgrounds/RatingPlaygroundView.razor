@@ -1,0 +1,264 @@
+@using System.Globalization
+@using BlazorAtoms.Ratings
+
+<PageTitle>AtomRating Playground</PageTitle>
+
+<h1>AtomRating playground</h1>
+<p>Tune <code>&lt;AtomRating&gt;</code> live. One component does both jobs: a read-only display that fills
+   icons to any fraction of the value, or (default) an interactive input with hover preview, keyboard
+   control, and a snapping <code>Step</code>. The value is <code>double?</code> — <code>null</code> is the
+   "unrated" state, distinct from a real <code>0</code>.</p>
+<p><a href="demo">&larr; Back to demo</a></p>
+
+<div class="rt-stage">
+    <AtomRating Value="LiveValue" ValueChanged="OnRatingChanged"
+                Max="@Max" Step="@Step" ReadOnly="@ReadOnly" Disabled="@Disabled" Clearable="@Clearable"
+                Icon="@IconSel" IconPath="@Nz(IconPath)"
+                EmptyIcon="@EffectiveEmptyIcon" EmptyIconPath="@Nz(EmptyIconPath)"
+                IconViewBox="@IconViewBox" Rotation="@RotationV"
+                Color="@Nz(Color)" EmptyColor="@Nz(EmptyColor)" HoverColor="@Nz(HoverColor)"
+                Size="@SizeV" Gap="@GapV"
+                ShowValue="@ShowValue" ValueFormat="@ValueFormat" UnratedText="@UnratedText"
+                Count="@(UseCount ? CountValue : (int?)null)" CountFormat="@CountFormat"
+                AriaLabel="@Nz(AriaLabel)"
+                CssClass="@Nz(HatchClass)" Style="@Nz(HatchStyle)" title="@Nz(HatchTitle)" />
+    <div class="rt-readout">value = <code>@(Unrated ? "null" : ScoreValue.ToString(Inv))</code></div>
+</div>
+
+<div class="rt-controls">
+    <div class="ctrl">
+        <label>Value <span class="val">@(Unrated ? "null" : ScoreValue.ToString(Inv))</span></label>
+        <input type="range" min="0" max="@Max" step="@Step" @bind="ScoreValue" @bind:event="oninput" @bind:culture="Inv" />
+        <button class="rt-btn" @onclick="SetUnrated">Set unrated (null)</button>
+    </div>
+    <div class="ctrl">
+        <label>Max <span class="val">@Max</span></label>
+        <input type="range" min="1" max="10" step="1" @bind="Max" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>Step (input snap)</label>
+        <select @bind="Step">
+            <option value="1">1 — whole</option>
+            <option value="0.5">0.5 — half</option>
+            <option value="0.25">0.25 — quarter</option>
+            <option value="0.2">0.2 — fifth</option>
+            <option value="0.1">0.1 — tenth</option>
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Icon</label>
+        <select @bind="IconSel">
+            @foreach (var i in Icons) { <option value="@i">@i</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Empty icon</label>
+        <div class="row">
+            <input type="checkbox" id="rtUseEmpty" @bind="UseEmptyIcon" />
+            <select @bind="EmptyIconSel" disabled="@(!UseEmptyIcon)">
+                @foreach (var i in Icons) { <option value="@i">@i</option> }
+            </select>
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Size (px) <span class="val">@SizeV.ToString(Inv)</span></label>
+        <input type="range" min="14" max="72" step="1" @bind="SizeV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Gap (px) <span class="val">@GapV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="24" step="1" @bind="GapV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Mode</label>
+        <div class="row"><input type="checkbox" id="rtRead" @bind="ReadOnly" /><label for="rtRead" class="inline">ReadOnly (display)</label></div>
+        <div class="row"><input type="checkbox" id="rtDis" @bind="Disabled" /><label for="rtDis" class="inline">Disabled</label></div>
+        <div class="row"><input type="checkbox" id="rtClr" @bind="Clearable" /><label for="rtClr" class="inline">Clearable</label></div>
+    </div>
+    <div class="ctrl">
+        <label>Labels</label>
+        <div class="row"><input type="checkbox" id="rtSv" @bind="ShowValue" /><label for="rtSv" class="inline">ShowValue</label></div>
+        <div class="row"><input type="checkbox" id="rtCnt" @bind="UseCount" /><label for="rtCnt" class="inline">Show count</label></div>
+        <input type="number" min="0" @bind="CountValue" disabled="@(!UseCount)" />
+    </div>
+    <div class="ctrl">
+        <label>Fill color (Color)</label>
+        <div class="row color">
+            <input type="color" @bind="Color" @bind:event="oninput" aria-label="Fill color picker" />
+            <input type="text" @bind="Color" @bind:event="oninput" placeholder="(default amber)" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Empty color (EmptyColor)</label>
+        <div class="row color">
+            <input type="color" @bind="EmptyColor" @bind:event="oninput" aria-label="Empty color picker" />
+            <input type="text" @bind="EmptyColor" @bind:event="oninput" placeholder="(default tint)" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Hover color (HoverColor)</label>
+        <div class="row color">
+            <input type="color" @bind="HoverColor" @bind:event="oninput" aria-label="Hover color picker" />
+            <input type="text" @bind="HoverColor" @bind:event="oninput" placeholder="(default = fill)" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Custom icon path (IconPath)</label>
+        <input type="text" @bind="IconPath" @bind:event="oninput" placeholder="(built-in glyph)" />
+    </div>
+    <div class="ctrl">
+        <label>Empty icon path (EmptyIconPath)</label>
+        <input type="text" @bind="EmptyIconPath" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Icon view box (IconViewBox)</label>
+        <input type="text" @bind="IconViewBox" @bind:event="oninput" placeholder="0 0 24 24" />
+    </div>
+    <div class="ctrl">
+        <label>Rotation (deg) <span class="val">@RotationV.ToString(Inv)</span></label>
+        <input type="range" min="-180" max="180" step="5" @bind="RotationV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Value format (ValueFormat)</label>
+        <input type="text" @bind="ValueFormat" @bind:event="oninput" placeholder="0.#" />
+    </div>
+    <div class="ctrl">
+        <label>Unrated text (UnratedText)</label>
+        <input type="text" @bind="UnratedText" @bind:event="oninput" placeholder="Unrated" />
+    </div>
+    <div class="ctrl">
+        <label>Count format (CountFormat)</label>
+        <input type="text" @bind="CountFormat" @bind:event="oninput" placeholder="N0" />
+    </div>
+    <div class="ctrl">
+        <label>Aria label (AriaLabel)</label>
+        <input type="text" @bind="AriaLabel" @bind:event="oninput" placeholder="(auto)" />
+    </div>
+    <div class="ctrl">
+        <label>Extra class (CssClass)</label>
+        <input type="text" @bind="HatchClass" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Extra style (Style)</label>
+        <input type="text" @bind="HatchStyle" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>title attr (splat)</label>
+        <input type="text" @bind="HatchTitle" @bind:event="oninput" placeholder="(none)" />
+    </div>
+</div>
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomRatingExample.razor" />
+
+<style>
+    .rt-stage { display:flex; flex-direction:column; align-items:center; gap:1rem; background:#fff; border:1px solid #d0d0d8; border-radius:12px; padding:2rem 1.5rem; margin-bottom:1.5rem; }
+    .rt-readout { color:#6b7785; font-size:.85rem; }
+    .rt-readout code { color:#0a7ea4; }
+    .rt-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem 1.5rem; background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; }
+    .rt-controls .ctrl { display:flex; flex-direction:column; gap:.4rem; }
+    .rt-controls label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; gap:.5rem; }
+    .rt-controls label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
+    .rt-controls input[type=range] { width:100%; accent-color:#f5a623; }
+    .rt-controls input[type=text], .rt-controls input[type=number], .rt-controls select { padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; }
+    .rt-controls .row { display:flex; align-items:center; gap:.5rem; }
+    .rt-controls .row.color { gap:.4rem; }
+    .rt-controls .row.color input[type=color] { flex:none; width:38px; height:32px; padding:2px; background:#070b10; border:1px solid #1b2330; border-radius:6px; cursor:pointer; }
+    .rt-controls .row.color input[type=text] { flex:1 1 auto; min-width:0; }
+    .rt-controls .row input[type=checkbox] { accent-color:#f5a623; width:16px; height:16px; }
+    .rt-controls .row label.inline { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; justify-content:flex-start; }
+    .rt-btn { align-self:flex-start; padding:.35rem .7rem; border:1px solid #1b2330; border-radius:6px; background:#161d29; color:#cfd8e3; cursor:pointer; font-size:.8rem; }
+    .rt-btn:hover { background:#1e2836; }
+</style>
+
+@code {
+    private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
+    private static readonly RatingIcon[] Icons = (RatingIcon[])Enum.GetValues(typeof(RatingIcon));
+
+    // Value is modeled as (ScoreValue + Unrated flag) so the range can drive it and the
+    // "Set unrated" button can express the null state the range can't.
+    private double ScoreValue = 3.5;
+    private bool Unrated;
+
+    private int Max = 5;
+    private double Step = 0.5;
+    private bool ReadOnly;
+    private bool Disabled;
+    private bool Clearable;
+
+    private RatingIcon IconSel = RatingIcon.Star;
+    private bool UseEmptyIcon;
+    private RatingIcon EmptyIconSel = RatingIcon.Circle;
+    private string IconPath = "";
+    private string EmptyIconPath = "";
+    private string IconViewBox = "0 0 24 24";
+    private double RotationV = 0;
+
+    private string Color = "";
+    private string EmptyColor = "";
+    private string HoverColor = "";
+    private double SizeV = 32;
+    private double GapV = 6;
+
+    private bool ShowValue = true;
+    private string ValueFormat = "0.#";
+    private string UnratedText = "Unrated";
+    private bool UseCount;
+    private int CountValue = 1204;
+    private string CountFormat = "N0";
+    private string AriaLabel = "";
+
+    private string HatchClass = "";
+    private string HatchStyle = "";
+    private string HatchTitle = "";
+
+    private double? LiveValue => Unrated ? (double?)null : ScoreValue;
+    private RatingIcon? EffectiveEmptyIcon => UseEmptyIcon ? EmptyIconSel : (RatingIcon?)null;
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
+
+    private void SetUnrated() => Unrated = true;
+
+    private void OnRatingChanged(double? v)
+    {
+        if (v is null) { Unrated = true; }
+        else { Unrated = false; ScoreValue = v.Value; }
+    }
+
+    private string Snippet
+    {
+        get
+        {
+            var interactive = !ReadOnly && !Disabled;
+            var sb = new System.Text.StringBuilder("<AtomRating");
+            // Input: two-way bind. Display: a literal value (null omitted → unrated).
+            if (interactive) sb.Append(" @bind-Value=\"score\"");
+            else if (!Unrated) sb.Append($" Value=\"{ScoreValue.ToString(Inv)}\"");
+            if (Max != 5) sb.Append($" Max=\"{Max}\"");
+            if (Step != 0.5) sb.Append($" Step=\"{Step.ToString(Inv)}\"");
+            if (ReadOnly) sb.Append(" ReadOnly=\"true\"");
+            if (Disabled) sb.Append(" Disabled=\"true\"");
+            if (Clearable) sb.Append(" Clearable=\"true\"");
+            if (IconSel != RatingIcon.Star) sb.Append($" Icon=\"RatingIcon.{IconSel}\"");
+            if (!string.IsNullOrEmpty(IconPath)) sb.Append($" IconPath=\"{IconPath}\"");
+            if (UseEmptyIcon) sb.Append($" EmptyIcon=\"RatingIcon.{EmptyIconSel}\"");
+            if (!string.IsNullOrEmpty(EmptyIconPath)) sb.Append($" EmptyIconPath=\"{EmptyIconPath}\"");
+            if (IconViewBox != "0 0 24 24") sb.Append($" IconViewBox=\"{IconViewBox}\"");
+            if (RotationV != 0) sb.Append($" Rotation=\"{RotationV.ToString(Inv)}\"");
+            if (!string.IsNullOrEmpty(Color)) sb.Append($" Color=\"{Color}\"");
+            if (!string.IsNullOrEmpty(EmptyColor)) sb.Append($" EmptyColor=\"{EmptyColor}\"");
+            if (!string.IsNullOrEmpty(HoverColor)) sb.Append($" HoverColor=\"{HoverColor}\"");
+            if (SizeV != 24) sb.Append($" Size=\"{SizeV.ToString(Inv)}\"");
+            if (GapV != 6) sb.Append($" Gap=\"{GapV.ToString(Inv)}\"");
+            if (ShowValue) sb.Append(" ShowValue=\"true\"");
+            if (ValueFormat != "0.#") sb.Append($" ValueFormat=\"{ValueFormat}\"");
+            if (UnratedText != "Unrated") sb.Append($" UnratedText=\"{UnratedText}\"");
+            if (UseCount) sb.Append($" Count=\"{CountValue}\"");
+            if (CountFormat != "N0") sb.Append($" CountFormat=\"{CountFormat}\"");
+            if (!string.IsNullOrEmpty(AriaLabel)) sb.Append($" AriaLabel=\"{AriaLabel}\"");
+            if (!string.IsNullOrEmpty(HatchClass)) sb.Append($" CssClass=\"{HatchClass}\"");
+            if (!string.IsNullOrEmpty(HatchStyle)) sb.Append($" Style=\"{HatchStyle}\"");
+            if (!string.IsNullOrEmpty(HatchTitle)) sb.Append($" title=\"{HatchTitle}\"");
+            sb.Append(" />");
+            return sb.ToString();
+        }
+    }
+}
