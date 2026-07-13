@@ -16,7 +16,7 @@
                       Width="@WidthV" Height="@HeightV"
                       Background="@Nz(BgColor)"
                       PenColor="@PenColor" PenWidth="@PenWidthV" FillColor="@Nz(FillColor)"
-                      ShowToolbar="@ShowToolbar" ShowLayers="@ShowLayers" ShowStatusBar="@ShowStatus"
+                      ShowMenuBar="@ShowMenu" ShowToolbar="@ShowToolbar" ShowLayers="@ShowLayers" ShowStatusBar="@ShowStatus"
                       ToolbarPlacement="@Placement"
                       MaxHistory="@MaxHistory"
                       Disabled="@Disabled"
@@ -78,6 +78,7 @@
     </div>
     <div class="ctrl">
         <label>Panels</label>
+        <div class="row"><input type="checkbox" id="csMenu" @bind="ShowMenu" /><label for="csMenu" class="inline">ShowMenuBar</label></div>
         <div class="row"><input type="checkbox" id="csTb" @bind="ShowToolbar" /><label for="csTb" class="inline">ShowToolbar</label></div>
         <div class="row"><input type="checkbox" id="csLy" @bind="ShowLayers" /><label for="csLy" class="inline">ShowLayers</label></div>
         <div class="row"><input type="checkbox" id="csSt" @bind="ShowStatus" /><label for="csSt" class="inline">ShowStatusBar</label></div>
@@ -133,6 +134,7 @@
     private string FillColor = "";
     private ToolbarPlacement Placement = ToolbarPlacement.Top;
     private int MaxHistory = 100;
+    private bool ShowMenu = true;
     private bool ShowToolbar = true;
     private bool ShowLayers = true;
     private bool ShowStatus = true;
@@ -165,6 +167,7 @@
             if (!string.IsNullOrEmpty(FillColor)) sb.Append($" FillColor=\"{FillColor}\"");
             if (Placement != ToolbarPlacement.Top) sb.Append($" ToolbarPlacement=\"ToolbarPlacement.{Placement}\"");
             if (MaxHistory != 100) sb.Append($" MaxHistory=\"{MaxHistory}\"");
+            if (!ShowMenu) sb.Append(" ShowMenuBar=\"false\"");
             if (!ShowToolbar) sb.Append(" ShowToolbar=\"false\"");
             if (!ShowLayers) sb.Append(" ShowLayers=\"false\"");
             if (!ShowStatus) sb.Append(" ShowStatusBar=\"false\"");

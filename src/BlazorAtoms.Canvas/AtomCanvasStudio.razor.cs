@@ -31,6 +31,14 @@ public partial class AtomCanvasStudio : AtomComponentBase
 
     private CanvasTool _tool;
     private CanvasTool? _lastToolParam;
+    // panel visibility: internal (so View-menu can toggle) but adopt external param changes too
+    private bool _showToolbar, _showLayers, _showStatus;
+    private bool _lastShowToolbar, _lastShowLayers, _lastShowStatus;
+    // style seeds are editable in the toolbar; track the last param values to adopt external (param) changes
+    private string _lastPenColorParam = "";
+    private double _lastPenWidthParam;
+    private string? _lastFillParam;
+    private string? _lastBgParam;
     private string _penColor = "#111827";
     private double _penWidth = 2;
     private string? _fillColor;
@@ -74,6 +82,8 @@ public partial class AtomCanvasStudio : AtomComponentBase
     [Parameter] public bool ShowLayers { get; set; } = true;
     /// <summary>Show the default status bar (when no <see cref="StatusBar"/> slot is supplied).</summary>
     [Parameter] public bool ShowStatusBar { get; set; } = true;
+    /// <summary>Show the default menu bar (File/Edit/View/Object/Help) — when no <see cref="Menu"/> slot is supplied.</summary>
+    [Parameter] public bool ShowMenuBar { get; set; } = true;
     /// <summary>Where the toolbar sits. Default <see cref="ToolbarPlacement.Top"/>.</summary>
     [Parameter] public ToolbarPlacement ToolbarPlacement { get; set; } = ToolbarPlacement.Top;
 
@@ -89,6 +99,8 @@ public partial class AtomCanvasStudio : AtomComponentBase
     [Parameter] public EventCallback OnChange { get; set; }
 
     // ---- slots (each receives the studio context as @context) ----
+    /// <summary>Replaces the entire default menu bar.</summary>
+    [Parameter] public RenderFragment<AtomCanvasStudioContext>? Menu { get; set; }
     /// <summary>Replaces the entire default toolbar.</summary>
     [Parameter] public RenderFragment<AtomCanvasStudioContext>? Toolbar { get; set; }
     /// <summary>Injected at the start of the default toolbar.</summary>
@@ -110,16 +122,28 @@ public partial class AtomCanvasStudio : AtomComponentBase
     {
         _tool = Tool;
         _lastToolParam = Tool;
-        _penColor = PenColor;
-        _penWidth = PenWidth;
-        _fillColor = FillColor;
-        _background = Background;
+        _penColor = _lastPenColorParam = PenColor;
+        _penWidth = _lastPenWidthParam = PenWidth;
+        _fillColor = _lastFillParam = FillColor;
+        _background = _lastBgParam = Background;
+        _showToolbar = _lastShowToolbar = ShowToolbar;
+        _showLayers = _lastShowLayers = ShowLayers;
+        _showStatus = _lastShowStatus = ShowStatusBar;
         _context = new AtomCanvasStudioContext(this);
     }
 
     protected override void OnParametersSet()
     {
         if (_lastToolParam != Tool) { _tool = Tool; _lastToolParam = Tool; }
+        // adopt external (e.g. playground) toggles, while letting the View menu flip them between changes
+        if (_lastShowToolbar != ShowToolbar) { _showToolbar = ShowToolbar; _lastShowToolbar = ShowToolbar; }
+        if (_lastShowLayers != ShowLayers) { _showLayers = ShowLayers; _lastShowLayers = ShowLayers; }
+        if (_lastShowStatus != ShowStatusBar) { _showStatus = ShowStatusBar; _lastShowStatus = ShowStatusBar; }
+        // adopt external style-param changes (fixes: playground "Initial fill/pen" controls were dead after init)
+        if (_lastPenColorParam != PenColor) { _penColor = PenColor; _lastPenColorParam = PenColor; }
+        if (_lastPenWidthParam != PenWidth) { _penWidth = PenWidth; _lastPenWidthParam = PenWidth; }
+        if (_lastFillParam != FillColor) { _fillColor = FillColor; _lastFillParam = FillColor; }
+        if (_lastBgParam != Background) { _background = Background; _lastBgParam = Background; }
     }
 
     // ---- read surface (used by the context + default chrome) ----
@@ -175,14 +199,44 @@ public partial class AtomCanvasStudio : AtomComponentBase
         StateHasChanged();
     }
 
-    /// <summary>Set the pen (stroke) color.</summary>
-    public void SetPenColor(string color) { _penColor = color; StateHasChanged(); }
-    /// <summary>Set the pen (stroke) width in px.</summary>
-    public void SetPenWidth(double width) { _penWidth = width; StateHasChanged(); }
-    /// <summary>Set the fill color used for inserted shapes (null = none).</summary>
-    public void SetFillColor(string? color) { _fillColor = color; StateHasChanged(); }
+    /// <summary>Set the pen (stroke) color — the default for new shapes, and recolors the selected shape.</summary>
+    public async Task SetPenColorAsync(string color)
+    {
+        _penColor = color;
+        await ApplyToSelectedAsync(s => s with { Stroke = color });
+        StateHasChanged();
+    }
+
+    /// <summary>Set the pen (stroke) width — the default for new shapes, and applies to the selected shape.</summary>
+    public async Task SetPenWidthAsync(double width)
+    {
+        _penWidth = width;
+        await ApplyToSelectedAsync(s => s with { StrokeWidth = width });
+        StateHasChanged();
+    }
+
+    /// <summary>Set the fill color (null = none) — the default for new shapes, and fills the selected shape.</summary>
+    public async Task SetFillColorAsync(string? color)
+    {
+        _fillColor = color;
+        await ApplyToSelectedAsync(s => s with { Fill = color });
+        StateHasChanged();
+    }
+
     /// <summary>Set the canvas background color.</summary>
     public void SetBackground(string? color) { _background = color; StateHasChanged(); }
+
+    // Apply an edit to the selected shape (undoable). No-op when nothing is selected — the caller has still
+    // updated the "current style" default for future inserts.
+    private async Task ApplyToSelectedAsync(Func<CanvasShape, CanvasShape> edit)
+    {
+        var id = _selectedId;
+        if (id is null) return;
+        var src = Current;
+        if (!src.Any(s => s.Id == id)) return;
+        PushHistory();
+        await SetShapesAsync(src.Select(s => s.Id == id ? edit(s) : s).ToList());
+    }
 
     /// <summary>Append a shape (records an undo step).</summary>
     public async Task AddShapeAsync(CanvasShape shape)
@@ -286,6 +340,19 @@ public partial class AtomCanvasStudio : AtomComponentBase
     /// <summary>Reset zoom to 100% and pan to origin.</summary>
     public void ZoomReset() { _scale = 1; _panX = 0; _panY = 0; StateHasChanged(); }
 
+    /// <summary>Show/hide the toolbar (tool strip).</summary>
+    public void ToggleToolbar() { _showToolbar = !_showToolbar; StateHasChanged(); }
+    /// <summary>Show/hide the layers panel.</summary>
+    public void ToggleLayers() { _showLayers = !_showLayers; StateHasChanged(); }
+    /// <summary>Show/hide the status bar.</summary>
+    public void ToggleStatusBar() { _showStatus = !_showStatus; StateHasChanged(); }
+    /// <summary>Toggle the selected shape's visibility (no-op if nothing is selected).</summary>
+    public Task ToggleSelectedVisibleAsync() => _selectedId is null ? Task.CompletedTask : ToggleVisibleAsync(_selectedId);
+
+    internal bool ShowToolbarValue => _showToolbar;
+    internal bool ShowLayersValue => _showLayers;
+    internal bool ShowStatusValue => _showStatus;
+
     private void SetScale(double newScale)
     {
         newScale = Math.Clamp(newScale, 0.1, 8);
@@ -373,19 +440,14 @@ public partial class AtomCanvasStudio : AtomComponentBase
 
     private static string Fmt(double v) => v.ToString(Inv);
 
-    // default-toolbar input handlers
-    private void OnPenColorInput(ChangeEventArgs e) => SetPenColor(e.Value?.ToString() ?? _penColor);
-    private void OnPenWidthInput(ChangeEventArgs e)
-    {
-        if (double.TryParse(e.Value?.ToString(), NumberStyles.Any, Inv, out var v)) SetPenWidth(v);
-    }
+    // default-toolbar input handlers (color/width use @onchange = commit → one undo step, recolors selection)
+    private Task OnPenColorInput(ChangeEventArgs e) => SetPenColorAsync(e.Value?.ToString() ?? _penColor);
+    private Task OnPenWidthInput(ChangeEventArgs e)
+        => double.TryParse(e.Value?.ToString(), NumberStyles.Any, Inv, out var v) ? SetPenWidthAsync(v) : Task.CompletedTask;
     private void OnBackgroundInput(ChangeEventArgs e) => SetBackground(e.Value?.ToString());
-    private void OnFillToggle(ChangeEventArgs e)
-    {
-        var on = e.Value is bool b && b;
-        SetFillColor(on ? (_fillColor ?? "#93c5fd") : null);
-    }
-    private void OnFillColorInput(ChangeEventArgs e) => SetFillColor(e.Value?.ToString());
+    // Picking a color always sets a (non-null) fill; the "No fill" button clears it.
+    private Task OnFillColorInput(ChangeEventArgs e) => SetFillColorAsync(e.Value?.ToString());
+    private Task ClearFill() => SetFillColorAsync(null);
 
     internal static string ShapeLabel(CanvasShape s) => s switch
     {

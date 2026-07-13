@@ -153,4 +153,105 @@ public class AtomCanvasStudioTests : TestContext
         Assert.Single(cut.FindAll(".acs-stamp"));
         Assert.Contains("Ⓩ", cut.Markup);
     }
+
+    [Fact]
+    public void Default_menu_bar_renders_standard_menus()
+    {
+        var cut = RenderComponent<AtomCanvasStudio>();
+        Assert.NotNull(cut.Find(".acs-menubar"));
+        Assert.Equal(5, cut.FindAll(".acs-menu").Count); // File / Edit / View / Object / Help
+        foreach (var label in new[] { "File", "Edit", "View", "Object", "Help" })
+            Assert.Contains(label, cut.Markup);
+    }
+
+    [Fact]
+    public void ShowMenuBar_false_hides_the_menu_bar()
+    {
+        var cut = RenderComponent<AtomCanvasStudio>(p => p.Add(c => c.ShowMenuBar, false));
+        Assert.Empty(cut.FindAll(".acs-menubar"));
+    }
+
+    [Fact]
+    public void Menu_slot_replaces_the_default_menu_bar()
+    {
+        var cut = RenderComponent<AtomCanvasStudio>(p => p
+            .Add(c => c.Menu, (AtomCanvasStudioContext ctx) =>
+                (RenderFragment)(b => b.AddMarkupContent(0, "<div class=\"custom-menu\">mine</div>"))));
+
+        Assert.NotEmpty(cut.FindAll(".custom-menu"));
+        Assert.Empty(cut.FindAll(".acs-menu")); // default menus gone
+    }
+
+    [Fact]
+    public async Task View_menu_toggle_hides_the_layers_panel()
+    {
+        var cut = RenderComponent<AtomCanvasStudio>();
+        Assert.NotNull(cut.Find(".acs-layers"));
+
+        await cut.InvokeAsync(() => cut.Instance.ToggleLayers());
+
+        Assert.Empty(cut.FindAll(".acs-layers"));
+    }
+
+    [Fact]
+    public async Task SetFillColor_fills_the_selected_shape()
+    {
+        var rect = new CanvasRect(0, 0, 10, 10); // no fill
+        IReadOnlyList<CanvasShape>? cur = null;
+        var cut = RenderComponent<AtomCanvasStudio>(p => p.Add(c => c.ShapesChanged, Capture(v => cur = v)));
+
+        await cut.InvokeAsync(() => cut.Instance.AddShapeAsync(rect));
+        await cut.InvokeAsync(() => cut.Instance.SelectShape(rect.Id));
+        await cut.InvokeAsync(() => cut.Instance.SetFillColorAsync("#ff0000"));
+
+        Assert.Equal("#ff0000", cur!.Single().Fill);
+        Assert.Equal(rect.Id, cur!.Single().Id);
+    }
+
+    [Fact]
+    public async Task SetPenColor_recolors_the_selected_shape_stroke()
+    {
+        var rect = new CanvasRect(0, 0, 10, 10);
+        IReadOnlyList<CanvasShape>? cur = null;
+        var cut = RenderComponent<AtomCanvasStudio>(p => p.Add(c => c.ShapesChanged, Capture(v => cur = v)));
+
+        await cut.InvokeAsync(() => cut.Instance.AddShapeAsync(rect));
+        await cut.InvokeAsync(() => cut.Instance.SelectShape(rect.Id));
+        await cut.InvokeAsync(() => cut.Instance.SetPenColorAsync("#00ff00"));
+
+        Assert.Equal("#00ff00", cur!.Single().Stroke);
+    }
+
+    [Fact]
+    public async Task SetFillColor_with_no_selection_only_sets_the_default()
+    {
+        IReadOnlyList<CanvasShape>? cur = null;
+        var cut = RenderComponent<AtomCanvasStudio>(p => p.Add(c => c.ShapesChanged, Capture(v => cur = v)));
+
+        await cut.InvokeAsync(() => cut.Instance.SetFillColorAsync("#123456")); // nothing selected
+        Assert.Null(cur); // no model change / ShapesChanged
+    }
+
+    [Fact]
+    public void Fill_color_picker_is_enabled_by_default_with_a_no_fill_button()
+    {
+        var cut = RenderComponent<AtomCanvasStudio>();
+        var fill = cut.FindAll("input[type=color]").First(i => i.GetAttribute("aria-label") == "Fill color");
+        Assert.False(fill.HasAttribute("disabled")); // was disabled until a checkbox was ticked — the reported bug
+        Assert.Contains("No fill", cut.Markup);
+    }
+
+    [Fact]
+    public void FillColor_param_change_after_init_is_adopted()
+    {
+        var cut = RenderComponent<AtomCanvasStudio>(p => p
+            .Add(c => c.FillColor, "#111111")
+            .Add(c => c.ToolbarEnd, (AtomCanvasStudioContext ctx) =>
+                (RenderFragment)(b => b.AddMarkupContent(0, $"<span class=\"fc\">{ctx.FillColor}</span>"))));
+
+        Assert.Equal("#111111", cut.Find(".fc").TextContent);
+
+        cut.SetParametersAndRender(p => p.Add(c => c.FillColor, "#222222"));
+        Assert.Equal("#222222", cut.Find(".fc").TextContent);
+    }
 }

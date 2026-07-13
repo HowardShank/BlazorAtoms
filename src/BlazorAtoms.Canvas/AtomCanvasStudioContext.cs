@@ -44,12 +44,12 @@ public sealed class AtomCanvasStudioContext
     // ---- actions ----
     /// <summary>Set the active tool.</summary>
     public Task SetTool(CanvasTool tool) => _s.SetToolAsync(tool);
-    /// <summary>Set the pen color.</summary>
-    public void SetPenColor(string color) => _s.SetPenColor(color);
-    /// <summary>Set the pen width (px).</summary>
-    public void SetPenWidth(double width) => _s.SetPenWidth(width);
-    /// <summary>Set the fill color (null = none).</summary>
-    public void SetFillColor(string? color) => _s.SetFillColor(color);
+    /// <summary>Set the pen color — default for new shapes; recolors the selected shape.</summary>
+    public Task SetPenColor(string color) => _s.SetPenColorAsync(color);
+    /// <summary>Set the pen width (px) — default for new shapes; applies to the selected shape.</summary>
+    public Task SetPenWidth(double width) => _s.SetPenWidthAsync(width);
+    /// <summary>Set the fill color (null = none) — default for new shapes; fills the selected shape.</summary>
+    public Task SetFillColor(string? color) => _s.SetFillColorAsync(color);
     /// <summary>Set the background color.</summary>
     public void SetBackground(string? color) => _s.SetBackground(color);
     /// <summary>Append a shape (undoable).</summary>
@@ -82,6 +82,14 @@ public sealed class AtomCanvasStudioContext
     public void ZoomOut() => _s.ZoomOut();
     /// <summary>Reset zoom + pan.</summary>
     public void ZoomReset() => _s.ZoomReset();
+    /// <summary>Show/hide the toolbar.</summary>
+    public void ToggleToolbar() => _s.ToggleToolbar();
+    /// <summary>Show/hide the layers panel.</summary>
+    public void ToggleLayers() => _s.ToggleLayers();
+    /// <summary>Show/hide the status bar.</summary>
+    public void ToggleStatusBar() => _s.ToggleStatusBar();
+    /// <summary>Toggle the selected shape's visibility.</summary>
+    public Task ToggleSelectedVisible() => _s.ToggleSelectedVisibleAsync();
     /// <summary>Export the current viewport as a PNG data URL.</summary>
     public ValueTask<string> ExportPngAsync() => _s.ExportPngAsync();
     /// <summary>Export the model as an SVG string.</summary>

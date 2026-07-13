@@ -14,6 +14,75 @@
      style="@StyleAttr(null)"
      data-placement="@PlacementValue">
 
+    @* ---------------- menu bar ---------------- *@
+    @if (Menu is not null)
+    {
+        <div class="acs-menubar">@Menu(_context!)</div>
+    }
+    else if (ShowMenuBar)
+    {
+        <div class="acs-menubar" role="menubar">
+            <details name="acsmenu" class="acs-menu">
+                <summary class="acs-menu-label">File</summary>
+                <div class="acs-menu-list">
+                    <button type="button" class="acs-menu-item" disabled="@Disabled" @onclick="ClearAsync">New</button>
+                    <label class="acs-menu-item">Open…<InputFile OnChange="OnLoadFileAsync" class="acs-file" accept=".json" /></label>
+                    <a class="acs-menu-item" download="canvas.json" href="@ExportJsonDataUri">Save (.json)</a>
+                    <div class="acs-menu-sep"></div>
+                    <button type="button" class="acs-menu-item" @onclick="DoExportPngAsync">Export PNG…</button>
+                    @if (!string.IsNullOrEmpty(_png))
+                    {
+                        <a class="acs-menu-item acs-dl" download="canvas.png" href="@_png">⤓ Download PNG</a>
+                    }
+                    <a class="acs-menu-item" download="canvas.svg" href="@ExportSvgDataUri">Export SVG</a>
+                </div>
+            </details>
+
+            <details name="acsmenu" class="acs-menu">
+                <summary class="acs-menu-label">Edit</summary>
+                <div class="acs-menu-list">
+                    <button type="button" class="acs-menu-item" disabled="@(Disabled || !CanUndoValue)" @onclick="UndoAsync">Undo</button>
+                    <button type="button" class="acs-menu-item" disabled="@(Disabled || !CanRedoValue)" @onclick="RedoAsync">Redo</button>
+                    <div class="acs-menu-sep"></div>
+                    <button type="button" class="acs-menu-item" disabled="@(Disabled || _selectedId is null)" @onclick="DeleteSelectedAsync">Delete selected</button>
+                    <button type="button" class="acs-menu-item" disabled="@(Disabled || ShapeCountValue == 0)" @onclick="ClearAsync">Clear all</button>
+                </div>
+            </details>
+
+            <details name="acsmenu" class="acs-menu">
+                <summary class="acs-menu-label">View</summary>
+                <div class="acs-menu-list">
+                    <button type="button" class="acs-menu-item" @onclick="ZoomIn">Zoom in</button>
+                    <button type="button" class="acs-menu-item" @onclick="ZoomOut">Zoom out</button>
+                    <button type="button" class="acs-menu-item" @onclick="ZoomReset">Reset zoom</button>
+                    <div class="acs-menu-sep"></div>
+                    <button type="button" class="acs-menu-item" @onclick="ToggleToolbar"><span class="acs-check">@(_showToolbar ? "✓" : "")</span> Toolbar</button>
+                    <button type="button" class="acs-menu-item" @onclick="ToggleLayers"><span class="acs-check">@(_showLayers ? "✓" : "")</span> Layers</button>
+                    <button type="button" class="acs-menu-item" @onclick="ToggleStatusBar"><span class="acs-check">@(_showStatus ? "✓" : "")</span> Status bar</button>
+                </div>
+            </details>
+
+            <details name="acsmenu" class="acs-menu">
+                <summary class="acs-menu-label">Object</summary>
+                <div class="acs-menu-list">
+                    <button type="button" class="acs-menu-item" disabled="@(Disabled || _selectedId is null)" @onclick="() => BringToFrontAsync(_selectedId!)">Bring to front</button>
+                    <button type="button" class="acs-menu-item" disabled="@(Disabled || _selectedId is null)" @onclick="() => BringForwardAsync(_selectedId!)">Bring forward</button>
+                    <button type="button" class="acs-menu-item" disabled="@(Disabled || _selectedId is null)" @onclick="() => SendBackwardAsync(_selectedId!)">Send backward</button>
+                    <button type="button" class="acs-menu-item" disabled="@(Disabled || _selectedId is null)" @onclick="() => SendToBackAsync(_selectedId!)">Send to back</button>
+                    <div class="acs-menu-sep"></div>
+                    <button type="button" class="acs-menu-item" disabled="@(Disabled || _selectedId is null)" @onclick="ToggleSelectedVisibleAsync">Show / hide</button>
+                </div>
+            </details>
+
+            <details name="acsmenu" class="acs-menu">
+                <summary class="acs-menu-label">Help</summary>
+                <div class="acs-menu-list">
+                    <span class="acs-menu-item acs-menu-info">AtomCanvasStudio · BlazorAtoms.Canvas</span>
+                </div>
+            </details>
+        </div>
+    }
+
     <div class="acs-main">
 
         @* ---------------- toolbar ---------------- *@
@@ -21,7 +90,7 @@
         {
             <div class="acs-toolbar">@Toolbar(_context!)</div>
         }
-        else if (ShowToolbar)
+        else if (_showToolbar)
         {
             <div class="acs-toolbar">
                 @if (ToolbarStart is not null) { @ToolbarStart(_context!) }
@@ -51,14 +120,14 @@
                 </div>
 
                 <div class="acs-group" role="group" aria-label="Style">
-                    <label class="acs-swatch" title="Pen color">
-                        <input type="color" value="@_penColor" @oninput="OnPenColorInput" disabled="@Disabled" aria-label="Pen color" />
+                    <label class="acs-swatch" title="Pen / stroke color (applies to the selected shape)">
+                        <input type="color" value="@_penColor" @onchange="OnPenColorInput" disabled="@Disabled" aria-label="Pen color" />
                     </label>
-                    <input class="acs-range" type="range" min="1" max="24" step="0.5" value="@Fmt(_penWidth)" @oninput="OnPenWidthInput" disabled="@Disabled" title="Pen width" aria-label="Pen width" />
-                    <label class="acs-swatch acs-fill" title="Fill">
-                        <input type="checkbox" checked="@(_fillColor is not null)" @onchange="OnFillToggle" disabled="@Disabled" aria-label="Enable fill" />
-                        <input type="color" value="@(_fillColor ?? "#93c5fd")" @oninput="OnFillColorInput" disabled="@(Disabled || _fillColor is null)" aria-label="Fill color" />
+                    <input class="acs-range" type="range" min="1" max="24" step="0.5" value="@Fmt(_penWidth)" @onchange="OnPenWidthInput" disabled="@Disabled" title="Pen width" aria-label="Pen width" />
+                    <label class="acs-swatch" title="Fill color (applies to the selected shape)">
+                        <input type="color" value="@(_fillColor ?? "#93c5fd")" @onchange="OnFillColorInput" disabled="@Disabled" aria-label="Fill color" />
                     </label>
+                    <button type="button" class="acs-btn @(_fillColor is null ? "is-active" : "")" title="No fill" disabled="@Disabled" @onclick="ClearFill">⌀</button>
                     <label class="acs-swatch" title="Background">
                         <input type="color" value="@(_background ?? "#ffffff")" @oninput="OnBackgroundInput" disabled="@Disabled" aria-label="Background color" />
                     </label>
@@ -124,7 +193,7 @@
             {
                 <div class="acs-panel acs-panel-end">@EndPanel(_context!)</div>
             }
-            else if (ShowLayers)
+            else if (_showLayers)
             {
                 <div class="acs-panel acs-panel-end acs-layers">
                     <div class="acs-panel-title">Layers</div>
@@ -160,7 +229,7 @@
     {
         <div class="acs-status">@StatusBar(_context!)</div>
     }
-    else if (ShowStatusBar)
+    else if (_showStatus)
     {
         <div class="acs-status">
             <span>@ShapeCountValue shape@(ShapeCountValue == 1 ? "" : "s")</span>

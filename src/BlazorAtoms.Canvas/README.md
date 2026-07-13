@@ -127,9 +127,11 @@ A full drawing workbench you can drop in with zero config:
 @code { List<CanvasShape> scene = new(); }
 ```
 
-That renders the canvas plus a toolbar (Select / Draw / Pan / Erase, insert Rect/Circle/Line/Text, a stamp
-palette, pen color + width, fill, background, undo/redo, delete, clear, zoom, and PNG/SVG/JSON export), a
-layers panel, and a status bar. Everything drives a two-way-bound `Shapes` model with a full undo/redo history.
+That renders the canvas plus a **menu bar** (File / Edit / View / Object / Help), a toolbar (Select / Draw /
+Pan / Erase, insert Rect/Circle/Line/Text, a stamp palette, pen color + width, fill, background, undo/redo,
+delete, clear, zoom, and PNG/SVG/JSON export), a layers panel, and a status bar. Everything drives a
+two-way-bound `Shapes` model with a full undo/redo history. Toggle regions with `ShowMenuBar` / `ShowToolbar`
+/ `ShowLayers` / `ShowStatusBar` (the View menu toggles them too).
 
 **Extend it without editing source** — every region is a `RenderFragment<AtomCanvasStudioContext>` slot, and
 the same context is a `CascadingValue`. Inject your own tools that drive the canvas:
@@ -152,7 +154,7 @@ the same context is a `CascadingValue`. Inject your own tools that drive the can
 }
 ```
 
-Slots: `Toolbar` (replaces the whole toolbar) · `ToolbarStart` / `ToolbarEnd` (inject beside the defaults) ·
+Slots: `Menu` (replaces the whole menu bar) · `Toolbar` (replaces the whole toolbar) · `ToolbarStart` / `ToolbarEnd` (inject beside the defaults) ·
 `StartPanel` / `EndPanel` (side rails; `EndPanel` replaces the default layers panel) · `StatusBar` ·
 `CanvasOverlay`. The `AtomCanvasStudioContext` exposes read state (`Tool`, `PenColor`, `SelectedId`,
 `ShapeCount`, `CanUndo`…) and actions (`SetTool`, `AddShape`, `BeginInsert`, `DeleteSelected`, `Undo`/`Redo`,
