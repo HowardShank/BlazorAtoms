@@ -1,0 +1,20 @@
+@inherits AtomComponentBase
+
+@*
+    AtomHighlight.razor
+    -------------------
+    Light, zero-JS highlighter for plain-text child content. The component renders
+    <mark> elements around matches at build time, so behaviour is identical in every
+    Blazor render mode. Use this when you control or know the child content is text.
+*@
+
+@if (!CancellationToken.IsCancellationRequested)
+{
+    <link rel="stylesheet" href="_content/BlazorAtoms.Highlights/atom-highlight.css" />
+    <span @attributes="AdditionalAttributes"
+          class="@ClassAttr("atom-highlight-root")"
+          style="@StyleAttr(RootStyle)"
+          aria-label="@AriaLabel">
+        @_renderContent
+    </span>
+}

@@ -1,0 +1,41 @@
+/* atom-highlight.css
+   ---------------
+   Global styles for .atom-highlight marks. Loaded as a static web asset so it
+   applies to both server-rendered <mark> elements and marks created by the
+   AtomHighlightDeep JavaScript module.
+*/
+
+.atom-highlight-root {
+    --highlight-bg: #fde047;
+    --highlight-color: inherit;
+    --highlight-radius: 2px;
+    --highlight-padding: 0 2px;
+    --highlight-underline-thickness: 3px;
+    --highlight-underline-offset: 2px;
+    --highlight-outline-width: 1.5px;
+    --highlight-outline-offset: 1px;
+}
+
+.atom-highlight {
+    background-color: var(--highlight-bg);
+    color: var(--highlight-color);
+    border-radius: var(--highlight-radius);
+    padding: var(--highlight-padding);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+}
+
+.atom-highlight[data-style="underline"] {
+    background-color: transparent;
+    text-decoration: underline;
+    text-decoration-color: var(--highlight-bg);
+    text-decoration-thickness: var(--highlight-underline-thickness);
+    text-underline-offset: var(--highlight-underline-offset);
+    padding: 0;
+}
+
+.atom-highlight[data-style="outline"] {
+    background-color: transparent;
+    outline: var(--highlight-outline-width) solid var(--highlight-bg);
+    outline-offset: var(--highlight-outline-offset);
+}

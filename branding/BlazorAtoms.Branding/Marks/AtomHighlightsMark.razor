@@ -1,0 +1,16 @@
+@* AtomHighlightsMark.razor — BlazorAtoms "Highlights" brand mark. Thin wrapper over the shared AtomMark engine.
+   Payload (symbol / number / label / colors) is baked here; chrome is inherited from AtomMark's defaults. *@
+<AtomMark Layout="@Layout" Size="@Size"
+          Number="89" Symbol="Hi" Label="HIGHLIGHTS" Word2="HIGHLIGHTS"
+          TileTop="#fde047" TileBottom="#f59e0b" Stroke="#d97706" Ember="#fef3c7" Cream="#ffffff"
+          FlameTip="#fef3c7" FlameMid="#fbbf24" FlameBase="#d97706"
+          InnerTop="#fffbeb" InnerBottom="#fde68a"
+          Word2Top="#fbbf24" Word2Bottom="#d97706" SymbolColor="#FFFFFF" />
+
+@code {
+    /// <summary>Layout arrangement — Icon (default), Lockup, or Stacked.</summary>
+    [Parameter] public AtomMark.MarkLayout Layout { get; set; } = AtomMark.MarkLayout.Icon;
+
+    /// <summary>Overall size in px — icon edge, or lockup/stacked height (width keeps aspect).</summary>
+    [Parameter] public int Size { get; set; } = 128;
+}

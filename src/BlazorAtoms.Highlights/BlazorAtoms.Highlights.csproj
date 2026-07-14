@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <Import Project="$(RepoRoot)build\Packable.props" />
+  <Import Project="$(RepoRoot)build\Shared.props" />
+
+  <PropertyGroup>
+    <PackageId>BlazorAtoms.Highlights</PackageId>
+    <Title>Blazor Highlights</Title>
+    <Description>Text highlighter components for Blazor. AtomHighlight is a zero-JS light highlighter for plain-text child content. AtomHighlightDeep uses a tiny self-loaded JS module to search and highlight text inside arbitrary child content (mixed markup, components) like jquery.highlight. Both components are themeable via CSS variables and support background, underline, and outline styles.</Description>
+    <PackageTags>Blazor;Highlight;Mark;Search;Text;CSS;JavaScript;WebAssembly;Server</PackageTags>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+  </ItemGroup>
+
+</Project>

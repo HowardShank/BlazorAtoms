@@ -1,0 +1,22 @@
+@inherits AtomComponentBase
+
+@*
+    AtomHighlightDeep.razor
+    -----------------------
+    Full DOM text-node highlighter for arbitrary child content, including nested
+    components and mixed markup. A tiny self-loaded JS module walks the rendered DOM
+    and wraps matches in <mark class="atom-highlight">, similar to jquery.highlight.
+    Use this when the child content is unknown, dynamic, or produced by other components.
+*@
+
+<link rel="stylesheet" href="_content/BlazorAtoms.Highlights/atom-highlight.css" />
+<span @attributes="AdditionalAttributes"
+      @ref="RootRef"
+      class="@ClassAttr("atom-highlight-root")"
+      style="@StyleAttr(RootStyle)"
+      aria-label="@AriaLabel"
+      data-highlight-style="@StyleValue"
+      data-highlight-terms="@(_hasTerms ? SerializedTerms : null)"
+      data-highlight-options="@(_hasTerms ? OptionsJson : null)">
+    @ChildContent
+</span>
