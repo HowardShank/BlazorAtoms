@@ -1,0 +1,33 @@
+/* atom-highlighter.css
+   --------------------
+   Default look for <mark> elements injected by atom-highlighter.js. Targets the
+   AtomHighlighter component's default HighlightClass ("atom-highlighter"); pass a
+   different HighlightClass to use your own styling instead. Tokens are set as inline
+   custom properties on AtomHighlighter's own wrapper div (Background/Color/Radius/Padding
+   params), so they cascade down to marks without any component needing a "root" class.
+*/
+
+.atom-highlighter {
+    background-color: var(--highlighter-bg, #fde047);
+    color: var(--highlighter-color, inherit);
+    border-radius: var(--highlighter-radius, 2px);
+    padding: var(--highlighter-padding, 0 2px);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+}
+
+.atom-highlighter[data-style="underline"] {
+    background-color: transparent;
+    color: inherit; /* underline marks the match; text color stays whatever it already was */
+    text-decoration: underline;
+    text-decoration-color: var(--highlighter-bg, #fde047);
+    text-decoration-thickness: 3px;
+    text-underline-offset: 2px;
+    padding: 0;
+}
+
+.atom-highlighter[data-style="outline"] {
+    background-color: transparent;
+    outline: 1.5px solid var(--highlighter-bg, #fde047);
+    outline-offset: 1px;
+}

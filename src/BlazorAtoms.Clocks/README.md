@@ -18,13 +18,12 @@ Live time-display components for Blazor — one library, six components:
   filter, grouped by region, current UTC offset per zone, and a "use my zone" auto-detect.
   Two-way bound on the IANA id (`@bind-Value`).
 
-All four share their tick + browser-timezone plumbing (`ClockInfraBase`); the single-zone clocks
-add `Kind` / `TimeZone` / `CurrentTime` on top (`ClockBase`), so `Live` behaves identically across
-every component.
+`Live` (tick every second vs. a frozen snapshot) behaves identically across every component.
 
-Renders a semantic `<time datetime="…">` element. Ticks once a second via a C# `PeriodicTimer`.
-Browser-timezone detection uses a tiny **self-loaded JS module** — no `<script>` tag, no DI, and
-only for `Kind="Browser"`; every other mode is JS-free. Server or WebAssembly.
+Renders a semantic `<time datetime="…">` element and ticks once a second. Browser-timezone
+detection only runs when a component actually needs it (`Kind="Browser"`, or a map/strip
+highlighting the viewer's zone) — every other mode loads no JS at all. Works under Server or
+WebAssembly hosting.
 
 ## Install
 
@@ -82,10 +81,6 @@ Link `{App}.styles.css` (scoped-CSS bundle), as with any RCL.
 | `Label` | `string?` | Caption under the dial. |
 | `FaceColor` / `HandColor` / `AccentColor` | `string?` | `--aclk-face` / `--aclk-hand` / `--aclk-accent` (second hand + cap). |
 
-The dial is a `viewBox="0 0 100 100"` SVG scaled by `Size`; hands are vertical lines rotated about
-the center. Hour numerals are injected as raw SVG (Razor reserves the `<text>` tag) and carry inline
-presentation attributes.
-
 ## AtomClockPair
 
 ```razor
@@ -135,8 +130,8 @@ A row/grid/list of clocks — the N-zone case of `AtomClockPair`. Each cell reus
 `public sealed record ClockZone(string Label, string TimeZoneId);` — `ClockZone.Default` is the
 built-in set.
 
-**One timer for the whole strip.** Cells render with `Live="false"`; the strip owns the single tick
-and its per-second re-render refreshes every cell. N zones cost **one** `PeriodicTimer`, not N.
+The strip's own `Live` (inherited, default true) ticks every cell together — cells can't tick
+independently of the strip.
 
 ## AtomTimeZoneMap
 
@@ -171,14 +166,12 @@ per-city times from `TimeZoneInfo` (DST-aware; the tz database already in the .N
 
 `public sealed record MapCity(string Name, double Lon, double Lat, string TimeZoneId);`
 
-**How it stays dependency-free.** The map is an equirectangular SVG (`viewBox="0 0 360 180"`,
-`X = lon+180`, `Y = 90-lat`). Bands, graticule, the day/night terminator (a solar-declination sine
-curve) and the sun marker are all plain C# geometry. Continents are a compact, low-poly public-domain
-outline baked in as an inline `<path>`. City times are `TimeZoneInfo.ConvertTime(...)`. The **only**
-JS is the shared browser-timezone probe, and only when `HighlightViewerZone` is on — during static
-SSR/prerender the map renders correctly without it and simply skips the highlight until interactive.
-Approximate by design: the bands are nominal whole-hour meridians, not political tz borders — the
-city pins carry the exact, DST-correct local times.
+No map tiles or CDN are ever fetched — the whole map, including continents, is inline SVG shipped
+with the component. The only JS is the shared browser-timezone probe, and only when
+`HighlightViewerZone` is on — during static SSR/prerender the map renders correctly without it and
+simply skips the highlight until interactive. Approximate by design: the bands are nominal
+whole-hour meridians, not political tz borders — the city pins carry the exact, DST-correct local
+times.
 
 ## AtomTimeZonePicker
 
@@ -223,6 +216,6 @@ prerender the browser clock renders **UTC**; on the first interactive render it 
 are identical in every render mode. In WebAssembly, `Server` already *is* the browser zone
 (`TimeZoneInfo.Local`), so `Browser` and `Server` coincide.
 
-Ticking is disabled implicitly during non-interactive renders (the timer starts in
-`OnAfterRenderAsync`, which doesn't run there) — a static snapshot is shown. No JS is loaded unless
-`Kind="Browser"` is actually used.
+Ticking is disabled during non-interactive renders — a static snapshot is shown until the component
+goes interactive. No JS is loaded unless `Kind="Browser"` (or an equivalent viewer-zone feature) is
+actually used.

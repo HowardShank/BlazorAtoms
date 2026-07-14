@@ -18,11 +18,6 @@ three components:
 The component ships and **self-imports its own tiny JS module** (`_content/BlazorAtoms.Canvas/atom-canvas.js`)
 on first render — no `<script>` tag, no DI, no setup, no third-party runtime dependency. Server or WebAssembly.
 
-> **Why canvas (and JS) here?** The rest of the BlazorAtoms family is pure SVG/CSS. Freehand ink is the
-> exception SVG can't serve: a `pointermove` stream at ~60 Hz would round-trip to the server on every point.
-> This library keeps the whole gesture in JS and calls back to C# **once per stroke**, so drawing is smooth
-> even on a Blazor Server circuit — and `toDataURL` gives you a raster export SVG can't.
-
 ## Install
 
 ```xml

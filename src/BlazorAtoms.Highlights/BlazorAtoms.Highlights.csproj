@@ -6,8 +6,8 @@
   <PropertyGroup>
     <PackageId>BlazorAtoms.Highlights</PackageId>
     <Title>Blazor Highlights</Title>
-    <Description>Text highlighter components for Blazor. AtomHighlight is a zero-JS light highlighter for plain-text child content. AtomHighlightDeep uses a tiny self-loaded JS module to search and highlight text inside arbitrary child content (mixed markup, components) like jquery.highlight. Both components are themeable via CSS variables and support background, underline, and outline styles.</Description>
-    <PackageTags>Blazor;Highlight;Mark;Search;Text;CSS;JavaScript;WebAssembly;Server</PackageTags>
+    <Description>Text highlighter components for Blazor. AtomHighlight is a zero-JS light highlighter for plain-text child content. AtomHighlightDeep is a zero-JS highlighter for rich HTML content (mixed markup: headings, lists, tables, links) supplied as an HTML string; matches inside the markup's text are wrapped in &lt;mark&gt; during Blazor's render pass, so it is safe across re-renders. Both components are themeable via CSS variables and support background, underline, and outline styles.</Description>
+    <PackageTags>Blazor;Highlight;Mark;Search;Text;CSS;WebAssembly;Server</PackageTags>
     <Version>0.1.0</Version>
   </PropertyGroup>
 

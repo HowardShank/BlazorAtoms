@@ -1,0 +1,192 @@
+@using System.Globalization
+@using BlazorAtoms.Highlights
+
+<PageTitle>AtomHighlighter Playground</PageTitle>
+
+<h1>AtomHighlighter playground</h1>
+<p>
+    Highlights keyword matches in the live DOM via a self-imported JS module, scoped to its own
+    container — so it works through arbitrarily nested child components. Below, the wrapper lives
+    inside <code>HighlighterGrandparent</code>, wrapping its own heading plus a
+    <code>HighlighterParent</code> that hosts a <code>HighlighterChild</code>; neither of those two
+    components knows <code>&lt;AtomHighlighter&gt;</code> exists.
+</p>
+<p><a href="demo">&larr; Back to demo</a></p>
+
+<div class="hl-stage-outer">
+    <div class="hl-preview">
+        <div class="hl-preview-box">
+            <HighlighterGrandparent Keywords="@KeywordsList.ToArray()"
+                                     HighlightClass="@HighlightClass"
+                                     CaseSensitive="@CaseSensitive"
+                                     WholeWord="@WholeWord"
+                                     HighlightStyle="@Style"
+                                     Background="@Nz(Background)"
+                                     Color="@Nz(Color)"
+                                     Radius="@Radius"
+                                     Padding="@Nz(Padding)" />
+        </div>
+    </div>
+</div>
+
+<div class="hl-controls">
+    <div class="hl-ctrl">
+        <label>Keywords (comma separated)</label>
+        <input type="text" @bind="RawKeywords" @bind:event="oninput" placeholder="e.g. Blazor, C#" />
+    </div>
+    <div class="hl-ctrl">
+        <label>Highlight class</label>
+        <input type="text" @bind="HighlightClass" @bind:event="oninput" />
+    </div>
+    <div class="hl-ctrl">
+        <label>Style</label>
+        <select @bind="Style">
+            @foreach (var s in Enum.GetValues<HighlightStyle>())
+            {
+                <option value="@s">@s</option>
+            }
+        </select>
+    </div>
+    <div class="hl-ctrl">
+        <label>Background <span class="val">@Background</span></label>
+        <div class="row color">
+            <input type="color" @bind="Background" @bind:event="oninput" aria-label="Background color picker" />
+            <input type="text" @bind="Background" @bind:event="oninput" />
+        </div>
+    </div>
+    <div class="hl-ctrl">
+        <label>Text color <span class="val">@Color</span></label>
+        <div class="row color">
+            <input type="color" @bind="Color" @bind:event="oninput" aria-label="Text color picker" />
+            <input type="text" @bind="Color" @bind:event="oninput" placeholder="(inherit)" />
+        </div>
+    </div>
+    <div class="hl-ctrl">
+        <label>Radius px <span class="val">@Radius</span></label>
+        <input type="range" min="0" max="20" step="1" @bind="Radius" @bind:event="oninput" />
+    </div>
+    <div class="hl-ctrl">
+        <label>Padding</label>
+        <input type="text" @bind="Padding" @bind:event="oninput" placeholder="e.g. 0 2px" />
+    </div>
+    <div class="hl-ctrl">
+        <label>Options</label>
+        <div class="row"><input type="checkbox" id="hlr-cs" @bind="CaseSensitive" /><label for="hlr-cs">Case sensitive</label></div>
+        <div class="row"><input type="checkbox" id="hlr-ww" @bind="WholeWord" /><label for="hlr-ww">Whole word</label></div>
+    </div>
+    <div class="hl-ctrl">
+        <label>Suggestion strategy</label>
+        <select @bind="SuggestionStrategy">
+            @foreach (var s in Enum.GetValues<HighlightColorStrategy>())
+            {
+                <option value="@s">@s</option>
+            }
+        </select>
+    </div>
+    <div class="hl-ctrl">
+        <label>Suggestions</label>
+        <div class="row suggestion">
+            <button type="button" class="chip" style="background:@BackgroundSuggestionBackground; color:@BackgroundSuggestionForeground;" title="Suggested foreground for selected background" @onclick="UseBackgroundSuggestion">
+                @BackgroundSuggestionText
+            </button>
+            <button type="button" class="chip" style="background:@TextSuggestionBackground; color:@TextSuggestionForeground;" title="Suggested background for selected text color" @onclick="UseTextSuggestion">
+                @TextSuggestionText
+            </button>
+        </div>
+    </div>
+</div>
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomHighlighterExample.razor" />
+
+<style>
+    .hl-stage-outer { background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.5rem; margin-bottom:1.5rem; }
+    .hl-preview { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1.5rem; }
+    .hl-preview-box { background:#161b26; border:1px solid #2a3242; border-radius:10px; padding:1.25rem; color:#e6edf3; line-height:1.6; }
+    .hl-preview-box h1 { font-size:1.3rem; margin:0 0 .5rem; }
+    .hl-preview-box h2 { font-size:1.05rem; margin:.75rem 0 .5rem; color:#8794a3; }
+    .hl-controls { display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:1rem 1.5rem; background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; margin-bottom:1.5rem; }
+    .hl-ctrl { display:flex; flex-direction:column; gap:.4rem; }
+    .hl-ctrl label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; gap:.5rem; }
+    .hl-ctrl label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
+    .hl-ctrl input[type=text], .hl-ctrl select { padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; }
+    .hl-ctrl input[type=range] { width:100%; accent-color:#2563eb; }
+    .hl-ctrl .row { display:flex; align-items:center; gap:.5rem; }
+    .hl-ctrl .row.color { gap:.4rem; }
+    .hl-ctrl .row.color input[type=color] { flex:none; width:38px; height:32px; padding:2px; background:#070b10; border:1px solid #1b2330; border-radius:6px; cursor:pointer; }
+    .hl-ctrl .row.color input[type=text] { flex:1 1 auto; min-width:0; }
+    .hl-ctrl .row input[type=checkbox] { accent-color:#2563eb; width:16px; height:16px; }
+    .hl-ctrl .row label { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; justify-content:flex-start; }
+    .hl-ctrl .row.suggestion { flex-wrap:wrap; gap:.5rem; }
+    .hl-ctrl .row.suggestion .chip { padding:.25rem .5rem; border-radius:6px; border:1px solid #2a3242; font-family:ui-monospace,Consolas,monospace; font-size:.8rem; }
+</style>
+
+@code {
+    private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
+
+    private string RawKeywords { get; set; } = "Blazor, C#";
+    private string HighlightClass { get; set; } = "atom-highlighter";
+    private HighlightStyle Style { get; set; } = HighlightStyle.Mark;
+    private HighlightColorStrategy SuggestionStrategy { get; set; } = HighlightColorStrategy.BestContrast;
+    private string _background = "#fde047";
+    private string Background
+    {
+        get => _background;
+        set => _background = string.IsNullOrEmpty(value) ? value : value.ToUpperInvariant();
+    }
+    private string _color = "";
+    private string Color
+    {
+        get => _color;
+        set => _color = string.IsNullOrEmpty(value) ? value : value.ToUpperInvariant();
+    }
+    private int Radius { get; set; } = 2;
+    private string Padding { get; set; } = "";
+    private bool CaseSensitive;
+    private bool WholeWord;
+
+    private IReadOnlyList<string> KeywordsList => RawKeywords
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Where(t => !string.IsNullOrWhiteSpace(t))
+        .ToList();
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
+
+    private static string Upper(string? s) => string.IsNullOrEmpty(s) ? s ?? "" : s.ToUpperInvariant();
+
+    // Derived only from the selected background color.
+    private string BackgroundSuggestionForeground => Upper(HighlightColor.SuggestForeground(Background, SuggestionStrategy));
+    private string BackgroundSuggestionBackground => Background;
+    private string BackgroundSuggestionText => $"Bg {Background} → Fg {BackgroundSuggestionForeground}";
+
+    // Derived only from the selected text color.
+    private string TextSuggestionBackground => Upper(HighlightColor.SuggestBackground(Color, SuggestionStrategy));
+    private string TextSuggestionForeground => Color;
+    private string TextSuggestionText => $"Fg {Color} → Bg {TextSuggestionBackground}";
+
+    private void UseBackgroundSuggestion() => Color = BackgroundSuggestionForeground;
+    private void UseTextSuggestion() => Background = TextSuggestionBackground;
+
+    private string KeywordsArrayLiteral => "new[] { " + string.Join(", ", KeywordsList.Select(t => $"\"{t}\"")) + " }";
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder("<AtomHighlighter");
+            if (KeywordsList.Count > 0) sb.Append($" Keywords=\"@({KeywordsArrayLiteral})\"");
+            if (!string.IsNullOrEmpty(HighlightClass) && HighlightClass != "atom-highlighter") sb.Append($" HighlightClass=\"{HighlightClass}\"");
+            if (CaseSensitive) sb.Append(" CaseSensitive=\"true\"");
+            if (WholeWord) sb.Append(" WholeWord=\"true\"");
+            if (Style != HighlightStyle.Mark) sb.Append($" HighlightStyle=\"HighlightStyle.{Style}\"");
+            if (!string.IsNullOrEmpty(Background) && Background != "#fde047") sb.Append($" Background=\"{Background}\"");
+            if (!string.IsNullOrEmpty(Color)) sb.Append($" Color=\"{Color}\"");
+            if (Radius != 2) sb.Append($" Radius=\"{Radius.ToString(Inv)}\"");
+            if (!string.IsNullOrEmpty(Padding)) sb.Append($" Padding=\"{Padding}\"");
+            sb.Append(">\n");
+            sb.Append("    <h1>Grandparent component</h1>\n");
+            sb.Append("    <Parent />\n");
+            sb.Append("</AtomHighlighter>");
+            return sb.ToString();
+        }
+    }
+}

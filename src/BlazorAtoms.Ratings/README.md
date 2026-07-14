@@ -81,10 +81,3 @@ attributes (`title`, `data-*`, `id`, ARIA, …).
 | Home | Set to `Step` (the minimum) |
 | End | Set to `Max` |
 | Delete / Backspace / 0 | Clear to `null` when `Clearable` |
-
-## How the fractional fill works
-
-Each icon is two stacked copies of the same SVG glyph: an empty one underneath and a full-color one
-on top, clipped by a wrapper whose width is the fraction of the value in that position. No SVG clip
-ids, no masks, no JS — just `overflow: hidden` on a percentage-width box. That makes `4.3` render as
-four full icons and one 30%-filled icon.

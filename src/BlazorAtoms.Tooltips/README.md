@@ -20,17 +20,7 @@ All three anchor to arbitrary trigger content, show on `:hover`/`:focus-within`,
 
 ---
 
-## Package layout
-
-```
-BlazorAtoms.Tooltips/
-  AtomTooltip.razor / .razor.cs / .razor.css          <- pure-CSS tooltip
-  AtomShapedTooltip.razor / .razor.cs / .razor.css     <- SVG-outline (border on every shape)
-  AtomPaintedTooltip.razor / .razor.cs / .razor.css    <- SVG paints fill/stroke/shadow
-  Placement.cs                                          <- shared Placement enum
-  TooltipShape.cs / ShapedTooltipShape.cs / PaintedTooltipShape.cs  <- per-component shape enums
-  wwwroot/atom-tooltip.js / atom-shaped-tooltip.js / atom-painted-tooltip.js  <- cursor-follow modules
-```
+## Types
 
 | Type | Namespace |
 |---|---|
@@ -38,8 +28,9 @@ BlazorAtoms.Tooltips/
 | `Placement` (shared) | `BlazorAtoms.Tooltips` |
 | `TooltipShape` / `ShapedTooltipShape` / `PaintedTooltipShape` | `BlazorAtoms.Tooltips` |
 
-Each component keeps its own `Shape` enum because the shape sets differ slightly (`AtomTooltip`
-has `Thought`; the SVG components have `Cloud`). `Placement` is shared.
+Each component has its own `Shape` enum, and the members differ: `TooltipShape` (`AtomTooltip`)
+includes `Thought`; `ShapedTooltipShape` / `PaintedTooltipShape` include `Cloud` instead.
+`Placement` is shared across all three components.
 
 ---
 
@@ -134,8 +125,8 @@ Set `Shape` to change the bubble outline:
 ```
 
 > **Border on `Burst`/`FoldedCorner`:** these use CSS `clip-path`, which clips the border away,
-> so `BorderColor`/`BorderWidth` have no visible effect and no arrow is drawn. A bordered,
-> crisper version of these shapes is planned via an SVG background.
+> so `BorderColor`/`BorderWidth` have no visible effect and no arrow is drawn. Use
+> `AtomShapedTooltip` or `AtomPaintedTooltip` instead if you need a border on these shapes.
 
 ## Theming (CSS custom properties)
 
@@ -183,22 +174,17 @@ Three equivalent ways to theme:
 
 ---
 
-## How positioning works
+## Positioning behavior
 
-`Placement` is applied via a `data-placement` attribute and resolved in pure CSS:
-`position:absolute` on the bubble, offset from the trigger's wrapper (which is
-`position:relative`) per placement. This is deterministic and works in **every browser and
-every render mode** — no JavaScript, no dependence on newer CSS features.
+Positioning is pure CSS — deterministic, and works the same in every browser and every
+render mode, with no JavaScript involved.
 
-Trade-offs of the JS-free approach (v1):
+What to expect:
 - **No auto-flip** on viewport overflow — the bubble stays on the side you asked for. Pick a
   `Placement` that has room, or leave margin around edge triggers.
 - The bubble is clipped by an ancestor with `overflow:hidden`/`clip`, since it lives inside
   the trigger's wrapper. Keep the tooltip out of clipped/scrolling containers, or give that
   container room.
-
-(An optional CSS Anchor Positioning enhancement for auto-flip may come later; it's browser-
-version-sensitive, so v1 sticks with the mechanism that works everywhere.)
 
 ### Corner placements
 
@@ -208,12 +194,9 @@ side placements.
 
 ### Cursor mode (`Placement.Cursor`)
 
-The bubble follows the mouse pointer while hovering the trigger. CSS can't read the cursor
-position, so this one mode uses a tiny JS module — but it stays **invisible to you**: the
-component lazy-imports `_content/BlazorAtoms.Tooltips/atom-tooltip.js` itself via
-`IJSObjectReference` the first time a Cursor tooltip renders, attaches a `pointermove`
-listener, and disposes it (`IAsyncDisposable`) when the component goes away. No `<script>`
-tag, no DI registration, nothing to wire up.
+The bubble follows the mouse pointer while hovering the trigger. This one mode uses a small
+JS module under the hood, but it's **invisible to you** — no `<script>` tag, no DI
+registration, nothing to wire up.
 
 ```razor
 <AtomTooltip Text="I follow your cursor" Placement="Placement.Cursor">
@@ -226,8 +209,8 @@ Caveats specific to Cursor mode:
   won't position until the component is interactive (`InteractiveServer`/`WebAssembly`/`Auto`).
 - **No arrow** — there's no fixed edge to point from, so `ShowArrow` is ignored.
 - **`Offset`** sets the gap between the pointer and the bubble (default 12px).
-- Every other placement remains 100% JS-free; the module is never loaded unless a Cursor
-  tooltip is actually used.
+- Every other placement remains 100% JS-free; the module is only loaded if a Cursor tooltip
+  is actually used.
 
 ---
 
@@ -260,11 +243,10 @@ wait for).
 
 ## AtomShapedTooltip — SVG outline (border on every shape)
 
-`AtomTooltip`'s `Burst`/`FoldedCorner` are `clip-path` shapes, which clip the border and arrow
-away. `AtomShapedTooltip` draws the bubble outline as an inline **SVG path** instead, so **fill
-and border (SVG `stroke`) apply uniformly on every shape** — including cloud, burst, and folded
-corner. Color still comes from the `--tip-bg` / `--tip-border` tokens; positioning, show/hide,
-and `Cursor` mode are the same as `AtomTooltip`.
+Use `AtomShapedTooltip` when you need a visible border on `Burst`, `FoldedCorner`, or `Cloud`
+shapes — `AtomTooltip` can't draw a border on those. Fill and border apply uniformly on every
+shape, colored from the same `--tip-bg` / `--tip-border` tokens; positioning, show/hide, and
+`Cursor` mode work the same as `AtomTooltip`.
 
 ```razor
 <AtomShapedTooltip Text="Bordered burst!" Shape="ShapedTooltipShape.Burst"
@@ -326,7 +308,7 @@ Distinctive parameters (on top of the `AtomShapedTooltip` set):
 ## Notes & gotchas
 
 - **Scoped-CSS bundle must be linked** — the most common "it renders but isn't styled" cause.
-- **No auto-flip** — the bubble stays on the requested side; see "How positioning works".
+- **No auto-flip** — the bubble stays on the requested side; see "Positioning behavior".
 - **Give non-interactive triggers a `tabindex`** or keyboard users can't reveal the tooltip.
 - **Per-component `Shape` enums** — `TooltipShape` / `ShapedTooltipShape` / `PaintedTooltipShape`.
   `Placement` is shared across all three.

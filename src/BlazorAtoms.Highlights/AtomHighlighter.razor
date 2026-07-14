@@ -1,0 +1,18 @@
+@inherits AtomComponentCore
+
+@*
+    AtomHighlighter.razor
+    ----------------------
+    Renders ChildContent unchanged inside a container div, then highlights keyword matches in the
+    live DOM via a self-imported JS module, scoped strictly to that container. Because highlighting
+    runs against real rendered output rather than Blazor's render tree, it works through arbitrarily
+    nested child components with no per-component changes.
+*@
+
+@if (!CancellationToken.IsCancellationRequested)
+{
+    <link rel="stylesheet" href="_content/BlazorAtoms.Highlights/atom-highlighter.css" />
+    <div @ref="_container" @attributes="AdditionalAttributes" style="@RootStyle">
+        @ChildContent
+    </div>
+}

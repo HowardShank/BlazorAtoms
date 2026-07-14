@@ -1,25 +1,29 @@
-using System.Text.Encodings.Web;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
 using BlazorAtoms.Shared;
 
 namespace BlazorAtoms.Highlights;
 
 /// <summary>
-/// Deep, full-DOM text highlighter. Use this when the wrapped content is produced by
-/// other components, contains mixed markup, or is otherwise unknown at compile time.
-/// A small JS module walks the rendered DOM text nodes, similar to jquery.highlight,
-/// and wraps matches in &lt;mark class="atom-highlight"&gt;. SSR renders the original
-/// content unchanged; highlighting applies once the component becomes interactive.
+/// Deep, Blazor-native text highlighter for rich HTML content (mixed markup such as
+/// headings, paragraphs, lists, tables, and links). Unlike <see cref="AtomHighlight"/>,
+/// which treats its child content as plain text, this component highlights matches inside
+/// the <em>text content</em> of arbitrary markup while leaving tags and attributes intact.
+/// <para>
+/// Highlighting is produced during Blazor''s own render pass and emitted as a
+/// <see cref="MarkupString"/> the component fully owns - there is no JavaScript and no
+/// post-render DOM manipulation, so it is safe across re-renders and every render mode.
+/// </para>
+/// <para>
+/// Content is supplied as an HTML string via <see cref="Html"/> and is rendered as trusted
+/// markup. Do not pass untrusted user input.
+/// </para>
 /// </summary>
-public partial class AtomHighlightDeep : AtomComponentBase, IAsyncDisposable
+public partial class AtomHighlightDeep : AtomComponentBase
 {
-    [Inject] private IJSRuntime JS { get; set; } = default!;
-
-    /// <summary>The child content whose text should be highlighted. Required.</summary>
-    [Parameter, EditorRequired] public RenderFragment ChildContent { get; set; } = default!;
+    /// <summary>The HTML content whose text should be highlighted. Rendered as trusted markup. Required.</summary>
+    [Parameter, EditorRequired] public string Html { get; set; } = default!;
 
     /// <summary>A single search term; merged with <see cref="Terms"/>.</summary>
     [Parameter] public string? Term { get; set; }
@@ -51,34 +55,21 @@ public partial class AtomHighlightDeep : AtomComponentBase, IAsyncDisposable
     /// <summary>Accessible label for the highlighted region.</summary>
     [Parameter] public string AriaLabel { get; set; } = "Highlighted content";
 
-    private ElementReference RootRef;
-    private IJSObjectReference? _module;
-    private bool _attached;
-    private bool _hasTerms;
-    private string? _lastTermsJson;
-    private string? _lastOptionsJson;
+    private MarkupString _highlighted;
 
-    internal string SerializedTerms => _lastTermsJson ??= JsonSerializer.Serialize(
-        GetTerms().ToArray(),
-        JsonOptions);
-
-    internal string OptionsJson => _lastOptionsJson ??= JsonSerializer.Serialize(
-        new HighlightOptions(CaseSensitive, WholeWord),
-        JsonOptions);
-
-    private static readonly JsonSerializerOptions JsonOptions = new()
+    protected override void OnParametersSet()
     {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-    };
+        var terms = GetTerms();
 
-    private string StyleValue => HighlightStyle switch
-    {
-        HighlightStyle.Underline => "underline",
-        HighlightStyle.Outline => "outline",
-        _ => "mark",
-    };
+        if (terms.Count == 0 || string.IsNullOrEmpty(Html))
+        {
+            _highlighted = new MarkupString(Html ?? string.Empty);
+            return;
+        }
+
+        var regex = BuildRegex(terms);
+        _highlighted = new MarkupString(HtmlHighlighter.Highlight(Html, regex, StyleValue));
+    }
 
     private string RootStyle => new StyleVars("highlight")
         .Add("bg", Background)
@@ -86,6 +77,13 @@ public partial class AtomHighlightDeep : AtomComponentBase, IAsyncDisposable
         .Add("radius", Radius)
         .Add("padding", Padding)
         .ToString();
+
+    private string StyleValue => HighlightStyle switch
+    {
+        HighlightStyle.Underline => "underline",
+        HighlightStyle.Outline => "outline",
+        _ => "mark",
+    };
 
     private IReadOnlyList<string> GetTerms()
     {
@@ -97,52 +95,17 @@ public partial class AtomHighlightDeep : AtomComponentBase, IAsyncDisposable
         return result;
     }
 
-    protected override void OnParametersSet()
+    private Regex BuildRegex(IReadOnlyList<string> terms)
     {
-        _hasTerms = GetTerms().Count > 0;
-        _lastTermsJson = null;
-        _lastOptionsJson = null;
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        _module ??= await JS.InvokeAsync<IJSObjectReference>(
-            "import", "./_content/BlazorAtoms.Highlights/atom-highlight-deep.js");
-
-        if (!_hasTerms)
+        var sb = new StringBuilder();
+        for (int i = 0; i < terms.Count; i++)
         {
-            if (_attached)
-            {
-                await _module.InvokeVoidAsync("clear", RootRef);
-                _attached = false;
-            }
-            return;
+            if (i > 0) sb.Append('|');
+            sb.Append(Regex.Escape(terms[i]));
         }
 
-        await _module.InvokeVoidAsync("highlight", RootRef);
-        _attached = true;
+        var pattern = WholeWord ? $"\\b(?:{sb})\\b" : sb.ToString();
+        var options = CaseSensitive ? RegexOptions.None : RegexOptions.IgnoreCase;
+        return new Regex(pattern, options);
     }
-
-    public async ValueTask DisposeAsync()
-    {
-        try
-        {
-            if (_module is not null)
-            {
-                if (_attached) await _module.InvokeVoidAsync("clear", RootRef);
-                await _module.DisposeAsync();
-            }
-        }
-        catch (JSDisconnectedException) { }
-        catch (OperationCanceledException) { }
-        finally
-        {
-            _module = null;
-            _attached = false;
-        }
-
-        GC.SuppressFinalize(this);
-    }
-
-    private sealed record HighlightOptions(bool CaseSensitive, bool WholeWord);
 }

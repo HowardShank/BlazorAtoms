@@ -34,18 +34,6 @@ Link `{App}.styles.css` (scoped-CSS bundle), as with any RCL.
             BorderColor="#22d3ee" BorderWidth="3" Size="72" />
 ```
 
-## How it works
-
-- **Image vs silhouette:** set `Src` to show an image (cropped to the shape via `object-fit: cover`
-  + the container's crop); leave it null for the built-in head/shoulders silhouette.
-- **Crop:** circle/square/rounded/squircle use `border-radius` + `overflow: hidden`; hexagon uses
-  `clip-path`.
-- **Background:** solid `Background`, or a gradient when both `BackgroundGradientFrom`/`To` are set
-  (`BackgroundGradientAngle` in CSS degrees, 0 = up). Shows behind a transparent image and around a
-  silhouette.
-- **Silhouette fill:** solid `FigureColor`, or a gradient when both `FigureGradientFrom`/`To` are set
-  (`FigureGradientAngle` rotates about the center; per-instance SVG `<linearGradient>`).
-
 ## Parameters
 
 | Parameter | Type | Default | Notes |
@@ -112,8 +100,10 @@ auto overflow).
 
 ## Notes
 
-- The border is a rectangular CSS border clipped by the shape. It follows circle/square/rounded/
-  squircle cleanly; on `Hexagon` (clip-path) only the flat edges show a ring.
+- `Background`/silhouette color shows through behind a transparent image and around the silhouette,
+  so a transparent PNG or an image with rounded corners will reveal it.
+- The border ring follows `Circle`/`Square`/`Rounded`/`Squircle` cleanly; on `Hexagon`, only the flat
+  edges show a ring (the points don't).
 - `role="img"` with `aria-label` from `Alt` (falls back to "avatar").
-- `AtomAvatarGroup` styles its children through `::deep` (they carry a child component's CSS scope),
-  applying the overlap margin and the separating ring.
+- `AtomAvatarGroup` automatically applies the overlap spacing and separating ring to its children,
+  whether they're the auto-generated avatars from `Names` or your own `ChildContent`.

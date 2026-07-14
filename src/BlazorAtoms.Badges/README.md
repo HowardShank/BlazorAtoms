@@ -129,6 +129,4 @@ CSS token; null keeps the component default.
 
 ## Notes
 
-- Overlay mode wraps `ChildContent` in a `position:relative` host and places the badge absolutely by
-  `data-placement`; inline mode (no child) renders in normal flow.
 - `AtomBadge` is a `role="status"` `aria-live="polite"` region so count changes are announced.
