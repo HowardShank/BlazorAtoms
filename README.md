@@ -23,6 +23,7 @@ each shipped as its own standalone NuGet package with ~0 third-party dependencie
 | [`BlazorAtoms.Canvas`](src/BlazorAtoms.Canvas/README.md) | `AtomCanvas` (declarative shape model over `<canvas>`), `AtomSignaturePad`, and `AtomCanvasStudio` (extensible drawing workbench). |
 | [`BlazorAtoms.Clocks`](src/BlazorAtoms.Clocks/README.md) | Live clocks (digital/analog), multi-zone strips, a world timezone map, and a searchable timezone picker. |
 | [`BlazorAtoms.Highlights`](src/BlazorAtoms.Highlights/README.md) | Keyword/text highlighters: zero-JS for plain text or a trusted HTML string, or a JS-assisted one that works through arbitrarily nested child components. |
+| [`BlazorAtoms.Inputs`](src/BlazorAtoms.Inputs/README.md) | `AtomRangeInput` — labeled slider/range control with min/max/step, an `EditContext`/`DataAnnotations`-aware error state, and a `Disabled` (renders nothing) vs `ReadOnly` (greyed out) distinction. |
 | [`BlazorAtoms.Ratings`](src/BlazorAtoms.Ratings/README.md) | `AtomRating` — one component for both a read-only fractional-fill display and an interactive star/heart/etc. picker. |
 | [`BlazorAtoms.Tooltips`](src/BlazorAtoms.Tooltips/README.md) | Three tooltip components — pure-CSS bubble, SVG-outlined shape, and SVG gradient-painted shape. |
 

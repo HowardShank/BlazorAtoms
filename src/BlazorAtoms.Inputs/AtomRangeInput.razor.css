@@ -1,0 +1,104 @@
+.atom-range-input {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: .5rem 1rem;
+    font: inherit;
+}
+
+.atom-range-input-label {
+    font-weight: 600;
+    padding-top: .35rem;
+}
+
+.atom-range-input-control {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.atom-range-input-track-wrap {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.atom-range-input-track {
+    appearance: none;
+    -webkit-appearance: none;
+    width: var(--range-track-width, 200px);
+    height: var(--range-track-height, 6px);
+    border-radius: 999px;
+    background: var(--range-track-color, #d0d5dd);
+    outline: none;
+    cursor: pointer;
+}
+
+.atom-range-input-track::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: var(--range-handle-size, 18px);
+    height: var(--range-handle-size, 18px);
+    border-radius: 50%;
+    background: var(--range-handle-color, #2563eb);
+    cursor: pointer;
+}
+
+.atom-range-input-track::-moz-range-thumb {
+    width: var(--range-handle-size, 18px);
+    height: var(--range-handle-size, 18px);
+    border: none;
+    border-radius: 50%;
+    background: var(--range-handle-color, #2563eb);
+    cursor: pointer;
+}
+
+.atom-range-input-track::-moz-range-track {
+    height: var(--range-track-height, 6px);
+    border-radius: 999px;
+    background: var(--range-track-color, #d0d5dd);
+}
+
+/* Square is the only other built-in shape today; more (e.g. Heart) can be added by mapping a
+   new data-handle-shape value to its own clip-path/border-radius override here — no C# change. */
+.atom-range-input-track[data-handle-shape="square"]::-webkit-slider-thumb {
+    border-radius: 4px;
+}
+
+.atom-range-input-track[data-handle-shape="square"]::-moz-range-thumb {
+    border-radius: 4px;
+}
+
+.atom-range-input[data-state="readonly"] .atom-range-input-track {
+    filter: grayscale(1);
+    opacity: .6;
+    cursor: default;
+}
+
+.atom-range-input-error-icon {
+    width: 20px;
+    height: 20px;
+    flex: none;
+}
+
+.atom-range-input-error-bg {
+    fill: var(--range-error-color, #dc2626);
+}
+
+.atom-range-input-error-x {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
+.atom-range-input-subtext {
+    font-size: .85em;
+    color: var(--range-help-color, #6b7280);
+}
+
+.atom-range-input-subtext[data-state="error"] {
+    color: var(--range-error-color, #dc2626);
+}

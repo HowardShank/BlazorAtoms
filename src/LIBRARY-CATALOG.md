@@ -90,7 +90,7 @@ On-brand standout: **`Charts`** — SVG, JS-free, same DNA as the activity indic
 
 | Library | Components (`Atom*`) | Note |
 |---|---|---|
-| `BlazorAtoms.Inputs` | AtomTextField, AtomTextArea, AtomNumberField, AtomCheckbox, AtomRadioGroup, AtomSwitch, AtomSlider, AtomSelect | core forms; JS-free doable |
+| `BlazorAtoms.Inputs` *(in progress)* | AtomRangeInput *(shipped)*, AtomTextField, AtomTextArea, AtomNumberField, AtomCheckbox, AtomRadioGroup, AtomSwitch, AtomSelect | core forms; JS-free doable |
 | `BlazorAtoms.Buttons` | AtomButton, AtomIconButton, AtomButtonGroup, AtomToggleButton, AtomSplitButton | JS-free |
 | `BlazorAtoms.Cards` | AtomCard, AtomCardHeader, AtomCardBody, AtomCardFooter | JS-free |
 | `BlazorAtoms.Tabs` | AtomTabs, AtomTab, AtomTabPanel | JS-free |
@@ -103,7 +103,7 @@ On-brand standout: **`Charts`** — SVG, JS-free, same DNA as the activity indic
 | `BlazorAtoms.Clocks` *(shipped)* | AtomClock — live single-zone clock (server/browser/UTC or explicit zone), opt-out ticking, semantic `<time>` · AtomAnalogClock — same sources on a scalable SVG dial (hands, minute ticks, numerals) · AtomClockPair — two clocks (e.g. server + local) side-by-side or stacked · AtomClockStrip — N-zone world-clock row/grid/list (digital or analog, viewer highlight, relative offset, sort, select) · AtomTimeZoneMap — inline-SVG world map: continents + 24 UTC±N bands + day/night terminator + sun marker + accurate city pins · AtomTimeZonePicker — searchable combobox over every system zone (filter, region groups, per-zone offset, "use my zone" detect), `@bind-Value` on the IANA id | browser-tz detect via self-loaded JS module (opt-in); ticking via C# `PeriodicTimer`; city times/zone list via `TimeZoneInfo`; no map service/CDN/raster; else JS-free |
 
 **What each does:**
-- **Inputs** — the core form fields (text, number, checkbox, radio, switch, slider, select), two-way bound to your data.
+- **Inputs** — the core form fields, two-way bound to your data. `AtomRangeInput` (shipped) is a labeled slider — native `<input type="range">`, `EditContext`/`DataAnnotations`-aware error state, `Disabled` (renders nothing) vs `ReadOnly` (greyed out, blocked) distinction. Still to build: text, number, checkbox, radio, switch, select.
 - **Buttons** — clickable actions in variants: standard, icon-only, grouped, toggle, and split (button + dropdown arrow).
 - **Cards** — a bordered content container with optional header/body/footer; the box you put a summary or preview in.
 - **Tabs** — switch between panels of content in the same space via a tab strip.

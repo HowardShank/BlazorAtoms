@@ -22,6 +22,7 @@
     <ProjectReference Include="..\..\src\BlazorAtoms.Canvas\BlazorAtoms.Canvas.csproj" />
     <ProjectReference Include="..\..\src\BlazorAtoms.Ratings\BlazorAtoms.Ratings.csproj" />
     <ProjectReference Include="..\..\src\BlazorAtoms.Highlights\BlazorAtoms.Highlights.csproj" />
+    <ProjectReference Include="..\..\src\BlazorAtoms.Inputs\BlazorAtoms.Inputs.csproj" />
   </ItemGroup>
 
 </Project>

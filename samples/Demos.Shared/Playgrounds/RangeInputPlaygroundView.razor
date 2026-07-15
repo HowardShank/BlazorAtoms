@@ -1,0 +1,168 @@
+@using System.ComponentModel.DataAnnotations
+@using System.Globalization
+@using Microsoft.AspNetCore.Components.Forms
+@using BlazorAtoms.Inputs
+
+<PageTitle>AtomRangeInput Playground</PageTitle>
+
+<h1>AtomRangeInput playground</h1>
+<p>A labeled slider/range control. <code>Disabled</code> renders nothing at all;
+   <code>ReadOnly</code> renders greyed out with input blocked — these are deliberately different.
+   Wrap it in an <code>EditForm</code> + <code>DataAnnotationsValidator</code> and set
+   <code>ValidationFor</code> (or just <code>@@bind-Value</code>) to see the error state.</p>
+<p><a href="demo">&larr; Back to demo</a></p>
+
+<div class="ri-stage">
+    <AtomRangeInput Label="@Nz(Label)" @bind-Value="Value"
+                    Min="@Min" Max="@Max" Step="@Step"
+                    Disabled="@Disabled" ReadOnly="@ReadOnly"
+                    HandleShape="@HandleShapeSel"
+                    TrackWidth="@TrackWidthV" TrackHeight="@TrackHeightV" HandleSize="@HandleSizeV"
+                    HelpText="@($"The current value is {Value}. Valid range: {Min} - {Max}.")"
+                    AriaLabel="@Nz(AriaLabel)"
+                    CssClass="@Nz(HatchClass)" Style="@Nz(HatchStyle)" />
+</div>
+
+<div class="ri-controls">
+    <div class="ctrl">
+        <label>Value <span class="val">@Value</span></label>
+        <input type="range" min="@Min" max="@Max" step="@Step" @bind="Value" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>Min <span class="val">@Min</span></label>
+        <input type="range" min="-50" max="49" step="1" @bind="Min" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>Max <span class="val">@Max</span></label>
+        <input type="range" min="-49" max="100" step="1" @bind="Max" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>Step <span class="val">@Step</span></label>
+        <input type="range" min="1" max="10" step="1" @bind="Step" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>Handle shape</label>
+        <select @bind="HandleShapeSel">
+            @foreach (var s in Shapes) { <option value="@s">@s</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Track width (px) <span class="val">@TrackWidthV.ToString(Inv)</span></label>
+        <input type="range" min="80" max="400" step="1" @bind="TrackWidthV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Track height (px) <span class="val">@TrackHeightV.ToString(Inv)</span></label>
+        <input type="range" min="2" max="24" step="1" @bind="TrackHeightV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Handle size (px) <span class="val">@HandleSizeV.ToString(Inv)</span></label>
+        <input type="range" min="10" max="48" step="1" @bind="HandleSizeV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Label (Label)</label>
+        <input type="text" @bind="Label" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Mode</label>
+        <div class="row"><input type="checkbox" id="riRead" @bind="ReadOnly" /><label for="riRead" class="inline">ReadOnly (greyed, blocked)</label></div>
+        <div class="row"><input type="checkbox" id="riDis" @bind="Disabled" /><label for="riDis" class="inline">Disabled (renders nothing)</label></div>
+    </div>
+    <div class="ctrl">
+        <label>Aria label (AriaLabel)</label>
+        <input type="text" @bind="AriaLabel" @bind:event="oninput" placeholder="(auto = Label)" />
+    </div>
+    <div class="ctrl">
+        <label>Extra class (CssClass)</label>
+        <input type="text" @bind="HatchClass" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Extra style (Style)</label>
+        <input type="text" @bind="HatchStyle" @bind:event="oninput" placeholder="(none)" />
+    </div>
+</div>
+
+<h2>Validation / error state</h2>
+<p>Model's <code>Count</code> has <code>[Range(5, 15)]</code>. The slider itself allows 0-30 — set
+   it outside 5-15, click Validate, and the error icon + message replace the help text.</p>
+
+<div class="ri-stage">
+    <EditForm Model="@FormModel" OnValidSubmit="@(() => { })" OnInvalidSubmit="@(() => { })">
+        <DataAnnotationsValidator />
+        <AtomRangeInput Label="Enter Count" @bind-Value="FormModel.Count"
+                        ValidationFor="() => FormModel.Count"
+                        Min="0" Max="30" Step="1"
+                        HelpText="@($"Valid Range: 5 - 15. The current value is {FormModel.Count}")" />
+        <button type="submit" class="ri-btn">Validate</button>
+    </EditForm>
+</div>
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomRangeInputExample.razor" />
+
+<style>
+    .ri-stage { display:flex; flex-direction:column; align-items:flex-start; gap:1rem; background:#fff; border:1px solid #d0d0d8; border-radius:12px; padding:2rem 1.5rem; margin-bottom:1.5rem; }
+    .ri-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem 1.5rem; background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; margin-bottom:1.5rem; }
+    .ri-controls .ctrl { display:flex; flex-direction:column; gap:.4rem; }
+    .ri-controls label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; gap:.5rem; }
+    .ri-controls label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
+    .ri-controls input[type=range] { width:100%; accent-color:#2563eb; }
+    .ri-controls input[type=text], .ri-controls select { padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; }
+    .ri-controls .row { display:flex; align-items:center; gap:.5rem; }
+    .ri-controls .row input[type=checkbox] { accent-color:#2563eb; width:16px; height:16px; }
+    .ri-controls .row label.inline { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; justify-content:flex-start; }
+    .ri-btn { align-self:flex-start; padding:.5rem 1rem; border:1px solid #1b2330; border-radius:6px; background:#161d29; color:#cfd8e3; cursor:pointer; font-size:.85rem; }
+    .ri-btn:hover { background:#1e2836; }
+</style>
+
+@code {
+    private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
+    private static readonly HandleShape[] Shapes = (HandleShape[])Enum.GetValues(typeof(HandleShape));
+
+    private int Value = 5;
+    private int Min = 0;
+    private int Max = 10;
+    private int Step = 1;
+    private bool ReadOnly;
+    private bool Disabled;
+    private HandleShape HandleShapeSel = HandleShape.Round;
+    private double TrackWidthV = 200;
+    private double TrackHeightV = 6;
+    private double HandleSizeV = 18;
+    private string Label = "Label";
+    private string AriaLabel = "";
+    private string HatchClass = "";
+    private string HatchStyle = "";
+
+    private TestValidationModel FormModel = new();
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder("<AtomRangeInput");
+            if (!string.IsNullOrEmpty(Label)) sb.Append($" Label=\"{Label}\"");
+            sb.Append(" @bind-Value=\"value\"");
+            if (Min != 0) sb.Append($" Min=\"{Min}\"");
+            if (Max != 10) sb.Append($" Max=\"{Max}\"");
+            if (Step != 1) sb.Append($" Step=\"{Step}\"");
+            if (Disabled) sb.Append(" Disabled=\"true\"");
+            if (ReadOnly) sb.Append(" ReadOnly=\"true\"");
+            if (HandleShapeSel != HandleShape.Round) sb.Append($" HandleShape=\"HandleShape.{HandleShapeSel}\"");
+            if (TrackWidthV != 200) sb.Append($" TrackWidth=\"{TrackWidthV.ToString(Inv)}\"");
+            if (TrackHeightV != 6) sb.Append($" TrackHeight=\"{TrackHeightV.ToString(Inv)}\"");
+            if (HandleSizeV != 18) sb.Append($" HandleSize=\"{HandleSizeV.ToString(Inv)}\"");
+            if (!string.IsNullOrEmpty(AriaLabel)) sb.Append($" AriaLabel=\"{AriaLabel}\"");
+            if (!string.IsNullOrEmpty(HatchClass)) sb.Append($" CssClass=\"{HatchClass}\"");
+            if (!string.IsNullOrEmpty(HatchStyle)) sb.Append($" Style=\"{HatchStyle}\"");
+            sb.Append(" HelpText=\"@($\"The current value is {value}\")\" />");
+            return sb.ToString();
+        }
+    }
+
+    private sealed class TestValidationModel
+    {
+        [Range(5, 15, ErrorMessage = "Valid range is 5-15.")]
+        public int Count { get; set; } = 20;
+    }
+}
