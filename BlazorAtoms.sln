@@ -16,7 +16,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorAtoms.ActivityIndicators.Tests", "tests\BlazorAtoms.ActivityIndicators.Tests\BlazorAtoms.ActivityIndicators.Tests.csproj", "{D9A0BE85-F120-4E9B-94D5-18A7C60CB690}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Demos", "Demos", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BlazorWebAppAutoDemo", "BlazorWebAppAutoDemo", "{92957C74-72F3-4A90-BD5F-490EA661A849}"
 EndProject
@@ -24,15 +24,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BlazorWebAppWasmDemo", "Bla
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BlazorWebAppSvrDemo", "BlazorWebAppSvrDemo", "{2C110764-6BAF-49E9-9382-EA13CE887501}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorWebAppAutoDemo", "BlazorWebAppAutoDemo\BlazorWebAppAutoDemo\BlazorWebAppAutoDemo.csproj", "{157910A2-54C1-45B1-81E4-9C611451AD1F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorWebAppAutoDemo", "samples\BlazorWebAppAutoDemo\BlazorWebAppAutoDemo\BlazorWebAppAutoDemo.csproj", "{157910A2-54C1-45B1-81E4-9C611451AD1F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorWebAppAutoDemo.Client", "BlazorWebAppAutoDemo\BlazorWebAppAutoDemo.Client\BlazorWebAppAutoDemo.Client.csproj", "{88D6DF59-9BBA-4C59-8D4D-5DC08E07BC19}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorWebAppAutoDemo.Client", "samples\BlazorWebAppAutoDemo\BlazorWebAppAutoDemo.Client\BlazorWebAppAutoDemo.Client.csproj", "{88D6DF59-9BBA-4C59-8D4D-5DC08E07BC19}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorWebAppSvrDemo", "BlazorWebAppSvrDemo\BlazorWebAppSvrDemo.csproj", "{8912842E-A128-4455-8F27-D931D4B30D54}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorWebAppSvrDemo", "samples\BlazorWebAppSvrDemo\BlazorWebAppSvrDemo.csproj", "{8912842E-A128-4455-8F27-D931D4B30D54}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorWebAppWasmDemo", "BlazorWebAppWasmDemo\BlazorWebAppWasmDemo\BlazorWebAppWasmDemo.csproj", "{43CB20A4-5FDF-44A5-988D-95A55F01082B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorWebAppWasmDemo", "samples\BlazorWebAppWasmDemo\BlazorWebAppWasmDemo\BlazorWebAppWasmDemo.csproj", "{43CB20A4-5FDF-44A5-988D-95A55F01082B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorWebAppWasmDemo.Client", "BlazorWebAppWasmDemo\BlazorWebAppWasmDemo.Client\BlazorWebAppWasmDemo.Client.csproj", "{9E2C678D-A2A3-49C1-9715-B7421163D3DA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorWebAppWasmDemo.Client", "samples\BlazorWebAppWasmDemo\BlazorWebAppWasmDemo.Client\BlazorWebAppWasmDemo.Client.csproj", "{9E2C678D-A2A3-49C1-9715-B7421163D3DA}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "assets", "assets", "{E899D024-8C6E-4FC5-99F3-0AC925CA6BEA}"
 	ProjectSection(SolutionItems) = preProject
@@ -72,13 +72,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorAtoms.Canvas", "src\B
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorAtoms.Canvas.Tests", "tests\BlazorAtoms.Canvas.Tests\BlazorAtoms.Canvas.Tests.csproj", "{D8B6F2C1-4E53-40A7-8B2D-7C3F9A1E5B84}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorAtoms.Branding", "branding\BlazorAtoms.Branding\BlazorAtoms.Branding.csproj", "{7C3B9E4A-2D18-4F6B-A9E1-5B8C2F0D4A7E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorAtoms.Branding", "samples\BlazorAtoms.Branding\BlazorAtoms.Branding.csproj", "{7C3B9E4A-2D18-4F6B-A9E1-5B8C2F0D4A7E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demos.Shared", "samples\Demos.Shared\Demos.Shared.csproj", "{5E8D3C1F-9A47-4B62-8E1D-2F6A0B4C7D95}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "icons", "icons", "{E59DE943-0AEE-4CCC-BC30-B5EB47559DB6}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "branding", "branding", "{B8A1F3D2-4C5E-4A6B-9D7E-1F2A3B4C5D6E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorAtoms.Highlights", "src\BlazorAtoms.Highlights\BlazorAtoms.Highlights.csproj", "{EBD9ADD6-AF92-46C8-A838-C6B5ABF3A335}"
 EndProject
@@ -432,7 +430,7 @@ Global
 		{B4E2D0A1-8C35-4F96-AD72-3E9F1B2C4D5F} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{C7A5E1B0-3D42-4F86-9A1C-6B2E8F0D4A73} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{D8B6F2C1-4E53-40A7-8B2D-7C3F9A1E5B84} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
-		{7C3B9E4A-2D18-4F6B-A9E1-5B8C2F0D4A7E} = {B8A1F3D2-4C5E-4A6B-9D7E-1F2A3B4C5D6E}
+		{7C3B9E4A-2D18-4F6B-A9E1-5B8C2F0D4A7E} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{5E8D3C1F-9A47-4B62-8E1D-2F6A0B4C7D95} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{E59DE943-0AEE-4CCC-BC30-B5EB47559DB6} = {E899D024-8C6E-4FC5-99F3-0AC925CA6BEA}
 		{EBD9ADD6-AF92-46C8-A838-C6B5ABF3A335} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}

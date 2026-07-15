@@ -60,13 +60,13 @@ the library's own README for anything render-mode-specific.
 ## Repository layout
 
 ```
-src/                     the libraries themselves (one folder per BlazorAtoms.<Area> package)
-tests/                   one bUnit test project per library
-samples/Demos.Shared/    shared playground pages, rendered by all three demo hosts below
-BlazorWebAppSvrDemo/     demo host — Blazor Server
-BlazorWebAppWasmDemo/    demo host — Blazor WebAssembly (standalone)
-BlazorWebAppAutoDemo/    demo host — Blazor Auto (Server + WASM)
-branding/                the BlazorAtoms brand marks (per-library icons used in the demo nav)
+src/                             the libraries themselves (one folder per BlazorAtoms.<Area> package)
+tests/                           one bUnit test project per library
+samples/Demos.Shared/            shared playground pages, rendered by all three demo hosts below
+samples/BlazorAtoms.Branding/    the BlazorAtoms brand marks (per-library icons used in the demo nav)
+samples/BlazorWebAppSvrDemo/     demo host — Blazor Server
+samples/BlazorWebAppWasmDemo/    demo host — Blazor WebAssembly (standalone)
+samples/BlazorWebAppAutoDemo/    demo host — Blazor Auto (Server + WASM)
 ```
 
 ## Build & test
