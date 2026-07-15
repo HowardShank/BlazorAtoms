@@ -6,7 +6,7 @@
 /.github/workflows/*                  @HowardShank
 /.github/CODEOWNERS                   @HowardShank
 /.github/dependabot.yml               @HowardShank
-/.github/SECURITY.md                  @HowardShank
+/SECURITY.md                          @HowardShank
 
 # Package publishing / release controls
 /nuget.config                         @HowardShank
