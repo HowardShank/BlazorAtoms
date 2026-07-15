@@ -93,4 +93,4 @@ code snippet) shared across all three demo hosts. Run whichever hosting model yo
 
 ## License
 
-[MIT](LICENSE.txt)
+[Apache-2.0](LICENSE)
