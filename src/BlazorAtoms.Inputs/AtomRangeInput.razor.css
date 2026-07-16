@@ -23,36 +23,80 @@
     display: flex;
     align-items: center;
     gap: .5rem;
+    /* Reserve vertical space (C# sets --range-handle-room) so an above/below handle isn't clipped
+       and doesn't overlap the label/help rows. */
+    padding-block: var(--range-handle-room, 0);
+    overflow: visible;
 }
 
+/* Vertical: stack StartIcon / track / EndIcon / error-icon top-to-bottom instead of left-to-right.
+   StartIcon reads as "top" this way — matches its DOM/reading order, no relabeling needed. */
+.atom-range-input-track-wrap[data-orientation="vertical"] {
+    flex-direction: column;
+}
+
+/* Reserves the track's on-screen footprint. Horizontal: sized by its own content (no override
+   needed). Vertical: the footprint is the *swapped* box (thickness x length) — the input inside
+   keeps its normal horizontal size and is rotated to fill this box (see below). */
+.atom-range-input-track-box[data-orientation="vertical"] {
+    position: relative;
+    width: max(var(--range-track-height, 6px), var(--range-handle-size, 18px));
+    height: var(--range-track-width, 200px);
+}
+
+/* The input is a transparent host; the visible track lives on the vendor track pseudo-elements
+   below. Its box height matches the handle so the thumb centers on WebKit's runnable-track. */
 .atom-range-input-track {
     appearance: none;
     -webkit-appearance: none;
     width: var(--range-track-width, 200px);
-    height: var(--range-track-height, 6px);
-    border-radius: 999px;
-    background: var(--range-track-color, #d0d5dd);
+    height: var(--range-handle-size, 18px);
+    background: transparent;
     outline: none;
     cursor: pointer;
+    overflow: visible;
 }
 
-.atom-range-input-track::-webkit-slider-thumb {
-    appearance: none;
-    -webkit-appearance: none;
-    width: var(--range-handle-size, 18px);
-    height: var(--range-handle-size, 18px);
-    border-radius: 50%;
-    background: var(--range-handle-color, #2563eb);
-    cursor: pointer;
+/* Rotate-in-a-box: the input's own size/rules above are untouched (still a normal horizontal
+   range) — only its position changes, centered in the swapped box and rotated to fill it.
+   -90deg (not 90deg) puts min at the bottom and max at the top, the standard vertical-slider
+   convention; every derived value (fill/handle offset/rotation/glyphs) was computed pre-rotation,
+   so it all stays correct — just visually reoriented. */
+.atom-range-input-track[data-orientation="vertical"] {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform-origin: center;
+    transform: translate(-50%, -50%) rotate(var(--range-vertical-rotate, -90deg));
 }
 
-.atom-range-input-track::-moz-range-thumb {
-    width: var(--range-handle-size, 18px);
-    height: var(--range-handle-size, 18px);
-    border: none;
-    border-radius: 50%;
-    background: var(--range-handle-color, #2563eb);
-    cursor: pointer;
+/* VerticalDirection.TopToBottom: rotate the other way (max at bottom instead of top). */
+.atom-range-input-track[data-orientation="vertical"][data-vertical-direction="top-to-bottom"] {
+    --range-vertical-rotate: 90deg;
+}
+
+/* Handle vertical position: --range-handle-offset (negative = above, positive = below) folds into
+   the thumb centering below. Enum sets it here off the size vars; a numeric HandleOffset overrides
+   it via an inline custom property (inline wins over these rules). */
+.atom-range-input-track[data-handle-position="above"] {
+    --range-handle-offset: calc((var(--range-handle-size, 18px) + var(--range-track-height, 6px)) / -2);
+}
+
+.atom-range-input-track[data-handle-position="below"] {
+    --range-handle-offset: calc((var(--range-handle-size, 18px) + var(--range-track-height, 6px)) / 2);
+}
+
+/* ---- track (must be one rule per vendor — a combined selector is dropped whole) ---------- */
+
+/* WebKit/Blink has no filled-track pseudo-element, so paint the fill as a hard-stop gradient
+   driven by --range-fill (a percent set inline per value in C#). */
+.atom-range-input-track::-webkit-slider-runnable-track {
+    height: var(--range-track-height, 6px);
+    border-radius: 999px;
+    background:
+        linear-gradient(to right,
+            var(--range-fill-color, #2563eb) 0 var(--range-fill, 0%),
+            var(--range-track-color, #d0d5dd) var(--range-fill, 0%) 100%);
 }
 
 .atom-range-input-track::-moz-range-track {
@@ -61,8 +105,47 @@
     background: var(--range-track-color, #d0d5dd);
 }
 
-/* Square is the only other built-in shape today; more (e.g. Heart) can be added by mapping a
-   new data-handle-shape value to its own clip-path/border-radius override here — no C# change. */
+/* Firefox has a real filled-progress pseudo-element — no gradient math needed. */
+.atom-range-input-track::-moz-range-progress {
+    height: var(--range-track-height, 6px);
+    border-radius: 999px;
+    background: var(--range-fill-color, #2563eb);
+}
+
+/* ---- thumb (one rule per vendor) --------------------------------------------------------- */
+
+.atom-range-input-track::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: var(--range-handle-size, 18px);
+    height: var(--range-handle-size, 18px);
+    /* Center the thumb on the (thinner) track, plus the optional vertical offset. */
+    margin-top: calc((var(--range-track-height, 6px) - var(--range-handle-size, 18px)) / 2 + var(--range-handle-offset, 0px));
+    border-radius: 50%;
+    background: var(--range-handle-color, #fff);
+    border: var(--range-handle-outline-width, 2px) solid var(--range-handle-outline-color, #2563eb);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .25);
+    cursor: pointer;
+    /* WebKit positions vertically via margin-top (above), so transform is free for rotation. */
+    transform: rotate(var(--range-handle-rotate, 0deg));
+    transition: transform .1s ease, box-shadow .1s ease;
+}
+
+.atom-range-input-track::-moz-range-thumb {
+    width: var(--range-handle-size, 18px);
+    height: var(--range-handle-size, 18px);
+    border-radius: 50%;
+    background: var(--range-handle-color, #fff);
+    border: var(--range-handle-outline-width, 2px) solid var(--range-handle-outline-color, #2563eb);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .25);
+    cursor: pointer;
+    /* Firefox centers the thumb itself, so the vertical offset + rotation both go in the transform. */
+    transform: translateY(var(--range-handle-offset, 0px)) rotate(var(--range-handle-rotate, 0deg));
+    transition: transform .1s ease, box-shadow .1s ease;
+}
+
+/* Square handle: only other built-in shape today. Add more by mapping a new data-handle-shape
+   value to its own radius/clip-path here — no C# change needed. */
 .atom-range-input-track[data-handle-shape="square"]::-webkit-slider-thumb {
     border-radius: 4px;
 }
@@ -71,10 +154,76 @@
     border-radius: 4px;
 }
 
-.atom-range-input[data-state="readonly"] .atom-range-input-track {
+/* Glyph handles (Heart, Star, Diamond, …): a baked SVG carrying its own fill + stroke, delivered
+   as the inherited --range-handle-glyph custom property (a background-image set on the <input>
+   wouldn't reach the thumb pseudo-element). Scales with --range-handle-size; no CSS border/shadow —
+   the outline is the SVG's own stroke. */
+.atom-range-input-track[data-handle-glyph]::-webkit-slider-thumb {
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent center / contain no-repeat;
+    background-image: var(--range-handle-glyph);
+}
+
+.atom-range-input-track[data-handle-glyph]::-moz-range-thumb {
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent center / contain no-repeat;
+    background-image: var(--range-handle-glyph);
+}
+
+/* ---- hover / focus ----------------------------------------------------------------------- */
+
+.atom-range-input-track:hover::-webkit-slider-thumb {
+    transform: rotate(var(--range-handle-rotate, 0deg)) scale(1.12);
+}
+
+.atom-range-input-track:hover::-moz-range-thumb {
+    /* Keep the vertical offset + rotation while scaling (Firefox composes all via transform). */
+    transform: translateY(var(--range-handle-offset, 0px)) rotate(var(--range-handle-rotate, 0deg)) scale(1.12);
+}
+
+.atom-range-input-track:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--range-fill-color, #2563eb) 30%, transparent);
+}
+
+.atom-range-input-track:focus-visible::-moz-range-thumb {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--range-fill-color, #2563eb) 30%, transparent);
+}
+
+/* ---- states ------------------------------------------------------------------------------ */
+
+.atom-range-input[data-state="disabled"] .atom-range-input-track {
     filter: grayscale(1);
     opacity: .6;
     cursor: default;
+}
+
+/* Error tints the fill/thumb red via the shared --range-fill-color hook. */
+.atom-range-input[data-state="error"] .atom-range-input-track {
+    --range-fill-color: var(--range-error-color, #dc2626);
+}
+
+/* Consumer-provided start/end icon slots. Each is independently targetable
+   (.atom-range-input-icon-start / -end) and sized via --range-icon-size (default 1.25em).
+   Content (SVG/<i>/text) inherits currentColor so it themes with the surrounding text. */
+.atom-range-input-icon {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--range-icon-size, 1.25em);
+    height: var(--range-icon-size, 1.25em);
+    color: var(--range-icon-color, inherit);
+    line-height: 1;
+}
+
+.atom-range-input-icon :is(svg, img) {
+    width: 100%;
+    height: 100%;
+    display: block;
 }
 
 .atom-range-input-error-icon {

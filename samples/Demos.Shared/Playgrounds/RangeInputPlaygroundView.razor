@@ -15,36 +15,87 @@
 <div class="ri-stage">
     <AtomRangeInput Label="@Nz(Label)" @bind-Value="Value"
                     Min="@Min" Max="@Max" Step="@Step"
-                    Disabled="@Disabled" ReadOnly="@ReadOnly"
-                    HandleShape="@HandleShapeSel"
+                    Disabled="@Disabled" ReadOnly="@ReadOnly" Visible="@Visible"
+                    HandleShape="@HandleShapeSel" HandlePosition="@HandlePositionSel" HandleOffset="@HandleOffsetV"
+                    HandleRotation="@(RotationV == 0 ? (double?)null : RotationV)"
+                    IconPreset="@IconPresetSel" IconPresetReversed="@IconPresetReversedSel"
+                    Orientation="@OrientationSel" VerticalDirection="@VerticalDirectionSel"
                     TrackWidth="@TrackWidthV" TrackHeight="@TrackHeightV" HandleSize="@HandleSizeV"
+                    HandleColor="@Nz(HandleColorV)" OutlineColor="@Nz(OutlineColorV)" OutlineWidth="@OutlineWidthV"
                     HelpText="@($"The current value is {Value}. Valid range: {Min} - {Max}.")"
                     AriaLabel="@Nz(AriaLabel)"
-                    CssClass="@Nz(HatchClass)" Style="@Nz(HatchStyle)" />
+                    CssClass="@Nz(HatchClass)" Style="@CombinedStyle" />
 </div>
 
 <div class="ri-controls">
     <div class="ctrl">
-        <label>Value <span class="val">@Value</span></label>
-        <input type="range" min="@Min" max="@Max" step="@Step" @bind="Value" @bind:event="oninput" />
+        <label>Value <span class="val">@Value.ToString(Inv)</span></label>
+        <input type="range" min="@Min.ToString(Inv)" max="@Max.ToString(Inv)" step="@Step.ToString(Inv)" @bind="Value" @bind:event="oninput" @bind:culture="Inv" />
     </div>
     <div class="ctrl">
-        <label>Min <span class="val">@Min</span></label>
-        <input type="range" min="-50" max="49" step="1" @bind="Min" @bind:event="oninput" />
+        <label>Min (negative ok) <span class="val">@Min.ToString(Inv)</span></label>
+        <input type="range" min="-50" max="49" step="1" @bind="Min" @bind:event="oninput" @bind:culture="Inv" />
     </div>
     <div class="ctrl">
-        <label>Max <span class="val">@Max</span></label>
-        <input type="range" min="-49" max="100" step="1" @bind="Max" @bind:event="oninput" />
+        <label>Max (negative ok) <span class="val">@Max.ToString(Inv)</span></label>
+        <input type="range" min="-49" max="100" step="1" @bind="Max" @bind:event="oninput" @bind:culture="Inv" />
     </div>
     <div class="ctrl">
-        <label>Step <span class="val">@Step</span></label>
-        <input type="range" min="1" max="10" step="1" @bind="Step" @bind:event="oninput" />
+        <label>Step (fractional ok)</label>
+        <select @bind="Step" @bind:culture="Inv">
+            <option value="1">1 — whole</option>
+            <option value="0.5">0.5 — half</option>
+            <option value="0.25">0.25 — quarter</option>
+            <option value="0.1">0.1 — tenth</option>
+        </select>
     </div>
     <div class="ctrl">
         <label>Handle shape</label>
         <select @bind="HandleShapeSel">
             @foreach (var s in Shapes) { <option value="@s">@s</option> }
         </select>
+    </div>
+    <div class="ctrl">
+        <label>Handle position</label>
+        <select @bind="HandlePositionSel">
+            @foreach (var p in Positions) { <option value="@p">@p</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Handle offset (px, overrides position)</label>
+        <div class="row">
+            <input type="checkbox" id="riOff" @bind="UseOffset" /><label for="riOff" class="inline">Use offset</label>
+            <input type="number" step="1" @bind="OffsetInput" @bind:event="oninput" disabled="@(!UseOffset)" style="width:6rem" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Handle rotation (deg) <span class="val">@RotationV.ToString(Inv)</span></label>
+        <input type="range" min="-180" max="180" step="5" @bind="RotationV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Orientation</label>
+        <select @bind="OrientationSel">
+            @foreach (var o in Orientations) { <option value="@o">@o</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Vertical direction (max at)</label>
+        <select @bind="VerticalDirectionSel" disabled="@(OrientationSel != Orientation.Vertical)">
+            @foreach (var d in Directions) { <option value="@d">@d</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Icon preset (IconPreset)</label>
+        <select @bind="IconPresetSel">
+            @foreach (var p in IconPresets) { <option value="@p">@p</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Icon preset reversed</label>
+        <div class="row">
+            <input type="checkbox" id="riIconRev" @bind="IconPresetReversedSel" disabled="@(IconPresetSel == RangeIconPreset.None)" />
+            <label for="riIconRev" class="inline">IconPresetReversed</label>
+        </div>
     </div>
     <div class="ctrl">
         <label>Track width (px) <span class="val">@TrackWidthV.ToString(Inv)</span></label>
@@ -59,13 +110,46 @@
         <input type="range" min="10" max="48" step="1" @bind="HandleSizeV" @bind:event="oninput" @bind:culture="Inv" />
     </div>
     <div class="ctrl">
+        <label>Fill color (--range-fill-color)</label>
+        <div class="row color">
+            <input type="color" @bind="FillColor" @bind:event="oninput" aria-label="Fill color picker" />
+            <input type="text" @bind="FillColor" @bind:event="oninput" placeholder="(default #2563eb)" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Track color (--range-track-color)</label>
+        <div class="row color">
+            <input type="color" @bind="TrackColor" @bind:event="oninput" aria-label="Track color picker" />
+            <input type="text" @bind="TrackColor" @bind:event="oninput" placeholder="(default #d0d5dd)" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Handle color (HandleColor)</label>
+        <div class="row color">
+            <input type="color" @bind="HandleColorV" @bind:event="oninput" aria-label="Handle color picker" />
+            <input type="text" @bind="HandleColorV" @bind:event="oninput" placeholder="(default #ffffff)" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Outline color (OutlineColor)</label>
+        <div class="row color">
+            <input type="color" @bind="OutlineColorV" @bind:event="oninput" aria-label="Outline color picker" />
+            <input type="text" @bind="OutlineColorV" @bind:event="oninput" placeholder="(default #2563eb)" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Outline width (px) <span class="val">@OutlineWidthV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="6" step="0.5" @bind="OutlineWidthV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
         <label>Label (Label)</label>
         <input type="text" @bind="Label" @bind:event="oninput" placeholder="(none)" />
     </div>
     <div class="ctrl">
         <label>Mode</label>
-        <div class="row"><input type="checkbox" id="riRead" @bind="ReadOnly" /><label for="riRead" class="inline">ReadOnly (greyed, blocked)</label></div>
-        <div class="row"><input type="checkbox" id="riDis" @bind="Disabled" /><label for="riDis" class="inline">Disabled (renders nothing)</label></div>
+        <div class="row"><input type="checkbox" id="riVis" @bind="Visible" /><label for="riVis" class="inline">Visible (display on/off)</label></div>
+        <div class="row"><input type="checkbox" id="riDis" @bind="Disabled" /><label for="riDis" class="inline">Disabled (greyed, blocked)</label></div>
+        <div class="row"><input type="checkbox" id="riRead" @bind="ReadOnly" /><label for="riRead" class="inline">ReadOnly (= Disabled)</label></div>
     </div>
     <div class="ctrl">
         <label>Aria label (AriaLabel)</label>
@@ -108,6 +192,9 @@
     .ri-controls input[type=text], .ri-controls select { padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; }
     .ri-controls .row { display:flex; align-items:center; gap:.5rem; }
     .ri-controls .row input[type=checkbox] { accent-color:#2563eb; width:16px; height:16px; }
+    .ri-controls .row.color { gap:.4rem; }
+    .ri-controls .row.color input[type=color] { flex:none; width:38px; height:32px; padding:2px; background:#070b10; border:1px solid #1b2330; border-radius:6px; cursor:pointer; }
+    .ri-controls .row.color input[type=text] { flex:1 1 auto; min-width:0; }
     .ri-controls .row label.inline { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; justify-content:flex-start; }
     .ri-btn { align-self:flex-start; padding:.5rem 1rem; border:1px solid #1b2330; border-radius:6px; background:#161d29; color:#cfd8e3; cursor:pointer; font-size:.85rem; }
     .ri-btn:hover { background:#1e2836; }
@@ -116,14 +203,28 @@
 @code {
     private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
     private static readonly HandleShape[] Shapes = (HandleShape[])Enum.GetValues(typeof(HandleShape));
+    private static readonly HandlePosition[] Positions = (HandlePosition[])Enum.GetValues(typeof(HandlePosition));
+    private static readonly Orientation[] Orientations = (Orientation[])Enum.GetValues(typeof(Orientation));
+    private static readonly VerticalDirection[] Directions = (VerticalDirection[])Enum.GetValues(typeof(VerticalDirection));
+    private static readonly RangeIconPreset[] IconPresets = (RangeIconPreset[])Enum.GetValues(typeof(RangeIconPreset));
 
-    private int Value = 5;
-    private int Min = 0;
-    private int Max = 10;
-    private int Step = 1;
+    private double Value = 5;
+    private double Min = 0;
+    private double Max = 10;
+    private double Step = 1;
     private bool ReadOnly;
     private bool Disabled;
+    private bool Visible = true;
     private HandleShape HandleShapeSel = HandleShape.Round;
+    private HandlePosition HandlePositionSel = HandlePosition.Center;
+    private bool UseOffset;
+    private double OffsetInput = -12;
+    private double? HandleOffsetV => UseOffset ? OffsetInput : null;
+    private double RotationV = 0;
+    private RangeIconPreset IconPresetSel = RangeIconPreset.None;
+    private bool IconPresetReversedSel;
+    private Orientation OrientationSel = Orientation.Horizontal;
+    private VerticalDirection VerticalDirectionSel = VerticalDirection.BottomToTop;
     private double TrackWidthV = 200;
     private double TrackHeightV = 6;
     private double HandleSizeV = 18;
@@ -131,6 +232,40 @@
     private string AriaLabel = "";
     private string HatchClass = "";
     private string HatchStyle = "";
+
+    // Handle fill/outline are component parameters. Seeded to the component's real defaults so the
+    // swatches show the actual starting colors and the width slider starts where the component does.
+    private const string HandleDefault = "#ffffff";
+    private const string OutlineDefault = "#2563eb";
+    private const double OutlineWidthDefault = 2;
+
+    private string HandleColorV = HandleDefault;
+    private string OutlineColorV = OutlineDefault;
+    private double OutlineWidthV = OutlineWidthDefault;
+
+    // Track/fill colors are plain CSS vars (no dedicated params); seeded to their CSS defaults too.
+    private const string FillDefault = "#2563eb";
+    private const string TrackDefault = "#d0d5dd";
+
+    private string FillColor = FillDefault;
+    private string TrackColor = TrackDefault;
+
+    // Merge the fill/track color custom-property pickers with any freeform "Extra style" into the
+    // single Style param. Only emit a var when it differs from the default, so the snippet stays
+    // clean at defaults.
+    private string? CombinedStyle
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder();
+            if (!Same(FillColor, FillDefault)) sb.Append($"--range-fill-color:{FillColor};");
+            if (!Same(TrackColor, TrackDefault)) sb.Append($"--range-track-color:{TrackColor};");
+            if (!string.IsNullOrEmpty(HatchStyle)) sb.Append(HatchStyle);
+            return sb.Length == 0 ? null : sb.ToString();
+        }
+    }
+
+    private static bool Same(string a, string b) => string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
 
     private TestValidationModel FormModel = new();
 
@@ -143,18 +278,33 @@
             var sb = new System.Text.StringBuilder("<AtomRangeInput");
             if (!string.IsNullOrEmpty(Label)) sb.Append($" Label=\"{Label}\"");
             sb.Append(" @bind-Value=\"value\"");
-            if (Min != 0) sb.Append($" Min=\"{Min}\"");
-            if (Max != 10) sb.Append($" Max=\"{Max}\"");
-            if (Step != 1) sb.Append($" Step=\"{Step}\"");
+            if (Min != 0) sb.Append($" Min=\"{Min.ToString(Inv)}\"");
+            if (Max != 100) sb.Append($" Max=\"{Max.ToString(Inv)}\"");
+            if (Step != 1) sb.Append($" Step=\"{Step.ToString(Inv)}\"");
+            if (!Visible) sb.Append(" Visible=\"false\"");
             if (Disabled) sb.Append(" Disabled=\"true\"");
             if (ReadOnly) sb.Append(" ReadOnly=\"true\"");
             if (HandleShapeSel != HandleShape.Round) sb.Append($" HandleShape=\"HandleShape.{HandleShapeSel}\"");
+            if (HandlePositionSel != HandlePosition.Center) sb.Append($" HandlePosition=\"HandlePosition.{HandlePositionSel}\"");
+            if (HandleOffsetV is not null) sb.Append($" HandleOffset=\"{HandleOffsetV.Value.ToString(Inv)}\"");
+            if (RotationV != 0) sb.Append($" HandleRotation=\"{RotationV.ToString(Inv)}\"");
+            if (OrientationSel != Orientation.Horizontal) sb.Append($" Orientation=\"Orientation.{OrientationSel}\"");
+            if (OrientationSel == Orientation.Vertical && VerticalDirectionSel != VerticalDirection.BottomToTop)
+                sb.Append($" VerticalDirection=\"VerticalDirection.{VerticalDirectionSel}\"");
+            if (IconPresetSel != RangeIconPreset.None)
+            {
+                sb.Append($" IconPreset=\"RangeIconPreset.{IconPresetSel}\"");
+                if (IconPresetReversedSel) sb.Append(" IconPresetReversed=\"true\"");
+            }
             if (TrackWidthV != 200) sb.Append($" TrackWidth=\"{TrackWidthV.ToString(Inv)}\"");
             if (TrackHeightV != 6) sb.Append($" TrackHeight=\"{TrackHeightV.ToString(Inv)}\"");
             if (HandleSizeV != 18) sb.Append($" HandleSize=\"{HandleSizeV.ToString(Inv)}\"");
+            if (!Same(HandleColorV, HandleDefault)) sb.Append($" HandleColor=\"{HandleColorV}\"");
+            if (!Same(OutlineColorV, OutlineDefault)) sb.Append($" OutlineColor=\"{OutlineColorV}\"");
+            if (OutlineWidthV != OutlineWidthDefault) sb.Append($" OutlineWidth=\"{OutlineWidthV.ToString(Inv)}\"");
             if (!string.IsNullOrEmpty(AriaLabel)) sb.Append($" AriaLabel=\"{AriaLabel}\"");
             if (!string.IsNullOrEmpty(HatchClass)) sb.Append($" CssClass=\"{HatchClass}\"");
-            if (!string.IsNullOrEmpty(HatchStyle)) sb.Append($" Style=\"{HatchStyle}\"");
+            if (CombinedStyle is not null) sb.Append($" Style=\"{CombinedStyle}\"");
             sb.Append(" HelpText=\"@($\"The current value is {value}\")\" />");
             return sb.ToString();
         }

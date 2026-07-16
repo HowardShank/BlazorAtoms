@@ -1,42 +1,55 @@
 @typeparam TValue
 @inherits AtomComponentBase
 
-@if (!Disabled)
-{
-    <div @attributes="AdditionalAttributes"
-         class="@ClassAttr(RootClass)"
-         style="@StyleAttr(RootStyle)"
-         data-state="@State">
-        @if (!string.IsNullOrEmpty(Label))
-        {
-            <label class="atom-range-input-label @LabelCol">@Label</label>
-        }
-        <div class="atom-range-input-control @ControlCol">
-            <div class="atom-range-input-track-wrap">
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr(RootClass)"
+     style="@StyleAttr(RootStyle)"
+     data-state="@State">
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <label class="atom-range-input-label @LabelCol">@Label</label>
+    }
+    <div class="atom-range-input-control @ControlCol">
+        <div class="atom-range-input-track-wrap" data-orientation="@OrientationAttr">
+            @if (StartSlotContent is not null)
+            {
+                <span class="atom-range-input-icon atom-range-input-icon-start">@StartSlotContent</span>
+            }
+            <span class="atom-range-input-track-box" data-orientation="@OrientationAttr">
                 <input type="range"
                        class="atom-range-input-track"
                        data-handle-shape="@HandleShapeAttr"
+                       data-handle-glyph="@(IsGlyphHandle ? "true" : null)"
+                       data-handle-position="@HandlePositionAttr"
+                       data-orientation="@OrientationAttr"
+                       data-vertical-direction="@VerticalDirectionAttr"
+                       style="@InputStyle"
                        min="@RangeConvert.Format(MinDouble)"
                        max="@RangeConvert.Format(MaxDouble)"
                        step="@RangeConvert.Format(StepDouble)"
                        value="@RangeConvert.Format(ValueDouble)"
-                       disabled="@ReadOnly"
-                       aria-readonly="@(ReadOnly ? "true" : null)"
+                       disabled="@IsDisabled"
+                       aria-disabled="@(IsDisabled ? "true" : null)"
                        aria-invalid="@(HasError ? "true" : null)"
+                       aria-orientation="@OrientationAttr"
                        aria-label="@EffectiveAriaLabel"
                        @oninput="OnInput" />
-                @if (HasError)
-                {
-                    <svg class="atom-range-input-error-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                        <path class="atom-range-input-error-bg" d="M8 2h8l6 6v8l-6 6H8l-6-6V8z" />
-                        <path class="atom-range-input-error-x" d="M9 9l6 6M15 9l-6 6" />
-                    </svg>
-                }
-            </div>
-            @if (!string.IsNullOrEmpty(DisplayText))
+            </span>
+            @if (EndSlotContent is not null)
             {
-                <span class="atom-range-input-subtext" data-state="@State">@DisplayText</span>
+                <span class="atom-range-input-icon atom-range-input-icon-end">@EndSlotContent</span>
+            }
+            @if (HasError)
+            {
+                <svg class="atom-range-input-error-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path class="atom-range-input-error-bg" d="M8 2h8l6 6v8l-6 6H8l-6-6V8z" />
+                    <path class="atom-range-input-error-x" d="M9 9l6 6M15 9l-6 6" />
+                </svg>
             }
         </div>
+        @if (!string.IsNullOrEmpty(DisplayText))
+        {
+            <span class="atom-range-input-subtext" data-state="@State">@DisplayText</span>
+        }
     </div>
-}
+</div>
