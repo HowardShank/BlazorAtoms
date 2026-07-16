@@ -1,7 +1,8 @@
 # BlazorAtoms.Inputs
 
-Form input components for Blazor. `AtomRangeInput` is a labeled slider/range control — no
-JavaScript, no dependencies, works in Server or WebAssembly and every render mode.
+Form input components for Blazor. `AtomRangeInput` is a labeled slider/range control;
+`AtomCrtInput` is a CRT-terminal-styled text input. No JavaScript, no dependencies, works in Server
+or WebAssembly and every render mode.
 
 ## Install
 
@@ -217,3 +218,126 @@ prefer, but the glyph shapes only honor the parameters (their outline is baked i
 
 The pixel dimensions (`--range-track-width`, `--range-track-height`, `--range-handle-size`) are set
 via the `TrackWidth`/`TrackHeight`/`HandleSize` parameters.
+
+---
+
+## AtomCrtInput
+
+A CRT-terminal-styled text input. Phosphor color, glow, scanlines, monitor bezel, and blinking
+caret over a plain native `<textarea>` (or single-line `<input type=text>` when `Multiline="false"`).
+Same `EditContext`-aware validation contract as `AtomRangeInput`. No JavaScript.
+
+### Usage
+
+```razor
+@using BlazorAtoms.Inputs
+
+@* Default green phosphor terminal *@
+<AtomCrtInput Label="Terminal" @bind-Value="text" />
+
+@* Single-line amber, no bezel, custom width/size *@
+<AtomCrtInput @bind-Value="cmd"
+              Multiline="false"
+              Phosphor="CrtPhosphor.Amber"
+              Bezel="false"
+              Width="360" FontSize="18"
+              Placeholder="> _" />
+
+@* Under an EditForm with validation *@
+<EditForm Model="@model">
+    <DataAnnotationsValidator />
+    <AtomCrtInput Label="Notes" @bind-Value="model.Notes"
+                  ValidationFor="() => model.Notes" Rows="6" />
+</EditForm>
+```
+
+### AtomCrtInput parameters
+
+| Parameter | Type | Default | Notes |
+|---|---|---|---|
+| `Value` (`@bind-Value`) | `string?` | — | Current text. |
+| `ValueChanged` | `EventCallback<string?>` | — | Only needed directly when not using `@bind-Value`. |
+| `ValueExpression` | `Expression<Func<string?>>` | — | Populated by `@bind-Value`. |
+| `Label`, `LabelCol`, `ControlCol`, `HelpText`, `Placeholder`, `AriaLabel` | — | — | Same shape as `AtomRangeInput`. |
+| `ValidationFor` | `Expression<Func<string?>>` | — | Wires into an ancestor `EditContext`. |
+| `Disabled` / `ReadOnly` | `bool` | `false` | Same greyed/blocked state. |
+| `Visible` | `bool` | `true` | Hide via `display:none`. |
+| `Multiline` | `bool` | `true` | `true` renders `<textarea>`, `false` renders `<input type=text>`. |
+| `Rows` | `int` | `4` | Textarea rows (multiline only). |
+| `Cols` | `int?` | — | Column hint (ignored when `Width` is set). |
+| `Width` | `double?` | — | Explicit width in px → `--crt-width`. |
+| `Height` | `double?` | — | Explicit height in px, multiline only → `--crt-height`. |
+| `FontSize` | `double?` | — | Font size in px → `--crt-font-size`. |
+| `Phosphor` | `CrtPhosphor` | `Green` | Preset color: `Green`, `Amber`, `Blue`, `Red`, or `White`. Overridden by `Color` when set. |
+| `Color` | `string?` | — | Explicit text/glow/caret color (any CSS color: hex, rgb, named). |
+| `BackgroundColor` | `string?` | — | Explicit screen background color. |
+| `Font` | `CrtFont` | `System` | `System` (always works), `Vt323`, or `PressStart2P` — the latter two need the matching `.woff2` bundled (see below). |
+| `Glow` | `bool` | `true` | Phosphor glow via `text-shadow`. |
+| `Scanlines` | `bool` | `true` | Faint horizontal scanline overlay. |
+| `Bezel` | `bool` | `true` | Rounded metallic monitor-bezel frame. |
+| `CursorBlink` | `bool` | `true` | Phosphor-colored blinking caret (browser's native blink; `false` hides caret). |
+
+### Bundled CRT fonts
+
+`Font="CrtFont.Vt323"` and `Font="CrtFont.PressStart2P"` reference `.woff2` files that need to be
+dropped into `src/BlazorAtoms.Inputs/wwwroot/fonts/` — both are under the SIL Open Font License 1.1
+and free to redistribute. See that folder's `README.md` for the specific files (VT323.woff2,
+PressStart2P.woff2). If the file isn't present, the browser silently falls back to the system
+monospace stack — the component still works, it just doesn't look as authentically CRT. Default
+`Font="CrtFont.System"` always works with no bundled files.
+
+### Overriding colors
+
+The phosphor's text color and screen background are custom properties on the root, so consumers
+can nudge them via `Style`:
+
+```razor
+<AtomCrtInput @bind-Value="text"
+              Style="--crt-color:#00ff41; --crt-bg:#000000;" />
+```
+
+---
+
+## AtomCrtDisplay
+
+Display-only CRT companion to `AtomCrtInput` — same phosphor / glow / scanlines / bezel / font look,
+but there's no editable input. Text can type on with a tunable characters-per-second animation
+(no JS — a cancellable C# `Task.Delay` loop drives the visible-character count). Value changes
+cancel and restart the animation from the start.
+
+### Usage
+
+```razor
+@using BlazorAtoms.Inputs
+
+@* Boot-message reveal at 20 chars/sec *@
+<AtomCrtDisplay Value="@bootLog" CharactersPerSecond="20" />
+
+@* Amber terminal, no bezel, wide, looping *@
+<AtomCrtDisplay Value="@statusLine"
+                Phosphor="CrtPhosphor.Amber" Bezel="false"
+                Width="640" FontSize="18"
+                Loop="true" LoopDelayMs="2000" />
+
+@* Instant, no animation *@
+<AtomCrtDisplay Value="@snapshot" Animate="false" />
+```
+
+### AtomCrtDisplay parameters
+
+Shares the entire CRT-chrome surface with `AtomCrtInput` (`Phosphor`, `Color`, `BackgroundColor`,
+`Font`, `FontSize`, `Width`, `Height`, `Rows`, `Multiline`, `Glow`, `Scanlines`, `Bezel`,
+`CursorBlink`, `Visible`, `Label`, `LabelCol`, `ControlCol`, `HelpText`, `Placeholder`, `AriaLabel`).
+Additional parameters that are display-specific:
+
+| Parameter | Type | Default | Notes |
+|---|---|---|---|
+| `Value` | `string?` | — | Text to display (one-way; there is no `ValueChanged`). |
+| `Animate` | `bool` | `true` | Types the value one character at a time. `false` shows the full value immediately. |
+| `CharactersPerSecond` | `double` | `20` | Typing speed. Clamped to `≥ 0.1`. Value changes restart from the start. |
+| `Loop` | `bool` | `false` | Restarts the animation after finishing (after `LoopDelayMs`). |
+| `LoopDelayMs` | `int` | `1500` | Pause between loop iterations when `Loop="true"`. |
+
+The block-cursor after the typed text is the same `CursorBlink` toggle as `AtomCrtInput`; when the
+placeholder is showing (no value), the cursor is hidden — it would read strangely hanging off empty
+text.

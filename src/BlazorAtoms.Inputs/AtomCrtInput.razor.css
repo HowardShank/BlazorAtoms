@@ -1,0 +1,195 @@
+/* ---- bundled CRT fonts (optional) --------------------------------------------------------
+   Referenced via _content/BlazorAtoms.Inputs/fonts/*.woff2 — the actual .woff2 files must be
+   dropped into the library's own wwwroot/fonts/ folder (see that folder's README.md). If the file
+   isn't present the browser silently falls back to the monospace stack below — no error, just a
+   less-authentic look. font-display:swap keeps text visible during the tiny load stall. */
+@font-face {
+    font-family: 'BlazorAtoms Vt323';
+    src: url('fonts/VT323.woff2') format('woff2');
+    font-display: swap;
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'BlazorAtoms PressStart2P';
+    src: url('fonts/PressStart2P.woff2') format('woff2');
+    font-display: swap;
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'BlazorAtoms Special Elite';
+    src: url('fonts/SpecialElite.woff2') format('woff2');
+    font-display: swap;
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'BlazorAtoms Cutive Mono';
+    src: url('fonts/CutiveMono.woff2') format('woff2');
+    font-display: swap;
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* ---- layout -------------------------------------------------------------------------------- */
+
+.atom-crt-input {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: .5rem 1rem;
+    font: inherit;
+}
+
+.atom-crt-input-label {
+    font-weight: 600;
+    padding-top: .35rem;
+}
+
+.atom-crt-input-control {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* Metallic bezel (data-bezel="true"). Off = flat borderless frame, so the phosphor screen is
+   still visible without the monitor chrome. */
+.atom-crt-input-frame {
+    display: inline-block;
+    padding: 0;
+    border-radius: 4px;
+    background: transparent;
+    max-width: 100%;
+}
+
+.atom-crt-input[data-bezel="true"] .atom-crt-input-frame {
+    padding: 12px;
+    border-radius: 14px;
+    border: 1px solid #0a0a0a;
+    background: linear-gradient(#2a2a2a, #171717);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .06),
+        0 4px 12px rgba(0, 0, 0, .5);
+}
+
+/* Inner CRT screen. Slightly rounded to hint at the tube; a subtle inner shadow reads as
+   phosphor bloom around the edges. */
+.atom-crt-input-screen {
+    position: relative;
+    border-radius: 6px;
+    background: var(--crt-bg, #0a0f0a);
+    overflow: hidden;
+    box-shadow: inset 0 0 24px rgba(0, 0, 0, .8);
+}
+
+/* ---- phosphor colors ----------------------------------------------------------------------
+   Values are the actual color a CRT of that phosphor family emits; --crt-bg gets a matching
+   subtle tint so the "off" screen isn't pure black. Consumers can override either var via Style. */
+
+.atom-crt-input[data-phosphor="green"]  { --crt-color: #33ff66; --crt-bg: #061006; }
+.atom-crt-input[data-phosphor="amber"]  { --crt-color: #ffbf00; --crt-bg: #100b02; }
+.atom-crt-input[data-phosphor="blue"]   { --crt-color: #6ec6ff; --crt-bg: #05080e; }
+.atom-crt-input[data-phosphor="red"]    { --crt-color: #ff4d4d; --crt-bg: #100404; }
+.atom-crt-input[data-phosphor="white"]  { --crt-color: #eaeaea; --crt-bg: #050505; }
+
+/* ---- font --------------------------------------------------------------------------------
+   System fallback stack matches an old console feel without a webfont; bundled fonts are used
+   when the .woff2 is present. */
+
+.atom-crt-input[data-font="system"] .atom-crt-input-field {
+    font-family: ui-monospace, 'Cascadia Mono', 'Consolas', 'DejaVu Sans Mono', 'Courier New', monospace;
+    letter-spacing: .01em;
+}
+
+.atom-crt-input[data-font="vt323"] .atom-crt-input-field {
+    font-family: 'BlazorAtoms Vt323', ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+    letter-spacing: .02em;
+}
+
+.atom-crt-input[data-font="press-start-2p"] .atom-crt-input-field {
+    font-family: 'BlazorAtoms PressStart2P', ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+    letter-spacing: 0;
+    line-height: 1.4;
+}
+
+/* ---- the input itself ---------------------------------------------------------------------- */
+
+.atom-crt-input-field {
+    display: block;
+    box-sizing: border-box;
+    width: var(--crt-width, 32ch);
+    max-width: 100%;
+    padding: .6rem .8rem;
+    background: transparent;
+    color: var(--crt-color, #33ff66);
+    caret-color: var(--crt-color, #33ff66);
+    border: none;
+    outline: none;
+    resize: vertical;
+    font-size: var(--crt-font-size, 1rem);
+    line-height: 1.35;
+}
+
+.atom-crt-input-field:is(textarea) {
+    height: var(--crt-height, auto);
+    resize: vertical;
+}
+
+.atom-crt-input-field::placeholder {
+    color: color-mix(in srgb, var(--crt-color, #33ff66) 45%, transparent);
+}
+
+/* Phosphor glow (data-glow="true"). Two-layer shadow: a tight bright halo + a wider dim bloom. */
+.atom-crt-input[data-glow="true"] .atom-crt-input-field {
+    text-shadow:
+        0 0 4px var(--crt-color, #33ff66),
+        0 0 10px color-mix(in srgb, var(--crt-color, #33ff66) 45%, transparent);
+}
+
+/* Cursor: CursorBlink=false hides the caret; the native caret already blinks by itself when
+   visible, so no @keyframes needed. */
+.atom-crt-input:not([data-cursor="true"]) .atom-crt-input-field {
+    caret-color: transparent;
+}
+
+/* Scanlines overlay (data-scanlines="true"). A pseudo-element over the screen, pointer-events
+   off so it never intercepts clicks/drag. */
+.atom-crt-input[data-scanlines="true"] .atom-crt-input-screen::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent 0 2px,
+        rgba(0, 0, 0, .18) 2px 3px);
+    mix-blend-mode: multiply;
+}
+
+/* ---- states ------------------------------------------------------------------------------- */
+
+.atom-crt-input[data-state="disabled"] .atom-crt-input-field {
+    filter: grayscale(.6) brightness(.7);
+    cursor: not-allowed;
+}
+
+.atom-crt-input[data-state="error"] {
+    --crt-color: #ff4d4d;
+    --crt-bg: #100404;
+}
+
+.atom-crt-input-subtext {
+    font-size: .85em;
+    color: var(--crt-help-color, #6b7280);
+    font-family: ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+}
+
+.atom-crt-input-subtext[data-state="error"] {
+    color: var(--crt-error-color, #dc2626);
+}

@@ -1,0 +1,58 @@
+@inherits AtomComponentBase
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr(RootClass)"
+     style="@StyleAttr(RootStyle)"
+     data-state="@State"
+     data-phosphor="@PhosphorAttr"
+     data-font="@FontAttr"
+     data-glow="@(Glow ? "true" : null)"
+     data-scanlines="@(Scanlines ? "true" : null)"
+     data-bezel="@(Bezel ? "true" : null)"
+     data-cursor="@(CursorBlink ? "true" : null)">
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <label class="atom-crt-input-label @LabelCol">@Label</label>
+    }
+    <div class="atom-crt-input-control @ControlCol">
+        <div class="atom-crt-input-frame">
+            <div class="atom-crt-input-screen">
+                @if (Multiline)
+                {
+                    <textarea class="atom-crt-input-field"
+                              rows="@Rows"
+                              cols="@Cols"
+                              placeholder="@Placeholder"
+                              disabled="@IsDisabled"
+                              aria-disabled="@(IsDisabled ? "true" : null)"
+                              aria-invalid="@(HasError ? "true" : null)"
+                              aria-label="@EffectiveAriaLabel"
+                              value="@Value"
+                              @oninput="OnInput"
+                              spellcheck="false"
+                              autocorrect="off"
+                              autocapitalize="off"></textarea>
+                }
+                else
+                {
+                    <input type="text"
+                           class="atom-crt-input-field"
+                           placeholder="@Placeholder"
+                           disabled="@IsDisabled"
+                           aria-disabled="@(IsDisabled ? "true" : null)"
+                           aria-invalid="@(HasError ? "true" : null)"
+                           aria-label="@EffectiveAriaLabel"
+                           value="@Value"
+                           @oninput="OnInput"
+                           spellcheck="false"
+                           autocorrect="off"
+                           autocapitalize="off" />
+                }
+            </div>
+        </div>
+        @if (!string.IsNullOrEmpty(DisplayText))
+        {
+            <span class="atom-crt-input-subtext" data-state="@State">@DisplayText</span>
+        }
+    </div>
+</div>

@@ -1,0 +1,178 @@
+@using System.Globalization
+@using BlazorAtoms.Inputs
+
+<PageTitle>AtomCrtInput Playground</PageTitle>
+
+<h1>AtomCrtInput playground</h1>
+<p>A flexible CRT-terminal-styled text input. Phosphor color, glow, scanlines, monitor bezel, and
+   caret are all independently toggleable. Font, size, and dimensions are freely adjustable.</p>
+<p><a href="demo">&larr; Back to demo</a></p>
+
+<div class="crt-stage">
+    <AtomCrtInput Label="@Nz(Label)" @bind-Value="Value"
+                  Multiline="@Multiline" Rows="@RowsV"
+                  Width="@(WidthV > 0 ? WidthV : null)" Height="@(HeightV > 0 ? HeightV : null)"
+                  FontSize="@(FontSizeV > 0 ? FontSizeV : null)"
+                  Phosphor="@PhosphorSel" Font="@FontSel"
+                  Color="@Nz(ColorV)" BackgroundColor="@Nz(BgColorV)"
+                  Glow="@Glow" Scanlines="@Scanlines" Bezel="@Bezel" CursorBlink="@Cursor"
+                  Disabled="@Disabled" ReadOnly="@ReadOnly" Visible="@Visible"
+                  Placeholder="@Nz(Placeholder)"
+                  HelpText="@Nz(HelpText)" />
+</div>
+
+<div class="crt-controls">
+    <div class="ctrl">
+        <label>Value</label>
+        <textarea rows="2" @bind="Value" @bind:event="oninput" style="min-height:60px"></textarea>
+    </div>
+    <div class="ctrl">
+        <label>Label (Label)</label>
+        <input type="text" @bind="Label" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Placeholder</label>
+        <input type="text" @bind="Placeholder" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Help text</label>
+        <input type="text" @bind="HelpText" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Phosphor preset</label>
+        <select @bind="PhosphorSel">
+            @foreach (var p in Phosphors) { <option value="@p">@p</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Text color (Color, overrides preset)</label>
+        <div class="row color">
+            <input type="color" @bind="ColorV" @bind:event="oninput" aria-label="Text color picker" />
+            <input type="text" @bind="ColorV" @bind:event="oninput" placeholder="(preset default)" />
+            <button type="button" class="clr-btn" @onclick="() => ColorV = string.Empty">Clear</button>
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Background color (BackgroundColor)</label>
+        <div class="row color">
+            <input type="color" @bind="BgColorV" @bind:event="oninput" aria-label="Background color picker" />
+            <input type="text" @bind="BgColorV" @bind:event="oninput" placeholder="(preset default)" />
+            <button type="button" class="clr-btn" @onclick="() => BgColorV = string.Empty">Clear</button>
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Font</label>
+        <select @bind="FontSel">
+            @foreach (var f in Fonts) { <option value="@f">@f</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Font size (px) <span class="val">@FontSizeV.ToString(Inv)</span></label>
+        <input type="range" min="10" max="40" step="1" @bind="FontSizeV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Width (px, 0 = auto) <span class="val">@WidthV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="800" step="10" @bind="WidthV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Height (px, 0 = auto) <span class="val">@HeightV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="500" step="10" @bind="HeightV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Rows (multiline) <span class="val">@RowsV</span></label>
+        <input type="range" min="1" max="20" step="1" @bind="RowsV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Effects</label>
+        <div class="row"><input type="checkbox" id="crtGlow" @bind="Glow" /><label for="crtGlow" class="inline">Glow</label></div>
+        <div class="row"><input type="checkbox" id="crtScan" @bind="Scanlines" /><label for="crtScan" class="inline">Scanlines</label></div>
+        <div class="row"><input type="checkbox" id="crtBezel" @bind="Bezel" /><label for="crtBezel" class="inline">Bezel</label></div>
+        <div class="row"><input type="checkbox" id="crtCur" @bind="Cursor" /><label for="crtCur" class="inline">Cursor visible</label></div>
+    </div>
+    <div class="ctrl">
+        <label>Mode</label>
+        <div class="row"><input type="checkbox" id="crtMulti" @bind="Multiline" /><label for="crtMulti" class="inline">Multiline (textarea)</label></div>
+        <div class="row"><input type="checkbox" id="crtVis" @bind="Visible" /><label for="crtVis" class="inline">Visible</label></div>
+        <div class="row"><input type="checkbox" id="crtDis" @bind="Disabled" /><label for="crtDis" class="inline">Disabled</label></div>
+        <div class="row"><input type="checkbox" id="crtRead" @bind="ReadOnly" /><label for="crtRead" class="inline">ReadOnly (= Disabled)</label></div>
+    </div>
+</div>
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomCrtInputExample.razor" />
+
+<style>
+    .crt-stage { display:flex; flex-direction:column; align-items:flex-start; gap:1rem; background:#0d1117; border:1px solid #1b2330; border-radius:12px; padding:2rem 1.5rem; margin-bottom:1.5rem; }
+    .crt-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem 1.5rem; background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; margin-bottom:1.5rem; }
+    .crt-controls .ctrl { display:flex; flex-direction:column; gap:.4rem; }
+    .crt-controls label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; gap:.5rem; }
+    .crt-controls label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
+    .crt-controls input[type=range] { width:100%; accent-color:#2563eb; }
+    .crt-controls input[type=text], .crt-controls select, .crt-controls textarea { padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; }
+    .crt-controls .row { display:flex; align-items:center; gap:.5rem; }
+    .crt-controls .row input[type=checkbox] { accent-color:#2563eb; width:16px; height:16px; }
+    .crt-controls .row.color { gap:.4rem; }
+    .crt-controls .row.color input[type=color] { flex:none; width:38px; height:32px; padding:2px; background:#070b10; border:1px solid #1b2330; border-radius:6px; cursor:pointer; }
+    .crt-controls .row.color input[type=text] { flex:1 1 auto; min-width:0; }
+    .crt-controls .clr-btn { flex:none; padding:.35rem .55rem; border:1px solid #1b2330; background:#161d29; color:#cfd8e3; border-radius:6px; cursor:pointer; font-size:.75rem; }
+    .crt-controls .clr-btn:hover { background:#1e2836; }
+    .crt-controls .row label.inline { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; justify-content:flex-start; }
+</style>
+
+@code {
+    private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
+    private static readonly CrtPhosphor[] Phosphors = (CrtPhosphor[])Enum.GetValues(typeof(CrtPhosphor));
+    private static readonly CrtFont[] Fonts = (CrtFont[])Enum.GetValues(typeof(CrtFont));
+
+    private string Value = "> READY\n> _";
+    private string Label = "Terminal";
+    private string Placeholder = "";
+    private string HelpText = "Type anything. Enter Ctrl-D to exit... just kidding.";
+    private CrtPhosphor PhosphorSel = CrtPhosphor.Green;
+    private string ColorV = "";
+    private string BgColorV = "";
+    private CrtFont FontSel = CrtFont.System;
+    private double FontSizeV = 16;
+    private double WidthV = 480;
+    private double HeightV = 160;
+    private int RowsV = 4;
+    private bool Multiline = true;
+    private bool Visible = true;
+    private bool Disabled;
+    private bool ReadOnly;
+    private bool Glow = true;
+    private bool Scanlines = true;
+    private bool Bezel = true;
+    private bool Cursor = true;
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder("<AtomCrtInput");
+            if (!string.IsNullOrEmpty(Label)) sb.Append($" Label=\"{Label}\"");
+            sb.Append(" @bind-Value=\"value\"");
+            if (!Multiline) sb.Append(" Multiline=\"false\"");
+            if (RowsV != 4 && Multiline) sb.Append($" Rows=\"{RowsV}\"");
+            if (WidthV > 0) sb.Append($" Width=\"{WidthV.ToString(Inv)}\"");
+            if (HeightV > 0) sb.Append($" Height=\"{HeightV.ToString(Inv)}\"");
+            if (FontSizeV > 0 && FontSizeV != 16) sb.Append($" FontSize=\"{FontSizeV.ToString(Inv)}\"");
+            if (PhosphorSel != CrtPhosphor.Green) sb.Append($" Phosphor=\"CrtPhosphor.{PhosphorSel}\"");
+            if (!string.IsNullOrEmpty(ColorV)) sb.Append($" Color=\"{ColorV}\"");
+            if (!string.IsNullOrEmpty(BgColorV)) sb.Append($" BackgroundColor=\"{BgColorV}\"");
+            if (FontSel != CrtFont.System) sb.Append($" Font=\"CrtFont.{FontSel}\"");
+            if (!Glow) sb.Append(" Glow=\"false\"");
+            if (!Scanlines) sb.Append(" Scanlines=\"false\"");
+            if (!Bezel) sb.Append(" Bezel=\"false\"");
+            if (!Cursor) sb.Append(" CursorBlink=\"false\"");
+            if (!Visible) sb.Append(" Visible=\"false\"");
+            if (Disabled) sb.Append(" Disabled=\"true\"");
+            if (ReadOnly) sb.Append(" ReadOnly=\"true\"");
+            if (!string.IsNullOrEmpty(Placeholder)) sb.Append($" Placeholder=\"{Placeholder}\"");
+            if (!string.IsNullOrEmpty(HelpText)) sb.Append($" HelpText=\"{HelpText}\"");
+            sb.Append(" />");
+            return sb.ToString();
+        }
+    }
+}

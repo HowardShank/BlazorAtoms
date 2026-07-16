@@ -1,0 +1,34 @@
+@inherits AtomComponentBase
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr(RootClass)"
+     style="@StyleAttr(RootStyle)"
+     data-phosphor="@PhosphorAttr"
+     data-font="@FontAttr"
+     data-glow="@(Glow ? "true" : null)"
+     data-scanlines="@(Scanlines ? "true" : null)"
+     data-bezel="@(Bezel ? "true" : null)"
+     data-cursor="@(CursorBlink ? "true" : null)"
+     role="status"
+     aria-live="polite"
+     aria-label="@EffectiveAriaLabel">
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <label class="atom-crt-display-label @LabelCol">@Label</label>
+    }
+    <div class="atom-crt-display-control @ControlCol">
+        <div class="atom-crt-display-frame">
+            <div class="atom-crt-display-screen">
+                <pre class="atom-crt-display-field" data-multiline="@(Multiline ? "true" : null)"
+                     data-empty="@(ShowPlaceholder ? "true" : null)">@if (ShowPlaceholder)
+                    {@Placeholder}
+                    else
+                    {@DisplayedText}<span class="atom-crt-display-caret" aria-hidden="true">@("█")</span></pre>
+            </div>
+        </div>
+        @if (!string.IsNullOrEmpty(HelpText))
+        {
+            <span class="atom-crt-display-subtext">@HelpText</span>
+        }
+    </div>
+</div>

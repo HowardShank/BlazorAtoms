@@ -90,7 +90,7 @@ On-brand standout: **`Charts`** — SVG, JS-free, same DNA as the activity indic
 
 | Library | Components (`Atom*`) | Note |
 |---|---|---|
-| `BlazorAtoms.Inputs` *(in progress)* | AtomRangeInput *(shipped)*, AtomTextField, AtomTextArea, AtomNumberField, AtomCheckbox, AtomRadioGroup, AtomSwitch, AtomSelect | core forms; JS-free doable |
+| `BlazorAtoms.Inputs` *(in progress)* | AtomRangeInput *(shipped)*, AtomCrtInput *(shipped)*, AtomCrtDisplay *(shipped)*, AtomTextField, AtomTextArea, AtomNumberField, AtomCheckbox, AtomRadioGroup, AtomSwitch, AtomSelect | core forms; JS-free doable |
 | `BlazorAtoms.Buttons` | AtomButton, AtomIconButton, AtomButtonGroup, AtomToggleButton, AtomSplitButton | JS-free |
 | `BlazorAtoms.Cards` | AtomCard, AtomCardHeader, AtomCardBody, AtomCardFooter | JS-free |
 | `BlazorAtoms.Tabs` | AtomTabs, AtomTab, AtomTabPanel | JS-free |

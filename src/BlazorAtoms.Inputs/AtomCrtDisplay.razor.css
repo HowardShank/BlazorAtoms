@@ -1,0 +1,157 @@
+/* AtomCrtDisplay shares the same phosphor/glow/scanline/bezel visual language as AtomCrtInput; the
+   classes are prefixed .atom-crt-display-* so both components can style their internals
+   independently through Blazor's scoped CSS. Font @font-face declarations live in AtomCrtInput's
+   scoped file already; they're global scope (fonts.googleapis-style names don't scope), so this
+   file references the same 'BlazorAtoms Vt323'/'BlazorAtoms PressStart2P' family names without
+   redeclaring @font-face. */
+
+/* ---- layout -------------------------------------------------------------------------------- */
+
+.atom-crt-display {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: .5rem 1rem;
+    font: inherit;
+}
+
+.atom-crt-display-label {
+    font-weight: 600;
+    padding-top: .35rem;
+}
+
+.atom-crt-display-control {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.atom-crt-display-frame {
+    display: inline-block;
+    padding: 0;
+    border-radius: 4px;
+    background: transparent;
+    max-width: 100%;
+}
+
+.atom-crt-display[data-bezel="true"] .atom-crt-display-frame {
+    padding: 12px;
+    border-radius: 14px;
+    border: 1px solid #0a0a0a;
+    background: linear-gradient(#2a2a2a, #171717);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .06),
+        0 4px 12px rgba(0, 0, 0, .5);
+}
+
+.atom-crt-display-screen {
+    position: relative;
+    border-radius: 6px;
+    background: var(--crt-bg, #0a0f0a);
+    overflow: hidden;
+    box-shadow: inset 0 0 24px rgba(0, 0, 0, .8);
+}
+
+/* ---- phosphors (identical vars to AtomCrtInput) ------------------------------------------- */
+
+.atom-crt-display[data-phosphor="green"]  { --crt-color: #33ff66; --crt-bg: #061006; }
+.atom-crt-display[data-phosphor="amber"]  { --crt-color: #ffbf00; --crt-bg: #100b02; }
+.atom-crt-display[data-phosphor="blue"]   { --crt-color: #6ec6ff; --crt-bg: #05080e; }
+.atom-crt-display[data-phosphor="red"]    { --crt-color: #ff4d4d; --crt-bg: #100404; }
+.atom-crt-display[data-phosphor="white"]  { --crt-color: #eaeaea; --crt-bg: #050505; }
+
+/* ---- font --------------------------------------------------------------------------------- */
+
+.atom-crt-display[data-font="system"] .atom-crt-display-field {
+    font-family: ui-monospace, 'Cascadia Mono', 'Consolas', 'DejaVu Sans Mono', 'Courier New', monospace;
+    letter-spacing: .01em;
+}
+
+.atom-crt-display[data-font="vt323"] .atom-crt-display-field {
+    font-family: 'BlazorAtoms Vt323', ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+    letter-spacing: .02em;
+}
+
+.atom-crt-display[data-font="press-start-2p"] .atom-crt-display-field {
+    font-family: 'BlazorAtoms PressStart2P', ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+    letter-spacing: 0;
+    line-height: 1.4;
+}
+
+/* ---- the display field -------------------------------------------------------------------- */
+
+.atom-crt-display-field {
+    display: block;
+    box-sizing: border-box;
+    margin: 0;
+    width: var(--crt-width, 32ch);
+    max-width: 100%;
+    height: var(--crt-height, auto);
+    padding: .6rem .8rem;
+    background: transparent;
+    color: var(--crt-color, #33ff66);
+    font-size: var(--crt-font-size, 1rem);
+    line-height: 1.35;
+    overflow: auto;
+    white-space: pre;
+}
+
+.atom-crt-display-field[data-multiline="true"] {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.atom-crt-display-field[data-empty="true"] {
+    color: color-mix(in srgb, var(--crt-color, #33ff66) 45%, transparent);
+}
+
+.atom-crt-display[data-glow="true"] .atom-crt-display-field {
+    text-shadow:
+        0 0 4px var(--crt-color, #33ff66),
+        0 0 10px color-mix(in srgb, var(--crt-color, #33ff66) 45%, transparent);
+}
+
+/* Block cursor. Sits inline right after the typed text; opacity animation gives the classic
+   1-Hz blink. Hidden when CursorBlink=false. Also hidden when the field is showing the
+   placeholder — the caret would look wrong hanging off empty content. */
+.atom-crt-display-caret {
+    display: inline-block;
+    margin-left: .05em;
+    animation: atom-crt-blink 1s steps(2, jump-none) infinite;
+}
+
+.atom-crt-display:not([data-cursor="true"]) .atom-crt-display-caret {
+    display: none;
+}
+
+.atom-crt-display-field[data-empty="true"] .atom-crt-display-caret {
+    display: none;
+}
+
+@keyframes atom-crt-blink {
+    50% { opacity: 0; }
+}
+
+/* ---- scanlines ---------------------------------------------------------------------------- */
+
+.atom-crt-display[data-scanlines="true"] .atom-crt-display-screen::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent 0 2px,
+        rgba(0, 0, 0, .18) 2px 3px);
+    mix-blend-mode: multiply;
+}
+
+/* ---- subtext ------------------------------------------------------------------------------ */
+
+.atom-crt-display-subtext {
+    font-size: .85em;
+    color: var(--crt-help-color, #6b7280);
+    font-family: ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+}
