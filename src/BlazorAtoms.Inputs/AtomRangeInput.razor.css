@@ -89,14 +89,22 @@
 /* ---- track (must be one rule per vendor — a combined selector is dropped whole) ---------- */
 
 /* WebKit/Blink has no filled-track pseudo-element, so paint the fill as a hard-stop gradient
-   driven by --range-fill (a percent set inline per value in C#). */
+   driven by --range-fill (a percent set inline per value in C#).
+   The stop is inset by half the handle: the native thumb *center* travels only within
+   [halfThumb .. trackW-halfThumb] (not 0..100% of the track), so a plain --range-fill% edge drifts
+   away from the thumb center, worst at the ends. --range-fill-edge maps the percent into that same
+   reduced travel (halfThumb + pct*(100% - handleSize)), so the fill edge sits under the thumb
+   center everywhere. Firefox is unaffected — it uses the native ::-moz-range-progress below. */
 .atom-range-input-track::-webkit-slider-runnable-track {
     height: var(--range-track-height, 6px);
     border-radius: 999px;
+    --range-fill-edge: calc(
+        var(--range-handle-size, 18px) / 2
+        + var(--range-fill, 0%) * (100% - var(--range-handle-size, 18px)) / 100%);
     background:
         linear-gradient(to right,
-            var(--range-fill-color, #2563eb) 0 var(--range-fill, 0%),
-            var(--range-track-color, #d0d5dd) var(--range-fill, 0%) 100%);
+            var(--range-fill-color, #2563eb) 0 var(--range-fill-edge),
+            var(--range-track-color, #d0d5dd) var(--range-fill-edge) 100%);
 }
 
 .atom-range-input-track::-moz-range-track {
