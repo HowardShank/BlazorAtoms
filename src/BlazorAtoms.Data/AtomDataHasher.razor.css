@@ -1,0 +1,126 @@
+.atom-data-hasher {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: .5rem 1rem;
+    width: var(--hasher-width, 100%);
+    max-width: 100%;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    color: var(--hasher-fg, inherit);
+}
+
+.atom-data-hasher-label {
+    font-weight: 600;
+    padding-top: .25rem;
+}
+
+.atom-data-hasher-control {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+    min-width: 0;
+}
+
+.atom-data-hasher-algo {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+}
+
+.atom-data-hasher-algo-label {
+    font-size: .8rem;
+    color: var(--hasher-muted, #6b7280);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.atom-data-hasher-select {
+    padding: .4rem .55rem;
+    border-radius: 6px;
+    border: 1px solid var(--hasher-border, #cbd5e1);
+    background: var(--hasher-input-bg, #ffffff);
+    color: inherit;
+    font-family: inherit;
+    font-size: .95rem;
+    min-width: 12rem;
+    max-width: 100%;
+}
+
+.atom-data-hasher-input {
+    display: flex;
+    flex-direction: column;
+}
+
+.atom-data-hasher-field {
+    width: 100%;
+    box-sizing: border-box;
+    padding: .5rem .6rem;
+    border-radius: 6px;
+    border: 1px solid var(--hasher-border, #cbd5e1);
+    background: var(--hasher-input-bg, #ffffff);
+    color: inherit;
+    font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+    font-size: .95rem;
+    resize: vertical;
+}
+
+.atom-data-hasher-field:focus {
+    outline: 2px solid var(--hasher-focus, #2563eb);
+    outline-offset: 1px;
+}
+
+.atom-data-hasher-result {
+    background: var(--hasher-result-bg, #eef4ff);
+    border: 1px solid var(--hasher-result-border, #c7d7f0);
+    border-radius: 6px;
+    padding: .6rem .75rem;
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    color: var(--hasher-result-color, inherit);
+}
+
+.atom-data-hasher-result-label {
+    font-size: .8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--hasher-result-label-color, #1d4ed8);
+}
+
+.atom-data-hasher-result-value {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+    font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+    font-size: .95rem;
+    line-height: 1.35;
+    min-height: 1.35em;
+    color: var(--hasher-result-color, inherit);
+}
+
+.atom-data-hasher-result-value[data-empty="true"]::before {
+    content: attr(data-placeholder, "\00a0");
+    color: transparent;
+}
+
+.atom-data-hasher-subtext {
+    font-size: .8rem;
+    color: var(--hasher-muted, #6b7280);
+}
+
+.atom-data-hasher-subtext[data-state="error"] {
+    color: var(--hasher-error, #b91c1c);
+}
+
+.atom-data-hasher[data-state="disabled"] .atom-data-hasher-field,
+.atom-data-hasher[data-state="disabled"] .atom-data-hasher-select {
+    opacity: .55;
+    cursor: not-allowed;
+    background: var(--hasher-disabled-bg, #f1f5f9);
+}
+
+.atom-data-hasher[data-state="error"] .atom-data-hasher-field {
+    border-color: var(--hasher-error, #b91c1c);
+}

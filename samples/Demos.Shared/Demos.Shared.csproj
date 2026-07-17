@@ -23,6 +23,7 @@
     <ProjectReference Include="..\..\src\BlazorAtoms.Ratings\BlazorAtoms.Ratings.csproj" />
     <ProjectReference Include="..\..\src\BlazorAtoms.Highlights\BlazorAtoms.Highlights.csproj" />
     <ProjectReference Include="..\..\src\BlazorAtoms.Inputs\BlazorAtoms.Inputs.csproj" />
+    <ProjectReference Include="..\..\src\BlazorAtoms.Data\BlazorAtoms.Data.csproj" />
     <ProjectReference Include="..\..\BlazorAtoms.Screensavers\BlazorAtoms.Screensavers.csproj" />
   </ItemGroup>
 

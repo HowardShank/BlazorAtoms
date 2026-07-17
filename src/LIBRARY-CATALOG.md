@@ -71,6 +71,7 @@ rating icons, QR/barcodes, skeleton shapes, and icons.
 | `BlazorAtoms.Layout` | AtomStack, AtomGrid, AtomDivider, AtomSpacer, AtomCenter, AtomAspectRatio |
 | `BlazorAtoms.Transitions` | AtomFade, AtomSlide, AtomCollapse, AtomScale (CSS-only) |
 | `BlazorAtoms.Barcodes` *(implemented)* | AtomBarcode (1D), AtomQrCode (2D) — own C# encoder → SVG; generation only |
+| `BlazorAtoms.Data` *(shipped)* | AtomDataHasher — live CRC-32 / CRC-64 / MD5 / SHA-256 / SHA-512 hex-digest panel over a text input; CRC engines implemented in-library (no `System.IO.Hashing` dependency), cryptographic engines wrap `System.Security.Cryptography`; algorithm picker toggle, `EditContext`-aware validation, `Multiline` textarea vs single-line input, `ResultColor`/`ResultBackgroundColor` theming; no JS |
 
 On-brand standout: **`Charts`** — SVG, JS-free, same DNA as the activity indicators.
 
