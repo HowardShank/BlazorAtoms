@@ -1,0 +1,111 @@
+@typeparam TItem where TItem : class
+@inherits AtomComponentBase
+
+<div @attributes="AdditionalAttributes"
+     @ref="_rootRef"
+     class="@ClassAttr(RootClass)"
+     style="@StyleAttr(RootStyle)"
+     data-group="@Group"
+     data-orientation="@OrientationAttr"
+     data-in-transit="@InTransitAttr"
+     role="list"
+     @ondragover:preventDefault
+     @ondragover="NoOp"
+     @ondragenter:preventDefault
+     @ondragenter="NoOp"
+     @ondrop="OnDrop"
+     @ondrop:preventDefault
+     @ondrop:stopPropagation>
+
+    @if (Virtualize && VirtualizeOptions?.ItemsProvider is not null)
+    {
+        <Virtualize Context="item"
+                    TItem="TItem"
+                    ItemsProvider="VirtualizeOptions.ItemsProvider"
+                    OverscanCount="VirtualizeOptions.OverscanCount"
+                    ItemSize="VirtualizeOptions.ItemSize">
+            @RowFragment(item)
+        </Virtualize>
+    }
+    else if (Virtualize)
+    {
+        <Virtualize Context="item"
+                    TItem="TItem"
+                    Items="Items"
+                    OverscanCount="VirtualizeOptions?.OverscanCount ?? 3"
+                    ItemSize="VirtualizeOptions?.ItemSize ?? 50f">
+            @RowFragment(item)
+        </Virtualize>
+    }
+    else
+    {
+        @foreach (var item in Items)
+        {
+            @RowFragment(item)
+        }
+    }
+
+    @if (Items.Count == 0)
+    {
+        <div class="atom-dropzone-empty"
+             role="listitem"
+             @ondrop="() => OnDropOnSpacer(0)"
+             @ondrop:stopPropagation
+             @ondragenter="() => SetActiveSpacer(0)"
+             @ondragleave="ClearActiveSpacer">
+            @if (EmptyContent is not null)
+            {
+                @EmptyContent
+            }
+            else
+            {
+                <span class="atom-dropzone-empty-label">Drop here</span>
+            }
+        </div>
+    }
+
+    @Footer
+</div>
+
+@code {
+    private RenderFragment<TItem> RowFragment => item => __builder =>
+    {
+        var index = Items.IndexOf(item);
+        var isFirst = index == 0;
+        var isLast = index == Items.Count - 1;
+
+        @if (isFirst)
+        {
+            <div class="@SpacerClass(0)"
+                 @ondrop="() => OnDropOnSpacer(0)"
+                 @ondrop:stopPropagation
+                 @ondragenter="() => SetActiveSpacer(0)"
+                 @ondragleave="ClearActiveSpacer"></div>
+        }
+
+        <div class="@DraggableClass(item)"
+             role="listitem"
+             draggable="@DraggableAttr(item)"
+             @ondragstart="() => OnDragStart(item)"
+             @ondragstart:stopPropagation
+             @ondragend="OnDragEndInternal"
+             @ondragend:stopPropagation
+             @ondragenter="() => OnDragEnter(item)"
+             @ondragleave="OnDragLeave"
+             data-active="@(IsActive(item) ? "true" : null)"
+             data-target="@TargetState(item)">
+            @if (ChildContent is not null)
+            {
+                @ChildContent(item)
+            }
+        </div>
+
+        <div class="@SpacerClass(index + 1)"
+             @ondrop="() => OnDropOnSpacer(index + 1)"
+             @ondrop:stopPropagation
+             @ondragenter="() => SetActiveSpacer(index + 1)"
+             @ondragleave="ClearActiveSpacer"></div>
+    };
+
+    private void NoOp() { }
+}

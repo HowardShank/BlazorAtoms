@@ -1,0 +1,13 @@
+@typeparam TItem where TItem : class
+
+<CascadingValue Value="_context" IsFixed="true">
+    @ChildContent
+</CascadingValue>
+
+@code {
+    private readonly DragDropContext<TItem> _context = new();
+
+    /// <summary>Zones nested inside this group share a single drag context and can transfer items
+    /// between one another. Zones outside any group only support single-list reordering.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

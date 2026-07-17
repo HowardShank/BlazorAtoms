@@ -1,0 +1,43 @@
+@using BlazorAtoms.DragDrop
+
+<div class="demo-note">You can only pick up the row titled <strong>"Item 1"</strong> — the rest are locked in place via <c>AllowsDrag</c>.</div>
+
+<AtomDropzoneGroup TItem="TodoItem">
+    <div class="demo-heading">First Dropzone</div>
+    <AtomDropzone TItem="TodoItem" Items="ListA" Group="ad"
+                  AllowsDrag="OnlyItem1"
+                  OnItemDrop="i => _lastDropped = i">
+        <ChildContent Context="c">
+            <div class="@(c.IsNew ? "demo-bluecard" : "demo-blackcard")">@c.Title</div>
+        </ChildContent>
+    </AtomDropzone>
+
+    <div class="demo-heading">Second Dropzone</div>
+    <AtomDropzone TItem="TodoItem" Items="ListB" Group="ad"
+                  AllowsDrag="OnlyItem1"
+                  OnItemDrop="i => _lastDropped = i">
+        <ChildContent Context="c">
+            <div class="@(c.IsNew ? "demo-bluecard" : "demo-blackcard")">@c.Title</div>
+        </ChildContent>
+    </AtomDropzone>
+</AtomDropzoneGroup>
+
+<div class="demo-status">Last dropped: @(_lastDropped?.Title ?? "—")</div>
+
+@code {
+    private TodoItem? _lastDropped;
+
+    private static bool OnlyItem1(TodoItem d) => d.Title == "Item 1";
+
+    public List<TodoItem> ListA { get; } = new()
+    {
+        new() { Title = "Item 1", IsNew = true },
+    };
+
+    public List<TodoItem> ListB { get; } = new()
+    {
+        new() { Title = "Item 2" }, new() { Title = "Item 3" }, new() { Title = "Item 4" },
+        new() { Title = "Item 5" }, new() { Title = "Item 6" }, new() { Title = "Item 7" },
+        new() { Title = "Item 8" }, new() { Title = "Item 9" }, new() { Title = "Item 10" },
+    };
+}

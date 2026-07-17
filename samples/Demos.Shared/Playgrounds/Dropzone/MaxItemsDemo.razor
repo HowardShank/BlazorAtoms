@@ -1,0 +1,45 @@
+@using BlazorAtoms.DragDrop
+
+<div class="demo-note">The second zone caps at <strong>2 items</strong>. Extra drops fire <c>OnItemDropRejectedByMaxItems</c>.</div>
+
+<AtomDropzoneGroup TItem="TodoItem">
+    <div class="demo-row two">
+        <div>
+            <div class="demo-heading">First Dropzone (no cap)</div>
+            <AtomDropzone TItem="TodoItem" Items="ListA" Group="mx">
+                <ChildContent Context="c">
+                    <div class="demo-bluecard">@c.Title</div>
+                </ChildContent>
+            </AtomDropzone>
+        </div>
+        <div>
+            <div class="demo-heading">Second Dropzone (max 2)</div>
+            <AtomDropzone TItem="TodoItem" Items="ListB" Group="mx" MaxItems="2"
+                          OnItemDropRejectedByMaxItems="i => _lastRejected = i">
+                <ChildContent Context="c">
+                    <div class="demo-blackcard">@c.Title</div>
+                </ChildContent>
+            </AtomDropzone>
+        </div>
+    </div>
+</AtomDropzoneGroup>
+
+@if (_lastRejected is not null)
+{
+    <div class="demo-warn">Last rejected: @_lastRejected.Title</div>
+}
+
+@code {
+    private TodoItem? _lastRejected;
+
+    public List<TodoItem> ListA { get; } = new()
+    {
+        new() { Title = "Item 1" }, new() { Title = "Item 2" }, new() { Title = "Item 3" },
+        new() { Title = "Item 4" }, new() { Title = "Item 5" },
+    };
+
+    public List<TodoItem> ListB { get; } = new()
+    {
+        new() { Title = "Item 6" }, new() { Title = "Item 7" },
+    };
+}

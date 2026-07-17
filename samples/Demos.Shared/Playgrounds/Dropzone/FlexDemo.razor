@@ -1,0 +1,13 @@
+@using BlazorAtoms.DragDrop
+
+<div class="demo-note">Horizontal orientation — spacers become vertical bars between items on a single row.</div>
+
+<AtomDropzone TItem="string" Items="Cells" Orientation="DropzoneOrientation.Horizontal">
+    <ChildContent Context="c">
+        <div class="demo-flex-item">@c</div>
+    </ChildContent>
+</AtomDropzone>
+
+@code {
+    public List<string> Cells { get; } = new() { "1", "2", "3", "4", "5", "6" };
+}

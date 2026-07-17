@@ -1,0 +1,67 @@
+@using BlazorAtoms.DragDrop
+
+<div class="demo-note">Three-column kanban. Cards move between "To Do", "In Progress", and "Done". <c>Footer</c> slot demonstrated on the first column.</div>
+
+<AtomDropzoneGroup TItem="TodoItem">
+    <div class="demo-row">
+        <div>
+            <div class="demo-heading">To Do List</div>
+            <AtomDropzone TItem="TodoItem" Items="ToDo" Group="k"
+                          OnItemDrop="i => _lastDropped = i">
+                <ChildContent Context="c">
+                    <div class="demo-kanban-card todo">
+                        <h6>@c.Title</h6>
+                        <p>Sapien elit in malesuada semper mi, id sollicitudin urna fermentum.</p>
+                    </div>
+                </ChildContent>
+                <Footer>
+                    <button class="demo-kanban-loadmore" type="button">Load more (Inactive)</button>
+                </Footer>
+            </AtomDropzone>
+        </div>
+        <div>
+            <div class="demo-heading">In Progress Column</div>
+            <AtomDropzone TItem="TodoItem" Items="InProgress" Group="k"
+                          OnItemDrop="i => _lastDropped = i">
+                <ChildContent Context="c">
+                    <div class="demo-kanban-card wip">
+                        <h6>@c.Title</h6>
+                        <p>Sapien elit in malesuada semper mi, id sollicitudin urna fermentum.</p>
+                    </div>
+                </ChildContent>
+            </AtomDropzone>
+        </div>
+        <div>
+            <div class="demo-heading">Completed</div>
+            <AtomDropzone TItem="TodoItem" Items="Done" Group="k"
+                          OnItemDrop="i => _lastDropped = i">
+                <ChildContent Context="c">
+                    <div class="demo-kanban-card done">
+                        <h6>@c.Title</h6>
+                        <p>Sapien elit in malesuada semper mi, id sollicitudin urna fermentum.</p>
+                    </div>
+                </ChildContent>
+            </AtomDropzone>
+        </div>
+    </div>
+</AtomDropzoneGroup>
+
+<div class="demo-status">Last dropped: @(_lastDropped?.Title ?? "—")</div>
+
+@code {
+    private TodoItem? _lastDropped;
+
+    public List<TodoItem> ToDo { get; } = new()
+    {
+        new() { Title = "Item 1" }, new() { Title = "Item 2" }, new() { Title = "Item 3" },
+        new() { Title = "Item 4" }, new() { Title = "Item 5" }, new() { Title = "Item 6" },
+        new() { Title = "Item 7" },
+    };
+
+    public List<TodoItem> InProgress { get; } = new()
+    {
+        new() { Title = "Item 8" }, new() { Title = "Item 9" }, new() { Title = "Item 10" },
+    };
+
+    public List<TodoItem> Done { get; } = new();
+}

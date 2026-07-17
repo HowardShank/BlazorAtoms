@@ -1,0 +1,61 @@
+@using BlazorAtoms.DragDrop
+
+<div class="demo-note">Only "Item 1" cards from the blue lists can move. The third zone <em>copies</em> anything dropped into it, so the source keeps its item.</div>
+
+<AtomDropzoneGroup TItem="TodoItem">
+    <div class="demo-row">
+        <div>
+            <div class="demo-heading">First Dropzone</div>
+            <AtomDropzone TItem="TodoItem" Items="ListA" Group="tz"
+                          AllowsDrag="OnlyItem1"
+                          OnItemDrop="i => _lastDropped = i">
+                <ChildContent Context="c">
+                    <div class="demo-bluecard">@c.Title</div>
+                </ChildContent>
+            </AtomDropzone>
+        </div>
+        <div>
+            <div class="demo-heading">Second Dropzone</div>
+            <AtomDropzone TItem="TodoItem" Items="ListB" Group="tz"
+                          AllowsDrag="OnlyItem1"
+                          OnItemDrop="i => _lastDropped = i">
+                <ChildContent Context="c">
+                    <div class="demo-blackcard">@c.Title</div>
+                </ChildContent>
+            </AtomDropzone>
+        </div>
+        <div>
+            <div class="demo-heading">Third Dropzone (copies)</div>
+            <AtomDropzone TItem="TodoItem" Items="ListC" Group="tz"
+                          CopyItem="Clone"
+                          OnItemDrop="i => _lastDropped = i">
+                <ChildContent Context="c">
+                    <div class="demo-blackcard">@c.Title</div>
+                </ChildContent>
+            </AtomDropzone>
+        </div>
+    </div>
+</AtomDropzoneGroup>
+
+<div class="demo-status">Last dropped: @(_lastDropped?.Title ?? "—")</div>
+
+@code {
+    private TodoItem? _lastDropped;
+
+    private static bool OnlyItem1(TodoItem d) => d.Title == "Item 1";
+    private static TodoItem Clone(TodoItem item) => new() { Title = item.Title };
+
+    public List<TodoItem> ListA { get; } = new()
+    {
+        new() { Title = "Item 1" }, new() { Title = "Item 2" }, new() { Title = "Item 3" },
+        new() { Title = "Item 4" }, new() { Title = "Item 5" },
+    };
+
+    public List<TodoItem> ListB { get; } = new()
+    {
+        new() { Title = "Item 6" }, new() { Title = "Item 7" }, new() { Title = "Item 8" },
+        new() { Title = "Item 9" }, new() { Title = "Item 10" },
+    };
+
+    public List<TodoItem> ListC { get; } = new();
+}

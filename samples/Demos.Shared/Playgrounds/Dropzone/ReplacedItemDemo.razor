@@ -1,0 +1,22 @@
+@using BlazorAtoms.DragDrop
+
+<div class="demo-note">Grid with <c>InstantReplace="true"</c> — hovering over a cell swaps it immediately. <c>OnReplacedItemDrop</c> fires with the displaced item.</div>
+
+<div class="demo-status">
+    Dropped item: <strong>@_dropped</strong> · Replaced item: <strong>@_replaced</strong>
+</div>
+
+<AtomDropzone TItem="string" Items="Cells" Orientation="DropzoneOrientation.Grid" InstantReplace="true"
+              OnItemDrop="i => { _dropped = i; StateHasChanged(); }"
+              OnReplacedItemDrop="i => { _replaced = i; StateHasChanged(); }">
+    <ChildContent Context="c">
+        <div class="demo-grid-item">@c</div>
+    </ChildContent>
+</AtomDropzone>
+
+@code {
+    private string _dropped = "—";
+    private string _replaced = "—";
+
+    public List<string> Cells { get; } = new() { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
+}

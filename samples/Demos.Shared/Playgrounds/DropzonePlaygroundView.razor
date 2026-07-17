@@ -1,0 +1,221 @@
+@using System.Text
+@using BlazorAtoms.DragDrop
+@using Demos.Shared.Playgrounds.Dropzone
+
+<PageTitle>AtomDropzone Playground</PageTitle>
+
+<h1>AtomDropzone playground</h1>
+<p>Native HTML5 drag-and-drop — no JavaScript. <c>AtomDropzone&lt;TItem&gt;</c>.</p>
+<p><a href="demo">&larr; Back to demo</a></p>
+
+<div class="dropzone-tabs" role="tablist">
+    @foreach (var tab in Tabs)
+    {
+        var t = tab;
+        <button type="button"
+                role="tab"
+                aria-selected="@(Active == t.Id ? "true" : "false")"
+                class="dropzone-tab @(Active == t.Id ? "active" : "")"
+                @onclick="() => Active = t.Id">
+            <span class="dropzone-tab-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="7" height="4" rx="1" />
+                    <line x1="13" y1="5" x2="21" y2="5" />
+                    <line x1="13" y1="8" x2="19" y2="8" />
+                    <rect x="3" y="12" width="7" height="4" rx="1" />
+                    <line x1="13" y1="13" x2="21" y2="13" />
+                    <line x1="13" y1="16" x2="19" y2="16" />
+                </svg>
+            </span>
+            <span>@t.Title</span>
+        </button>
+    }
+</div>
+
+<div class="dropzone-panel" role="tabpanel">
+    @if (Active == "simple")
+    {
+        <SimpleDemo />
+    }
+    else if (Active == "twozones")
+    {
+        <TwoZonesDemo />
+    }
+    else if (Active == "maxitems")
+    {
+        <MaxItemsDemo />
+    }
+    else if (Active == "accepts")
+    {
+        <AcceptsDemo />
+    }
+    else if (Active == "grid")
+    {
+        <DisplayGridDemo />
+    }
+    else if (Active == "flex")
+    {
+        <FlexDemo />
+    }
+    else if (Active == "allowsdrag")
+    {
+        <AllowsDragDemo />
+    }
+    else if (Active == "replaced")
+    {
+        <ReplacedItemDemo />
+    }
+    else if (Active == "kanban")
+    {
+        <KanbanDemo />
+    }
+</div>
+
+<CodeSnippetBox Code="@CurrentSnippet" FileName="AtomDropzoneExample.razor" />
+
+<style>
+    .dropzone-tabs { display:flex; gap:.25rem; flex-wrap:wrap; padding:.5rem; background:#0d1118; border:1px solid #1b2330; border-radius:12px 12px 0 0; border-bottom:none; }
+    .dropzone-tab { display:inline-flex; align-items:center; gap:.5rem; padding:.5rem .85rem; background:transparent; border:1px solid transparent; border-radius:8px; color:#cfd8e3; font-size:.9rem; cursor:pointer; }
+    .dropzone-tab:hover { background:#161d29; }
+    .dropzone-tab.active { background:#1e2836; border-color:#2563eb; color:#fff; }
+    .dropzone-tab-icon { display:inline-flex; color:#5fb7c9; }
+    .dropzone-tab.active .dropzone-tab-icon { color:#fff; }
+    .dropzone-panel { background:#f8fafc; border:1px solid #cbd5e1; border-top:none; border-radius:0 0 12px 12px; padding:1.5rem; margin-bottom:1.5rem; }
+    .demo-note { background:#dcfce7; border:1px solid #86efac; color:#166534; border-radius:6px; padding:.6rem .8rem; margin-bottom:1rem; font-size:.9rem; }
+    .demo-warn { background:#fef3c7; border:1px solid #fcd34d; color:#92400e; border-radius:6px; padding:.5rem .75rem; margin-top:.75rem; font-size:.85rem; }
+    .demo-status { background:#e0e7ff; border:1px solid #a5b4fc; color:#3730a3; border-radius:6px; padding:.5rem .75rem; margin-top:.75rem; font-size:.85rem; font-family:ui-monospace,Consolas,monospace; }
+    .demo-heading { font-size:.85rem; font-weight:600; color:#334155; text-transform:uppercase; letter-spacing:.05em; margin:.75rem 0 .35rem; }
+    .demo-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; }
+    .demo-row.two { grid-template-columns:1fr 1fr; }
+    .demo-simple-item { background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; padding:.5rem .75rem; display:flex; justify-content:space-between; align-items:center; }
+    .demo-simple-item button { background:#fef2f2; border:1px solid #fecaca; color:#991b1b; border-radius:4px; padding:.1rem .5rem; font-size:.75rem; cursor:pointer; }
+    .demo-simple-add { display:flex; gap:.5rem; margin-bottom:.75rem; }
+    .demo-simple-add input { flex:1; padding:.4rem .55rem; border-radius:6px; border:1px solid #cbd5e1; }
+    .demo-simple-add button { padding:.4rem 1rem; background:#2563eb; color:#fff; border:0; border-radius:6px; cursor:pointer; }
+    .demo-bluecard { border:2px solid #2563eb; padding:.35rem .6rem; border-radius:4px; background:#fff; }
+    .demo-blackcard { border:2px solid #0f172a; padding:.35rem .6rem; border-radius:4px; background:#fff; }
+    .demo-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; }
+    .demo-grid-item { background:#fef3c7; border:2px solid #f59e0b; padding:1.25rem; text-align:center; font-size:1.25rem; font-weight:600; border-radius:6px; color:#92400e; }
+    .demo-flex-item { background:#dbeafe; border:2px solid #2563eb; padding:.6rem 1rem; border-radius:6px; font-weight:600; }
+    .demo-kanban-card { background:#fff; border-radius:6px; padding:.75rem; box-shadow:0 1px 2px rgba(0,0,0,.06); margin-bottom:0; }
+    .demo-kanban-card h6 { margin:0 0 .25rem; font-size:.95rem; color:#0f172a; }
+    .demo-kanban-card p { margin:0; font-size:.8rem; color:#64748b; line-height:1.4; }
+    .demo-kanban-card.todo { border-left:3px solid #0f172a; }
+    .demo-kanban-card.wip { border-left:3px solid #f59e0b; }
+    .demo-kanban-card.done { border-left:3px solid #16a34a; }
+    .demo-kanban-loadmore { background:#2563eb; color:#fff; border:0; border-radius:6px; padding:.4rem .85rem; font-size:.8rem; cursor:pointer; margin-top:.5rem; }
+</style>
+
+@code {
+    private record TabDef(string Id, string Title);
+
+    private static readonly TabDef[] Tabs =
+    {
+        new("simple",     "Simple"),
+        new("twozones",   "Two Zones"),
+        new("maxitems",   "Max Items"),
+        new("accepts",    "Accepts"),
+        new("grid",       "Display Grid"),
+        new("flex",       "Flex"),
+        new("allowsdrag", "Allows Drag"),
+        new("replaced",   "Replaced Item"),
+        new("kanban",     "Kanban"),
+    };
+
+    private string Active = "simple";
+
+    private string CurrentSnippet => Active switch
+    {
+        "simple" => SimpleSnippet,
+        "twozones" => TwoZonesSnippet,
+        "maxitems" => MaxItemsSnippet,
+        "accepts" => AcceptsSnippet,
+        "grid" => GridSnippet,
+        "flex" => FlexSnippet,
+        "allowsdrag" => AllowsDragSnippet,
+        "replaced" => ReplacedSnippet,
+        "kanban" => KanbanSnippet,
+        _ => "",
+    };
+
+    private const string SimpleSnippet = @"<AtomDropzone TItem=""TodoItem"" Items=""Todos"">
+    <ChildContent Context=""t""><div>@t.Title</div></ChildContent>
+</AtomDropzone>";
+
+    private const string TwoZonesSnippet = @"<AtomDropzoneGroup TItem=""TodoItem"">
+    <AtomDropzone TItem=""TodoItem"" Items=""ListA"" Group=""z""
+                  AllowsDrag=""d => d.Title == 'Item 1'""
+                  OnItemDrop=""i => lastDropped = i"">
+        <ChildContent Context=""c""><div>@c.Title</div></ChildContent>
+    </AtomDropzone>
+    <AtomDropzone TItem=""TodoItem"" Items=""ListB"" Group=""z""
+                  AllowsDrag=""d => d.Title == 'Item 1'""
+                  OnItemDrop=""i => lastDropped = i"">
+        <ChildContent Context=""c""><div>@c.Title</div></ChildContent>
+    </AtomDropzone>
+    <AtomDropzone TItem=""TodoItem"" Items=""ListC"" Group=""z""
+                  CopyItem=""item => new TodoItem { Title = item.Title }"">
+        <ChildContent Context=""c""><div>@c.Title</div></ChildContent>
+    </AtomDropzone>
+</AtomDropzoneGroup>";
+
+    private const string MaxItemsSnippet = @"<AtomDropzoneGroup TItem=""TodoItem"">
+    <AtomDropzone TItem=""TodoItem"" Items=""ListA"" Group=""m"">
+        <ChildContent Context=""c""><div>@c.Title</div></ChildContent>
+    </AtomDropzone>
+    <AtomDropzone TItem=""TodoItem"" Items=""ListB"" Group=""m"" MaxItems=""2""
+                  OnItemDropRejectedByMaxItems=""i => lastRejected = i"">
+        <ChildContent Context=""c""><div>@c.Title</div></ChildContent>
+    </AtomDropzone>
+</AtomDropzoneGroup>";
+
+    private const string AcceptsSnippet = @"<AtomDropzoneGroup TItem=""TodoItem"">
+    <AtomDropzone TItem=""TodoItem"" Items=""ListA"" Group=""a"">
+        <ChildContent Context=""c""><div>@c.Title</div></ChildContent>
+    </AtomDropzone>
+    <AtomDropzone TItem=""TodoItem"" Items=""ListB"" Group=""a""
+                  Accepts=""(d, t) => d.Title.Contains(\""fun\"")""
+                  OnItemDropRejected=""i => lastRejected = i"">
+        <ChildContent Context=""c""><div>@c.Title</div></ChildContent>
+    </AtomDropzone>
+</AtomDropzoneGroup>";
+
+    private const string GridSnippet = @"<AtomDropzone TItem=""string"" Items=""Cells"" Orientation=""DropzoneOrientation.Grid"">
+    <ChildContent Context=""c""><div>@c</div></ChildContent>
+</AtomDropzone>";
+
+    private const string FlexSnippet = @"<AtomDropzone TItem=""string"" Items=""Cells"" Orientation=""DropzoneOrientation.Horizontal"">
+    <ChildContent Context=""c""><div>@c</div></ChildContent>
+</AtomDropzone>";
+
+    private const string AllowsDragSnippet = @"<AtomDropzoneGroup TItem=""TodoItem"">
+    <AtomDropzone TItem=""TodoItem"" Items=""ListA"" Group=""ad""
+                  AllowsDrag=""d => d.Title == 'Item 1'"">
+        <ChildContent Context=""c""><div>@c.Title</div></ChildContent>
+    </AtomDropzone>
+    <AtomDropzone TItem=""TodoItem"" Items=""ListB"" Group=""ad""
+                  AllowsDrag=""d => d.Title == 'Item 1'"">
+        <ChildContent Context=""c""><div>@c.Title</div></ChildContent>
+    </AtomDropzone>
+</AtomDropzoneGroup>";
+
+    private const string ReplacedSnippet = @"<AtomDropzone TItem=""string"" Items=""Cells"" Orientation=""DropzoneOrientation.Grid""
+              InstantReplace=""true""
+              OnItemDrop=""i => dropped = i""
+              OnReplacedItemDrop=""i => replaced = i"">
+    <ChildContent Context=""c""><div>@c</div></ChildContent>
+</AtomDropzone>";
+
+    private const string KanbanSnippet = @"<AtomDropzoneGroup TItem=""TodoItem"">
+    <AtomDropzone TItem=""TodoItem"" Items=""ToDo"" Group=""k"" OnItemDrop=""i => lastDropped = i"">
+        <ChildContent Context=""c""><div class=""card""><h6>@c.Title</h6></div></ChildContent>
+        <Footer><button class=""btn"">Load more</button></Footer>
+    </AtomDropzone>
+    <AtomDropzone TItem=""TodoItem"" Items=""InProgress"" Group=""k"" OnItemDrop=""i => lastDropped = i"">
+        <ChildContent Context=""c""><div class=""card""><h6>@c.Title</h6></div></ChildContent>
+    </AtomDropzone>
+    <AtomDropzone TItem=""TodoItem"" Items=""Done"" Group=""k"" OnItemDrop=""i => lastDropped = i"">
+        <ChildContent Context=""c""><div class=""card""><h6>@c.Title</h6></div></ChildContent>
+    </AtomDropzone>
+</AtomDropzoneGroup>";
+}

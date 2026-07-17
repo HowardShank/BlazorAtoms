@@ -1,0 +1,44 @@
+@using BlazorAtoms.DragDrop
+
+<div class="demo-note">Type a title, press Add and/or drag rows to reorder.Uses single <c>AtomDropzone</c>.</div>
+
+<div class="demo-simple-add">
+    <input type="text" placeholder="Add new work item" @bind="_newTitle" @bind:event="oninput" @onkeydown="OnKey" />
+    <button type="button" @onclick="Add">Add</button>
+</div>
+
+<AtomDropzone TItem="TodoItem" Items="Todos">
+    <ChildContent Context="item">
+        <div class="demo-simple-item">
+            <span>@item.Title</span>
+            <button type="button" @onclick="() => Todos.Remove(item)">Remove</button>
+        </div>
+    </ChildContent>
+</AtomDropzone>
+
+@code {
+    private string _newTitle = string.Empty;
+
+    public List<TodoItem> Todos { get; } = new()
+    {
+        new() { Title = "Drag this item" },
+        new() { Title = "Add another item" },
+        new() { Title = "Remove this item" },
+        new() { Title = "Style this list" },
+        new() { Title = "Fix a bug" },
+        new() { Title = "Build a feature" },
+        new() { Title = "Create a PR" },
+    };
+
+    private void Add()
+    {
+        if (string.IsNullOrWhiteSpace(_newTitle)) return;
+        Todos.Add(new TodoItem { Title = _newTitle.Trim() });
+        _newTitle = string.Empty;
+    }
+
+    private void OnKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") Add();
+    }
+}

@@ -1,0 +1,51 @@
+@using BlazorAtoms.DragDrop
+
+<div class="demo-note">The second zone only accepts items whose title contains <c>"fun"</c>. Rejected drops fire <c>OnItemDropRejected</c>.</div>
+
+<AtomDropzoneGroup TItem="TodoItem">
+    <div class="demo-row two">
+        <div>
+            <div class="demo-heading">First Dropzone</div>
+            <AtomDropzone TItem="TodoItem" Items="ListA" Group="ac">
+                <ChildContent Context="c">
+                    <div class="demo-bluecard">@c.Title</div>
+                </ChildContent>
+            </AtomDropzone>
+        </div>
+        <div>
+            <div class="demo-heading">Second Dropzone (fun only)</div>
+            <AtomDropzone TItem="TodoItem" Items="ListB" Group="ac"
+                          Accepts="AcceptFun"
+                          OnItemDropRejected="i => _lastRejected = i">
+                <ChildContent Context="c">
+                    <div class="demo-blackcard">@c.Title</div>
+                </ChildContent>
+            </AtomDropzone>
+        </div>
+    </div>
+</AtomDropzoneGroup>
+
+@if (_lastRejected is not null)
+{
+    <div class="demo-warn">No place for you here: @_lastRejected.Title</div>
+}
+
+@code {
+    private TodoItem? _lastRejected;
+
+    private static bool AcceptFun(TodoItem d, TodoItem? _) => d.Title.Contains("fun");
+
+    public List<TodoItem> ListA { get; } = new()
+    {
+        new() { Title = "Item 1 - boring" },
+        new() { Title = "Item 2 - angry" },
+        new() { Title = "Item 3 - fun" },
+        new() { Title = "Item 4 - more fun" },
+        new() { Title = "Item 5 - great" },
+    };
+
+    public List<TodoItem> ListB { get; } = new()
+    {
+        new() { Title = "Item 6 - the real fun" },
+    };
+}

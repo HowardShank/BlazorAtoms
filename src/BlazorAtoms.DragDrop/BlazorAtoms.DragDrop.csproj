@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <Import Project="$(RepoRoot)build\Packable.props" />
+  <Import Project="$(RepoRoot)build\Shared.props" />
+
+  <PropertyGroup>
+    <PackageId>BlazorAtoms.DragDrop</PackageId>
+    <Title>Blazor Drag &amp; Drop</Title>
+    <Description>Generic AtomDropzone&lt;TItem&gt; drag-and-drop zone for Blazor built on native HTML5 DnD (no JavaScript). Same-list reordering plus cross-zone transfer with group scoping, Accepts / AllowsDrag / CopyItem / MaxItems / InstantReplace predicates, vertical / horizontal / grid orientation, scoped CSS with custom-property theming, and EventCallback events. Framework-only, no third-party runtime dependencies. Server or WebAssembly.</Description>
+    <PackageTags>Blazor;DragDrop;Drag;Drop;Sortable;Reorder;Kanban;List;WebAssembly;Server</PackageTags>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BlazorAtoms.DragDrop.Tests" />
+  </ItemGroup>
+
+</Project>
