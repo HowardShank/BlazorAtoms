@@ -42,6 +42,7 @@
 - JS-free tests assert rendered markup and attributes.
 
 ## Build / Test
+- Do not build or test without express direction from the user. Use the following commands to build and test the entire solution:
 ```bash
 dotnet restore
 dotnet build BlazorAtoms.sln
