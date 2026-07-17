@@ -2,6 +2,11 @@ namespace BlazorAtoms.Inputs.Tests;
 
 public class AtomCrtDisplayTests : TestContext
 {
+    // Same enum-name -> data-attribute-string mapping used by AtomCrtInputTests. Data-driven so
+    // new CrtFont values (SpecialElite, CutiveMono, ...) are exercised the moment they're added.
+    public static IEnumerable<object[]> AllFontsData =>
+        Enum.GetValues<CrtFont>().Select(f => new object[] { f, AtomCrtInputTests.FontDataAttr[f] });
+
     [Fact]
     public void Animate_false_shows_full_value_immediately()
     {
@@ -130,5 +135,155 @@ public class AtomCrtDisplayTests : TestContext
         // isn't still 'HELLO' and hasn't yet reached 'WORLD' fully.
         var text = cut.Find(".atom-crt-display-field").TextContent;
         Assert.DoesNotContain("HELLO", text);
+    }
+
+    // ---- gap-fill tests --------------------------------------------------------------------
+
+    [Theory]
+    [MemberData(nameof(AllFontsData))]
+    public void Font_maps_to_data_attribute(CrtFont font, string expected)
+    {
+        var cut = RenderComponent<AtomCrtDisplay>(p => p
+            .Add(c => c.Value, "X")
+            .Add(c => c.Font, font));
+
+        Assert.Equal(expected, cut.Find(".atom-crt-display").GetAttribute("data-font"));
+    }
+
+    [Fact]
+    public void Effect_flags_omit_data_attributes_when_false()
+    {
+        var cut = RenderComponent<AtomCrtDisplay>(p => p
+            .Add(c => c.Value, "X")
+            .Add(c => c.Glow, false)
+            .Add(c => c.Scanlines, false)
+            .Add(c => c.Bezel, false)
+            .Add(c => c.CursorBlink, false));
+
+        var root = cut.Find(".atom-crt-display");
+        Assert.Null(root.GetAttribute("data-glow"));
+        Assert.Null(root.GetAttribute("data-scanlines"));
+        Assert.Null(root.GetAttribute("data-bezel"));
+        Assert.Null(root.GetAttribute("data-cursor"));
+    }
+
+    [Fact]
+    public void Label_renders_when_set()
+    {
+        var cut = RenderComponent<AtomCrtDisplay>(p => p
+            .Add(c => c.Value, "X")
+            .Add(c => c.Label, "Screen"));
+
+        Assert.Contains("Screen", cut.Find("label").TextContent);
+    }
+
+    [Fact]
+    public void HelpText_renders_in_subtext()
+    {
+        var cut = RenderComponent<AtomCrtDisplay>(p => p
+            .Add(c => c.Value, "X")
+            .Add(c => c.HelpText, "system log"));
+
+        Assert.Contains("system log", cut.Find(".atom-crt-display-subtext").TextContent);
+    }
+
+    [Fact]
+    public void Multiline_true_sets_data_multiline_attribute()
+    {
+        var cut = RenderComponent<AtomCrtDisplay>(p => p
+            .Add(c => c.Value, "X")
+            .Add(c => c.Multiline, true));
+
+        Assert.Equal("true", cut.Find(".atom-crt-display-field").GetAttribute("data-multiline"));
+    }
+
+    [Fact]
+    public void Multiline_false_omits_data_multiline_attribute()
+    {
+        var cut = RenderComponent<AtomCrtDisplay>(p => p
+            .Add(c => c.Value, "X")
+            .Add(c => c.Multiline, false));
+
+        Assert.Null(cut.Find(".atom-crt-display-field").GetAttribute("data-multiline"));
+    }
+
+    [Fact]
+    public void Rows_drives_default_height_when_height_unset_and_multiline()
+    {
+        var cut = RenderComponent<AtomCrtDisplay>(p => p
+            .Add(c => c.Value, "X")
+            .Add(c => c.Rows, 6));
+        // Multiline defaults to true; Height defaults to null; RootStyle emits Rows * 1.35 em.
+        // 6 * 1.35 = 8.1; the "0.###" format trims trailing zeros.
+        Assert.Contains("--crt-height:8.1em", cut.Find(".atom-crt-display").GetAttribute("style") ?? "");
+    }
+
+    [Fact]
+    public void Explicit_height_wins_over_rows_default()
+    {
+        var cut = RenderComponent<AtomCrtDisplay>(p => p
+            .Add(c => c.Value, "X")
+            .Add(c => c.Rows, 6)
+            .Add(c => c.Height, 300d));
+
+        var style = cut.Find(".atom-crt-display").GetAttribute("style") ?? "";
+        Assert.Contains("--crt-height:300px", style);
+        Assert.DoesNotContain("em", style); // no fallback em value alongside the explicit px
+    }
+
+    [Fact]
+    public async Task Loop_true_restarts_after_finish()
+    {
+        // Value "A" completes in ~2ms at 500 CPS; 20ms loop delay; run for ~120ms so the loop
+        // completes at least twice. The stable state after each loop iteration still shows "A" —
+        // this is a regression guard that Loop doesn't leave the field blanked out permanently.
+        var cut = RenderComponent<AtomCrtDisplay>(p => p
+            .Add(c => c.Value, "A")
+            .Add(c => c.Animate, true)
+            .Add(c => c.CharactersPerSecond, 500)
+            .Add(c => c.Loop, true)
+            .Add(c => c.LoopDelayMs, 20));
+
+        await Task.Delay(120);
+        cut.Render();
+        Assert.Contains("A", cut.Find(".atom-crt-display-field").TextContent);
+    }
+
+    [Fact]
+    public void Root_carries_status_role_and_polite_live_region()
+    {
+        var cut = RenderComponent<AtomCrtDisplay>(p => p.Add(c => c.Value, "X"));
+
+        var root = cut.Find(".atom-crt-display");
+        Assert.Equal("status", root.GetAttribute("role"));
+        Assert.Equal("polite", root.GetAttribute("aria-live"));
+    }
+
+    [Fact]
+    public async Task DisposeAsync_cancels_pending_animation_without_throwing()
+    {
+        var cut = RenderComponent<AtomCrtDisplay>(p => p
+            .Add(c => c.Value, "LONG STRING HERE")
+            .Add(c => c.Animate, true)
+            .Add(c => c.CharactersPerSecond, 5)); // slow enough that the loop is definitely mid-run
+
+        // Component implements IAsyncDisposable; disposing while the internal Task.Delay loop is
+        // pending must cancel cleanly (no OperationCanceledException surfacing, no orphan task).
+        await ((IAsyncDisposable)cut.Instance).DisposeAsync();
+
+        // Give any straggler continuation a moment to run; still no throw.
+        await Task.Delay(30);
+    }
+
+    [Fact]
+    public void Color_and_BackgroundColor_defaults_absent_when_unset()
+    {
+        var cut = RenderComponent<AtomCrtDisplay>(p => p.Add(c => c.Value, "X"));
+
+        var style = cut.Find(".atom-crt-display").GetAttribute("style") ?? "";
+        // Defaults come from the phosphor CSS rules, NOT inline vars — nothing should be emitted
+        // inline for --crt-color / --crt-bg unless the params were set.
+        Assert.DoesNotContain("--crt-color", style);
+        Assert.DoesNotContain("--crt-bg", style);
     }
 }

@@ -10,10 +10,17 @@ function resolveCanvas(canvasOrId) {
 function updateLayout(state) {
     const canvas = state.canvas;
     const fontSize = Math.max(1, parseFontSize(readStyle(canvas, "--mr-font-size", "16px")));
-    const rect = canvas.parentElement?.getBoundingClientRect() ?? canvas.getBoundingClientRect();
+    // Size canvas from its own rendered box, not the parent — CSS like `width: 50%` shrinks
+    // the canvas below its parent, and sizing from the parent would produce a permanent width
+    // mismatch that fires updateLayout every frame (which clears the canvas → no trail).
+    // Floor to integers so the per-frame mismatch check against clientWidth (also integer) is
+    // stable — fractional rect values would otherwise re-trigger layout every frame and wipe
+    // the trail.
+    const width = Math.max(1, Math.floor(canvas.clientWidth || canvas.getBoundingClientRect().width));
+    const height = Math.max(1, Math.floor(canvas.clientHeight || canvas.getBoundingClientRect().height));
 
-    canvas.width = rect.width;
-    canvas.height = rect.height;
+    canvas.width = width;
+    canvas.height = height;
 
     const columns = Math.floor(canvas.width / fontSize) || 1;
     const oldDrops = state.drops;

@@ -1,10 +1,24 @@
 using System.ComponentModel.DataAnnotations;
+using System.Linq.Expressions;
 using Microsoft.AspNetCore.Components.Forms;
 
 namespace BlazorAtoms.Inputs.Tests;
 
 public class AtomCrtInputTests : TestContext
 {
+    // Enum-name -> data-attribute-string. Keeps the Font theories data-driven so new CrtFont
+    // values (e.g. SpecialElite, CutiveMono) are automatically covered as they're added — plus one
+    // dictionary entry mapping the enum name to its lowercase-hyphenated wire form.
+    public static readonly Dictionary<CrtFont, string> FontDataAttr = new()
+    {
+        [CrtFont.System] = "system",
+        [CrtFont.Vt323] = "vt323",
+        [CrtFont.PressStart2P] = "press-start-2p",
+    };
+
+    public static IEnumerable<object[]> AllFontsData =>
+        Enum.GetValues<CrtFont>().Select(f => new object[] { f, FontDataAttr[f] });
+
     [Fact]
     public void Renders_textarea_by_default()
     {
@@ -50,9 +64,7 @@ public class AtomCrtInputTests : TestContext
     }
 
     [Theory]
-    [InlineData(CrtFont.System, "system")]
-    [InlineData(CrtFont.Vt323, "vt323")]
-    [InlineData(CrtFont.PressStart2P, "press-start-2p")]
+    [MemberData(nameof(AllFontsData))]
     public void Font_maps_to_data_attribute(CrtFont font, string expected)
     {
         var cut = RenderComponent<AtomCrtInput>(p => p.Add(c => c.Font, font));
@@ -177,6 +189,121 @@ public class AtomCrtInputTests : TestContext
         Assert.Equal("error", cut.Find(".atom-crt-input").GetAttribute("data-state"));
         Assert.Equal("true", cut.Find("textarea").GetAttribute("aria-invalid"));
         Assert.Contains("Required", cut.Find(".atom-crt-input-subtext").TextContent);
+    }
+
+    // ---- gap-fill tests --------------------------------------------------------------------
+
+    [Fact]
+    public void Label_renders_as_label_element_when_set()
+    {
+        var cut = RenderComponent<AtomCrtInput>(p => p.Add(c => c.Label, "Foo"));
+
+        var label = cut.Find("label");
+        Assert.Contains("Foo", label.TextContent);
+    }
+
+    [Fact]
+    public void Label_omitted_when_null()
+    {
+        var cut = RenderComponent<AtomCrtInput>();
+
+        Assert.Empty(cut.FindAll("label"));
+    }
+
+    [Fact]
+    public void LabelCol_and_ControlCol_apply_classes()
+    {
+        var cut = RenderComponent<AtomCrtInput>(p => p
+            .Add(c => c.Label, "L")
+            .Add(c => c.LabelCol, "custom-label-col")
+            .Add(c => c.ControlCol, "custom-control-col"));
+
+        Assert.Contains("custom-label-col", cut.Find("label").GetAttribute("class")!);
+        Assert.Contains("custom-control-col", cut.Find(".atom-crt-input-control").GetAttribute("class")!);
+    }
+
+    [Fact]
+    public void HelpText_renders_in_subtext_on_happy_path()
+    {
+        var cut = RenderComponent<AtomCrtInput>(p => p.Add(c => c.HelpText, "Press ENTER to continue"));
+
+        var sub = cut.Find(".atom-crt-input-subtext");
+        Assert.Contains("Press ENTER to continue", sub.TextContent);
+    }
+
+    [Fact]
+    public void AriaLabel_takes_precedence_over_Label()
+    {
+        var cut = RenderComponent<AtomCrtInput>(p => p
+            .Add(c => c.Label, "LabelText")
+            .Add(c => c.AriaLabel, "Explicit ARIA"));
+
+        Assert.Equal("Explicit ARIA", cut.Find("textarea").GetAttribute("aria-label"));
+    }
+
+    [Fact]
+    public void AriaLabel_falls_back_to_Label_when_null()
+    {
+        var cut = RenderComponent<AtomCrtInput>(p => p.Add(c => c.Label, "LabelText"));
+
+        Assert.Equal("LabelText", cut.Find("textarea").GetAttribute("aria-label"));
+    }
+
+    [Fact]
+    public void Cols_flows_through_to_textarea()
+    {
+        var cut = RenderComponent<AtomCrtInput>(p => p.Add(c => c.Cols, 40));
+
+        Assert.Equal("40", cut.Find("textarea").GetAttribute("cols"));
+    }
+
+    [Fact]
+    public void Height_emits_crt_height_var_alone()
+    {
+        var cut = RenderComponent<AtomCrtInput>(p => p.Add(c => c.Height, 240d));
+
+        var style = cut.Find(".atom-crt-input").GetAttribute("style") ?? "";
+        Assert.Contains("--crt-height:240px", style);
+        Assert.DoesNotContain("--crt-width", style);
+        Assert.DoesNotContain("--crt-font-size", style);
+    }
+
+    [Fact]
+    public void ValidationFor_falls_back_to_ValueExpression()
+    {
+        // Simulates @bind-Value inside an EditForm with no explicit ValidationFor: Blazor's own
+        // binding infrastructure would supply ValueExpression; asserting we honor it as the
+        // validation-field selector.
+        var model = new TestModel { Text = "" };
+        var editContext = new EditContext(model);
+        var messages = new ValidationMessageStore(editContext);
+        messages.Add(editContext.Field(nameof(TestModel.Text)), "Required");
+        editContext.NotifyValidationStateChanged();
+
+        Expression<Func<string?>> valueExpr = () => model.Text;
+
+        var cut = RenderComponent<AtomCrtInput>(p => p
+            .AddCascadingValue(editContext)
+            .Add(c => c.Value, model.Text)
+            .Add(c => c.ValueExpression, valueExpr));
+
+        Assert.Equal("error", cut.Find(".atom-crt-input").GetAttribute("data-state"));
+    }
+
+    [Fact]
+    public void Field_disables_native_spellcheck()
+    {
+        var cut = RenderComponent<AtomCrtInput>();
+
+        Assert.Equal("false", cut.Find("textarea").GetAttribute("spellcheck"));
+    }
+
+    [Fact]
+    public void Default_phosphor_is_green()
+    {
+        var cut = RenderComponent<AtomCrtInput>();
+
+        Assert.Equal("green", cut.Find(".atom-crt-input").GetAttribute("data-phosphor"));
     }
 
     private sealed class TestModel
