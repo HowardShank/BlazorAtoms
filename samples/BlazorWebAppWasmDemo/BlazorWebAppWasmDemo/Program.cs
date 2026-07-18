@@ -7,6 +7,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
 
+// Raise SignalR's inbound message ceiling (default 32 KB → 5 MB). Kept even though this host runs
+// pages in WebAssembly render mode — any future page authored under InteractiveServer mode gets
+// the same protection, matching the Server + Auto demos.
+builder.Services.AddSignalR(o => o.MaximumReceiveMessageSize = 5 * 1024 * 1024);
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

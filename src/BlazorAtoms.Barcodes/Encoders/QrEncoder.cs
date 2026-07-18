@@ -46,21 +46,27 @@ internal sealed class QrEncoder
         _isFunction = new bool[_size, _size];
     }
 
-    /// <summary>Encodes <paramref name="text"/> (UTF-8, byte mode) at the given EC level.</summary>
-    public static bool[,] Encode(string text, QrErrorCorrection ecc)
+    /// <summary>Encodes <paramref name="text"/> (UTF-8, byte mode) at the given EC level.
+    /// The smallest version 1–40 that fits the data is selected automatically; pass
+    /// <paramref name="minVersion"/> to force a floor (useful when a specific print size or
+    /// module count is required regardless of payload length).</summary>
+    public static bool[,] Encode(string text, QrErrorCorrection ecc, int minVersion = 1)
     {
+        if (minVersion < 1 || minVersion > 40)
+            throw new ArgumentOutOfRangeException(nameof(minVersion), "minVersion must be between 1 and 40.");
+
         var data = Encoding.UTF8.GetBytes(text ?? string.Empty);
         var ecl = (int)ecc;
 
         var version = -1;
-        for (var v = 1; v <= 40; v++)
+        for (var v = minVersion; v <= 40; v++)
         {
             var capacity = NumDataCodewords(v, ecl) * 8;
             var ccBits = v < 10 ? 8 : 16;
             if (4 + ccBits + 8 * data.Length <= capacity) { version = v; break; }
         }
         if (version < 0)
-            throw new FormatException($"Data too long for a QR code ({data.Length} bytes at EC level {ecc}).");
+            throw new FormatException($"Data too long for a QR code ({data.Length} bytes at EC level {ecc}, minVersion {minVersion}).");
 
         var ccLen = version < 10 ? 8 : 16;
         var bits = new List<bool>((data.Length + 3) * 8);

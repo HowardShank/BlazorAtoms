@@ -8,6 +8,12 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
+// Raise SignalR's inbound message ceiling (default 32 KB → 5 MB). Playgrounds that base64-encode
+// clipboard image pastes or return larger JS-interop payloads to the server would otherwise close
+// the circuit with "Server returned an error on close". Only affects the Interactive Server path;
+// WebAssembly components don't cross this boundary.
+builder.Services.AddSignalR(o => o.MaximumReceiveMessageSize = 5 * 1024 * 1024);
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

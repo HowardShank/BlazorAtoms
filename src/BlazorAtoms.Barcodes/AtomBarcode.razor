@@ -1,105 +1,20 @@
 @inherits AtomComponentBase
-@using System.Globalization
-@using System.Net
-@using System.Text
-@using BlazorAtoms.Barcodes.Encoders
 
-@* AtomBarcode — linear (1D) barcode generator, rendered as inline SVG (no JS, no deps).
-   Implemented symbologies: Code39. Others fall back to an error tile until added. *@
+@* AtomBarcode — linear (1D) barcode generator, rendered as inline SVG.
+   Rendering is pure C# / no JS. Copy/Save/GetPngBytes lazily import atom-barcode.js.
+   Href / AutoLink wrap the code in an anchor with rel="noopener noreferrer". *@
 
 @if (!CancellationToken.IsCancellationRequested)
 {
-    <div @attributes="AdditionalAttributes" class="@ClassAttr("atom-barcode")" style="@StyleAttr(null)">@((MarkupString)BuildSvg())</div>
-}
-
-@code {
-    /// <summary>Data to encode.</summary>
-    [Parameter, EditorRequired] public string Value { get; set; } = "";
-
-    /// <summary>Which linear symbology to render.</summary>
-    [Parameter] public BarcodeSymbology Symbology { get; set; } = BarcodeSymbology.Code128;
-
-    /// <summary>Bar height in pixels (excludes the human-readable text line).</summary>
-    [Parameter] public double Height { get; set; } = 60;
-
-    /// <summary>Width of the narrowest bar/module, in pixels.</summary>
-    [Parameter] public double ModuleWidth { get; set; } = 2;
-
-    /// <summary>Quiet-zone width on each side, in narrow modules (spec minimum is 10).</summary>
-    [Parameter] public int QuietZone { get; set; } = 10;
-
-    /// <summary>Bar color (any CSS color).</summary>
-    [Parameter] public string Color { get; set; } = "#000000";
-
-    /// <summary>Background fill. Null leaves it transparent.</summary>
-    [Parameter] public string? Background { get; set; }
-
-    /// <summary>Show the human-readable value beneath the bars.</summary>br
-    [Parameter] public bool ShowText { get; set; } = true;
-
-    /// <summary>Extra CSS class(es) on the generated <c>&lt;svg&gt;</c> element (not the root; use the
-    /// inherited <c>Class</c> for that).</summary>
-    [Parameter] public string? SvgClass { get; set; }
-
-    private static string F(double v) => v.ToString("0.###", CultureInfo.InvariantCulture);
-    private static string Esc(string s) => WebUtility.HtmlEncode(s);
-
-    private string BuildSvg()
+    var href = ResolvedHref;
+    if (href is null)
     {
-        if (CancellationToken.IsCancellationRequested) return string.Empty;
-
-        bool[] modules;
-        try
-        {
-            modules = BarcodeEncoder.Encode(Symbology, Value);
-        }
-        catch (Exception ex)
-        {
-            return ErrorSvg(ex.Message);
-        }
-
-        var mw = ModuleWidth;
-        var textH = ShowText ? 18 : 0;
-        var box = Height + textH;
-        var totalMods = modules.Length + QuietZone * 2;
-        var w = totalMods * mw;
-        var cls = SvgClass is null ? "atom-barcode" : "atom-barcode " + Esc(SvgClass);
-
-        var sb = new StringBuilder();
-        sb.Append($"<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"{cls}\" role=\"img\" ")
-          .Append($"aria-label=\"Barcode: {Esc(Value)}\" width=\"{F(w)}\" height=\"{F(box)}\" viewBox=\"0 0 {F(w)} {F(box)}\">");
-
-        if (Background is not null)
-            sb.Append($"<rect x=\"0\" y=\"0\" width=\"{F(w)}\" height=\"{F(box)}\" fill=\"{Background}\"/>");
-
-        // Merge consecutive dark modules into a single <rect> run.
-        var i = 0;
-        while (i < modules.Length)
-        {
-            if (CancellationToken.IsCancellationRequested) return string.Empty;
-            if (!modules[i]) { i++; continue; }
-            var run = 1;
-            while (i + run < modules.Length && modules[i + run]) run++;
-            var x = (QuietZone + i) * mw;
-            sb.Append($"<rect x=\"{F(x)}\" y=\"0\" width=\"{F(run * mw)}\" height=\"{F(Height)}\" fill=\"{Color}\"/>");
-            i += run;
-        }
-
-        if (ShowText)
-            sb.Append($"<text x=\"{F(w / 2)}\" y=\"{F(Height + 13)}\" text-anchor=\"middle\" ")
-              .Append($"font-family=\"ui-monospace, monospace\" font-size=\"12\" fill=\"{Color}\">{Esc(Value)}</text>");
-
-        sb.Append("</svg>");
-        return sb.ToString();
+        <div @ref="_rootRef" @attributes="AdditionalAttributes" class="@ClassAttr("atom-barcode")" style="@StyleAttr(null)">@((MarkupString)BuildSvg())</div>
     }
-
-    private string ErrorSvg(string message)
+    else
     {
-        var box = Height + 18;
-        return $"<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"atom-barcode atom-barcode-error\" " +
-               $"role=\"img\" aria-label=\"Barcode error\" width=\"240\" height=\"{F(box)}\" viewBox=\"0 0 240 {F(box)}\">" +
-               $"<rect x=\"1\" y=\"1\" width=\"238\" height=\"{F(box - 2)}\" fill=\"none\" stroke=\"#c00\" stroke-dasharray=\"4 4\"/>" +
-               $"<text x=\"120\" y=\"{F(box / 2)}\" text-anchor=\"middle\" dominant-baseline=\"middle\" " +
-               $"font-family=\"ui-monospace, monospace\" font-size=\"10\" fill=\"#c00\">{Esc(message)}</text></svg>";
+        <a href="@href" target="@LinkTarget" rel="noopener noreferrer" class="atom-barcode-link">
+            <div @ref="_rootRef" @attributes="AdditionalAttributes" class="@ClassAttr("atom-barcode")" style="@StyleAttr(null)">@((MarkupString)BuildSvg())</div>
+        </a>
     }
 }

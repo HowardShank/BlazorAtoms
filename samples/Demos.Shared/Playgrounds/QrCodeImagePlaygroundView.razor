@@ -1,0 +1,254 @@
+@using BlazorAtoms.Barcodes
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<PageTitle>AtomQrCodeImage — Blazor Atoms</PageTitle>
+
+<h1>AtomQrCodeImage</h1>
+<p>Display a QR image supplied by the developer (URL, disk file, or clipboard paste).
+   Optionally decode in the browser (native <code>BarcodeDetector</code>, vendored jsQR fallback)
+   and wrap in an anchor when the payload parses as an <code>http/https/mailto/tel</code> URL.</p>
+
+<div class="qri-stage">
+    @if (HasImage)
+    {
+        <AtomQrCodeImage @ref="_view"
+                         Src="@(Bytes is null ? Nz(ImageSrc) : null)"
+                         Bytes="@Bytes" MimeType="@MimeType" Size="@Size"
+                         Href="@Nz(LinkHref)" AutoLink="@AutoLink" LinkTarget="@LinkTarget"
+                         OnDecoded="OnDecodedHandler" />
+    }
+    else
+    {
+        <div class="qri-empty">Provide an image URL, pick a file, or paste from the clipboard.</div>
+    }
+</div>
+
+<div class="qri-controls">
+    <div class="qri-ctrl qri-wide">
+        <label>Image URL (Src)</label>
+        <input type="text" @bind="ImageSrc" @bind:event="oninput"
+               @bind:after="OnSrcChanged" placeholder="https://…/qr.png" />
+    </div>
+    <div class="qri-ctrl qri-wide">
+        <label>Load from disk</label>
+        <div class="row">
+            <InputFile OnChange="OnFileSelected" accept="image/*" />
+            <button type="button" class="qri-btn" @onclick="PasteFromClipboard">Paste from clipboard</button>
+            <button type="button" class="qri-btn" @onclick="ManualDecode" disabled="@(!HasImage)">Decode now</button>
+            <button type="button" class="qri-btn qri-btn-alt" @onclick="ClearBytes" disabled="@(Bytes is null)">Clear file</button>
+        </div>
+        @if (!string.IsNullOrEmpty(FileStatus))
+        {
+            <div class="qri-status @(FileError ? "err" : "ok")">@FileStatus</div>
+        }
+    </div>
+    <div class="qri-ctrl">
+        <label>Size (px)</label>
+        <input type="range" min="80" max="480" step="8" @bind="Size" @bind:event="oninput" />
+    </div>
+    <div class="qri-ctrl">
+        <label>Explicit Href</label>
+        <input type="text" @bind="LinkHref" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="qri-ctrl">
+        <label>AutoLink</label>
+        <div class="row">
+            <input type="checkbox" id="qriAuto" @bind="AutoLink" />
+            <label for="qriAuto" class="inline">Decode + wrap when URL</label>
+        </div>
+    </div>
+    <div class="qri-ctrl">
+        <label>Link target</label>
+        <input type="text" @bind="LinkTarget" @bind:event="oninput" placeholder="_blank" />
+    </div>
+</div>
+
+@if (DecodedPayload is not null)
+{
+    <div class="qri-payload">Decoded payload: <code>@DecodedPayload</code></div>
+}
+else if (AutoLink || _decodeFired)
+{
+    <div class="qri-payload muted">Decode attempted — @(string.IsNullOrEmpty(_view?.LastDecodeDiagnostic) ? "no payload." : _view.LastDecodeDiagnostic)</div>
+}
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomQrCodeImageExample.razor" />
+
+<style>
+    .qri-stage { background:#fff; border:1px solid #d0d0d8; border-radius:12px; padding:1.5rem; text-align:center; margin-bottom:1.5rem; overflow-x:auto; min-height:220px; display:flex; align-items:center; justify-content:center; }
+    .qri-empty { color:#6b7785; font-size:.9rem; }
+    .qri-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:1rem 1.5rem; background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; }
+    .qri-ctrl { display:flex; flex-direction:column; gap:.35rem; }
+    .qri-ctrl.qri-wide { grid-column:1 / -1; }
+    .qri-ctrl label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; }
+    .qri-ctrl input[type=text] { padding:.5rem .6rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; }
+    .qri-ctrl input[type=range] { width:100%; accent-color:#00b3c4; }
+    .qri-ctrl .row { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+    .qri-ctrl .row input[type=checkbox] { accent-color:#00b3c4; width:16px; height:16px; }
+    .qri-ctrl .row label.inline { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; }
+    .qri-btn { padding:.45rem .9rem; border-radius:6px; border:1px solid #00b3c4; background:#00b3c4; color:#001417; font-weight:600; cursor:pointer; }
+    .qri-btn:hover:not([disabled]) { background:#22c9d9; }
+    .qri-btn[disabled] { opacity:.5; cursor:not-allowed; }
+    .qri-btn-alt { background:transparent; color:#00b3c4; }
+    .qri-status { margin-top:.5rem; font-family:ui-monospace,monospace; font-size:.85rem; }
+    .qri-status.ok { color:#5fb7c9; }
+    .qri-status.err { color:#e5787a; }
+    .qri-payload { margin-top:1rem; color:#5fb7c9; font-family:ui-monospace,monospace; font-size:.9rem; }
+    .qri-payload.muted { color:#6b7785; }
+</style>
+
+@code {
+    private AtomQrCodeImage? _view;
+    private IJSObjectReference? _jsModule;
+
+    private string ImageSrc = "";
+    private byte[]? Bytes;
+    private string MimeType = "image/png";
+    private int Size = 200;
+    private string LinkHref = "";
+    private bool AutoLink = false;
+    private string LinkTarget = "_blank";
+
+    private string FileStatus = "";
+    private bool FileError;
+    private string? DecodedPayload;
+    private bool _decodeFired;
+
+    private bool HasImage => Bytes is not null || !string.IsNullOrEmpty(ImageSrc);
+
+    private void OnDecodedHandler(string? payload)
+    {
+        _decodeFired = true;
+        DecodedPayload = payload;
+    }
+
+    private void OnSrcChanged()
+    {
+        // Src and Bytes are mutually exclusive on the component — drop bytes when the user types a URL.
+        if (!string.IsNullOrEmpty(ImageSrc) && Bytes is not null)
+        {
+            Bytes = null;
+            FileStatus = "";
+        }
+        _decodeFired = false;
+        DecodedPayload = null;
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file is null) return;
+        try
+        {
+            using var ms = new MemoryStream();
+            await file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024).CopyToAsync(ms);
+            Bytes = ms.ToArray();
+            MimeType = string.IsNullOrEmpty(file.ContentType) ? "image/png" : file.ContentType;
+            ImageSrc = "";
+            FileError = false;
+            FileStatus = $"Loaded {file.Name} ({Bytes.Length:N0} bytes, {MimeType}).";
+            _decodeFired = false;
+            DecodedPayload = null;
+        }
+        catch (Exception ex)
+        {
+            FileError = true;
+            FileStatus = $"Load failed: {ex.Message}";
+        }
+    }
+
+    private async Task PasteFromClipboard()
+    {
+        try
+        {
+            _jsModule ??= await JS.InvokeAsync<IJSObjectReference>(
+                "import", "./_content/BlazorAtoms.Barcodes/atom-barcode.js");
+            var result = await _jsModule.InvokeAsync<ClipboardImage?>("readImageFromClipboard");
+            if (result is null || string.IsNullOrEmpty(result.Base64))
+            {
+                FileError = true;
+                FileStatus = "Clipboard has no image.";
+                return;
+            }
+            Bytes = Convert.FromBase64String(result.Base64);
+            MimeType = string.IsNullOrEmpty(result.MimeType) ? "image/png" : result.MimeType;
+            ImageSrc = "";
+            FileError = false;
+            FileStatus = $"Pasted {Bytes.Length:N0} bytes ({MimeType}).";
+            _decodeFired = false;
+            DecodedPayload = null;
+        }
+        catch (JSException ex)
+        {
+            FileError = true;
+            FileStatus = $"Clipboard read failed: {ex.Message}";
+        }
+    }
+
+    private void ClearBytes()
+    {
+        Bytes = null;
+        FileStatus = "";
+        _decodeFired = false;
+        DecodedPayload = null;
+    }
+
+    private async Task ManualDecode()
+    {
+        if (_view is null) return;
+        var payload = await _view.TryDecodeAsync();
+        _decodeFired = true;
+        DecodedPayload = payload;
+        if (payload is null)
+        {
+            FileError = true;
+            var diag = _view.LastDecodeDiagnostic;
+            FileStatus = string.IsNullOrEmpty(diag)
+                ? "Decode returned null."
+                : $"Decode failed — {diag}";
+        }
+        else
+        {
+            FileError = false;
+            FileStatus = $"Decoded: {payload}";
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_jsModule is not null)
+        {
+            try { await _jsModule.DisposeAsync(); }
+            catch (JSDisconnectedException) { }
+            catch (JSException) { }
+            _jsModule = null;
+        }
+    }
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
+
+    private sealed class ClipboardImage
+    {
+        public string Base64 { get; set; } = "";
+        public string MimeType { get; set; } = "";
+    }
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder("<AtomQrCodeImage");
+            if (Bytes is not null) sb.Append($" Bytes=\"@Bytes\" MimeType=\"{MimeType}\"");
+            else if (!string.IsNullOrEmpty(ImageSrc)) sb.Append($" Src=\"{ImageSrc}\"");
+            if (Size != 160) sb.Append($" Size=\"{Size}\"");
+            if (!string.IsNullOrEmpty(LinkHref)) sb.Append($" Href=\"{LinkHref}\"");
+            if (AutoLink) sb.Append(" AutoLink=\"true\"");
+            if (LinkTarget != "_blank") sb.Append($" LinkTarget=\"{LinkTarget}\"");
+            sb.Append(" />");
+            return sb.ToString();
+        }
+    }
+}

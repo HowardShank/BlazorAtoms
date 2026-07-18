@@ -7,6 +7,9 @@
   <!-- Versions are defined here once; csproj files use versionless <PackageReference>. -->
   <ItemGroup>
     <PackageVersion Include="Microsoft.AspNetCore.Components.Web" Version="9.0.11" />
+    <!-- QR image decoder for AtomQrCodeImage (pure managed, works in Server + WASM). -->
+    <PackageVersion Include="ZXing.Net" Version="0.16.9" />
+    <PackageVersion Include="SixLabors.ImageSharp" Version="2.1.11" />
   </ItemGroup>
 
   <!-- Demo host/client dependencies -->
@@ -21,8 +24,6 @@
     <PackageVersion Include="bunit" Version="1.40.0" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
-    <!-- Test-only: decode our generated barcodes to verify round-trip. Never shipped. -->
-    <PackageVersion Include="ZXing.Net" Version="0.16.9" />
   </ItemGroup>
 
 </Project>

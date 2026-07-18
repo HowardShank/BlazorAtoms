@@ -11,7 +11,6 @@
 - `tests/BlazorAtoms.<Area>.Tests/` — one bUnit/xUnit project per library.
 - `samples/Demos.Shared/` — shared playground pages (`*PlaygroundView.razor`) served by all demo hosts.
 - `samples/BlazorWebApp{Svr,Wasm,Auto}Demo/` — thin wrapper pages for Server, standalone WASM, and Auto render modes.
-- `BlazorAtoms.Screensavers/` — same shape as `src/` libraries but lives at repo root.
 
 ## Project Conventions
 - `Directory.Build.props` sets `net9.0`, `Nullable=enable`, `ImplicitUsings=enable`, `RepoRoot`.
@@ -59,7 +58,7 @@ dotnet test tests/BlazorAtoms.Badges.Tests/BlazorAtoms.Badges.Tests.csproj
 - JavaScript and graphics policy: `src/LIBRARY-CATALOG.md`
 - Playground requirements: `samples/Demos.Shared/Playgrounds/README.md`
 - Shared component styling helpers: `src/BlazorAtoms.Shared/`
-- Example self-importing component: `BlazorAtoms.Screensavers/ScreensaverRain.razor.cs`
+- Example self-importing component: `src/BlazorAtoms.Screensavers/ScreensaverRain.razor.cs`
 - Example bUnit JS-interop tests:
   - `tests/BlazorAtoms.Screensavers.Tests/ScreensaverRainTests.cs`
   - `tests/BlazorAtoms.Canvas.Tests/Canvas2DContextTests.cs`

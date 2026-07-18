@@ -7,10 +7,46 @@
    input that's invalid for the chosen symbology shows an inline error tile.</p>
 
 <div class="ba-stage">
-    <AtomBarcode Value="@Value" Symbology="@Symbology" Height="@Height" ModuleWidth="@ModuleWidth"
+    <AtomBarcode @ref="_barcode" Value="@Value" Symbology="@Symbology" Height="@Height" ModuleWidth="@ModuleWidth"
                  Color="@Color" Background="@(UseBackground ? Background : null)" ShowText="@ShowText"
                  QuietZone="@QuietZone" SvgClass="@Nz(SvgClass)"
+                 Href="@Nz(LinkHref)" AutoLink="@AutoLink" LinkTarget="@LinkTarget"
                  CssClass="@Nz(HatchClass)" Style="@Nz(HatchStyle)" title="@Nz(HatchTitle)" />
+</div>
+
+<div class="ba-link">
+    <div class="ba-ctrl ba-wide">
+        <label>Explicit Href (wins over AutoLink)</label>
+        <input type="text" @bind="LinkHref" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ba-ctrl">
+        <label>AutoLink from Value</label>
+        <div class="row">
+            <input type="checkbox" id="baAutoLink" @bind="AutoLink" />
+            <label for="baAutoLink" class="inline">http/https/mailto/tel only</label>
+        </div>
+    </div>
+    <div class="ba-ctrl">
+        <label>Link target</label>
+        <input type="text" @bind="LinkTarget" @bind:event="oninput" placeholder="_blank" />
+    </div>
+</div>
+
+<div class="ba-export">
+    <div class="ba-export-row">
+        <label>Format</label>
+        <select @bind="ExportFormat">
+            @foreach (var f in ExportFormats) { <option value="@f">@f</option> }
+        </select>
+        <label>Filename</label>
+        <input type="text" @bind="SaveFileName" @bind:event="oninput" placeholder="barcode.svg" />
+        <button type="button" @onclick="DoCopy">Copy</button>
+        <button type="button" @onclick="DoSave">Save</button>
+    </div>
+    @if (!string.IsNullOrEmpty(ExportStatus))
+    {
+        <div class="ba-export-status @(ExportError ? "err" : "ok")">@ExportStatus</div>
+    }
 </div>
 
 <div class="ba-controls">
@@ -94,11 +130,63 @@
     .ba-ctrl .row input[type=checkbox] { accent-color:#00b3c4; width:16px; height:16px; }
     .ba-ctrl .row label.inline { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; }
     .ba-hint { color:#6b7785; font-size:.85rem; margin-top:1rem; }
+    .ba-link { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:1rem 1.5rem; background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1rem 1.25rem; margin:1rem 0; color:#cfd8e3; }
+    .ba-export { background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1rem 1.25rem; margin:1rem 0; color:#cfd8e3; }
+    .ba-export-row { display:flex; flex-wrap:wrap; align-items:center; gap:.6rem; }
+    .ba-export-row label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; }
+    .ba-export-row select, .ba-export-row input { padding:.4rem .55rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; }
+    .ba-export-row button { padding:.45rem .9rem; border-radius:6px; border:1px solid #00b3c4; background:#00b3c4; color:#001417; font-weight:600; cursor:pointer; }
+    .ba-export-row button:hover { background:#22c9d9; }
+    .ba-export-status { margin-top:.6rem; font-family:ui-monospace,monospace; font-size:.85rem; }
+    .ba-export-status.ok { color:#5fb7c9; }
+    .ba-export-status.err { color:#e5787a; }
 </style>
 
 @code {
     private static readonly System.Globalization.CultureInfo Inv = System.Globalization.CultureInfo.InvariantCulture;
     private static readonly BarcodeSymbology[] Symbologies = (BarcodeSymbology[])Enum.GetValues(typeof(BarcodeSymbology));
+    private static readonly BarcodeExportFormat[] ExportFormats = (BarcodeExportFormat[])Enum.GetValues(typeof(BarcodeExportFormat));
+
+    private AtomBarcode? _barcode;
+    private string LinkHref = "";
+    private bool AutoLink = false;
+    private string LinkTarget = "_blank";
+    private BarcodeExportFormat ExportFormat = BarcodeExportFormat.Svg;
+    private string SaveFileName = "barcode.svg";
+    private string ExportStatus = "";
+    private bool ExportError;
+
+    private async Task DoCopy()
+    {
+        if (_barcode is null) return;
+        try
+        {
+            await _barcode.CopyAsync(ExportFormat);
+            ExportError = false;
+            ExportStatus = $"Copied {ExportFormat} to clipboard.";
+        }
+        catch (BarcodeExportException ex)
+        {
+            ExportError = true;
+            ExportStatus = ex.Message;
+        }
+    }
+
+    private async Task DoSave()
+    {
+        if (_barcode is null) return;
+        try
+        {
+            await _barcode.SaveAsync(ExportFormat, SaveFileName);
+            ExportError = false;
+            ExportStatus = $"Saved {ExportFormat} as {SaveFileName}.";
+        }
+        catch (BarcodeExportException ex)
+        {
+            ExportError = true;
+            ExportStatus = ex.Message;
+        }
+    }
 
     private string Value = "BLAZORATOMS-123";
     private BarcodeSymbology Symbology = BarcodeSymbology.Code128;

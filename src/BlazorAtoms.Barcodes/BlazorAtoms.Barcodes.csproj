@@ -6,7 +6,7 @@
   <PropertyGroup>
     <PackageId>BlazorAtoms.Barcodes</PackageId>
     <Title>Blazor Barcodes</Title>
-    <Description>Barcode and QR code generators for Blazor, rendered as inline SVG. Pure C#, no JavaScript, no dependencies. Generation only.</Description>
+    <Description>Barcode and QR code generation (inline SVG, pure C#) plus AtomQrCodeImage viewer that decodes supplied QR images in-process via ZXing.Net + ImageSharp. Optional Copy/Save API uses a small lazy JS module for clipboard/download.</Description>
     <PackageTags>Blazor;Barcode;QRCode;QR;Code128;EAN;UPC;SVG;WebAssembly;Server</PackageTags>
     <Version>0.1.0</Version>
   </PropertyGroup>
@@ -17,6 +17,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+    <PackageReference Include="ZXing.Net" />
+    <PackageReference Include="SixLabors.ImageSharp" />
   </ItemGroup>
 
   <ItemGroup>

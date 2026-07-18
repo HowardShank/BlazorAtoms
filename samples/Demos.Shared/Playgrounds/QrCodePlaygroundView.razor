@@ -1,102 +1,532 @@
 @using BlazorAtoms.Barcodes
+@using Microsoft.AspNetCore.Components.Forms
 
 <PageTitle>AtomQrCode — Blazor Atoms</PageTitle>
 
 <h1>AtomQrCode</h1>
-<p>QR codes (2D) as pure inline SVG — byte mode, versions 1–40, four error-correction levels. No JavaScript, no dependencies.</p>
+<p>Designer QR generation: choose module shape, finder-eye style, colour or gradient, centre logo,
+   and an outer frame with a "SCAN ME" banner. Rendering is pure C# / inline SVG; the optional
+   Copy / Save / GetPngBytes methods lazy-load a small JS helper.</p>
 
 <div class="qr-stage">
-    <AtomQrCode Value="@Value" Size="@Size" EcLevel="@EcLevel" Color="@Color"
+    <AtomQrCode @ref="_qr" Value="@Value" Size="@Size" EcLevel="@EcLevel"
                 Background="@(UseBackground ? Background : null)" QuietZone="@QuietZone"
-                SvgClass="@Nz(SvgClass)"
+                MinVersion="@MinVersion"
+                SvgClass="@Nz(SvgClass)" Href="@Nz(LinkHref)" AutoLink="@AutoLink" LinkTarget="@LinkTarget"
+                ModuleShape="@ModuleShape" ModuleRadius="@ModuleRadius"
+                EyeFrame="@EyeFrame" EyePupil="@EyePupil"
+                EyeFrameRadius="@EyeFrameRadius" EyePupilRadius="@EyePupilRadius"
+                EyeCornerMask="@EyeCornerMask" EyeColor="@Nz(EyeColor)"
+                ForegroundStyle="@ForegroundStyle" ForegroundColor="@ForegroundColor"
+                ForegroundGradientFrom="@Nz(FgGradFrom)" ForegroundGradientTo="@Nz(FgGradTo)"
+                ForegroundGradientAngle="@FgGradAngle"
+                LogoSrc="@Nz(LogoSrc)" LogoBytes="@LogoBytes" LogoMimeType="@LogoMimeType"
+                LogoSize="@LogoSize" LogoShape="@LogoShape"
+                FrameShape="@FrameShape" FrameRadius="@FrameRadius"
+                FrameStroke="@FrameStroke" FrameStrokeWidth="@FrameStrokeWidth"
+                FrameInverted="@FrameInverted" FrameShadow="@FrameShadow"
+                FrameBanner="@FrameBanner" FrameText="@FrameText"
+                FrameTextColor="@FrameTextColor" FrameBannerColor="@FrameBannerColor"
+                FrameTextFontFamily="@FrameTextFontFamily"
                 CssClass="@Nz(HatchClass)" Style="@Nz(HatchStyle)" title="@Nz(HatchTitle)" />
 </div>
 
-<div class="qr-controls">
-    <div class="qr-ctrl qr-wide">
-        <label>Value</label>
-        <textarea rows="2" @bind="Value" @bind:event="oninput"></textarea>
-    </div>
-    <div class="qr-ctrl">
-        <label>EC level</label>
-        <select @bind="EcLevel">
-            @foreach (var e in Levels) { <option value="@e">@e</option> }
+<div class="qr-export">
+    <div class="qr-export-row">
+        <label>Format</label>
+        <select @bind="ExportFormat">
+            @foreach (var f in ExportFormats) { <option value="@f">@f</option> }
         </select>
+        <label>Filename</label>
+        <input type="text" @bind="SaveFileName" @bind:event="oninput" placeholder="qrcode.svg" />
+        <button type="button" class="qr-btn" @onclick="DoCopy">Copy</button>
+        <button type="button" class="qr-btn" @onclick="DoSave">Save</button>
     </div>
-    <div class="qr-ctrl">
-        <label>Size <span class="val">@(Size)px</span></label>
-        <input type="range" min="80" max="400" step="8" @bind="Size" @bind:event="oninput" />
-    </div>
-    <div class="qr-ctrl">
-        <label>Quiet zone <span class="val">@QuietZone</span></label>
-        <input type="range" min="0" max="8" step="1" @bind="QuietZone" @bind:event="oninput" />
-    </div>
-    <div class="qr-ctrl">
-        <label>Module color <span class="val">@Color</span></label>
-        <input type="color" @bind="Color" @bind:event="oninput" />
-    </div>
-    <div class="qr-ctrl">
-        <label>Background</label>
-        <div class="row">
-            <input type="checkbox" @bind="UseBackground" />
-            <input type="color" @bind="Background" @bind:event="oninput" disabled="@(!UseBackground)" />
-        </div>
-    </div>
-    <div class="qr-ctrl">
-        <label>Svg class (SvgClass)</label>
-        <input type="text" @bind="SvgClass" @bind:event="oninput" placeholder="(none)" />
-    </div>
-    <div class="qr-ctrl">
-        <label>Extra class (CssClass)</label>
-        <input type="text" @bind="HatchClass" @bind:event="oninput" placeholder="(none)" />
-    </div>
-    <div class="qr-ctrl">
-        <label>Extra style (Style)</label>
-        <input type="text" @bind="HatchStyle" @bind:event="oninput" placeholder="(none)" />
-    </div>
-    <div class="qr-ctrl">
-        <label>title attr (splat)</label>
-        <input type="text" @bind="HatchTitle" @bind:event="oninput" placeholder="(none)" />
-    </div>
+    @if (!string.IsNullOrEmpty(ExportStatus))
+    {
+        <div class="qr-export-status @(ExportError ? "err" : "ok")">@ExportStatus</div>
+    }
 </div>
 
-<p class="qr-hint">Higher EC levels (Q/H) survive more damage but hold less data, so a long value may bump the version up.</p>
+<div class="qr-tabs">
+    @foreach (var t in Tabs)
+    {
+        <button type="button" class="qr-tab @(ActiveTab == t ? "active" : "")" @onclick="() => ActiveTab = t">@t</button>
+    }
+</div>
+
+<div class="qr-panel">
+    @if (ActiveTab == "Content")
+    {
+        <div class="qr-controls">
+            <div class="qr-ctrl qr-wide">
+                <label>Value</label>
+                <textarea rows="2" @bind="Value" @bind:event="oninput"></textarea>
+            </div>
+            <div class="qr-ctrl">
+                <label>EC level</label>
+                <select @bind="EcLevel">
+                    @foreach (var e in Levels) { <option value="@e">@e</option> }
+                </select>
+            </div>
+            <div class="qr-ctrl">
+                <label>Size <span class="val">@(Size)px</span></label>
+                <input type="range" min="80" max="400" step="8" @bind="Size" @bind:event="oninput" />
+            </div>
+            <div class="qr-ctrl">
+                <label>Quiet zone <span class="val">@QuietZone</span></label>
+                <input type="range" min="0" max="8" step="1" @bind="QuietZone" @bind:event="oninput" />
+            </div>
+            <div class="qr-ctrl">
+                <label>MinVersion <span class="val">v@(MinVersion) · @(MinVersion*4+17)×@(MinVersion*4+17)</span></label>
+                <input type="range" min="1" max="40" step="1" @bind="MinVersion" @bind:event="oninput" />
+            </div>
+        </div>
+    }
+    else if (ActiveTab == "Pattern")
+    {
+        <div class="qr-tile-grid">
+            @foreach (var s in ModuleShapes)
+            {
+                <button type="button" class="qr-tile @(ModuleShape == s ? "active" : "")" @onclick="() => ModuleShape = s">
+                    <div class="qr-tile-preview">@ShapePreviewSvg(s)</div>
+                    <div class="qr-tile-label">@s</div>
+                </button>
+            }
+        </div>
+        <div class="qr-controls">
+            <div class="qr-ctrl">
+                <label>Module radius <span class="val">@ModuleRadius.ToString("0.00", Inv)</span></label>
+                <input type="range" min="0" max="0.5" step="0.05" @bind="ModuleRadius" @bind:event="oninput" @bind:culture="Inv" />
+            </div>
+        </div>
+    }
+    else if (ActiveTab == "Eyes")
+    {
+        <div class="qr-controls">
+            <div class="qr-ctrl">
+                <label>Frame shape</label>
+                <select @bind="EyeFrame">
+                    @foreach (var f in EyeFrames) { <option value="@f">@f</option> }
+                </select>
+            </div>
+            <div class="qr-ctrl">
+                <label>Pupil shape</label>
+                <select @bind="EyePupil">
+                    @foreach (var p in EyePupils) { <option value="@p">@p</option> }
+                </select>
+            </div>
+            <div class="qr-ctrl">
+                <label>Frame radius <span class="val">@EyeFrameRadius.ToString("0.00", Inv)</span></label>
+                <input type="range" min="0" max="0.5" step="0.05" @bind="EyeFrameRadius" @bind:event="oninput" @bind:culture="Inv" />
+            </div>
+            <div class="qr-ctrl">
+                <label>Pupil radius <span class="val">@EyePupilRadius.ToString("0.00", Inv)</span></label>
+                <input type="range" min="0" max="0.5" step="0.05" @bind="EyePupilRadius" @bind:event="oninput" @bind:culture="Inv" />
+            </div>
+            <div class="qr-ctrl">
+                <label>Eye color <span class="val">@(string.IsNullOrEmpty(EyeColor) ? "inherit" : EyeColor)</span></label>
+                <div class="row">
+                    <input type="checkbox" id="qrEyeC" checked="@(!string.IsNullOrEmpty(EyeColor))"
+                           @onchange="OnEyeColorToggle" />
+                    <input type="color" @bind="EyeColor" @bind:event="oninput" disabled="@(string.IsNullOrEmpty(EyeColor))" />
+                </div>
+            </div>
+            <div class="qr-ctrl qr-wide">
+                <label>Rounded corners (mask)</label>
+                <div class="row">
+                    <label class="inline"><input type="checkbox" checked="@((EyeCornerMask & EyeCorner.TopLeft) != 0)"
+                        @onchange="e => ToggleCorner(EyeCorner.TopLeft, (bool)e.Value!)" /> TL</label>
+                    <label class="inline"><input type="checkbox" checked="@((EyeCornerMask & EyeCorner.TopRight) != 0)"
+                        @onchange="e => ToggleCorner(EyeCorner.TopRight, (bool)e.Value!)" /> TR</label>
+                    <label class="inline"><input type="checkbox" checked="@((EyeCornerMask & EyeCorner.BottomRight) != 0)"
+                        @onchange="e => ToggleCorner(EyeCorner.BottomRight, (bool)e.Value!)" /> BR</label>
+                    <label class="inline"><input type="checkbox" checked="@((EyeCornerMask & EyeCorner.BottomLeft) != 0)"
+                        @onchange="e => ToggleCorner(EyeCorner.BottomLeft, (bool)e.Value!)" /> BL</label>
+                </div>
+            </div>
+        </div>
+    }
+    else if (ActiveTab == "Logo")
+    {
+        <div class="qr-controls">
+            <div class="qr-ctrl qr-wide">
+                <label>Logo URL / data URI (Src)</label>
+                <input type="text" @bind="LogoSrc" @bind:event="oninput" placeholder="https://…/logo.png (leave blank to use file upload below)" />
+            </div>
+            <div class="qr-ctrl qr-wide">
+                <label>Or upload from disk</label>
+                <div class="row">
+                    <InputFile OnChange="OnLogoFileSelected" accept="image/*" />
+                    <button type="button" class="qr-btn qr-btn-alt" @onclick="ClearLogo" disabled="@(LogoBytes is null)">Clear file</button>
+                </div>
+            </div>
+            <div class="qr-ctrl">
+                <label>Logo shape</label>
+                <select @bind="LogoShape">
+                    <option value="@BlazorAtoms.Barcodes.LogoShape.Square">Square</option>
+                    <option value="@BlazorAtoms.Barcodes.LogoShape.Rounded">Rounded</option>
+                    <option value="@BlazorAtoms.Barcodes.LogoShape.Circle">Circle</option>
+                </select>
+            </div>
+            <div class="qr-ctrl">
+                <label>Size <span class="val">@(LogoSize.ToString("0.00", Inv)) (of QR area)</span></label>
+                <input type="range" min="0.05" max="0.30" step="0.01" @bind="LogoSize" @bind:event="oninput" @bind:culture="Inv" />
+            </div>
+        </div>
+        <p class="qr-hint">Setting a logo reserves ~15% of the code. Bump <code>EcLevel</code> to <code>H</code> to keep scanability high.</p>
+    }
+    else if (ActiveTab == "Colors")
+    {
+        <div class="qr-controls">
+            <div class="qr-ctrl qr-wide">
+                <label>Foreground style</label>
+                <div class="row">
+                    <label class="inline"><input type="radio" name="fgStyle" checked="@(ForegroundStyle == FillStyle.Solid)"
+                        @onchange="() => ForegroundStyle = FillStyle.Solid" /> Solid</label>
+                    <label class="inline"><input type="radio" name="fgStyle" checked="@(ForegroundStyle == FillStyle.LinearGradient)"
+                        @onchange="() => { ForegroundStyle = FillStyle.LinearGradient; EnsureGradientDefaults(); }" /> Linear gradient</label>
+                    <label class="inline"><input type="radio" name="fgStyle" checked="@(ForegroundStyle == FillStyle.RadialGradient)"
+                        @onchange="() => { ForegroundStyle = FillStyle.RadialGradient; EnsureGradientDefaults(); }" /> Radial gradient</label>
+                </div>
+            </div>
+            @if (ForegroundStyle == FillStyle.Solid)
+            {
+                <div class="qr-ctrl">
+                    <label>Foreground colour</label>
+                    <input type="color" @bind="ForegroundColor" @bind:event="oninput" />
+                </div>
+            }
+            else
+            {
+                <div class="qr-ctrl">
+                    <label>Gradient from</label>
+                    <input type="color" @bind="FgGradFrom" @bind:event="oninput" />
+                </div>
+                <div class="qr-ctrl">
+                    <label>Gradient to</label>
+                    <input type="color" @bind="FgGradTo" @bind:event="oninput" />
+                </div>
+                @if (ForegroundStyle == FillStyle.LinearGradient)
+                {
+                    <div class="qr-ctrl qr-wide">
+                        <label>Direction</label>
+                        <div class="row">
+                            @foreach (var (label, angle) in GradientPresets)
+                            {
+                                <button type="button" class="qr-btn qr-btn-alt @(Math.Abs(FgGradAngle - angle) < 0.5 ? "active" : "")"
+                                        @onclick="() => FgGradAngle = angle">@label</button>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+            <div class="qr-ctrl">
+                <label>Background</label>
+                <div class="row">
+                    <input type="checkbox" @bind="UseBackground" />
+                    <input type="color" @bind="Background" @bind:event="oninput" disabled="@(!UseBackground)" />
+                </div>
+            </div>
+        </div>
+    }
+    else if (ActiveTab == "Frame")
+    {
+        <div class="qr-controls">
+            <div class="qr-ctrl">
+                <label>Frame shape</label>
+                <select @bind="FrameShape">
+                    @foreach (var f in FrameShapes) { <option value="@f">@f</option> }
+                </select>
+            </div>
+            <div class="qr-ctrl">
+                <label>Banner</label>
+                <select @bind="FrameBanner">
+                    @foreach (var b in FrameBanners) { <option value="@b">@b</option> }
+                </select>
+            </div>
+            <div class="qr-ctrl qr-wide">
+                <label>Frame text <span class="val">@FrameText.Length/15</span></label>
+                <input type="text" @bind="FrameText" @bind:event="oninput" maxlength="15" placeholder="SCAN ME" />
+            </div>
+            <div class="qr-ctrl">
+                <label>Frame text font</label>
+                <select @bind="FrameTextFontFamily">
+                    @foreach (var f in FontFamilies) { <option value="@f">@f</option> }
+                </select>
+            </div>
+            <div class="qr-ctrl">
+                <label>Frame radius <span class="val">@FrameRadius.ToString("0.00", Inv)</span></label>
+                <input type="range" min="0" max="0.30" step="0.01" @bind="FrameRadius" @bind:event="oninput" @bind:culture="Inv" />
+            </div>
+            <div class="qr-ctrl">
+                <label>Stroke width <span class="val">@FrameStrokeWidth.ToString("0.0", Inv)</span></label>
+                <input type="range" min="0.5" max="3" step="0.1" @bind="FrameStrokeWidth" @bind:event="oninput" @bind:culture="Inv" />
+            </div>
+            <div class="qr-ctrl">
+                <label>Frame stroke</label>
+                <input type="color" @bind="FrameStroke" @bind:event="oninput" />
+            </div>
+            <div class="qr-ctrl">
+                <label>Banner colour</label>
+                <input type="color" @bind="FrameBannerColor" @bind:event="oninput" />
+            </div>
+            <div class="qr-ctrl">
+                <label>Banner text colour</label>
+                <input type="color" @bind="FrameTextColor" @bind:event="oninput" />
+            </div>
+            <div class="qr-ctrl">
+                <label>Effects</label>
+                <div class="row">
+                    <label class="inline"><input type="checkbox" @bind="FrameInverted" /> Inverted (solid fill)</label>
+                    <label class="inline"><input type="checkbox" @bind="FrameShadow" /> Drop shadow</label>
+                </div>
+            </div>
+        </div>
+    }
+    else if (ActiveTab == "Advanced")
+    {
+        <div class="qr-controls">
+            <div class="qr-ctrl">
+                <label>Svg class (SvgClass)</label>
+                <input type="text" @bind="SvgClass" @bind:event="oninput" placeholder="(none)" />
+            </div>
+            <div class="qr-ctrl">
+                <label>Extra class (CssClass)</label>
+                <input type="text" @bind="HatchClass" @bind:event="oninput" placeholder="(none)" />
+            </div>
+            <div class="qr-ctrl">
+                <label>Extra style (Style)</label>
+                <input type="text" @bind="HatchStyle" @bind:event="oninput" placeholder="(none)" />
+            </div>
+            <div class="qr-ctrl">
+                <label>title attr (splat)</label>
+                <input type="text" @bind="HatchTitle" @bind:event="oninput" placeholder="(none)" />
+            </div>
+            <div class="qr-ctrl">
+                <label>Explicit Href</label>
+                <input type="text" @bind="LinkHref" @bind:event="oninput" placeholder="(none)" />
+            </div>
+            <div class="qr-ctrl">
+                <label>AutoLink</label>
+                <div class="row">
+                    <input type="checkbox" id="qrAutoLink" @bind="AutoLink" />
+                    <label for="qrAutoLink" class="inline">http/https/mailto/tel only</label>
+                </div>
+            </div>
+            <div class="qr-ctrl">
+                <label>Link target</label>
+                <input type="text" @bind="LinkTarget" @bind:event="oninput" placeholder="_blank" />
+            </div>
+        </div>
+    }
+</div>
 
 <CodeSnippetBox Code="@Snippet" FileName="AtomQrCodeExample.razor" />
 
 <style>
-    .qr-stage { background:#fff; border:1px solid #d0d0d8; border-radius:12px; padding:1.5rem; text-align:center; margin-bottom:1.5rem; overflow-x:auto; }
-    .qr-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:1rem 1.5rem; background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; }
+    .qr-stage { background:#fff; border:1px solid #d0d0d8; border-radius:12px; padding:1.5rem; text-align:center; margin-bottom:1rem; overflow-x:auto; }
+    .qr-tabs { display:flex; flex-wrap:wrap; gap:.25rem; background:#0d1118; border:1px solid #1b2330; border-top-left-radius:12px; border-top-right-radius:12px; padding:.5rem .75rem 0; border-bottom:none; }
+    .qr-tab { padding:.5rem 1rem; border-radius:6px 6px 0 0; border:1px solid transparent; background:transparent; color:#8794a3; cursor:pointer; font-weight:500; font-size:.9rem; }
+    .qr-tab:hover { color:#e6edf3; }
+    .qr-tab.active { color:#e6edf3; background:#070b10; border-color:#1b2330; border-bottom-color:#070b10; margin-bottom:-1px; }
+    .qr-panel { background:#0d1118; border:1px solid #1b2330; border-top:none; border-bottom-left-radius:12px; border-bottom-right-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; }
+    .qr-tile-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(90px,1fr)); gap:.6rem; margin-bottom:1rem; }
+    .qr-tile { display:flex; flex-direction:column; align-items:center; gap:.35rem; padding:.5rem; background:#070b10; border:1px solid #1b2330; border-radius:8px; cursor:pointer; color:#cfd8e3; }
+    .qr-tile:hover { border-color:#00b3c4; }
+    .qr-tile.active { border-color:#00b3c4; background:#0b1522; }
+    .qr-tile-preview { background:#fff; border-radius:4px; padding:2px; }
+    .qr-tile-label { font-size:.75rem; font-family:ui-monospace,monospace; }
+    .qr-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:1rem 1.5rem; color:#cfd8e3; }
     .qr-ctrl { display:flex; flex-direction:column; gap:.35rem; }
     .qr-ctrl.qr-wide { grid-column:1 / -1; }
     .qr-ctrl label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; }
     .qr-ctrl label .val { color:#5fb7c9; font-family:ui-monospace,monospace; text-transform:none; }
-    .qr-ctrl textarea { padding:.5rem .6rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; resize:vertical; }
+    .qr-ctrl textarea, .qr-ctrl input[type=text] { padding:.5rem .6rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; resize:vertical; }
     .qr-ctrl select { padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; }
     .qr-ctrl input[type=range] { width:100%; accent-color:#00b3c4; }
     .qr-ctrl input[type=color] { width:100%; height:32px; background:none; border:1px solid #1b2330; border-radius:6px; padding:2px; }
-    .qr-ctrl .row { display:flex; align-items:center; gap:.5rem; }
-    .qr-ctrl .row input[type=checkbox] { accent-color:#00b3c4; width:16px; height:16px; }
-    .qr-hint { color:#6b7785; font-size:.85rem; margin-top:1rem; }
+    .qr-ctrl .row { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+    .qr-ctrl .row input[type=checkbox], .qr-ctrl .row input[type=radio] { accent-color:#00b3c4; width:16px; height:16px; }
+    .qr-ctrl .row label.inline { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; display:flex; align-items:center; gap:.35rem; }
+    .qr-hint { color:#6b7785; font-size:.85rem; margin-top:.75rem; }
+    .qr-btn { padding:.4rem .9rem; border-radius:6px; border:1px solid #00b3c4; background:#00b3c4; color:#001417; font-weight:600; cursor:pointer; font-size:.85rem; }
+    .qr-btn:hover:not([disabled]) { background:#22c9d9; }
+    .qr-btn[disabled] { opacity:.5; cursor:not-allowed; }
+    .qr-btn-alt { background:transparent; color:#00b3c4; }
+    .qr-btn-alt.active { background:#0b1522; }
+    .qr-export { background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1rem 1.25rem; margin:1rem 0; color:#cfd8e3; }
+    .qr-export-row { display:flex; flex-wrap:wrap; align-items:center; gap:.6rem; }
+    .qr-export-row label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; }
+    .qr-export-row select, .qr-export-row input { padding:.4rem .55rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; }
+    .qr-export-status { margin-top:.6rem; font-family:ui-monospace,monospace; font-size:.85rem; }
+    .qr-export-status.ok { color:#5fb7c9; }
+    .qr-export-status.err { color:#e5787a; }
 </style>
 
 @code {
+    private static readonly System.Globalization.CultureInfo Inv = System.Globalization.CultureInfo.InvariantCulture;
     private static readonly QrErrorCorrection[] Levels = (QrErrorCorrection[])Enum.GetValues(typeof(QrErrorCorrection));
+    private static readonly ModuleShape[] ModuleShapes = (ModuleShape[])Enum.GetValues(typeof(ModuleShape));
+    private static readonly EyeFrame[] EyeFrames = (EyeFrame[])Enum.GetValues(typeof(EyeFrame));
+    private static readonly EyePupil[] EyePupils = (EyePupil[])Enum.GetValues(typeof(EyePupil));
+    private static readonly FrameShape[] FrameShapes = (FrameShape[])Enum.GetValues(typeof(FrameShape));
+    private static readonly FrameBanner[] FrameBanners = (FrameBanner[])Enum.GetValues(typeof(FrameBanner));
+    private static readonly BarcodeExportFormat[] ExportFormats = (BarcodeExportFormat[])Enum.GetValues(typeof(BarcodeExportFormat));
+    private static readonly string[] FontFamilies = { "sans-serif", "serif", "monospace", "Arial", "Verdana", "Georgia", "Times New Roman", "Courier New" };
+    private static readonly string[] Tabs = { "Content", "Pattern", "Eyes", "Logo", "Colors", "Frame", "Advanced" };
+    private static readonly (string Label, double Angle)[] GradientPresets =
+    {
+        ("→", 0),
+        ("↓", 90),
+        ("↘", 135),
+        ("↗", 45),
+    };
 
+    private AtomQrCode? _qr;
+    private string ActiveTab = "Pattern";
+
+    // Content
     private string Value = "https://github.com/HowardShank/BlazorAtoms";
     private QrErrorCorrection EcLevel = QrErrorCorrection.M;
-    private int Size = 200;
+    private int Size = 260;
     private int QuietZone = 4;
-    private string Color = "#111111";
+    private int MinVersion = 1;
+
+    // Pattern
+    private ModuleShape ModuleShape = ModuleShape.Square;
+    private double ModuleRadius = 0.0;
+
+    // Eyes
+    private EyeFrame EyeFrame = EyeFrame.Square;
+    private EyePupil EyePupil = EyePupil.Square;
+    private double EyeFrameRadius = 0.0;
+    private double EyePupilRadius = 0.0;
+    private EyeCorner EyeCornerMask = EyeCorner.All;
+    private string EyeColor = "";
+
+    // Logo
+    private string LogoSrc = "";
+    private byte[]? LogoBytes;
+    private string LogoMimeType = "image/png";
+    private double LogoSize = 0.15;
+    private LogoShape LogoShape = LogoShape.Square;
+
+    // Colors
+    private FillStyle ForegroundStyle = FillStyle.Solid;
+    private string ForegroundColor = "#111111";
+    private string FgGradFrom = "#054080";
+    private string FgGradTo = "#f30505";
+    private double FgGradAngle = 0;
     private bool UseBackground = true;
     private string Background = "#ffffff";
 
+    // Frame
+    private FrameShape FrameShape = FrameShape.None;
+    private double FrameRadius = 0.05;
+    private string FrameStroke = "#000000";
+    private double FrameStrokeWidth = 1.0;
+    private bool FrameInverted;
+    private bool FrameShadow;
+    private FrameBanner FrameBanner = FrameBanner.None;
+    private string FrameText = "SCAN ME";
+    private string FrameTextColor = "#ffffff";
+    private string FrameBannerColor = "#000000";
+    private string FrameTextFontFamily = "sans-serif";
+
+    // Advanced
     private string SvgClass = "";
     private string HatchClass = "";
     private string HatchStyle = "";
     private string HatchTitle = "";
+    private string LinkHref = "";
+    private bool AutoLink;
+    private string LinkTarget = "_blank";
+
+    // Export
+    private BarcodeExportFormat ExportFormat = BarcodeExportFormat.Svg;
+    private string SaveFileName = "qrcode.svg";
+    private string ExportStatus = "";
+    private bool ExportError;
 
     private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
+
+    private void EnsureGradientDefaults()
+    {
+        if (string.IsNullOrEmpty(FgGradFrom)) FgGradFrom = "#054080";
+        if (string.IsNullOrEmpty(FgGradTo)) FgGradTo = "#f30505";
+    }
+
+    private void ToggleCorner(EyeCorner corner, bool on)
+    {
+        EyeCornerMask = on ? (EyeCornerMask | corner) : (EyeCornerMask & ~corner);
+    }
+
+    private void OnEyeColorToggle(ChangeEventArgs e)
+    {
+        EyeColor = ((bool)e.Value!) ? "#000000" : "";
+    }
+
+    private async Task OnLogoFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file is null) return;
+        using var ms = new MemoryStream();
+        await file.OpenReadStream(maxAllowedSize: 2 * 1024 * 1024).CopyToAsync(ms);
+        LogoBytes = ms.ToArray();
+        LogoMimeType = string.IsNullOrEmpty(file.ContentType) ? "image/png" : file.ContentType;
+        LogoSrc = "";
+    }
+
+    private void ClearLogo()
+    {
+        LogoBytes = null;
+        LogoMimeType = "image/png";
+    }
+
+    private async Task DoCopy()
+    {
+        if (_qr is null) { ExportError = true; ExportStatus = "QR component not ready (_qr is null)."; return; }
+        try
+        {
+            await _qr.CopyAsync(ExportFormat);
+            ExportError = false;
+            ExportStatus = $"Copied {ExportFormat} to clipboard.";
+        }
+        catch (BarcodeExportException ex) { ExportError = true; ExportStatus = $"BarcodeExportException: {ex.Message}"; }
+        catch (Exception ex) { ExportError = true; ExportStatus = $"{ex.GetType().Name}: {ex.Message}"; }
+    }
+
+    private async Task DoSave()
+    {
+        if (_qr is null) { ExportError = true; ExportStatus = "QR component not ready (_qr is null)."; return; }
+        try
+        {
+            await _qr.SaveAsync(ExportFormat, SaveFileName);
+            ExportError = false;
+            ExportStatus = $"Saved {ExportFormat} as {SaveFileName}.";
+        }
+        catch (BarcodeExportException ex) { ExportError = true; ExportStatus = $"BarcodeExportException: {ex.Message}"; }
+        catch (Exception ex) { ExportError = true; ExportStatus = $"{ex.GetType().Name}: {ex.Message}"; }
+    }
+
+    // Tiny inline preview showing how a single module renders under the current shape choice.
+    private MarkupString ShapePreviewSvg(ModuleShape s)
+    {
+        string dark = s switch
+        {
+            ModuleShape.Square => "<rect x='4' y='4' width='16' height='16' fill='#111'/>",
+            ModuleShape.Rounded => "<rect x='4' y='4' width='16' height='16' rx='4' ry='4' fill='#111'/>",
+            ModuleShape.Dot => "<circle cx='12' cy='12' r='7' fill='#111'/>",
+            ModuleShape.Ellipse => "<ellipse cx='12' cy='12' rx='8' ry='5' fill='#111'/>",
+            ModuleShape.Diamond => "<polygon points='12,3 21,12 12,21 3,12' fill='#111'/>",
+            ModuleShape.Star => "<polygon points='12,2 14,10 22,12 14,14 12,22 10,14 2,12 10,10' fill='#111'/>",
+            ModuleShape.Pill => "<rect x='2' y='7' width='20' height='10' rx='5' ry='5' fill='#111'/>",
+            ModuleShape.Blob => "<circle cx='7' cy='12' r='6' fill='#111'/><circle cx='17' cy='12' r='6' fill='#111'/>",
+            _ => "",
+        };
+        return new MarkupString($"<svg viewBox='0 0 24 24' width='40' height='40' xmlns='http://www.w3.org/2000/svg'>{dark}</svg>");
+    }
 
     private string Snippet
     {
@@ -106,13 +536,41 @@
             sb.Append($" Value=\"{Value}\"");
             if (Size != 160) sb.Append($" Size=\"{Size}\"");
             if (EcLevel != QrErrorCorrection.M) sb.Append($" EcLevel=\"QrErrorCorrection.{EcLevel}\"");
-            if (Color != "#000000") sb.Append($" Color=\"{Color}\"");
-            if (UseBackground) sb.Append($" Background=\"{Background}\"");
             if (QuietZone != 4) sb.Append($" QuietZone=\"{QuietZone}\"");
-            if (!string.IsNullOrEmpty(SvgClass)) sb.Append($" SvgClass=\"{SvgClass}\"");
-            if (!string.IsNullOrEmpty(HatchClass)) sb.Append($" CssClass=\"{HatchClass}\"");
-            if (!string.IsNullOrEmpty(HatchStyle)) sb.Append($" Style=\"{HatchStyle}\"");
-            if (!string.IsNullOrEmpty(HatchTitle)) sb.Append($" title=\"{HatchTitle}\"");
+            if (MinVersion != 1) sb.Append($" MinVersion=\"{MinVersion}\"");
+            if (UseBackground) sb.Append($" Background=\"{Background}\"");
+            if (ModuleShape != ModuleShape.Square) sb.Append($" ModuleShape=\"ModuleShape.{ModuleShape}\"");
+            if (ModuleRadius != 0) sb.Append($" ModuleRadius=\"{ModuleRadius.ToString(Inv)}\"");
+            if (EyeFrame != EyeFrame.Square) sb.Append($" EyeFrame=\"EyeFrame.{EyeFrame}\"");
+            if (EyePupil != EyePupil.Square) sb.Append($" EyePupil=\"EyePupil.{EyePupil}\"");
+            if (!string.IsNullOrEmpty(EyeColor)) sb.Append($" EyeColor=\"{EyeColor}\"");
+            if (ForegroundStyle != FillStyle.Solid)
+            {
+                sb.Append($" ForegroundStyle=\"FillStyle.{ForegroundStyle}\"");
+                sb.Append($" ForegroundGradientFrom=\"{FgGradFrom}\"");
+                sb.Append($" ForegroundGradientTo=\"{FgGradTo}\"");
+                if (ForegroundStyle == FillStyle.LinearGradient && FgGradAngle != 0)
+                    sb.Append($" ForegroundGradientAngle=\"{FgGradAngle.ToString(Inv)}\"");
+            }
+            else if (ForegroundColor != "#000000")
+            {
+                sb.Append($" ForegroundColor=\"{ForegroundColor}\"");
+            }
+            if (!string.IsNullOrEmpty(LogoSrc)) sb.Append($" LogoSrc=\"{LogoSrc}\"");
+            else if (LogoBytes is not null) sb.Append($" LogoBytes=\"@YourBytes\" LogoMimeType=\"{LogoMimeType}\"");
+            if (LogoBytes is not null || !string.IsNullOrEmpty(LogoSrc))
+                sb.Append($" LogoSize=\"{LogoSize.ToString(Inv)}\" LogoShape=\"LogoShape.{LogoShape}\"");
+            if (FrameShape != FrameShape.None)
+            {
+                sb.Append($" FrameShape=\"FrameShape.{FrameShape}\"");
+                if (FrameInverted) sb.Append(" FrameInverted=\"true\"");
+                if (FrameShadow) sb.Append(" FrameShadow=\"true\"");
+                if (FrameBanner != FrameBanner.None)
+                {
+                    sb.Append($" FrameBanner=\"FrameBanner.{FrameBanner}\"");
+                    if (FrameText != "SCAN ME") sb.Append($" FrameText=\"{FrameText}\"");
+                }
+            }
             sb.Append(" />");
             return sb.ToString();
         }

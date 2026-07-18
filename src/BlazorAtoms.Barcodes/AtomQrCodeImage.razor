@@ -1,0 +1,25 @@
+@inherits AtomComponentBase
+
+@* AtomQrCodeImage — display a QR the consumer supplies (URL, data URI, or byte[]).
+   Never generates a QR (see AtomQrCode for that). Optional in-browser decode + click-to-follow. *@
+
+@if (!CancellationToken.IsCancellationRequested)
+{
+    var href = _resolvedHref;
+    if (href is null)
+    {
+        <div @ref="_rootRef" @attributes="AdditionalAttributes" class="@ClassAttr("atom-qrcode-image")" style="@StyleAttr(null)">
+            <img @ref="_imgRef" src="@ResolvedSrc" alt="@(Alt ?? "QR code")"
+                 width="@SizeAttr" height="@SizeAttr" loading="lazy" />
+        </div>
+    }
+    else
+    {
+        <a href="@href" target="@LinkTarget" rel="noopener noreferrer" class="atom-qrcode-image-link">
+            <div @ref="_rootRef" @attributes="AdditionalAttributes" class="@ClassAttr("atom-qrcode-image")" style="@StyleAttr(null)">
+                <img @ref="_imgRef" src="@ResolvedSrc" alt="@(Alt ?? "QR code")"
+                     width="@SizeAttr" height="@SizeAttr" loading="lazy" />
+            </div>
+        </a>
+    }
+}
