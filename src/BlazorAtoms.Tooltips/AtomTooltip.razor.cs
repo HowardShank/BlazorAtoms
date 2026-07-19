@@ -61,6 +61,16 @@ public partial class AtomTooltip : AtomComponentBase, IAsyncDisposable
     /// <summary>When true, the bubble never renders (trigger content still renders normally).</summary>
     [Parameter] public bool Disabled { get; set; }
 
+    /// <summary>
+    /// Delay tooltip dispay in milliseconds.
+    /// </summary>
+    [Parameter] public int DelayOpen { get; set; } = 0;
+
+    /// <summary>
+    /// Delay tooltip closing after mouseout in milliseconds.
+    /// </summary>
+    [Parameter] public int DelayClose { get; set; } = 0;
+
 
     // Unique per instance so multiple tooltips on a page never collide on ids.
     private readonly string _id = "tt" + Guid.NewGuid().ToString("N")[..8];

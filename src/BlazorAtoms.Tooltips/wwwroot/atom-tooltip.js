@@ -17,13 +17,13 @@ export function attach(trigger, bubble) {
     detach(trigger);
 
     const onMove = (e) => {
-        bubble.style.setProperty("--tip-cursor-x", e.clientX + "px");
-        bubble.style.setProperty("--tip-cursor-y", e.clientY + "px");
+        bubble.style.setProperty("--tip-cursor-x", Math.round(e.clientX) + "px");
+        bubble.style.setProperty("--tip-cursor-y", Math.round(e.clientY) + "px");
     };
 
     trigger[HANDLER] = onMove;
     // pointermove covers mouse, pen, and touch-drag uniformly.
-    trigger.addEventListener("pointermove", onMove);
+    trigger.addEventListener("pointermove", onMove, {passive: true});
 }
 
 // Remove the listener previously added by attach(). Safe to call more than once.
