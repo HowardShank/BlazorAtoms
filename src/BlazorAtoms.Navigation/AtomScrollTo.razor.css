@@ -1,0 +1,89 @@
+.atom-scroll-to {
+    --scrollto-color: #ffffff;
+    --scrollto-bg: #2563eb;
+    --scrollto-size: 44px;
+    --scrollto-radius: 50%;
+    --scrollto-offset-v: 1.5rem;
+    --scrollto-offset-h: 1.5rem;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--scrollto-size);
+    height: var(--scrollto-size);
+    padding: 0;
+    border: none;
+    border-radius: var(--scrollto-radius);
+    background: var(--scrollto-bg);
+    color: var(--scrollto-color);
+    cursor: pointer;
+    line-height: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
+    transition: opacity .2s ease, transform .15s ease, background-color .15s ease;
+}
+
+.atom-scroll-to:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.08);
+}
+
+.atom-scroll-to:active {
+    transform: translateY(0);
+}
+
+.atom-scroll-to:focus-visible {
+    outline: 2px solid var(--scrollto-color);
+    outline-offset: 2px;
+}
+
+/* Auto-hide: the JS watcher flips data-visible; when the consumer sets VisibleAfter the button
+   starts hidden and fades in past the threshold. When VisibleAfter is null the attribute is
+   "true" from first render, so the button is always shown. */
+.atom-scroll-to[data-visible="false"] {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+}
+
+.atom-scroll-to[data-visible="true"] {
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+}
+
+/* Collision auto-hide (HideNear): a matching element is on-screen — fade out so the button never
+   covers it. Declared after the visibility rules so it wins when both apply. */
+.atom-scroll-to[data-collision="true"] {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+}
+
+.atom-scroll-to-arrow {
+    display: block;
+}
+
+/* ---- self-positioning (no consumer CSS) --------------------------------------------------
+   data-position = "<mode>-<v>-<h>": mode ∈ fixed|absolute, v ∈ top|bottom, h ∈ left|right|center.
+   Attribute-substring selectors compose the mode (pin type) with the corner (insets). Centering
+   uses the `translate:` property, NOT `transform:` — the hover lift drives `transform:`, and the
+   two individual properties compose instead of clobbering each other. */
+.atom-scroll-to[data-position^="fixed"] {
+    position: fixed;
+    z-index: var(--scrollto-z, 1000);
+}
+
+.atom-scroll-to[data-position^="absolute"] {
+    position: absolute;
+    z-index: var(--scrollto-z, 10);
+}
+
+.atom-scroll-to[data-position*="-bottom-"] { bottom: var(--scrollto-offset-v); }
+.atom-scroll-to[data-position*="-top-"] { top: var(--scrollto-offset-v); }
+.atom-scroll-to[data-position$="-right"] { right: var(--scrollto-offset-h); }
+.atom-scroll-to[data-position$="-left"] { left: var(--scrollto-offset-h); }
+
+.atom-scroll-to[data-position$="-center"] {
+    left: 50%;
+    translate: -50% 0;
+}

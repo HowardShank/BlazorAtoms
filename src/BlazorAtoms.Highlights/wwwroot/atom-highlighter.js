@@ -32,18 +32,43 @@ function buildRegex(keywords, caseSensitive, wholeWord) {
     return new RegExp(`(${pattern})`, caseSensitive ? "g" : "gi");
 }
 
+// // Unwraps every <mark> this instance owns (matched by dataset.owner, NOT cssClass) back into
+// // plain text, then normalizes so adjacent text nodes merge — letting the next scan match across
+// // what used to be a mark boundary. Marks belonging to a different AtomHighlighter instance (a
+// // different owner id) are left untouched; they aren't ours to unwrap, regardless of cssClass.
+// function unmark(container, owner) {
+//     // Possible optimization: if container.querySelector("mark") returns null, skip the rest
+//     //of this function. But that would require a second querySelectorAll to find the marks we actually own, so it might not be worth it.
+//     //    const marks = Array.from(container.querySelectorAll("mark")).filter((m) => m.dataset.owner === owner );
+//     // If array is required, the you can do this:
+//     //const marks = [...container.querySelectorAll(`mark[data-owner="${owner}"]`)];
+//     const marks = Array.from(container.querySelectorAll("mark")).filter((m) =>
+//         m.dataset.owner === owner
+//     );
+//     for (const mark of marks) {
+//         mark.replaceWith(document.createTextNode(mark.textContent));
+//     }
+//     if (marks.length > 0) container.normalize();
+// }
+
 // Unwraps every <mark> this instance owns (matched by dataset.owner, NOT cssClass) back into
 // plain text, then normalizes so adjacent text nodes merge — letting the next scan match across
 // what used to be a mark boundary. Marks belonging to a different AtomHighlighter instance (a
 // different owner id) are left untouched; they aren't ours to unwrap, regardless of cssClass.
 function unmark(container, owner) {
-    const marks = Array.from(container.querySelectorAll("mark")).filter((m) =>
-        m.dataset.owner === owner
-    );
+    // Let the browser handle the filtering via CSS attribute selector.
+    // We don't even need Array.from() or spread syntax because NodeList supports for...of loops.
+    const marks = container.querySelectorAll(`mark[data-owner="${owner}"]`);
+
+    if (marks.length === 0) return;
+
     for (const mark of marks) {
+        // Safe unwrap: replaces the node element with its inner text content
         mark.replaceWith(document.createTextNode(mark.textContent));
     }
-    if (marks.length > 0) container.normalize();
+
+    // Clean up adjacent text nodes so future scans work seamlessly
+    container.normalize();
 }
 
 function highlightTextNode(node, regex, cssClass, style, owner) {

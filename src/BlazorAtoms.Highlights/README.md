@@ -65,3 +65,7 @@ Text highlighter components for Blazor.
 | `Radius` | `double?` | null | Corner radius in px. |
 | `Padding` | `string?` | null | Inline padding. |
 | `AriaLabel` | `string` | "Highlighted content" | Accessible label. |
+
+# Known Issues
+- When selecting multiple keywords, if the keywords overlap, the follow on keywords will not be marked properly. i.e. In the example, selecting keywords `paren, rent` do not find or mark `rent`.
+- Observation is the longer words win the highlight. i.e. Parent, rent, highlights `Parent`. 

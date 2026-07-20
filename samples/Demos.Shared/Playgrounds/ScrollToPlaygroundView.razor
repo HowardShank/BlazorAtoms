@@ -1,0 +1,203 @@
+@using BlazorAtoms.Navigation
+
+@* AtomScrollTo playground — NOT a knobs widget. Four self-contained, copy-paste recipes, each a
+   live working example plus the exact markup (surrounding DOM and all). For a positional/behavioural
+   component, honest recipes teach usage far better than an abstract parameter explorer. *@
+
+<div class="st-wrap">
+    <header class="st-intro">
+        <h1>AtomScrollTo — usage recipes</h1>
+        <p>
+            Four real patterns. Each card is a working example; the code block under it is the exact
+            markup — copy it verbatim. Pick the recipe that matches your layout:
+        </p>
+        <ul class="st-toc">
+            <li><strong>Page back-to-top</strong> — float over the viewport, appear after scrolling.</li>
+            <li><strong>In-panel scroller</strong> — pin a button inside a scrollable box.</li>
+            <li><strong>Anchor / id nav</strong> — jump to sections by element id.</li>
+            <li><strong>Top + bottom pair</strong> — two independent buttons at once.</li>
+        </ul>
+    </header>
+
+    @* ---- Recipe 1: page back-to-top --------------------------------------------------------- *@
+    <section class="st-recipe">
+        <h2>1 · Page back-to-top</h2>
+        <p class="st-note">
+            The #1 use case. <code>Position="FixedBottomRight"</code> pins it to the viewport corner
+            with <em>no host CSS</em>; <code>VisibleAfter="300"</code> keeps it hidden until you
+            scroll 300&nbsp;px, then fades it in. Default <code>Scope="Page"</code> scrolls the window.
+            Scroll this page — the live button is bottom-right.
+        </p>
+        <div class="st-card st-card--plain">
+            <span class="st-hint">Live: scroll the whole page ▸ a “Back to top” button appears bottom-right.</span>
+        </div>
+        <AtomScrollTo Position="ScrollPosition.FixedBottomRight" VisibleAfter="300"
+                      Tooltip="Back to top" />
+        <CodeSnippetBox Code="@Recipe1" FileName="PageBackToTop.razor" />
+    </section>
+
+    @* ---- Recipe 2: in-panel scroller -------------------------------------------------------- *@
+    <section class="st-recipe">
+        <h2>2 · In-panel scroller (container level)</h2>
+        <p class="st-note">
+            To pin a button in a <em>scrollable panel's</em> corner: wrap the scroll box in a
+            non-scrolling <code>position:relative</code> container and make the button an
+            <strong>overlay sibling</strong> — an absolute child <em>inside</em> a scroller scrolls
+            away; a sibling pins to the wrapper. <code>ScrollContainer="#rc-log"</code> binds the
+            click to the inner box (the button isn't inside it), and
+            <code>Position="Absolute*"</code> parks it in the non-scrolling wrapper's corner.
+        </p>
+        <div class="rc-shell">
+            <div id="rc-log" class="rc-log">
+                @for (var i = 1; i <= 40; i++)
+                {
+                    <div class="rc-log-line">Log line @i — lorem ipsum dolor sit amet, consectetur.</div>
+                }
+            </div>
+            <AtomScrollTo ScrollContainer="#rc-log" Scope="ScrollScope.Container"
+                          Position="ScrollPosition.AbsoluteBottomRight" OffsetV="0.75rem" OffsetH="0.75rem"
+                          Direction="ScrollDirection.Down" Tooltip="Jump to newest" Size="38px" />
+            <AtomScrollTo ScrollContainer="#rc-log" Scope="ScrollScope.Container"
+                          Position="ScrollPosition.AbsoluteTopRight" OffsetV="0.75rem" OffsetH="0.75rem"
+                          Direction="ScrollDirection.Up" Tooltip="Back to top of log" Size="38px"
+                          Background="#0f766e" />
+        </div>
+        <CodeSnippetBox Code="@Recipe2" FileName="InPanelScroller.razor" />
+    </section>
+
+    @* ---- Recipe 3: anchor / id nav ---------------------------------------------------------- *@
+    <section class="st-recipe">
+        <h2>3 · Anchor / id navigation</h2>
+        <p class="st-note">
+            Not top/bottom — jump to a specific element. Set <code>Target</code> to a bare id, an
+            <code>#id</code> selector, or any CSS selector; the button calls
+            <code>scrollIntoView</code>. Custom icon via child content. Click a chip to jump.
+        </p>
+        <div class="rc-nav">
+            <AtomScrollTo Target="#st-sec-a" Tooltip="Go to A" Size="34px" Background="#7c3aed">
+                <span class="rc-chip-lbl">A</span>
+            </AtomScrollTo>
+            <AtomScrollTo Target="#st-sec-b" Tooltip="Go to B" Size="34px" Background="#7c3aed">
+                <span class="rc-chip-lbl">B</span>
+            </AtomScrollTo>
+            <AtomScrollTo Target="#st-sec-c" Tooltip="Go to C" Size="34px" Background="#7c3aed">
+                <span class="rc-chip-lbl">C</span>
+            </AtomScrollTo>
+        </div>
+        <div class="rc-sections">
+            <div id="st-sec-a" class="rc-sec">Section A — target of the “A” button.</div>
+            <div id="st-sec-b" class="rc-sec">Section B — target of the “B” button.</div>
+            <div id="st-sec-c" class="rc-sec">Section C — target of the “C” button.</div>
+        </div>
+        <CodeSnippetBox Code="@Recipe3" FileName="AnchorNav.razor" />
+    </section>
+
+    @* ---- Recipe 4: top + bottom pair -------------------------------------------------------- *@
+    <section class="st-recipe">
+        <h2>4 · Top + bottom pair</h2>
+        <p class="st-note">
+            Every <code>AtomScrollTo</code> is independent — render as many as you like. Here a pair
+            (up + down) coexist. In a <em>real app</em> these would be <code>Position="Fixed*"</code>
+            over the window; the demo scopes them to this bordered card with
+            <code>Position="Absolute*"</code> so they don't float over the whole page.
+        </p>
+        <div class="rc-pair">
+            <div class="rc-pair-body">
+                @for (var i = 1; i <= 25; i++)
+                {
+                    <p>Paragraph @i — scroll this card; both buttons act on it.</p>
+                }
+            </div>
+            <AtomScrollTo Scope="ScrollScope.Container" Direction="ScrollDirection.Up"
+                          Position="ScrollPosition.AbsoluteTopRight" OffsetV="0.75rem" OffsetH="0.75rem"
+                          Tooltip="Top" Size="38px" />
+            <AtomScrollTo Scope="ScrollScope.Container" Direction="ScrollDirection.Down"
+                          Position="ScrollPosition.AbsoluteBottomRight" OffsetV="0.75rem" OffsetH="0.75rem"
+                          Tooltip="Bottom" Size="38px" />
+        </div>
+        <CodeSnippetBox Code="@Recipe4" FileName="TopBottomPair.razor" />
+    </section>
+</div>
+
+<style>
+    .st-wrap { max-width: 860px; margin: 0 auto; color: #e5e9f0; }
+    .st-intro h1 { margin: 0 0 .5rem; font-size: 1.6rem; }
+    .st-intro p { color: #b8c2d0; line-height: 1.6; }
+    .st-toc { color: #b8c2d0; line-height: 1.7; padding-left: 1.1rem; }
+    .st-toc strong { color: #e5e9f0; }
+    .st-recipe { margin: 2.5rem 0; padding-top: 1.5rem; border-top: 1px solid #1b2330; }
+    .st-recipe h2 { font-size: 1.15rem; margin: 0 0 .5rem; }
+    .st-note { color: #a8b3c2; line-height: 1.6; font-size: .92rem; }
+    .st-note code { background: #161b26; border: 1px solid #262d3b; border-radius: 4px;
+        padding: .05rem .35rem; font-size: .85em; color: #cfe0ff; }
+    .st-card { border: 1px solid #1b2330; border-radius: 12px; padding: 1.2rem; background: #0d1118; }
+    .st-card--plain { display: flex; align-items: center; justify-content: center; min-height: 90px; }
+    .st-hint { color: #8794a3; font-size: .88rem; }
+
+    /* Recipe 2 — relative shell + scrollable log + overlay-sibling buttons. */
+    .rc-shell { position: relative; }
+    .rc-log { height: 280px; overflow-y: auto; border: 1px solid #1b2330; border-radius: 12px;
+        padding: 1rem; background: #0d1118; }
+    .rc-log-line { padding: .3rem 0; color: #cfd8e3; font-size: .88rem; border-bottom: 1px solid #141a24; }
+
+    /* Recipe 3 — nav chips + target sections. */
+    .rc-nav { display: flex; gap: .6rem; margin-bottom: 1rem; }
+    .rc-chip-lbl { font-weight: 700; font-size: .95rem; }
+    .rc-sections { display: flex; flex-direction: column; gap: 60vh; }
+    .rc-sec { border: 1px solid #1b2330; border-radius: 12px; padding: 1.5rem; background: #0d1118;
+        color: #cfd8e3; scroll-margin-top: 1rem; }
+
+    /* Recipe 4 — positioned card holding a scrollable body + a pair. */
+    .rc-pair { position: relative; }
+    .rc-pair-body { height: 300px; overflow-y: auto; border: 1px solid #1b2330; border-radius: 12px;
+        padding: 1rem 1.2rem; background: #0d1118; color: #cfd8e3; line-height: 1.6; }
+    .rc-pair-body p { margin: .4rem 0; }
+</style>
+
+@code {
+    // Hand-written const snippets — a consumer copies these verbatim (full DOM structure, not a
+    // params-driven generator). Keep in lockstep with the live examples above.
+
+    private const string Recipe1 =
+@"@* Floating back-to-top — pins to the viewport corner, appears after 300px, scrolls the window. *@
+<AtomScrollTo Position=""ScrollPosition.FixedBottomRight""
+              VisibleAfter=""300""
+              Tooltip=""Back to top"" />";
+
+    private const string Recipe2 =
+@"@* In-panel scroller: relative wrapper + scroll box + overlay-sibling button(s).
+   ScrollContainer binds the click to the inner box; Absolute* parks the button in the
+   non-scrolling wrapper's corner (an absolute child INSIDE the box would scroll away). *@
+<div style=""position:relative"">
+    <div id=""log-panel"" style=""height:280px; overflow-y:auto"">
+        @* …scrollable content… *@
+    </div>
+
+    <AtomScrollTo ScrollContainer=""#log-panel"" Scope=""ScrollScope.Container""
+                  Position=""ScrollPosition.AbsoluteBottomRight""
+                  Direction=""ScrollDirection.Down"" Tooltip=""Jump to newest"" />
+</div>";
+
+    private const string Recipe3 =
+@"@* Anchor / id navigation — Target is a bare id, ""#id"", or any CSS selector. Child content
+   replaces the default chevron with a custom label/icon. *@
+<AtomScrollTo Target=""#section-a"" Tooltip=""Go to A"">
+    <span>A</span>
+</AtomScrollTo>
+
+<div id=""section-a"">…</div>";
+
+    private const string Recipe4 =
+@"@* Two independent buttons. In a real app use Position=""Fixed*"" to float them over the window;
+   here they're Absolute* inside a position:relative card so they stay within it. *@
+<div style=""position:relative"">
+    <div style=""height:300px; overflow-y:auto"">
+        @* …content… *@
+    </div>
+
+    <AtomScrollTo Scope=""ScrollScope.Container"" Direction=""ScrollDirection.Up""
+                  Position=""ScrollPosition.AbsoluteTopRight"" Tooltip=""Top"" />
+    <AtomScrollTo Scope=""ScrollScope.Container"" Direction=""ScrollDirection.Down""
+                  Position=""ScrollPosition.AbsoluteBottomRight"" Tooltip=""Bottom"" />
+</div>";
+}

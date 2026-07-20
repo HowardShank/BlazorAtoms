@@ -66,3 +66,10 @@ dotnet test tests/BlazorAtoms.Badges.Tests/BlazorAtoms.Badges.Tests.csproj
 
 ## Communication Style
 - User prefers terse statements, no guessing, no assumptions, minimize token use where possible.
+
+## Git Commands
+- When undoing changes, do not use destructive git commands such as `git reset`, `git clean`, or any other command that removes uncommitted files or modifies repository state destructively without explicit approval.
+
+## File and Tool Safety
+- Deleting files via any tool, terminal, or script — including PowerShell, Bash, and file-system APIs — must be expressly identified and authorized before execution. Explain the risk and wait for explicit approval. This applies to uncommitted work and tracked files alike. No silent or assumed deletions.
+- If an action is denied, stop immediately and ask for instructions. Never continue with an alternative solution without first requesting what the user wants done next.

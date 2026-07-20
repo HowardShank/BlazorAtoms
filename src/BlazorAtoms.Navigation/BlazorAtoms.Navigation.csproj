@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <Import Project="$(RepoRoot)build\Packable.props" />
+  <Import Project="$(RepoRoot)build\Shared.props" />
+
+  <PropertyGroup>
+    <PackageId>BlazorAtoms.Navigation</PackageId>
+    <Title>Blazor Navigation</Title>
+    <Description>Navigation components for Blazor. Ships AtomScrollTo — a scroll-to-top/bottom/anchor button with a default SVG chevron, custom icon, tooltip, self-positioning (no host CSS), auto-hide, and overlap avoidance. Smooth scrolling and watchers run through a small lazy JS module the component imports itself.</Description>
+    <PackageTags>Blazor;Navigation;ScrollToTop;BackToTop;Scroll;Anchor;WebAssembly;Server</PackageTags>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BlazorAtoms.Navigation.Tests" />
+  </ItemGroup>
+
+</Project>

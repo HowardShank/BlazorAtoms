@@ -1,0 +1,26 @@
+@inherits AtomComponentBase
+
+@* AtomScrollTo — scroll-to-top / -bottom / -anchor button. Renders a default SVG chevron (or your
+   ChildContent), and on click smoothly scrolls the page or a container. Smooth scrolling, auto-hide
+   (VisibleAfter) and overlap avoidance (HideNear) run through a lazily-imported JS module — no
+   <script> tag, no DI. data-position / data-visible / data-collision drive the scoped CSS. *@
+
+<button @ref="_rootRef"
+        @attributes="AdditionalAttributes"
+        type="button"
+        class="@ClassAttr(RootClass)"
+        style="@StyleAttr(RootStyle)"
+        data-position="@PositionAttr"
+        data-visible="@(VisibleAfter is null ? "true" : "false")"
+        title="@Tooltip"
+        aria-label="@(Tooltip ?? DefaultAriaLabel)"
+        @onclick="ScrollAsync">
+    @if (ChildContent is not null)
+    {
+        @ChildContent
+    }
+    else
+    {
+        @((MarkupString)DefaultArrowSvg)
+    }
+</button>

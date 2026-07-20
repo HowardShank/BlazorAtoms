@@ -125,7 +125,7 @@ On-brand standout: **`Charts`** — SVG, JS-free, same DNA as the activity indic
 | `BlazorAtoms.Overlays` (Modal, Drawer, Popover, Dropdown, Menu) | positioning + focus-trap + scroll-lock usually want JS |
 | `BlazorAtoms.Pickers` (Date / Time / Color) | popup/calendar logic; color picker is closer to JS-free |
 | `BlazorAtoms.Tables` / `DataGrid` | a simple table is JS-free; sorting/virtualization is heavy |
-| `BlazorAtoms.Navigation` (Breadcrumbs, Pagination, Stepper) | mostly fine; some scroll/JS |
+| `BlazorAtoms.Navigation` *(shipped)* | AtomScrollTo — scroll-to-top/bottom or scroll-to-anchor button; default SVG chevron or custom-icon slot, tooltip/aria, page-or-container scope, optional auto-hide-until-scrolled (passive + rAF-coalesced watcher); self-imports `atom-navigation.js` for smooth scroll + visibility. *Planned:* Breadcrumbs, Pagination, Stepper. |
 | `BlazorAtoms.Behaviors` (ClickOutside, FocusTrap, Clipboard, Portal) | headless, but several need JS interop |
 
 **What each does:**
@@ -133,7 +133,7 @@ On-brand standout: **`Charts`** — SVG, JS-free, same DNA as the activity indic
 - **Overlays** — things that float above the page: modal dialog, side drawer, popover, dropdown, menu.
 - **Pickers** — specialized value selectors for date, time, and color.
 - **Tables** — tabular data display, from a simple static table up to a sortable/virtualized data grid.
-- **Navigation** — moving around an app: breadcrumbs, pagination, stepper.
+- **Navigation** — moving around an app. Shipped: `AtomScrollTo` (scroll-to-top/bottom/anchor button, page or container scope, auto-hide-until-scrolled). Planned: breadcrumbs, pagination, stepper.
 - **Behaviors** — headless helpers with no visuals of their own: click-outside, focus-trap, clipboard copy, portal.
 
 ---
