@@ -74,13 +74,13 @@
             <code>scrollIntoView</code>. Custom icon via child content. Click a chip to jump.
         </p>
         <div class="rc-nav">
-            <AtomScrollTo Target="#st-sec-a" Tooltip="Go to A" Size="34px" Background="#7c3aed">
+            <AtomScrollTo Target="#st-sec-a" Tooltip="Go to A" Size="34px" Background="#3399ff">
                 <span class="rc-chip-lbl">A</span>
             </AtomScrollTo>
-            <AtomScrollTo Target="#st-sec-b" Tooltip="Go to B" Size="34px" Background="#7c3aed">
+            <AtomScrollTo Target="#st-sec-b" Tooltip="Go to B" Size="34px" Background="#ffcc00">
                 <span class="rc-chip-lbl">B</span>
             </AtomScrollTo>
-            <AtomScrollTo Target="#st-sec-c" Tooltip="Go to C" Size="34px" Background="#7c3aed">
+            <AtomScrollTo Target="#st-sec-c" Tooltip="Go to C" Size="34px" Background="#ff3399" Radius="12px">
                 <span class="rc-chip-lbl">C</span>
             </AtomScrollTo>
         </div>
@@ -158,6 +158,17 @@
     .rc-pair-body { height: 300px; overflow-y: auto; border: 1px solid #1b2330; border-radius: 12px;
         padding: 1rem 1.2rem; background: #0d1118; color: #fff; line-height: 1.6; }
     .rc-pair-body p { margin: .4rem 0; }
+    
+    #st-sec-a {
+        background: #3399ff !important;
+    }
+
+    #st-sec-b {
+        background: #ffcc00 !important;
+    }
+    #st-sec-c {
+        background: #ff3399 !important;
+    }
 </style>
 
 @code {
