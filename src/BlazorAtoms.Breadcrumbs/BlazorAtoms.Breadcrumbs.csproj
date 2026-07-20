@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <Import Project="$(RepoRoot)build\Packable.props" />
+  <Import Project="$(RepoRoot)build\Shared.props" />
+
+  <PropertyGroup>
+    <PackageId>BlazorAtoms.Breadcrumbs</PackageId>
+    <Title>Blazor Breadcrumbs</Title>
+    <Description>Breadcrumb navigation components for Blazor. Ships AtomBreadcrumbs — a customizable breadcrumb trail component with semantic HTML, automatic styling, and zero dependencies. Supports nested routes, custom separators, and accessible navigation patterns.</Description>
+    <PackageTags>Blazor;Breadcrumbs;Navigation;WebAssembly;Server</PackageTags>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BlazorAtoms.Breadcrumbs.Tests" />
+  </ItemGroup>
+
+</Project>
