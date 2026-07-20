@@ -32,7 +32,7 @@
             <span class="st-hint">Live: scroll the whole page ▸ a “Back to top” button appears bottom-right.</span>
         </div>
         <AtomScrollTo Position="ScrollPosition.FixedBottomRight" VisibleAfter="300"
-                      Tooltip="Back to top" />
+                      Tooltip="Back to top" Background="#0f766e" />
         <CodeSnippetBox Code="@Recipe1" FileName="PageBackToTop.razor" />
     </section>
 
@@ -59,8 +59,8 @@
                           Direction="ScrollDirection.Down" Tooltip="Jump to newest" Size="38px" />
             <AtomScrollTo ScrollContainer="#rc-log" Scope="ScrollScope.Container"
                           Position="ScrollPosition.AbsoluteTopRight" OffsetV="0.75rem" OffsetH="0.75rem"
-                          Direction="ScrollDirection.Up" Tooltip="Back to top of log" Size="38px"
-                          Background="#0f766e" />
+                          Direction="ScrollDirection.Up" Tooltip="Back to top of log" Size="38px" />
+                          @* Background="#0f766e" /> *@
         </div>
         <CodeSnippetBox Code="@Recipe2" FileName="InPanelScroller.razor" />
     </section>
@@ -102,18 +102,24 @@
             <code>Position="Absolute*"</code> so they don't float over the whole page.
         </p>
         <div class="rc-pair">
-            <div class="rc-pair-body">
+            <div id="rc-pair-body" class="rc-pair-body">
                 @for (var i = 1; i <= 25; i++)
                 {
                     <p>Paragraph @i — scroll this card; both buttons act on it.</p>
                 }
             </div>
+            <AtomScrollTo ScrollContainer="#rc-pair-body" Scope="ScrollScope.Container" Direction="ScrollDirection.Up"
+                          Position="ScrollPosition.AbsoluteTopRight" OffsetV="0.75rem" OffsetH="2.75rem"
+                          Tooltip="Top" Size="38px" />
+            <AtomScrollTo ScrollContainer="#rc-pair-body" Scope="ScrollScope.Container" Direction="ScrollDirection.Down"
+                          Position="ScrollPosition.AbsoluteBottomRight" OffsetV="0.75rem" OffsetH="2.75rem"
+                          Tooltip="Bottom" Size="38px" />
             <AtomScrollTo Scope="ScrollScope.Container" Direction="ScrollDirection.Up"
                           Position="ScrollPosition.AbsoluteTopRight" OffsetV="0.75rem" OffsetH="0.75rem"
-                          Tooltip="Top" Size="38px" />
+                          Tooltip="Top" Size="38px" Background="#0f766e" />
             <AtomScrollTo Scope="ScrollScope.Container" Direction="ScrollDirection.Down"
                           Position="ScrollPosition.AbsoluteBottomRight" OffsetV="0.75rem" OffsetH="0.75rem"
-                          Tooltip="Bottom" Size="38px" />
+                          Tooltip="Bottom" Size="38px" Background="#0f766e" />
         </div>
         <CodeSnippetBox Code="@Recipe4" FileName="TopBottomPair.razor" />
     </section>
@@ -189,15 +195,17 @@
 
     private const string Recipe4 =
 @"@* Two independent buttons. In a real app use Position=""Fixed*"" to float them over the window;
-   here they're Absolute* inside a position:relative card so they stay within it. *@
+   here they're Absolute* inside a position:relative card so they stay within it. The scroll box is
+   a SIBLING of the buttons (not an ancestor), so bind each with ScrollContainer=""#id"" — otherwise
+   Scope=Container's ancestor-walk finds nothing scrollable and falls back to scrolling the page. *@
 <div style=""position:relative"">
-    <div style=""height:300px; overflow-y:auto"">
+    <div id=""pair-body"" style=""height:300px; overflow-y:auto"">
         @* …content… *@
     </div>
 
-    <AtomScrollTo Scope=""ScrollScope.Container"" Direction=""ScrollDirection.Up""
+    <AtomScrollTo ScrollContainer=""#pair-body"" Scope=""ScrollScope.Container"" Direction=""ScrollDirection.Up""
                   Position=""ScrollPosition.AbsoluteTopRight"" Tooltip=""Top"" />
-    <AtomScrollTo Scope=""ScrollScope.Container"" Direction=""ScrollDirection.Down""
+    <AtomScrollTo ScrollContainer=""#pair-body"" Scope=""ScrollScope.Container"" Direction=""ScrollDirection.Down""
                   Position=""ScrollPosition.AbsoluteBottomRight"" Tooltip=""Bottom"" />
 </div>";
 }
