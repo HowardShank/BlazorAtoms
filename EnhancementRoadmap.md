@@ -36,6 +36,10 @@
 ## Inputs Components
 - N/A
 
+## Navigation Components
+- Add Scroll To component.
+- Added Blazor Breadcrumb component.
+
 ## Ratings Components
 - N/A
 
