@@ -74,6 +74,26 @@ main {
         padding-left: 2rem !important;
         padding-right: 1.5rem !important;
     }
+
+    /* main = viewport-tall flex column: top-row pinned at top, #content scrolls internally
+       (bottom bounded by the viewport), not the whole window. */
+    main {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    main > .top-row {
+        flex: 0 0 auto;
+    }
+
+    #content {
+        flex: 1 1 auto;
+        min-height: 0;        /* let the flex child shrink so overflow-y can scroll */
+        overflow-y: auto;
+        margin-top: 0.5rem;   /* tiny gap beneath the top-row, no overlap */
+    }
 }
 
 #blazor-error-ui {
