@@ -24,6 +24,11 @@ public partial class AtomBreadcrumbProvider : ComponentBase
     /// supplied, this takes precedence over each page's own <see cref="AtomBreadcrumbAttribute.IsRoot"/>.</summary>
     [Parameter] public Func<string, bool>? IsRootRoute { get; set; }
 
+    /// <summary>External title lookup for unattributed pages — see <see cref="AtomBreadcrumbService.TitleResolver"/>.
+    /// Wired through here so it can be set declaratively at the same mount point as <see cref="IsRootRoute"/>,
+    /// instead of the consumer having to reach the cascaded service instance directly.</summary>
+    [Parameter] public Func<string?, string, string?>? TitleResolver { get; set; }
+
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
     private readonly AtomBreadcrumbService _atomsBreadcrumbService = new();
@@ -31,6 +36,8 @@ public partial class AtomBreadcrumbProvider : ComponentBase
     protected override void OnParametersSet()
     {
         if (RouteData is null) return;
+
+        _atomsBreadcrumbService.TitleResolver = TitleResolver;
 
         var uri = NavigationManager.Uri;
         var isRoot = IsRootRoute?.Invoke(uri) ?? EvaluateAttributeIsRoot();

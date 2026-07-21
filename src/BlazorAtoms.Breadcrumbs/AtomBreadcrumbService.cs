@@ -60,6 +60,16 @@ public sealed partial class AtomBreadcrumbService
     /// <c>AtomBreadcrumbBar</c> — to react (e.g. sync <c>&lt;title&gt;</c>, log analytics).</summary>
     public event EventHandler? Changed;
 
+    /// <summary>Optional external title lookup for unattributed pages (no <see cref="AtomBreadcrumbAttribute"/>).
+    /// Called with two different views of the same navigation, so the consumer picks whichever fits
+    /// the lookup: <c>routeTemplate</c> — the matched <c>@page</c> template (e.g. <c>"/products/{id}"</c>),
+    /// or <c>null</c> if none matched — for keying a title source (CSV, database, ...) on the page's
+    /// shape rather than every concrete URL; and <c>path</c> — the normalized URI path with actual
+    /// segment values intact (e.g. <c>"/products/482"</c>) — for parsing a specific value (an id, a
+    /// slug) out to drive its own data lookup, since only the consumer knows how to interpret it.
+    /// Return <c>null</c> to fall through to the built-in humanized-segment title.</summary>
+    public Func<string?, string, string?>? TitleResolver { get; set; }
+
     /// <summary>Called by <c>AtomBreadcrumbProvider</c> when the cascaded <c>RouteData</c> changes.
     /// Not meant for app code to call directly.</summary>
     //internal void OnNavigated(Type? pageType, IReadOnlyDictionary<string, object?> routeValues, string currentUri, bool isRoot)
@@ -251,7 +261,7 @@ public sealed partial class AtomBreadcrumbService
     /// the page's own <c>@page</c> template(s) (via reflection, independent of the breadcrumb graph)
     /// and humanizes the template's last literal segment instead — falling back to the raw last
     /// URL segment only if no template match is found.</summary>
-    private static string ResolveUnattributedTitle(Type? pageType, string currentUri)
+    private string ResolveUnattributedTitle(Type? pageType, string currentUri)
     {
         var path = NormalizeKey(currentUri);
         if (path is "" or "/") return "Home";
@@ -263,6 +273,10 @@ public sealed partial class AtomBreadcrumbService
             .ToArray() ?? Array.Empty<string>();
 
         var matched = MatchRouteTemplate(templates, path);
+
+        var external = TitleResolver?.Invoke(matched, path);
+        if (external is not null) return external;
+
         return matched is not null ? TitleFromRouteTemplate(matched) : HumanizeLastSegment(currentUri);
     }
 

@@ -136,3 +136,84 @@ Some routes should always start fresh — e.g. a dashboard root the user can jum
 ```
 
 Without an explicit predicate, a page's own `[AtomBreadcrumb(..., IsRoot = true)]` is used instead.
+
+## External title lookup for unattributed pages
+
+If your titles live in data you own (a CSV, a database table) rather than in `[AtomBreadcrumb]`
+attributes, wire a lookup in via `TitleResolver` at the same `Routes.razor` mount point as
+`IsRootRoute`. It's called with **two** views of the same navigation — use whichever the lookup needs:
+
+- `routeTemplate` — the matched `@page` template (e.g. `"/products/{id}"`), or `null` if none
+  matched — for keying a title on the page's *shape*, one row per page.
+- `path` — the normalized URI with actual segment values intact (e.g. `"/products/482"`) — for
+  pulling a specific value (an id, a slug) back out to drive an *entity* lookup. Only the consumer
+  knows how that value is structured, so parsing it is left entirely to the resolver.
+
+Generic per-page-shape title, keyed on the template, `IsRootRoute` a plain inline predicate:
+
+```razor
+@* Routes.razor *@
+@inject IPageTitleStore PageTitleStore
+
+<Router AppAssembly="typeof(Program).Assembly">
+    <Found Context="routeData">
+        <CascadingValue Value="routeData">
+            <AtomBreadcrumbProvider TitleResolver="@ResolveTitle" IsRootRoute="@(uri => uri.EndsWith("/dashboard"))">
+                <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+            </AtomBreadcrumbProvider>
+        </CascadingValue>
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+</Router>
+
+@code {
+    // one row per page shape, e.g. "/products/{id}" -> "Product" — same title regardless of which product
+    private string? ResolveTitle(string? routeTemplate, string path) =>
+        routeTemplate is not null && PageTitleStore.TryGetTitle(routeTemplate, out var title) ? title : null;
+}
+```
+
+Entity-specific title: parse the id out of `path` and look up the actual record:
+
+```razor
+@* Routes.razor *@
+@inject IPageTitleStore PageTitleStore
+
+<Router AppAssembly="typeof(Program).Assembly">
+    <Found Context="routeData">
+        <CascadingValue Value="routeData">
+            <AtomBreadcrumbProvider TitleResolver="@ResolveTitle" IsRootRoute="@ResolveIsRoot">
+                <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+            </AtomBreadcrumbProvider>
+        </CascadingValue>
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+</Router>
+
+@code {
+    // "/products/482" -> pull "482" out, look up that specific product's name
+    private string? ResolveTitle(string? routeTemplate, string path)
+    {
+        var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        return routeTemplate == "/products/{id}" && segments.Length == 2 && int.TryParse(segments[1], out var id)
+            ? PageTitleStore.GetProductName(id)
+            : null;
+    }
+
+    // IsRootRoute gets the raw NavigationManager.Uri too — same store, a different column/key
+    // (e.g. an "IsRoot" flag per row) driving the same data-owned decision.
+    private bool ResolveIsRoot(string uri) => PageTitleStore.IsRootRoute(uri);
+}
+```
+
+```csharp
+public interface IPageTitleStore
+{
+    bool TryGetTitle(string routeTemplate, out string title);
+    string? GetProductName(int id);
+    bool IsRootRoute(string uri);
+}
+```
+
+Returning `null` (no row for that key) falls through to the built-in humanized-segment title, so a
+partially-populated store is safe — only the pages you've actually keyed get overridden.
