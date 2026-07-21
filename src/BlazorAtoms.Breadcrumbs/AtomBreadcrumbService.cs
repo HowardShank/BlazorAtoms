@@ -23,6 +23,26 @@ public sealed partial class AtomBreadcrumbService
     [GeneratedRegex(@"^\{\*?(\w+)(?::[^}?]+)?\??\}$")]
     private static partial Regex FullRouteParamSegmentPattern();
 
+    [GeneratedRegex(@"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")]
+    private static partial Regex CamelCaseBoundaryPattern();
+
+    private static readonly Dictionary<string, string> SpecialCaseWords = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["id"] = "ID",
+        ["ids"] = "IDs",
+        ["url"] = "URL",
+        ["urls"] = "URLs",
+        ["uri"] = "URI",
+        ["api"] = "API",
+        ["apis"] = "APIs",
+        ["ui"] = "UI",
+        ["faq"] = "FAQ",
+        ["faqs"] = "FAQs",
+        ["sso"] = "SSO",
+        ["oauth"] = "OAuth",
+        ["qr"] = "QR",
+    };
+
     private readonly Dictionary<string, string> _tokenValues = new();
     private List<AtomBreadcrumbEntry> _staticHead = new();
     private readonly List<AtomBreadcrumbEntry> _dynamicTail = new();
@@ -291,11 +311,18 @@ public sealed partial class AtomBreadcrumbService
 
     private static string Humanize(string segment)
     {
-        var words = segment.Replace('-', ' ').Replace('_', ' ').Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var delimited = segment.Replace('-', ' ').Replace('_', ' ');
+        var words = CamelCaseBoundaryPattern().Replace(delimited, " ")
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries);
         return words.Length == 0
             ? "Home"
-            : string.Join(' ', words.Select(w => char.ToUpperInvariant(w[0]) + w[1..]));
+            : string.Join(' ', words.Select(HumanizeWord));
     }
+
+    private static string HumanizeWord(string word) =>
+        SpecialCaseWords.TryGetValue(word, out var special)
+            ? special
+            : char.ToUpperInvariant(word[0]) + word[1..].ToLowerInvariant();
 
     private static string StripQuery(string uri)
     {
