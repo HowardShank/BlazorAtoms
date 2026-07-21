@@ -1,6 +1,12 @@
-﻿<Router AppAssembly="typeof(Program).Assembly" AdditionalAssemblies="new[] { typeof(Client._Imports).Assembly }">
+﻿@using BlazorAtoms.Breadcrumbs
+
+<Router AppAssembly="typeof(Program).Assembly" AdditionalAssemblies="new[] { typeof(Client._Imports).Assembly }">
     <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+        <CascadingValue Value="routeData">
+            <AtomBreadcrumbProvider>
+                <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+            </AtomBreadcrumbProvider>
+        </CascadingValue>
         <FocusOnNavigate RouteData="routeData" Selector="h1" />
     </Found>
 </Router>

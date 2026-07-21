@@ -41,4 +41,4 @@ When you add a public parameter to a component, you must in the same change:
 2. extend that view's `Snippet` getter to emit it (guarded against default).
 
 New components follow the full wiring checklist (view + 3 wrapper pages + 3 NavMenu entries + 3
-`Demo.razor` links); the two goals above are the acceptance bar for the view itself.
+`ActivityIndicators.razor` links); the two goals above are the acceptance bar for the view itself.

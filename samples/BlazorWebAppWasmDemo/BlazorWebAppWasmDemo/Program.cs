@@ -1,5 +1,6 @@
 using BlazorWebAppWasmDemo.Client.Pages;
 using BlazorWebAppWasmDemo.Components;
+using BlazorWebAppWasmDemo.services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,11 @@ builder.Services.AddRazorComponents()
 // pages in WebAssembly render mode — any future page authored under InteractiveServer mode gets
 // the same protection, matching the Server + Auto demos.
 builder.Services.AddSignalR(o => o.MaximumReceiveMessageSize = 5 * 1024 * 1024);
+
+// Register route list service
+builder.Services.AddSingleton<RouteInfoService>();
+
+
 
 var app = builder.Build();
 

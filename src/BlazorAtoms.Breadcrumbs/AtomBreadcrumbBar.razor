@@ -1,0 +1,29 @@
+@inherits AtomComponentBase
+
+@if (Service is not null)
+{
+    var trail = Service.Trail;
+    <nav class="@ClassAttr("atom-breadcrumb-bar")" style="@StyleAttr(null)" aria-label="breadcrumb" @attributes="AdditionalAttributes">
+        <ol class="atom-breadcrumb-bar__list">
+            @for (var i = 0; i < trail.Count; i++)
+            {
+                var entry = trail[i];
+                var isCurrent = i == trail.Count - 1;
+                <li @key="entry.Key" class="atom-breadcrumb-bar__item">
+                    @if (!isCurrent && entry.Href is not null)
+                    {
+                        <a class="atom-breadcrumb-bar__link" href="@entry.Href" title="@entry.Tooltip">@(entry.IsTitlePending ? LoadingPlaceholder : entry.Title)</a>
+                    }
+                    else
+                    {
+                        <span class="atom-breadcrumb-bar__text" aria-current="@(isCurrent ? "page" : null)" title="@entry.Tooltip">@(entry.IsTitlePending ? LoadingPlaceholder : entry.Title)</span>
+                    }
+                    @if (!isCurrent)
+                    {
+                        <span class="atom-breadcrumb-bar__separator" aria-hidden="true">@Separator</span>
+                    }
+                </li>
+            }
+        </ol>
+    </nav>
+}

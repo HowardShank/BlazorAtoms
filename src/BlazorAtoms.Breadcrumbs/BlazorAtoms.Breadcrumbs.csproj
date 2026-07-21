@@ -6,7 +6,7 @@
   <PropertyGroup>
     <PackageId>BlazorAtoms.Breadcrumbs</PackageId>
     <Title>Blazor Breadcrumbs</Title>
-    <Description>Breadcrumb navigation components for Blazor. Ships AtomBreadcrumbs — a customizable breadcrumb trail component with semantic HTML, automatic styling, and zero dependencies. Supports nested routes, custom separators, and accessible navigation patterns.</Description>
+    <Description>Breadcrumb navigation for Blazor combining static and dynamic trails: [AtomBreadcrumb] declares a page's title/parent route for a refresh-safe static chain, AtomBreadcrumbService.Push handles unattributed pages at runtime, AtomBreadcrumbProvider cascades the service (no DI registration), and AtomBreadcrumbBar renders accessible semantic HTML. Zero dependencies.</Description>
     <PackageTags>Blazor;Breadcrumbs;Navigation;WebAssembly;Server</PackageTags>
     <Version>0.1.0</Version>
   </PropertyGroup>

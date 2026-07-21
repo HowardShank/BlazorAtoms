@@ -1,0 +1,38 @@
+@using BlazorAtoms.Breadcrumbs
+
+<h1>Customer #@Id</h1>
+<p>
+    This page's <code>[AtomBreadcrumb]</code> title is <code>"Customer: {name}"</code>. The
+    <code>{name}</code> token isn't known until this simulated lookup finishes, so the breadcrumb
+    bar shows its loading placeholder until then.
+</p>
+<p>Customer name: <strong>@(_customerName ?? "resolving…")</strong></p>
+<p><a href="@($"/playground/breadcrumbs/customers/{Id}/draft/1")">Open a draft (unattributed page, Push-based breadcrumb) &rarr;</a></p>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    [CascadingParameter] private AtomBreadcrumbService? AtomsBreadcrumbsSvc { get; set; }
+
+    private string? _customerName;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _customerName = null;
+        var nameTask = ResolveCustomerNameAsync(Id);
+        var setDataTask = AtomsBreadcrumbsSvc?.SetDataAsync("name", nameTask) ?? Task.CompletedTask;
+        _customerName = await nameTask;
+        await setDataTask;
+    }
+
+    private static async Task<string> ResolveCustomerNameAsync(int id)
+    {
+        await Task.Delay(600);
+        return id switch
+        {
+            1 => "Acme Corp",
+            2 => "Globex",
+            3 => "Initech",
+            _ => $"Customer #{id}",
+        };
+    }
+}

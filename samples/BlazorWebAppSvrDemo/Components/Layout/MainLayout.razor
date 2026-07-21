@@ -1,5 +1,5 @@
 @inherits LayoutComponentBase
-
+@using BlazorAtoms.Breadcrumbs
 <style>
     main {
         min-width: 0px;
@@ -18,7 +18,13 @@
 
     <main>
         <div id="top-row" class="top-row px-4">
+            <AtomBreadcrumbBar />
+
             <a href="about">About</a>
+        </div>
+
+        <div class="px-4">
+            <AtomBreadcrumbBar />
         </div>
 
         <article id="content" class="content px-4">

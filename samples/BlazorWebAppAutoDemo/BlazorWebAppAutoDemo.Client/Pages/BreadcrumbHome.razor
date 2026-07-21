@@ -1,0 +1,11 @@
+@page "/playground/breadcrumbs"
+@rendermode InteractiveWebAssembly
+@attribute [AtomBreadcrumb("Breadcrumbs Playground")]
+@using BlazorAtoms.Breadcrumbs
+
+<h1>Breadcrumbs Playground</h1>
+<p>Demonstrates the static <code>[AtomBreadcrumb]</code> attribute chain, an async title token, a Push-based dynamic tail, and a nested-provider scoped trail with its own root-reset.</p>
+<ul>
+    <li><a href="playground/breadcrumbs/customers">Customers</a> &mdash; static chain + async title token + draft (dynamic tail) demo</li>
+    <li><a href="playground/breadcrumbs/admin">Admin</a> &mdash; nested provider, independently-scoped trail, root-reset</li>
+</ul>

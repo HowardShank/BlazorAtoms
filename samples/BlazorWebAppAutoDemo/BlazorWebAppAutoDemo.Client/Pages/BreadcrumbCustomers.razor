@@ -1,0 +1,11 @@
+@page "/playground/breadcrumbs/customers"
+@rendermode InteractiveWebAssembly
+@attribute [AtomBreadcrumb("Customers", ParentRoute = "/playground/breadcrumbs")]
+@using BlazorAtoms.Breadcrumbs
+
+<h1>Customers</h1>
+<ul>
+    <li><a href="playground/breadcrumbs/customers/1">Acme Corp</a></li>
+    <li><a href="playground/breadcrumbs/customers/2">Globex</a></li>
+    <li><a href="playground/breadcrumbs/customers/3">Initech</a></li>
+</ul>

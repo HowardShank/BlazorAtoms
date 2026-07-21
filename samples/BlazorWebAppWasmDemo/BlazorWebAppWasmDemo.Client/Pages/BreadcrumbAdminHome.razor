@@ -1,0 +1,10 @@
+@page "/playground/breadcrumbs/admin"
+@rendermode InteractiveWebAssembly
+@layout BreadcrumbAdminLayout
+@attribute [AtomBreadcrumb("Admin", IsRoot = true)]
+@using BlazorAtoms.Breadcrumbs
+@using Demos.Shared.Playgrounds.Breadcrumbs
+
+<h1>Admin</h1>
+<p>This section has its own nested <code>AtomBreadcrumbProvider</code> (see <code>BreadcrumbAdminLayout</code>), independent from the site-wide one in <code>MainLayout</code>. Marked <code>IsRoot</code>, so returning here always resets this section's dynamic tail.</p>
+<p><a href="playground/breadcrumbs/admin/users">Users &rarr;</a></p>

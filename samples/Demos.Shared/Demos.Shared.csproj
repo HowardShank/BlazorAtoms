@@ -27,6 +27,7 @@
     <ProjectReference Include="..\..\src\BlazorAtoms.DragDrop\BlazorAtoms.DragDrop.csproj" />
     <ProjectReference Include="..\..\src\BlazorAtoms.Screensavers\BlazorAtoms.Screensavers.csproj" />
     <ProjectReference Include="..\..\src\BlazorAtoms.Navigation\BlazorAtoms.Navigation.csproj" />
+    <ProjectReference Include="..\..\src\BlazorAtoms.Breadcrumbs\BlazorAtoms.Breadcrumbs.csproj" />
   </ItemGroup>
 
 </Project>

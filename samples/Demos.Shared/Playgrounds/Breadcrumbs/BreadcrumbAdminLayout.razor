@@ -1,0 +1,14 @@
+@inherits LayoutComponentBase
+@using BlazorAtoms.Breadcrumbs
+
+@* Self-contained (no site chrome) — the Wasm/Auto demo hosts' page files live in a Client
+   project that references Demos.Shared but not the host's own Server project, so this layout
+   can't nest each host's own MainLayout type without a circular reference. *@
+<div class="px-4" style="margin-top:.5rem;">
+    <a href="playground/breadcrumbs">&larr; Back to Breadcrumbs Playground</a>
+    <p><strong>Admin section trail (independent from the site-wide one on other pages):</strong></p>
+    <AtomBreadcrumbProvider>
+        <AtomBreadcrumbBar />
+        @Body
+    </AtomBreadcrumbProvider>
+</div>

@@ -1,10 +1,10 @@
-@page "/demo"
+@page "/playground/ActivityIndicators"
 @rendermode InteractiveWebAssembly
 @using BlazorAtoms.ActivityIndicators
 @using BlazorAtoms.ActivityIndicators.Indicators
 @using BlazorAtoms.Shared
 
-<PageTitle>Blazor Atoms Demo</PageTitle>
+<PageTitle>Blazor Atoms Activity Indicators</PageTitle>
 
 <style>
     .indicator-grid {
@@ -133,7 +133,7 @@
 
 <style>body { background-color: @BgColor; }</style>
 
-<h1>Blazor Atoms Demo</h1>
+<h1>Blazor Atoms Activity Indicators</h1>
 <p>Live playgrounds: <a href="playground/pulsebar">AtomPulseBar</a> &middot; <a href="playground/pulsescanner">AtomPulseScanner</a> &middot; <a href="playground/tooltip">AtomTooltip</a> &middot; <a href="playground/shapedtooltip">AtomShapedTooltip</a> &middot; <a href="playground/paintedtooltip">AtomPaintedTooltip</a> &middot; <a href="playground/badge">AtomBadge</a> &middot; <a href="playground/chip">AtomChip/Tag/Pill</a> &middot; <a href="playground/rating">AtomRating</a> &middot; <a href="playground/avatar">AtomAvatar</a> &middot; <a href="playground/highlight">AtomHighlight</a> &middot; <a href="playground/highlighter">AtomHighlighter</a> &middot; <a href="playground/clock">AtomClock</a> &middot; <a href="playground/timezone-map">AtomTimeZoneMap</a> &middot; <a href="playground/timezone-picker">AtomTimeZonePicker</a> &middot; <a href="playground/canvas">AtomCanvas</a> &middot; <a href="playground/signaturepad">AtomSignaturePad</a> &middot; <a href="playground/canvas-studio">AtomCanvasStudio</a> &middot; <a href="playground/rangeinput">AtomRangeInput</a> &middot; <a href="playground/crtinput">AtomCrtInput</a> &middot; <a href="playground/crtdisplay">AtomCrtDisplay</a></p>
 
 <div class="page-bg-ctrl">
@@ -199,7 +199,7 @@
 </div>
 
 <h2>Linear indicators</h2>
-<p>Self-contained <code>AtomPulse*</code> components, rendered directly (excluded from the wrapper).</p>
+<p>Self-contained <code>Pulse*</code> components, rendered directly (excluded from the wrapper).</p>
 @foreach (var type in LinearIndicators)
 {
     <div class="linear-card" @key="type">

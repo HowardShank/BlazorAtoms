@@ -1,0 +1,46 @@
+.atom-breadcrumb-bar {
+    --breadcrumb-gap: .35rem;
+    --breadcrumb-text-color: #475569;
+    --breadcrumb-current-color: #0f172a;
+    --breadcrumb-link-color: #2563eb;
+    --breadcrumb-separator-color: #94a3b8;
+    font-size: .875rem;
+}
+
+.atom-breadcrumb-bar__list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--breadcrumb-gap);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.atom-breadcrumb-bar__item {
+    display: flex;
+    align-items: center;
+    gap: var(--breadcrumb-gap);
+}
+
+.atom-breadcrumb-bar__link {
+    color: var(--breadcrumb-link-color);
+    text-decoration: none;
+}
+
+.atom-breadcrumb-bar__link:hover {
+    text-decoration: underline;
+}
+
+.atom-breadcrumb-bar__text {
+    color: var(--breadcrumb-text-color);
+}
+
+.atom-breadcrumb-bar__text[aria-current="page"] {
+    color: var(--breadcrumb-current-color);
+    font-weight: 600;
+}
+
+.atom-breadcrumb-bar__separator {
+    color: var(--breadcrumb-separator-color);
+}

@@ -1,4 +1,5 @@
 using BlazorWebAppSvrDemo.Components;
+using BlazorWebAppSvrDemo.services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +11,9 @@ builder.Services.AddRazorComponents()
 // clipboard image pastes or return larger JS-interop payloads to the server (e.g. the older
 // AtomQrCode PNG path) would otherwise close the circuit with "Server returned an error on close".
 builder.Services.AddSignalR(o => o.MaximumReceiveMessageSize = 5 * 1024 * 1024);
+
+// Register route list service
+builder.Services.AddSingleton<RouteInfoService>();
 
 var app = builder.Build();
 

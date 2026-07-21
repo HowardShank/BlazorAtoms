@@ -1,0 +1,11 @@
+@page "/playground/breadcrumbs/customers/{id:int}"
+@rendermode InteractiveWebAssembly
+@attribute [AtomBreadcrumb("Customer: {name}", ParentRoute = "/playground/breadcrumbs/customers")]
+@using BlazorAtoms.Breadcrumbs
+@using Demos.Shared.Playgrounds.Breadcrumbs
+
+<BreadcrumbCustomerDetailView Id="@Id" />
+
+@code {
+    [Parameter] public int Id { get; set; }
+}

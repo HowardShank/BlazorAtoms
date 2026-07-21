@@ -1,0 +1,27 @@
+@using BlazorAtoms.Breadcrumbs
+
+<h1>Draft #@DraftNumber for customer #@Id</h1>
+<p>
+    This page has no <code>[AtomBreadcrumb]</code> attribute at all. Its breadcrumb entry was
+    appended at runtime via <code>AtomBreadcrumbService.Push</code> — the static chain resolved for
+    the customer page stays as the head, and this is the dynamic tail appended after it.
+</p>
+<p><a href="@($"/playground/breadcrumbs/customers/{Id}/draft/{DraftNumber + 1}")">Next draft &rarr;</a></p>
+<p><a href="@($"/playground/breadcrumbs/customers/{Id}")">&larr; Back to customer (revisit truncates this draft off the trail)</a></p>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    [Parameter] public int DraftNumber { get; set; }
+
+    [CascadingParameter] private AtomBreadcrumbService? Breadcrumbs { get; set; }
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+
+    protected override void OnParametersSet()
+    {
+        Breadcrumbs?.Push(new AtomBreadcrumbEntry
+        {
+            Title = $"Draft #{DraftNumber}",
+            Key = new Uri(NavigationManager.Uri).AbsolutePath,
+        });
+    }
+}
