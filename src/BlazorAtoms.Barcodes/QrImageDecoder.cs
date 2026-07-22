@@ -81,6 +81,36 @@ internal static class QrImageDecoder
         }
     }
 
+    /// <summary>
+    /// Decode a QR straight from a raw RGBA pixel buffer (row-major, 4 bytes/pixel, alpha already
+    /// flattened onto white by the caller). Used by the WebAssembly hot path: the browser decodes
+    /// and downscales the image natively via a &lt;canvas&gt; (instant) and hands the pixels here,
+    /// so ImageSharp — brutally slow in the interpreted WASM runtime — is skipped entirely. ZXing's
+    /// own binarizer handles thresholding, and TryHarder covers scale, so the pure + general passes
+    /// are enough (no ImageSharp-only threshold/upscale strategies).
+    /// </summary>
+    public static Result TryDecodeRgba(byte[] rgba, int width, int height)
+    {
+        if (rgba is null || rgba.Length == 0)
+            return new Result(null, "no pixel bytes supplied");
+        if (width <= 0 || height <= 0 || rgba.Length < width * height * 4)
+            return new Result(null, $"pixel buffer too small for {width}×{height} RGBA");
+
+        try
+        {
+            var luminance = new RGBLuminanceSource(rgba, width, height, RGBLuminanceSource.BitmapFormat.RGBA32);
+            var payload = DecodeLuminance(luminance, pureBarcode: true)
+                          ?? DecodeLuminance(luminance, pureBarcode: false);
+            return payload is not null
+                ? new Result(payload, null)
+                : new Result(null, $"no QR code detected on {width}×{height} RGBA pixels (pure + general).");
+        }
+        catch (Exception ex)
+        {
+            return new Result(null, $"decoder exception ({ex.GetType().Name}: {ex.Message})");
+        }
+    }
+
     private static string? DecodePixels(Image<Rgba32> image, bool pureBarcode)
     {
         var w = image.Width;
@@ -117,6 +147,11 @@ internal static class QrImageDecoder
         });
 
         var luminance = new RGBLuminanceSource(rgb, w, h, RGBLuminanceSource.BitmapFormat.RGB24);
+        return DecodeLuminance(luminance, pureBarcode);
+    }
+
+    private static string? DecodeLuminance(LuminanceSource luminance, bool pureBarcode)
+    {
         var reader = new BarcodeReaderGeneric
         {
             AutoRotate = !pureBarcode,

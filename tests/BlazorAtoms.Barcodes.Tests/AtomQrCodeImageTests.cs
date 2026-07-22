@@ -125,4 +125,57 @@ public class AtomQrCodeImageTests
         cut.WaitForAssertion(() => Assert.True(fired), TimeSpan.FromSeconds(10));
         Assert.Null(seen);
     }
+
+    // ---- RGBA pixel decode (the WASM hot path — QrImageDecoder.TryDecodeRgba) -------------------
+
+    // Build a black/white RGBA buffer from a ZXing-encoded QR — mirrors what the browser <canvas>
+    // getImageData hands back (alpha already flattened to 255). No ImageSharp, no browser needed.
+    private static byte[] EncodeQrToRgba(string payload, out int width, out int height)
+    {
+        var writer = new ZXing.BarcodeWriterGeneric
+        {
+            Format = ZXing.BarcodeFormat.QR_CODE,
+            Options = new ZXing.Common.EncodingOptions { Width = 250, Height = 250, Margin = 4 },
+        };
+        var matrix = writer.Encode(payload);
+        width = matrix.Width;
+        height = matrix.Height;
+        var rgba = new byte[width * height * 4];
+        var o = 0;
+        for (var y = 0; y < height; y++)
+            for (var x = 0; x < width; x++)
+            {
+                var v = matrix[x, y] ? (byte)0 : (byte)255; // black module vs white
+                rgba[o++] = v; rgba[o++] = v; rgba[o++] = v; rgba[o++] = 255;
+            }
+        return rgba;
+    }
+
+    [Fact]
+    public void TryDecodeRgba_round_trips_a_generated_qr()
+    {
+        const string payload = "https://example.com/atom";
+        var rgba = EncodeQrToRgba(payload, out var w, out var h);
+        var result = QrImageDecoder.TryDecodeRgba(rgba, w, h);
+        Assert.Equal(payload, result.Payload);
+        Assert.Null(result.Diagnostic);
+    }
+
+    [Fact]
+    public void TryDecodeRgba_returns_diagnostic_on_blank_pixels()
+    {
+        var rgba = new byte[16 * 16 * 4];
+        Array.Fill(rgba, (byte)255); // all white → no QR
+        var result = QrImageDecoder.TryDecodeRgba(rgba, 16, 16);
+        Assert.Null(result.Payload);
+        Assert.NotNull(result.Diagnostic);
+    }
+
+    [Fact]
+    public void TryDecodeRgba_guards_undersized_buffer()
+    {
+        var result = QrImageDecoder.TryDecodeRgba(new byte[10], 100, 100);
+        Assert.Null(result.Payload);
+        Assert.Contains("too small", result.Diagnostic);
+    }
 }

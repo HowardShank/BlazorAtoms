@@ -135,6 +135,35 @@ public partial class AtomQrCodeImage : AtomComponentBase, IAsyncDisposable
     // we already have them; when only Src is set, JS fetchToBase64 grabs the pixels first.
     private async ValueTask<QrImageDecoder.Result> DecodeCurrentSourceAsync(CancellationToken ct)
     {
+        // WebAssembly hot path: let the browser decode + downscale the image natively via <canvas>
+        // (instant) and hand the raw pixels to ZXing — skipping ImageSharp, which is punishingly
+        // slow in the interpreted WASM runtime (a clipboard paste took ~15s the old way). On Blazor
+        // Server ImageSharp runs JIT-compiled on the server CPU and is already instant, so we keep
+        // the managed path there and avoid shipping several MB of pixels over SignalR.
+        if (OperatingSystem.IsBrowser())
+        {
+            var src = ResolvedSrc;
+            if (!string.IsNullOrEmpty(src))
+            {
+                try
+                {
+                    var module = await LoadModuleAsync(ct);
+                    var packed = await module.InvokeAsync<byte[]>("imageToPixels", ct, src, 1024);
+                    if (packed is { Length: > 8 })
+                    {
+                        var width = System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian(packed.AsSpan(0, 4));
+                        var height = System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian(packed.AsSpan(4, 4));
+                        var rgba = packed.AsSpan(8).ToArray();
+                        return QrImageDecoder.TryDecodeRgba(rgba, width, height);
+                    }
+                    // Unexpected empty payload → fall through to the managed path below.
+                }
+                catch (OperationCanceledException) { throw; }
+                catch (JSException) { /* tainted (cross-origin) canvas / load failure → managed fallback */ }
+                catch (InvalidOperationException) { /* interop unavailable → managed fallback */ }
+            }
+        }
+
         byte[]? bytes = Bytes;
         if (bytes is null || bytes.Length == 0)
         {

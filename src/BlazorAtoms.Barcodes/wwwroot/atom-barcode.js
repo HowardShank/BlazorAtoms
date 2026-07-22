@@ -185,6 +185,52 @@ export async function fetchToBase64(url) {
     return btoa(bin);
 }
 
+// ---- native pixel decode (WASM hot path) -------------------------------------------
+
+// Decode `src` (URL or data URI) with the browser's native image pipeline, flatten transparency
+// onto white, downscale so the longest side <= maxDim, and return the raw RGBA pixels packed as
+// [width:int32 LE][height:int32 LE][RGBA bytes...] in a single Uint8Array (one efficient byte[]
+// marshal to .NET). Lets Blazor WebAssembly skip ImageSharp — which is punishingly slow in the
+// interpreted WASM runtime — and hand pixels straight to ZXing. Throws (SecurityError) on a
+// cross-origin image without CORS headers; the C# caller falls back to the managed decode path.
+export async function imageToPixels(src, maxDim) {
+    if (!src) throw new Error('imageToPixels: no source.');
+    const img = new Image();
+    img.crossOrigin = 'anonymous'; // permit getImageData for CORS-enabled remote images
+    const loaded = new Promise((res, rej) => {
+        img.onload = () => res();
+        img.onerror = () => rej(new Error('imageToPixels: image failed to load.'));
+    });
+    img.src = src;
+    if (typeof img.decode === 'function') { try { await img.decode(); } catch { await loaded; } }
+    else await loaded;
+
+    const w = img.naturalWidth || img.width;
+    const h = img.naturalHeight || img.height;
+    if (!w || !h) throw new Error('imageToPixels: image has zero size.');
+
+    const cap = maxDim && maxDim > 0 ? maxDim : 1024;
+    const scale = Math.min(1, cap / Math.max(w, h)); // never upscale
+    const tw = Math.max(1, Math.round(w * scale));
+    const th = Math.max(1, Math.round(h * scale));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = tw;
+    canvas.height = th;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.fillStyle = '#ffffff'; // flatten alpha → white (a QR with transparency reads as solid black otherwise)
+    ctx.fillRect(0, 0, tw, th);
+    ctx.drawImage(img, 0, 0, tw, th);
+    const data = ctx.getImageData(0, 0, tw, th).data; // Uint8ClampedArray, RGBA row-major
+
+    const out = new Uint8Array(8 + data.length);
+    const dv = new DataView(out.buffer);
+    dv.setInt32(0, tw, true);
+    dv.setInt32(4, th, true);
+    out.set(data, 8);
+    return out;
+}
+
 // ---- clipboard image read ----------------------------------------------------------
 
 async function blobToBase64(blob) {
