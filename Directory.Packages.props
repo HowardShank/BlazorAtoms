@@ -27,10 +27,10 @@
 
   <!-- Test dependencies -->
   <ItemGroup>
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
     <PackageVersion Include="bunit" Version="2.7.2" />
     <PackageVersion Include="xunit" Version="2.9.3" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
     <!-- Transitive via bunit, which only floors it at 1.4.0 (the version NU1902 flagged:
          GHSA-pgww-w46g-26qg, mXSS via MathML annotation-xml, fixed in 1.5.0). Pin up to latest stable. -->
     <PackageVersion Include="AngleSharp" Version="1.5.2" />
