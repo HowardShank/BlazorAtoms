@@ -5,6 +5,10 @@
 Each `BlazorAtoms.*` package is versioned independently. Security fixes are made against the
 latest published version of each package; older versions are not patched.
 
+Security fixes, if any, are provided at the discretion of the maintainers.
+
+This policy does not create any obligation to provide support, maintenance services, SLAs, custom fixes, hosted services, managed services, operational monitoring, professional services, consulting, or certification of customer products.
+
 ## Reporting a Vulnerability
 
 Please do **not** open a public GitHub issue for security vulnerabilities.
