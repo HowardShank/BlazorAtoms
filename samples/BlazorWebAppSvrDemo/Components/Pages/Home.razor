@@ -1,42 +1,12 @@
 @page "/"
 @using BlazorAtoms.Breadcrumbs
+@using Demos.Shared.Playgrounds
+
 @attribute [AtomBreadcrumb("Home", IsRoot = true, Tooltip = "Go to the home page")]
 
 <PageTitle>Blazor Atom - Home</PageTitle>
 
 <h1>Blazor Atoms - SSR demo</h1>
 
-<p>
-    <strong>Blazor Atoms</strong> is a family of small, self-contained Blazor component
-    libraries. Each library is one "atom" &mdash; add just the one you need and it works.
-</p>
+<HomeCommon />
 
-<h2>The idea</h2>
-<p>
-    Lightweight, drop-in, no lock-in. Every library is a standalone NuGet package with
-    ~zero third-party dependencies, so you never inherit a big framework just to use a
-    spinner or a badge.
-</p>
-<ul>
-    <li><strong>No umbrella package</strong> &mdash; take one component, one library, or several.</li>
-    <li><strong>No setup</strong> &mdash; no global theme provider, no <code>builder.Services.Add…()</code>, no <code>&lt;script&gt;</code> tag to wire up.</li>
-    <li><strong>Any render mode</strong> &mdash; works unchanged in Server, WebAssembly, and Auto.</li>
-    <li><strong>Plays nice</strong> &mdash; intermixes freely with any app, including MudBlazor, Radzen, Fluent, or Telerik.</li>
-</ul>
-
-<h2>How it's built</h2>
-<p>
-    Each component is plain Blazor plus <strong>inline SVG</strong> and CSS &mdash; crisp at
-    any zoom, themeable through CSS custom properties, and animatable in pure CSS. Components
-    read their inputs from <code>[Parameter]</code>s and their colors from CSS variables.
-    JavaScript is used only where a browser primitive truly needs it, and always stays
-    invisible to you.
-</p>
-
-<h2>What's here</h2>
-<p>Explore the demos in the navigation menu:</p>
-<ul>
-    <li><strong>Activity Indicators</strong> &mdash; animated "working…" loaders (gears, DNA, pulse bars) for tasks with no known progress.</li>
-    <li><strong>Barcodes</strong> &mdash; 1D linear codes (Code128, EAN-13, Code39…) generated from a value, rendered as SVG.</li>
-    <li><strong>QR Code</strong> &mdash; 2D matrix codes, produced by a dependency-free C# encoder.</li>
-</ul>

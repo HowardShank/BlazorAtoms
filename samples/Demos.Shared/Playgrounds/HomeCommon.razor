@@ -1,0 +1,132 @@
+
+<p>
+    <strong>Blazor Atoms</strong> is a family of small, self-contained Blazor component
+    libraries &mdash; usable in <strong>Server</strong>, <strong>WebAssembly</strong>, or
+    <strong>Auto</strong> render mode &mdash; each shipped as its own standalone NuGet package
+    with ~zero third-party dependencies. Each library is one "atom": add just the one you need
+    and it works.
+</p>
+
+<h2>Goals</h2>
+<p>
+    <strong>Lightweight, drop-in, no lock-in.</strong> Take one component, one library, or
+    several, and never inherit a big framework just to use a spinner or a badge.
+</p>
+<ul>
+    <li><strong>No umbrella package</strong> &mdash; no shared runtime dependency tying the libraries together.</li>
+    <li><strong>Requires little or no setup</strong> &mdash; no global theme provider, only when necessary <code>builder.Services.Add…()</code> registration, no <code>&lt;script&gt;</code> tag to wire up by hand (auto import of JS).</li>
+    <li><strong>Any render mode</strong> &mdash; the same markup works unchanged in Server, WebAssembly, and Auto unless otherwisse noted in the component library.</li>
+    <li><strong>Plays nice</strong> &mdash; intermixes freely with any application, greenfield or legacy, and alongside heavier component suites (MudBlazor, Radzen<sup>&reg;</sup>, Fluent UI<sup>&reg;</sup>, Telerik<sup>&reg;</sup>) without conflict.<sup>*</sup></li>
+</ul>
+<p><small><sup>*</sup> MudBlazor, Radzen, Fluent UI, and Telerik may be/are trademarks of their respective owners. Mentioned only for compatibility context; no affiliation or endorsement is implied.</small></p>
+
+<h2>Design Philosophy</h2>
+<p>
+    The goals above are the <strong>ideal</strong> every library is measured against, not a hard
+    rule enforced at the expense of the component actually working. Most libraries hit the ideal
+    fully &mdash; plain Blazor plus inline SVG and CSS, styled via CSS custom properties, no JS, no
+    DI. Where a component's job genuinely can't be done that way, the library breaks the pattern
+    on purpose, in the smallest way that satisfies the requirement, and says so in its own README.
+</p>
+<ul>
+    <li>
+        <strong>Framework-only by default</strong> &mdash; most libraries need nothing beyond
+        <code>Microsoft.AspNetCore.Components.Web</code>. A library only reaches further when its
+        actual job requires it &mdash; e.g. a barcode/QR encoder is self-contained C#, not a
+        third-party codec, by design, not because the rule demands it.
+    </li>
+    <li>
+        <strong>JavaScript, when a browser primitive truly requires it</strong> &mdash; most
+        components are 100% JS-free. Some genuinely can't be: smart tooltip/overlay positioning,
+        clipboard access, resize/intersection observers, cursor-follow effects, a 60fps
+        <code>&lt;canvas&gt;</code> drawing surface. In those cases the library ships its own small
+        JS module and self-imports it on first use &mdash; still no <code>&lt;script&gt;</code> tag
+        to add by hand, but real JS is running.
+    </li>
+    <li>
+        <strong>DI/service registration, only where state must be shared</strong> &mdash; most
+        components take everything through <code>[Parameter]</code>s, no registration needed. A
+        library that coordinates cross-page state (e.g. a breadcrumb trail that needs a page to
+        push a resolved title once it loads) cascades a small service instead of forcing global
+        <code>services.Add…()</code> wiring &mdash; less setup than a typical DI dependency, but not
+        zero.
+    </li>
+    <li>
+        <strong>Raster only when vector genuinely can't do the job</strong> &mdash; charts, gauges,
+        sparklines, rating icons, QR/barcodes, and skeleton shapes are all inline SVG. The one
+        deliberate exception is <code>BlazorAtoms.Canvas</code>, which owns real
+        <code>&lt;canvas&gt;</code> because real-time freehand ink and PNG export are things SVG
+        can't do at acceptable performance.
+    </li>
+    <li>
+        <strong>Culture-safe, trimming/AOT-safe, everywhere</strong> &mdash; invariant number
+        formatting in generated markup, and every library, JS-free or not, is verified to work
+        under WASM trimming and AOT.
+    </li>
+</ul>
+<p>
+    <small>
+        Bottom line: the philosophy is a strong default, not a straitjacket. Check the library's
+        own README for the specifics of what it needs and why &mdash; a component that needs JS or
+        DI still keeps everything else about the philosophy (no umbrella package, no forced global
+        setup beyond what its job requires, drop-in usage).
+    </small>
+</p>
+
+<h2>Frameworks</h2>
+<ul>
+    <li>Target frameworks: </li>
+    <li>>.Net compatibility: Net 10.0</li>
+</ul>
+
+<h2>Dependencies</h2>
+
+
+<h2>Libraries shipped in this demo</h2>
+<table class="table">
+    <thead>
+        <tr><th>Package</th><th>What it is</th></tr>
+    </thead>
+    <tbody>
+        <tr><td><code>BlazorAtoms.ActivityIndicators</code></td><td>Animated "working…" loaders &mdash; 7 round SVG indicators + 2 linear sliding bars. Pure CSS, no JS.</td></tr>
+        <tr><td><code>BlazorAtoms.Avatars</code></td><td>Person/entity avatars &mdash; image or silhouette, initials fallback, overlapping group stack.</td></tr>
+        <tr><td><code>BlazorAtoms.Badges</code></td><td><code>AtomBadge</code> (count/status badge, many shapes, optional motion) plus the chip family: <code>AtomChip</code> / <code>AtomTag</code> / <code>AtomPill</code>.</td></tr>
+        <tr><td><code>BlazorAtoms.Barcodes</code></td><td><code>AtomBarcode</code> (1D) and <code>AtomQrCode</code> (2D) &mdash; generation only, our own C# encoder to SVG, no third-party codec.</td></tr>
+        <tr><td><code>BlazorAtoms.Breadcrumbs</code></td><td>Breadcrumb trails combining static <code>[AtomBreadcrumb]</code> route metadata (correct on a hard refresh) with a dynamic, URL-derived fallback you can replace once real data (e.g. an entity name) loads.</td></tr>
+        <tr><td><code>BlazorAtoms.Canvas</code></td><td><code>AtomCanvas</code> (declarative shape model over <code>&lt;canvas&gt;</code>), <code>AtomSignaturePad</code>, and <code>AtomCanvasStudio</code> (extensible drawing workbench).</td></tr>
+        <tr><td><code>BlazorAtoms.Clocks</code></td><td>Live clocks (digital/analog), multi-zone strips, a world timezone map, and a searchable timezone picker.</td></tr>
+        <tr><td><code>BlazorAtoms.Data</code></td><td><code>AtomDataHasher</code> &mdash; live CRC-32/64, MD5, SHA-256/512 digest panel over a text input; CRC engines implemented in-library, no extra hashing dependency.</td></tr>
+        <tr><td><code>BlazorAtoms.DragDrop</code></td><td><code>AtomDropzone&lt;TItem&gt;</code> &mdash; generic drag-and-drop list using native HTML5 DnD (no JS), single-list reorder plus cross-zone transfer.</td></tr>
+        <tr><td><code>BlazorAtoms.Highlights</code></td><td>Keyword/text highlighters: zero-JS for plain text or a trusted HTML string, or a JS-assisted one that works through arbitrarily nested child components.</td></tr>
+        <tr><td><code>BlazorAtoms.Inputs</code></td><td><code>AtomRangeInput</code>, <code>AtomCrtInput</code>, and <code>AtomCrtDisplay</code> &mdash; labeled form controls with <code>EditContext</code>/<code>DataAnnotations</code>-aware validation and a <code>Disabled</code> vs <code>ReadOnly</code> distinction.</td></tr>
+        <tr><td><code>BlazorAtoms.Navigation</code></td><td><code>AtomScrollTo</code> &mdash; scroll-to-top/bottom/anchor button with auto-hide-until-scrolled.</td></tr>
+        <tr><td><code>BlazorAtoms.Ratings</code></td><td><code>AtomRating</code> &mdash; one component for both a read-only fractional-fill display and an interactive star/heart/etc. picker.</td></tr>
+        <tr><td><code>BlazorAtoms.Screensavers</code></td><td><code>AtomScreensaverRain</code> &mdash; Matrix-style falling code rain effect.</td></tr>
+        <tr><td><code>BlazorAtoms.Tooltips</code></td><td>Three tooltip components &mdash; pure-CSS bubble, SVG-outlined shape, and SVG gradient-painted shape.</td></tr>
+    </tbody>
+</table>
+<p>
+    Each library's own <code>README.md</code> in the repo is its usage documentation &mdash; install
+    steps, examples, and parameter reference. The full roadmap, including libraries not yet built
+    and the naming/JS/graphics policies above, lives in <code>src/LIBRARY-CATALOG.md</code>.
+</p>
+
+<h2>Install</h2>
+<p>Each library is an independent package; take only what you need.</p>
+<pre><code>&lt;PackageReference Include="BlazorAtoms.Badges" Version="0.1.0" /&gt;</code></pre>
+<p>Then add the namespace where you use it:</p>
+<pre><code>@@using BlazorAtoms.Badges</code></pre>
+<p>
+    Most libraries are pure CSS/SVG with nothing else to configure. The few that ship JavaScript
+    self-import their own module on first use.
+</p>
+
+<h2>Demos</h2>
+<p>
+    This page is shared across all three demo hosts in the repo &mdash;
+    <code>BlazorWebAppSvrDemo</code> (Server), <code>BlazorWebAppWasmDemo</code> (WebAssembly), and
+    <code>BlazorWebAppAutoDemo</code> (Auto) &mdash; so every playground below behaves identically
+    regardless of hosting model. Explore them from the navigation menu, or jump straight to the
+    <a href="about">About page</a> for a categorized list of every playground and the library it
+    demonstrates.
+</p>

@@ -20,11 +20,16 @@ each shipped as its own standalone NuGet package with ~0 third-party dependencie
 | [`BlazorAtoms.Avatars`](src/BlazorAtoms.Avatars/README.md) | Person/entity avatars — image or silhouette, initials fallback, overlapping group stack. |
 | [`BlazorAtoms.Badges`](src/BlazorAtoms.Badges/README.md) | `AtomBadge` (count/status badge, many shapes, optional motion) + the chip family: `AtomChip` / `AtomTag` / `AtomPill`. |
 | [`BlazorAtoms.Barcodes`](src/BlazorAtoms.Barcodes/README.md) | `AtomBarcode` (1D) and `AtomQrCode` (2D) — generation only, our own C# encoder → SVG, no third-party codec. |
+| [`BlazorAtoms.Breadcrumbs`](src/BlazorAtoms.Breadcrumbs/README.md) | Breadcrumb trails combining static `[AtomBreadcrumb]` route metadata (correct on a hard refresh) with a dynamic, URL-derived fallback you can replace once real data (e.g. an entity name) loads. |
 | [`BlazorAtoms.Canvas`](src/BlazorAtoms.Canvas/README.md) | `AtomCanvas` (declarative shape model over `<canvas>`), `AtomSignaturePad`, and `AtomCanvasStudio` (extensible drawing workbench). |
 | [`BlazorAtoms.Clocks`](src/BlazorAtoms.Clocks/README.md) | Live clocks (digital/analog), multi-zone strips, a world timezone map, and a searchable timezone picker. |
+| [`BlazorAtoms.Data`](src/BlazorAtoms.Data/README.md) | `AtomDataHasher` — live CRC-32/64, MD5, SHA-256/512 digest panel over a text input; CRC engines implemented in-library, no extra hashing dependency. |
+| [`BlazorAtoms.DragDrop`](src/BlazorAtoms.DragDrop/README.md) | `AtomDropzone<TItem>` — generic drag-and-drop list using native HTML5 DnD (no JS), single-list reorder plus cross-zone transfer. |
 | [`BlazorAtoms.Highlights`](src/BlazorAtoms.Highlights/README.md) | Keyword/text highlighters: zero-JS for plain text or a trusted HTML string, or a JS-assisted one that works through arbitrarily nested child components. |
 | [`BlazorAtoms.Inputs`](src/BlazorAtoms.Inputs/README.md) | `AtomRangeInput` — labeled slider/range control with min/max/step, an `EditContext`/`DataAnnotations`-aware error state, and a `Disabled` (renders nothing) vs `ReadOnly` (greyed out) distinction. |
+| [`BlazorAtoms.Navigation`](src/BlazorAtoms.Navigation/README.md) | `AtomScrollTo` — scroll-to-top/bottom/anchor button with auto-hide-until-scrolled. |
 | [`BlazorAtoms.Ratings`](src/BlazorAtoms.Ratings/README.md) | `AtomRating` — one component for both a read-only fractional-fill display and an interactive star/heart/etc. picker. |
+| `BlazorAtoms.Screensavers` | `AtomScreensaverRain` — Matrix-style falling code rain effect. |
 | [`BlazorAtoms.Tooltips`](src/BlazorAtoms.Tooltips/README.md) | Three tooltip components — pure-CSS bubble, SVG-outlined shape, and SVG gradient-painted shape. |
 
 Each package's own `README.md` (linked above) is its usage documentation — install steps, examples,
