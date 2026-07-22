@@ -12,9 +12,9 @@ public class QrStyleRenderTests
     [Fact]
     public void Default_still_emits_single_path_backwards_compatible()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
-        var cut = ctx.RenderComponent<AtomQrCode>(p => p.Add(x => x.Value, "hi"));
+        var cut = ctx.Render<AtomQrCode>(p => p.Add(x => x.Value, "hi"));
         var svg = cut.Instance.GetSvg();
         Assert.Contains("<path", svg);
         Assert.Contains("fill=\"#000000\"", svg);
@@ -31,9 +31,9 @@ public class QrStyleRenderTests
     [InlineData(ModuleShape.Blob)]
     public void ModuleShape_produces_svg(ModuleShape shape)
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
-        var cut = ctx.RenderComponent<AtomQrCode>(p => p
+        var cut = ctx.Render<AtomQrCode>(p => p
             .Add(x => x.Value, "hello")
             .Add(x => x.ModuleShape, shape));
         var svg = cut.Instance.GetSvg();
@@ -47,9 +47,9 @@ public class QrStyleRenderTests
     [InlineData(EyeFrame.Rounded)]
     public void EyeFrame_renders(EyeFrame frame)
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
-        var cut = ctx.RenderComponent<AtomQrCode>(p => p
+        var cut = ctx.Render<AtomQrCode>(p => p
             .Add(x => x.Value, "hi")
             .Add(x => x.EyeFrame, frame));
         Assert.StartsWith("<svg", cut.Instance.GetSvg());
@@ -62,9 +62,9 @@ public class QrStyleRenderTests
     [InlineData(EyePupil.Rhombus)]
     public void EyePupil_renders(EyePupil pupil)
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
-        var cut = ctx.RenderComponent<AtomQrCode>(p => p
+        var cut = ctx.Render<AtomQrCode>(p => p
             .Add(x => x.Value, "hi")
             .Add(x => x.EyePupil, pupil));
         Assert.StartsWith("<svg", cut.Instance.GetSvg());
@@ -73,9 +73,9 @@ public class QrStyleRenderTests
     [Fact]
     public void EyeColor_overrides_foreground_fill()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
-        var cut = ctx.RenderComponent<AtomQrCode>(p => p
+        var cut = ctx.Render<AtomQrCode>(p => p
             .Add(x => x.Value, "hi")
             .Add(x => x.EyeColor, "#ff0000"));
         Assert.Contains("#ff0000", cut.Instance.GetSvg());
@@ -84,9 +84,9 @@ public class QrStyleRenderTests
     [Fact]
     public void LinearGradient_emits_defs()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
-        var cut = ctx.RenderComponent<AtomQrCode>(p => p
+        var cut = ctx.Render<AtomQrCode>(p => p
             .Add(x => x.Value, "hi")
             .Add(x => x.ForegroundStyle, FillStyle.LinearGradient)
             .Add(x => x.ForegroundGradientFrom, "#054080")
@@ -101,9 +101,9 @@ public class QrStyleRenderTests
     [Fact]
     public void RadialGradient_emits_defs()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
-        var cut = ctx.RenderComponent<AtomQrCode>(p => p
+        var cut = ctx.Render<AtomQrCode>(p => p
             .Add(x => x.Value, "hi")
             .Add(x => x.ForegroundStyle, FillStyle.RadialGradient)
             .Add(x => x.ForegroundGradientFrom, "#000000")
@@ -114,9 +114,9 @@ public class QrStyleRenderTests
     [Fact]
     public void Logo_emits_image_element()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
-        var cut = ctx.RenderComponent<AtomQrCode>(p => p
+        var cut = ctx.Render<AtomQrCode>(p => p
             .Add(x => x.Value, "hi")
             .Add(x => x.EcLevel, QrErrorCorrection.H)
             .Add(x => x.LogoSrc, "https://example.com/logo.png"));
@@ -128,10 +128,10 @@ public class QrStyleRenderTests
     [Fact]
     public void LogoBytes_serializes_data_uri()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         var bytes = new byte[] { 0x89, 0x50, 0x4E, 0x47 };
-        var cut = ctx.RenderComponent<AtomQrCode>(p => p
+        var cut = ctx.Render<AtomQrCode>(p => p
             .Add(x => x.Value, "hi")
             .Add(x => x.LogoBytes, bytes));
         Assert.Contains("data:image/png;base64,iVBOR", cut.Instance.GetSvg());

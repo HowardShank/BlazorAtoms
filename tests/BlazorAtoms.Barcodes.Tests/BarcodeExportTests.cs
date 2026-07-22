@@ -16,10 +16,10 @@ public class BarcodeExportTests
     [Fact]
     public void GetSvg_returns_current_markup()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
 
-        var cut = ctx.RenderComponent<AtomBarcode>(p => p.Add(x => x.Value, "HELLO"));
+        var cut = ctx.Render<AtomBarcode>(p => p.Add(x => x.Value, "HELLO"));
 
         var svg = cut.Instance.GetSvg();
         Assert.StartsWith("<svg", svg);
@@ -29,11 +29,11 @@ public class BarcodeExportTests
     [Fact]
     public async Task CopyAsync_Svg_calls_copyText_with_svg_string()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         var module = ctx.JSInterop.SetupModule(ModulePath);
         module.SetupVoid("copyText", _ => true).SetVoidResult();
 
-        var cut = ctx.RenderComponent<AtomBarcode>(p => p.Add(x => x.Value, "HELLO"));
+        var cut = ctx.Render<AtomBarcode>(p => p.Add(x => x.Value, "HELLO"));
 
         await cut.Instance.CopyAsync(BarcodeExportFormat.Svg);
 
@@ -47,11 +47,11 @@ public class BarcodeExportTests
     {
         // PNG copy is a single JS call — SVG in, clipboard write happens entirely browser-side to
         // avoid crossing the SignalR message-size limit with the PNG payload.
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         var module = ctx.JSInterop.SetupModule(ModulePath);
         module.SetupVoid("svgToPngClipboard", _ => true).SetVoidResult();
 
-        var cut = ctx.RenderComponent<AtomBarcode>(p => p.Add(x => x.Value, "HELLO"));
+        var cut = ctx.Render<AtomBarcode>(p => p.Add(x => x.Value, "HELLO"));
 
         await cut.Instance.CopyAsync(BarcodeExportFormat.Png);
 
@@ -62,11 +62,11 @@ public class BarcodeExportTests
     [Fact]
     public async Task SaveAsync_Svg_calls_saveText_with_filename_and_svg_mime()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         var module = ctx.JSInterop.SetupModule(ModulePath);
         module.SetupVoid("saveText", _ => true).SetVoidResult();
 
-        var cut = ctx.RenderComponent<AtomBarcode>(p => p.Add(x => x.Value, "HELLO"));
+        var cut = ctx.Render<AtomBarcode>(p => p.Add(x => x.Value, "HELLO"));
 
         await cut.Instance.SaveAsync(BarcodeExportFormat.Svg, "barcode.svg");
 
@@ -79,11 +79,11 @@ public class BarcodeExportTests
     [Fact]
     public async Task SaveAsync_Png_calls_svgToPngSave_single_shot()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         var module = ctx.JSInterop.SetupModule(ModulePath);
         module.SetupVoid("svgToPngSave", _ => true).SetVoidResult();
 
-        var cut = ctx.RenderComponent<AtomBarcode>(p => p.Add(x => x.Value, "HELLO"));
+        var cut = ctx.Render<AtomBarcode>(p => p.Add(x => x.Value, "HELLO"));
 
         await cut.Instance.SaveAsync(BarcodeExportFormat.Png, "barcode.png");
 
@@ -95,11 +95,11 @@ public class BarcodeExportTests
     [Fact]
     public async Task PngPixelWidth_flows_to_JS_as_second_arg_of_svgToPngSave()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         var module = ctx.JSInterop.SetupModule(ModulePath);
         module.SetupVoid("svgToPngSave", _ => true).SetVoidResult();
 
-        var cut = ctx.RenderComponent<AtomBarcode>(p => p
+        var cut = ctx.Render<AtomBarcode>(p => p
             .Add(x => x.Value, "HELLO")
             .Add(x => x.PngPixelWidth, 800));
 
@@ -112,11 +112,11 @@ public class BarcodeExportTests
     [Fact]
     public async Task CopyAsync_wraps_JSException_as_BarcodeExportException()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         var module = ctx.JSInterop.SetupModule(ModulePath);
         module.SetupVoid("copyText", _ => true).SetException(new JSException("Clipboard denied"));
 
-        var cut = ctx.RenderComponent<AtomBarcode>(p => p.Add(x => x.Value, "HELLO"));
+        var cut = ctx.Render<AtomBarcode>(p => p.Add(x => x.Value, "HELLO"));
 
         var ex = await Assert.ThrowsAsync<BarcodeExportException>(
             async () => await cut.Instance.CopyAsync(BarcodeExportFormat.Svg));
@@ -126,9 +126,9 @@ public class BarcodeExportTests
     [Fact]
     public async Task SaveAsync_empty_filename_throws_ArgumentException()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
-        var cut = ctx.RenderComponent<AtomBarcode>(p => p.Add(x => x.Value, "HELLO"));
+        var cut = ctx.Render<AtomBarcode>(p => p.Add(x => x.Value, "HELLO"));
 
         await Assert.ThrowsAsync<ArgumentException>(
             async () => await cut.Instance.SaveAsync(BarcodeExportFormat.Svg, "   "));

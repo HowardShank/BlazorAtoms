@@ -3,14 +3,14 @@ using System.Linq;
 
 namespace BlazorAtoms.Clocks.Tests;
 
-public class AtomAnalogClockTests : TestContext
+public class AtomAnalogClockTests : BunitContext
 {
     // Live=false so no PeriodicTimer spins up during the assertion.
 
     [Fact]
     public void Renders_svg_face_with_dial_and_cap()
     {
-        var cut = RenderComponent<AtomAnalogClock>(p => p
+        var cut = Render<AtomAnalogClock>(p => p
             .Add(c => c.Kind, ClockKind.Utc)
             .Add(c => c.Live, false));
 
@@ -23,7 +23,7 @@ public class AtomAnalogClockTests : TestContext
     [Fact]
     public void Twelve_hour_ticks_always_present()
     {
-        var cut = RenderComponent<AtomAnalogClock>(p => p
+        var cut = Render<AtomAnalogClock>(p => p
             .Add(c => c.Kind, ClockKind.Utc)
             .Add(c => c.ShowMinuteTicks, false)
             .Add(c => c.Live, false));
@@ -35,7 +35,7 @@ public class AtomAnalogClockTests : TestContext
     [Fact]
     public void Minute_ticks_add_up_to_sixty()
     {
-        var cut = RenderComponent<AtomAnalogClock>(p => p
+        var cut = Render<AtomAnalogClock>(p => p
             .Add(c => c.Kind, ClockKind.Utc)
             .Add(c => c.ShowMinuteTicks, true)
             .Add(c => c.Live, false));
@@ -48,11 +48,11 @@ public class AtomAnalogClockTests : TestContext
     [Fact]
     public void Second_hand_toggles_with_ShowSeconds()
     {
-        var on = RenderComponent<AtomAnalogClock>(p => p
+        var on = Render<AtomAnalogClock>(p => p
             .Add(c => c.Kind, ClockKind.Utc).Add(c => c.Live, false));
         Assert.Single(on.FindAll("line.aclk-hand-sec"));
 
-        var off = RenderComponent<AtomAnalogClock>(p => p
+        var off = Render<AtomAnalogClock>(p => p
             .Add(c => c.Kind, ClockKind.Utc).Add(c => c.ShowSeconds, false).Add(c => c.Live, false));
         Assert.Empty(off.FindAll("line.aclk-hand-sec"));
     }
@@ -62,7 +62,7 @@ public class AtomAnalogClockTests : TestContext
     {
         // Custom +00 zone so the rendered instant equals UtcNow; assert hand angles match.
         var now = DateTimeOffset.UtcNow;
-        var cut = RenderComponent<AtomAnalogClock>(p => p
+        var cut = Render<AtomAnalogClock>(p => p
             .Add(c => c.Kind, ClockKind.Utc)
             .Add(c => c.Live, false));
 
@@ -78,11 +78,11 @@ public class AtomAnalogClockTests : TestContext
     [Fact]
     public void Numerals_render_only_when_enabled()
     {
-        var without = RenderComponent<AtomAnalogClock>(p => p
+        var without = Render<AtomAnalogClock>(p => p
             .Add(c => c.Kind, ClockKind.Utc).Add(c => c.Live, false));
         Assert.Empty(without.FindAll("svg text"));
 
-        var with = RenderComponent<AtomAnalogClock>(p => p
+        var with = Render<AtomAnalogClock>(p => p
             .Add(c => c.Kind, ClockKind.Utc).Add(c => c.ShowNumerals, true).Add(c => c.Live, false));
         var numerals = with.FindAll("svg text");
         Assert.Equal(12, numerals.Count);
@@ -92,7 +92,7 @@ public class AtomAnalogClockTests : TestContext
     [Fact]
     public void Size_and_color_tokens_emitted()
     {
-        var cut = RenderComponent<AtomAnalogClock>(p => p
+        var cut = Render<AtomAnalogClock>(p => p
             .Add(c => c.Kind, ClockKind.Utc)
             .Add(c => c.Size, 200)
             .Add(c => c.FaceColor, "#111")
@@ -110,7 +110,7 @@ public class AtomAnalogClockTests : TestContext
     [Fact]
     public void Label_renders_as_figcaption()
     {
-        var cut = RenderComponent<AtomAnalogClock>(p => p
+        var cut = Render<AtomAnalogClock>(p => p
             .Add(c => c.Kind, ClockKind.Utc)
             .Add(c => c.Label, "UTC")
             .Add(c => c.Live, false));
@@ -122,7 +122,7 @@ public class AtomAnalogClockTests : TestContext
     public void Explicit_timezone_overrides_kind()
     {
         var plus5 = TimeZoneInfo.CreateCustomTimeZone("t+5", TimeSpan.FromHours(5), "t+5", "t+5");
-        var cut = RenderComponent<AtomAnalogClock>(p => p
+        var cut = Render<AtomAnalogClock>(p => p
             .Add(c => c.Kind, ClockKind.Utc)
             .Add(c => c.TimeZone, plus5)
             .Add(c => c.Live, false));
@@ -135,7 +135,7 @@ public class AtomAnalogClockTests : TestContext
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
 
-        var cut = RenderComponent<AtomAnalogClock>(p => p
+        var cut = Render<AtomAnalogClock>(p => p
             .Add(c => c.Kind, ClockKind.Browser)
             .Add(c => c.Live, false));
 

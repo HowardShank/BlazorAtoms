@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Components.Forms;
 
 namespace BlazorAtoms.Inputs.Tests;
 
-public class AtomRangeInputTests : TestContext
+public class AtomRangeInputTests : BunitContext
 {
     private sealed class TestModel
     {
@@ -16,7 +16,7 @@ public class AtomRangeInputTests : TestContext
     [Fact]
     public void Renders_min_max_step_value_on_native_input()
     {
-        var cut = RenderComponent<AtomRangeInput<double>>(p => p
+        var cut = Render<AtomRangeInput<double>>(p => p
             .Add(c => c.Value, 2.5)
             .Add(c => c.Min, 0.0)
             .Add(c => c.Max, 10.0)
@@ -33,7 +33,7 @@ public class AtomRangeInputTests : TestContext
     public void Value_updates_and_ValueChanged_invoked_on_input()
     {
         int? changedTo = null;
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.Value, 5)
             .Add(c => c.Min, 0)
             .Add(c => c.Max, 10)
@@ -50,7 +50,7 @@ public class AtomRangeInputTests : TestContext
     {
         // ex1 shape: only @bind-Value, no Min/Max/Step — must not throw (regression guard for
         // Min/Max both defaulting to 0 and tripping the Min<Max guard).
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p.Add(c => c.Value, 5));
+        var cut = Render<AtomRangeInput<int>>(p => p.Add(c => c.Value, 5));
 
         var input = cut.Find("input");
         Assert.Equal("0", input.GetAttribute("min"));
@@ -61,7 +61,7 @@ public class AtomRangeInputTests : TestContext
     [Fact]
     public void Supports_negative_min_and_value()
     {
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.Value, -5)
             .Add(c => c.Min, -10)
             .Add(c => c.Max, 10));
@@ -75,7 +75,7 @@ public class AtomRangeInputTests : TestContext
     public void Supports_fractional_step_and_value_with_double()
     {
         double changedTo = double.NaN;
-        var cut = RenderComponent<AtomRangeInput<double>>(p => p
+        var cut = Render<AtomRangeInput<double>>(p => p
             .Add(c => c.Value, 1.5)
             .Add(c => c.Min, 0.0)
             .Add(c => c.Max, 5.0)
@@ -92,7 +92,7 @@ public class AtomRangeInputTests : TestContext
     [Fact]
     public void Supports_decimal_tvalue()
     {
-        var cut = RenderComponent<AtomRangeInput<decimal>>(p => p
+        var cut = Render<AtomRangeInput<decimal>>(p => p
             .Add(c => c.Value, 2.5m)
             .Add(c => c.Min, 0m)
             .Add(c => c.Max, 10m)
@@ -107,7 +107,7 @@ public class AtomRangeInputTests : TestContext
     public void Disabled_greys_out_and_blocks_input()
     {
         int? changedTo = null;
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.Disabled, true)
             .Add(c => c.Value, 5)
             .Add(c => c.Min, 0)
@@ -125,7 +125,7 @@ public class AtomRangeInputTests : TestContext
     [Fact]
     public void ReadOnly_equates_to_disabled()
     {
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.ReadOnly, true)
             .Add(c => c.Value, 5)
             .Add(c => c.Min, 0)
@@ -138,7 +138,7 @@ public class AtomRangeInputTests : TestContext
     [Fact]
     public void Visible_false_hides_via_display_none_but_stays_in_dom()
     {
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.Visible, false)
             .Add(c => c.Min, 0)
             .Add(c => c.Max, 10));
@@ -151,7 +151,7 @@ public class AtomRangeInputTests : TestContext
     [Fact]
     public void Visible_true_by_default_has_no_display_none()
     {
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.Min, 0)
             .Add(c => c.Max, 10));
 
@@ -167,7 +167,7 @@ public class AtomRangeInputTests : TestContext
     [InlineData(HandleShape.Bolt, "bolt")]
     public void HandleShape_maps_to_data_attribute(HandleShape shape, string expected)
     {
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.HandleShape, shape)
             .Add(c => c.Min, 0)
             .Add(c => c.Max, 10));
@@ -178,7 +178,7 @@ public class AtomRangeInputTests : TestContext
     [Fact]
     public void Glyph_handle_bakes_svg_background_with_fill_and_stroke()
     {
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.HandleShape, HandleShape.Star)
             .Add(c => c.HandleColor, "#ff8800")
             .Add(c => c.OutlineColor, "#003366")
@@ -197,7 +197,7 @@ public class AtomRangeInputTests : TestContext
     [Fact]
     public void Glyph_handle_with_zero_outline_width_omits_stroke()
     {
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.HandleShape, HandleShape.Star)
             .Add(c => c.OutlineWidth, 0d)
             .Add(c => c.Min, 0)
@@ -215,7 +215,7 @@ public class AtomRangeInputTests : TestContext
         messages.Add(editContext.Field(nameof(TestModel.Count)), "Out of range");
         editContext.NotifyValidationStateChanged();
 
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .AddCascadingValue(editContext)
             .Add(c => c.HandleShape, HandleShape.Star)
             .Add(c => c.Value, model.Count)
@@ -229,7 +229,7 @@ public class AtomRangeInputTests : TestContext
     [Fact]
     public void Non_glyph_handle_has_no_glyph_var_or_flag()
     {
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.HandleShape, HandleShape.Round)
             .Add(c => c.Min, 0)
             .Add(c => c.Max, 10));
@@ -242,7 +242,7 @@ public class AtomRangeInputTests : TestContext
     [Fact]
     public void Box_handle_emits_handle_and_outline_custom_properties()
     {
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.HandleShape, HandleShape.Round)
             .Add(c => c.HandleColor, "#ff8800")
             .Add(c => c.OutlineColor, "#003366")
@@ -261,7 +261,7 @@ public class AtomRangeInputTests : TestContext
     [InlineData(HandlePosition.Below, "below")]
     public void HandlePosition_emits_data_attribute(HandlePosition position, string expected)
     {
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.HandlePosition, position)
             .Add(c => c.Min, 0)
             .Add(c => c.Max, 10));
@@ -272,7 +272,7 @@ public class AtomRangeInputTests : TestContext
     [Fact]
     public void HandlePosition_center_emits_no_data_attribute()
     {
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.Min, 0)
             .Add(c => c.Max, 10));
 
@@ -282,7 +282,7 @@ public class AtomRangeInputTests : TestContext
     [Fact]
     public void HandleOffset_emits_inline_offset_var_and_overrides_position()
     {
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.HandlePosition, HandlePosition.Above)
             .Add(c => c.HandleOffset, -20d)
             .Add(c => c.Min, 0)
@@ -297,7 +297,7 @@ public class AtomRangeInputTests : TestContext
     [Fact]
     public void HandleRotation_emits_inline_rotate_var()
     {
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.HandleRotation, 45d)
             .Add(c => c.Min, 0)
             .Add(c => c.Max, 10));
@@ -308,7 +308,7 @@ public class AtomRangeInputTests : TestContext
     [Fact]
     public void Start_and_end_icons_render_in_their_own_slots()
     {
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.Min, 0)
             .Add(c => c.Max, 10)
             .Add(c => c.StartIcon, b => b.AddMarkupContent(0, "<i class=\"start-marker\"></i>"))
@@ -323,7 +323,7 @@ public class AtomRangeInputTests : TestContext
     [Fact]
     public void No_icon_slots_when_not_provided()
     {
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.Min, 0)
             .Add(c => c.Max, 10));
 
@@ -343,7 +343,7 @@ public class AtomRangeInputTests : TestContext
     public void Preset_horizontal_puts_min_icon_at_start_and_max_icon_at_end(
         RangeIconPreset preset, string minIcon, string maxIcon)
     {
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.IconPreset, preset)
             .Add(c => c.Min, 0)
             .Add(c => c.Max, 10));
@@ -355,7 +355,7 @@ public class AtomRangeInputTests : TestContext
     [Fact]
     public void Volume_preset_horizontal_puts_mute_at_start_and_loud_at_end()
     {
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.IconPreset, RangeIconPreset.Volume)
             .Add(c => c.Min, 0)
             .Add(c => c.Max, 10));
@@ -367,7 +367,7 @@ public class AtomRangeInputTests : TestContext
     [Fact]
     public void IconPresetReversed_swaps_min_and_max_icons()
     {
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.IconPreset, RangeIconPreset.Volume)
             .Add(c => c.IconPresetReversed, true)
             .Add(c => c.Min, 0)
@@ -381,7 +381,7 @@ public class AtomRangeInputTests : TestContext
     public void Thermostat_preset_vertical_default_direction_puts_hot_at_start()
     {
         // BottomToTop (default): max at top = Start slot -> hot (max end).
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.IconPreset, RangeIconPreset.Thermostat)
             .Add(c => c.Orientation, Orientation.Vertical)
             .Add(c => c.Min, 0)
@@ -395,7 +395,7 @@ public class AtomRangeInputTests : TestContext
     public void Thermostat_preset_vertical_topToBottom_puts_cold_at_start()
     {
         // TopToBottom: max at bottom = Start slot -> cold (min end).
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.IconPreset, RangeIconPreset.Thermostat)
             .Add(c => c.Orientation, Orientation.Vertical)
             .Add(c => c.VerticalDirection, VerticalDirection.TopToBottom)
@@ -409,7 +409,7 @@ public class AtomRangeInputTests : TestContext
     [Fact]
     public void Explicit_StartIcon_overrides_preset_for_that_slot_only()
     {
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.IconPreset, RangeIconPreset.Volume)
             .Add(c => c.StartIcon, b => b.AddMarkupContent(0, "<i class=\"custom-marker\"></i>"))
             .Add(c => c.Min, 0)
@@ -422,7 +422,7 @@ public class AtomRangeInputTests : TestContext
     [Fact]
     public void Vertical_orientation_emits_data_and_aria_attributes()
     {
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.Orientation, Orientation.Vertical)
             .Add(c => c.Min, 0)
             .Add(c => c.Max, 10));
@@ -437,7 +437,7 @@ public class AtomRangeInputTests : TestContext
     [Fact]
     public void Horizontal_orientation_default_emits_no_orientation_attributes()
     {
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.Min, 0)
             .Add(c => c.Max, 10));
 
@@ -451,7 +451,7 @@ public class AtomRangeInputTests : TestContext
     [Fact]
     public void VerticalDirection_topToBottom_emits_data_attribute_when_vertical()
     {
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.Orientation, Orientation.Vertical)
             .Add(c => c.VerticalDirection, VerticalDirection.TopToBottom)
             .Add(c => c.Min, 0)
@@ -463,7 +463,7 @@ public class AtomRangeInputTests : TestContext
     [Fact]
     public void VerticalDirection_default_emits_no_data_attribute()
     {
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.Orientation, Orientation.Vertical)
             .Add(c => c.Min, 0)
             .Add(c => c.Max, 10));
@@ -474,7 +474,7 @@ public class AtomRangeInputTests : TestContext
     [Fact]
     public void VerticalDirection_ignored_when_horizontal()
     {
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.VerticalDirection, VerticalDirection.TopToBottom)
             .Add(c => c.Min, 0)
             .Add(c => c.Max, 10));
@@ -489,7 +489,7 @@ public class AtomRangeInputTests : TestContext
     {
         // A transient Min > Max (e.g. mid-drag on two separate slider controls) must NOT throw —
         // throwing in OnParametersSet faults the component and freezes the whole render tree.
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .Add(c => c.Min, 10)
             .Add(c => c.Max, 5)
             .Add(c => c.Value, 7));
@@ -510,7 +510,7 @@ public class AtomRangeInputTests : TestContext
         messages.Add(editContext.Field(nameof(TestModel.Count)), "Out of range");
         editContext.NotifyValidationStateChanged();
 
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .AddCascadingValue(editContext)
             .Add(c => c.Value, model.Count)
             .Add(c => c.Min, 1)
@@ -529,7 +529,7 @@ public class AtomRangeInputTests : TestContext
         var model = new TestModel { Count = 10 };
         var editContext = new EditContext(model);
 
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .AddCascadingValue(editContext)
             .Add(c => c.Value, model.Count)
             .Add(c => c.Min, 1)
@@ -550,7 +550,7 @@ public class AtomRangeInputTests : TestContext
         messages.Add(editContext.Field(nameof(TestModel.Count)), "Out of range");
         editContext.NotifyValidationStateChanged();
 
-        var cut = RenderComponent<AtomRangeInput<int>>(p => p
+        var cut = Render<AtomRangeInput<int>>(p => p
             .AddCascadingValue(editContext)
             .Add(c => c.Value, model.Count)
             .Add(c => c.Min, 1)

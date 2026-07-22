@@ -1,11 +1,11 @@
 namespace BlazorAtoms.Tooltips.Tests;
 
-public class AtomShapedTooltipTests : TestContext
+public class AtomShapedTooltipTests : BunitContext
 {
     [Fact]
     public void Renders_trigger_bubble_and_svg()
     {
-        var cut = RenderComponent<AtomShapedTooltip>(p => p
+        var cut = Render<AtomShapedTooltip>(p => p
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
 
@@ -20,7 +20,7 @@ public class AtomShapedTooltipTests : TestContext
     [Fact]
     public void Aria_describedby_matches_bubble_id()
     {
-        var cut = RenderComponent<AtomShapedTooltip>(p => p
+        var cut = Render<AtomShapedTooltip>(p => p
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
 
@@ -34,7 +34,7 @@ public class AtomShapedTooltipTests : TestContext
     [InlineData(Placement.TopLeft, "top-left")]
     public void Placement_sets_data_placement(Placement placement, string expected)
     {
-        var cut = RenderComponent<AtomShapedTooltip>(p => p
+        var cut = Render<AtomShapedTooltip>(p => p
             .Add(c => c.Placement, placement)
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
@@ -51,7 +51,7 @@ public class AtomShapedTooltipTests : TestContext
     [InlineData(ShapedTooltipShape.FoldedCorner, "folded")]
     public void Shape_sets_data_shape_and_renders_svg_path(ShapedTooltipShape shape, string expected)
     {
-        var cut = RenderComponent<AtomShapedTooltip>(p => p
+        var cut = Render<AtomShapedTooltip>(p => p
             .Add(c => c.Shape, shape)
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
@@ -66,7 +66,7 @@ public class AtomShapedTooltipTests : TestContext
     [InlineData(ShapedTooltipShape.FoldedCorner)]
     public void Clip_style_shapes_have_no_separate_arrow(ShapedTooltipShape shape)
     {
-        var cut = RenderComponent<AtomShapedTooltip>(p => p
+        var cut = Render<AtomShapedTooltip>(p => p
             .Add(c => c.Shape, shape)
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
@@ -77,7 +77,7 @@ public class AtomShapedTooltipTests : TestContext
     [Fact]
     public void Disabled_suppresses_bubble()
     {
-        var cut = RenderComponent<AtomShapedTooltip>(p => p
+        var cut = Render<AtomShapedTooltip>(p => p
             .Add(c => c.Disabled, true)
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
@@ -89,7 +89,7 @@ public class AtomShapedTooltipTests : TestContext
     [Fact]
     public void No_alignment_set_omits_align_attributes()
     {
-        var cut = RenderComponent<AtomShapedTooltip>(p => p
+        var cut = Render<AtomShapedTooltip>(p => p
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
 
@@ -104,7 +104,7 @@ public class AtomShapedTooltipTests : TestContext
     [InlineData(TooltipTextAlign.End, "end")]
     public void TextAlign_sets_data_halign(TooltipTextAlign align, string expected)
     {
-        var cut = RenderComponent<AtomShapedTooltip>(p => p
+        var cut = Render<AtomShapedTooltip>(p => p
             .Add(c => c.TextAlign, align)
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
@@ -118,7 +118,7 @@ public class AtomShapedTooltipTests : TestContext
     [InlineData(TooltipVerticalAlign.Bottom, "bottom")]
     public void VerticalAlign_sets_data_valign(TooltipVerticalAlign align, string expected)
     {
-        var cut = RenderComponent<AtomShapedTooltip>(p => p
+        var cut = Render<AtomShapedTooltip>(p => p
             .Add(c => c.VerticalAlign, align)
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
@@ -131,7 +131,7 @@ public class AtomShapedTooltipTests : TestContext
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
 
-        var cut = RenderComponent<AtomShapedTooltip>(p => p
+        var cut = Render<AtomShapedTooltip>(p => p
             .Add(c => c.Placement, Placement.Cursor)
             .Add(c => c.Text, "Follows cursor")
             .AddChildContent("<button>Trigger</button>"));

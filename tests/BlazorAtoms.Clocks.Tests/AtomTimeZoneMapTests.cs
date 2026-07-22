@@ -5,13 +5,13 @@ using Microsoft.AspNetCore.Components;
 
 namespace BlazorAtoms.Clocks.Tests;
 
-public class AtomTimeZoneMapTests : TestContext
+public class AtomTimeZoneMapTests : BunitContext
 {
     // Live=false so no PeriodicTimer spins up; Loose JS so HighlightViewerZone detection is a no-op.
     private IRenderedComponent<AtomTimeZoneMap> Render(Action<ComponentParameterCollectionBuilder<AtomTimeZoneMap>>? extra = null)
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
-        return RenderComponent<AtomTimeZoneMap>(p =>
+        return Render<AtomTimeZoneMap>(p =>
         {
             p.Add(c => c.Live, false);
             extra?.Invoke(p);

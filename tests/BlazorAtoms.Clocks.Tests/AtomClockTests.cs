@@ -3,14 +3,14 @@ using System.Text.RegularExpressions;
 
 namespace BlazorAtoms.Clocks.Tests;
 
-public class AtomClockTests : TestContext
+public class AtomClockTests : BunitContext
 {
     // Live=false in most tests so no PeriodicTimer spins up during the assertion.
 
     [Fact]
     public void Renders_time_element_with_iso_datetime()
     {
-        var cut = RenderComponent<AtomClock>(p => p
+        var cut = Render<AtomClock>(p => p
             .Add(c => c.Kind, ClockKind.Utc)
             .Add(c => c.Live, false));
 
@@ -22,7 +22,7 @@ public class AtomClockTests : TestContext
     [Fact]
     public void Utc_kind_has_zero_offset_and_data_kind()
     {
-        var cut = RenderComponent<AtomClock>(p => p
+        var cut = Render<AtomClock>(p => p
             .Add(c => c.Kind, ClockKind.Utc)
             .Add(c => c.Live, false));
 
@@ -34,7 +34,7 @@ public class AtomClockTests : TestContext
     public void Explicit_timezone_overrides_kind_and_offset()
     {
         var plus5 = TimeZoneInfo.CreateCustomTimeZone("t+5", TimeSpan.FromHours(5), "t+5", "t+5");
-        var cut = RenderComponent<AtomClock>(p => p
+        var cut = Render<AtomClock>(p => p
             .Add(c => c.Kind, ClockKind.Utc)   // overridden by TimeZone
             .Add(c => c.TimeZone, plus5)
             .Add(c => c.Live, false));
@@ -46,7 +46,7 @@ public class AtomClockTests : TestContext
     [Fact]
     public void Format_and_culture_control_display_text()
     {
-        var cut = RenderComponent<AtomClock>(p => p
+        var cut = Render<AtomClock>(p => p
             .Add(c => c.Kind, ClockKind.Utc)
             .Add(c => c.Format, "yyyy")
             .Add(c => c.Live, false));
@@ -57,7 +57,7 @@ public class AtomClockTests : TestContext
     [Fact]
     public void Label_renders_when_set()
     {
-        var cut = RenderComponent<AtomClock>(p => p
+        var cut = Render<AtomClock>(p => p
             .Add(c => c.Kind, ClockKind.Utc)
             .Add(c => c.Label, "Server")
             .Add(c => c.Live, false));
@@ -68,7 +68,7 @@ public class AtomClockTests : TestContext
     [Fact]
     public void No_label_element_when_unset()
     {
-        var cut = RenderComponent<AtomClock>(p => p
+        var cut = Render<AtomClock>(p => p
             .Add(c => c.Kind, ClockKind.Utc)
             .Add(c => c.Live, false));
 
@@ -78,7 +78,7 @@ public class AtomClockTests : TestContext
     [Fact]
     public void Size_and_color_tokens_emitted()
     {
-        var cut = RenderComponent<AtomClock>(p => p
+        var cut = Render<AtomClock>(p => p
             .Add(c => c.Kind, ClockKind.Utc)
             .Add(c => c.Size, 24)
             .Add(c => c.Background, "#111")
@@ -101,11 +101,11 @@ public class AtomClockTests : TestContext
         module.Setup<string?>("timezoneId").SetResult("");   // no IANA id → use the offset
         module.Setup<int>("timezoneOffset").SetResult(300);  // UTC+05:00
 
-        var cut = RenderComponent<AtomClock>(p => p
+        var cut = Render<AtomClock>(p => p
             .Add(c => c.Kind, ClockKind.Server)
             .Add(c => c.Live, false));
 
-        cut.SetParametersAndRender(p => p.Add(c => c.Kind, ClockKind.Browser));
+        cut.Render(p => p.Add(c => c.Kind, ClockKind.Browser));
 
         Assert.Equal("browser", cut.Find(".atom-clock").GetAttribute("data-kind"));
         Assert.EndsWith("+05:00", cut.Find(".atom-clock-time").GetAttribute("datetime"));
@@ -118,7 +118,7 @@ public class AtomClockTests : TestContext
         // detection hasn't resolved). The clock must still render — falling back to UTC.
         JSInterop.Mode = JSRuntimeMode.Loose;
 
-        var cut = RenderComponent<AtomClock>(p => p
+        var cut = Render<AtomClock>(p => p
             .Add(c => c.Kind, ClockKind.Browser)
             .Add(c => c.Live, false));
 

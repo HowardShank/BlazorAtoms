@@ -4,13 +4,13 @@ using Microsoft.AspNetCore.Components;
 
 namespace BlazorAtoms.Clocks.Tests;
 
-public class AtomClockStripTests : TestContext
+public class AtomClockStripTests : BunitContext
 {
     // Live=false so the strip doesn't tick; Loose JS so viewer detection is a no-op → UTC.
     private IRenderedComponent<AtomClockStrip> Render(Action<ComponentParameterCollectionBuilder<AtomClockStrip>>? extra = null)
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
-        return RenderComponent<AtomClockStrip>(p =>
+        return Render<AtomClockStrip>(p =>
         {
             p.Add(c => c.Live, false);
             extra?.Invoke(p);

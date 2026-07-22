@@ -2,21 +2,21 @@ using Microsoft.AspNetCore.Components.Web;
 
 namespace BlazorAtoms.Ratings.Tests;
 
-public class AtomRatingTests : TestContext
+public class AtomRatingTests : BunitContext
 {
     // ---- structure ---------------------------------------------------------------------------
 
     [Fact]
     public void Renders_max_icons_default_five()
     {
-        var cut = RenderComponent<AtomRating>();
+        var cut = Render<AtomRating>();
         Assert.Equal(5, cut.FindAll(".atom-rating-item").Count);
     }
 
     [Fact]
     public void Max_controls_icon_count()
     {
-        var cut = RenderComponent<AtomRating>(p => p.Add(c => c.Max, 10));
+        var cut = Render<AtomRating>(p => p.Add(c => c.Max, 10));
         Assert.Equal(10, cut.FindAll(".atom-rating-item").Count);
     }
 
@@ -25,7 +25,7 @@ public class AtomRatingTests : TestContext
     [Fact]
     public void Fractional_value_fills_partial_icon()
     {
-        var cut = RenderComponent<AtomRating>(p => p
+        var cut = Render<AtomRating>(p => p
             .Add(c => c.Value, 4.3)
             .Add(c => c.ReadOnly, true));
         var fills = cut.FindAll(".atom-rating-fill");
@@ -38,7 +38,7 @@ public class AtomRatingTests : TestContext
     [Fact]
     public void Null_value_leaves_every_icon_empty()
     {
-        var cut = RenderComponent<AtomRating>(p => p.Add(c => c.ReadOnly, true));
+        var cut = Render<AtomRating>(p => p.Add(c => c.ReadOnly, true));
         foreach (var fill in cut.FindAll(".atom-rating-fill"))
             Assert.Contains("width:0%", fill.GetAttribute("style"));
     }
@@ -48,7 +48,7 @@ public class AtomRatingTests : TestContext
     [Fact]
     public void Interactive_by_default_is_a_slider()
     {
-        var cut = RenderComponent<AtomRating>();
+        var cut = Render<AtomRating>();
         var root = cut.Find(".atom-rating");
         Assert.Equal("slider", root.GetAttribute("role"));
         Assert.Equal("0", root.GetAttribute("tabindex"));
@@ -58,7 +58,7 @@ public class AtomRatingTests : TestContext
     [Fact]
     public void ReadOnly_is_an_image_with_no_tabindex()
     {
-        var cut = RenderComponent<AtomRating>(p => p.Add(c => c.ReadOnly, true));
+        var cut = Render<AtomRating>(p => p.Add(c => c.ReadOnly, true));
         var root = cut.Find(".atom-rating");
         Assert.Equal("img", root.GetAttribute("role"));
         Assert.Null(root.GetAttribute("tabindex"));
@@ -68,7 +68,7 @@ public class AtomRatingTests : TestContext
     public void Disabled_sets_aria_disabled_and_blocks_clicks()
     {
         double? captured = 7;
-        var cut = RenderComponent<AtomRating>(p => p
+        var cut = Render<AtomRating>(p => p
             .Add(c => c.Disabled, true)
             .Add(c => c.ValueChanged, (double? v) => captured = v));
         Assert.Equal("true", cut.Find(".atom-rating").GetAttribute("aria-disabled"));
@@ -81,7 +81,7 @@ public class AtomRatingTests : TestContext
     [Fact]
     public void Icon_enum_selects_glyph_path()
     {
-        var cut = RenderComponent<AtomRating>(p => p.Add(c => c.Icon, RatingIcon.Heart));
+        var cut = Render<AtomRating>(p => p.Add(c => c.Icon, RatingIcon.Heart));
         Assert.Equal(RatingGlyphs.Path(RatingIcon.Heart),
             cut.Find(".atom-rating-full path").GetAttribute("d"));
     }
@@ -100,7 +100,7 @@ public class AtomRatingTests : TestContext
     public void Gem_glyph_has_dedicated_path()
     {
         Assert.NotEqual(RatingGlyphs.Path(RatingIcon.Diamond), RatingGlyphs.Path(RatingIcon.Gem));
-        var cut = RenderComponent<AtomRating>(p => p.Add(c => c.Icon, RatingIcon.Gem));
+        var cut = Render<AtomRating>(p => p.Add(c => c.Icon, RatingIcon.Gem));
         Assert.Equal(RatingGlyphs.Path(RatingIcon.Gem),
             cut.Find(".atom-rating-full path").GetAttribute("d"));
     }
@@ -109,14 +109,14 @@ public class AtomRatingTests : TestContext
     public void IconPath_overrides_enum()
     {
         const string custom = "M0 0h24v24H0z";
-        var cut = RenderComponent<AtomRating>(p => p.Add(c => c.IconPath, custom));
+        var cut = Render<AtomRating>(p => p.Add(c => c.IconPath, custom));
         Assert.Equal(custom, cut.Find(".atom-rating-full path").GetAttribute("d"));
     }
 
     [Fact]
     public void EmptyIcon_can_differ_from_filled()
     {
-        var cut = RenderComponent<AtomRating>(p => p
+        var cut = Render<AtomRating>(p => p
             .Add(c => c.Icon, RatingIcon.Star)
             .Add(c => c.EmptyIcon, RatingIcon.Circle));
         Assert.Equal(RatingGlyphs.Path(RatingIcon.Circle),
@@ -130,7 +130,7 @@ public class AtomRatingTests : TestContext
     [Fact]
     public void ShowValue_renders_numeric_label()
     {
-        var cut = RenderComponent<AtomRating>(p => p
+        var cut = Render<AtomRating>(p => p
             .Add(c => c.Value, 4.3)
             .Add(c => c.ShowValue, true));
         Assert.Equal("4.3", cut.Find(".atom-rating-value").TextContent);
@@ -139,7 +139,7 @@ public class AtomRatingTests : TestContext
     [Fact]
     public void ShowValue_shows_unrated_text_when_null()
     {
-        var cut = RenderComponent<AtomRating>(p => p
+        var cut = Render<AtomRating>(p => p
             .Add(c => c.ShowValue, true)
             .Add(c => c.UnratedText, "No rating"));
         Assert.Equal("No rating", cut.Find(".atom-rating-value").TextContent);
@@ -148,7 +148,7 @@ public class AtomRatingTests : TestContext
     [Fact]
     public void Count_renders_formatted_in_parens()
     {
-        var cut = RenderComponent<AtomRating>(p => p.Add(c => c.Count, 1204));
+        var cut = Render<AtomRating>(p => p.Add(c => c.Count, 1204));
         Assert.Equal("(1,204)", cut.Find(".atom-rating-count").TextContent);
     }
 
@@ -157,7 +157,7 @@ public class AtomRatingTests : TestContext
     [Fact]
     public void Color_size_gap_emit_css_variables()
     {
-        var cut = RenderComponent<AtomRating>(p => p
+        var cut = Render<AtomRating>(p => p
             .Add(c => c.Color, "#e0245e")
             .Add(c => c.Size, 32)
             .Add(c => c.Gap, 10));
@@ -170,21 +170,21 @@ public class AtomRatingTests : TestContext
     [Fact]
     public void Rotation_emits_rotate_variable_in_degrees()
     {
-        var cut = RenderComponent<AtomRating>(p => p.Add(c => c.Rotation, 45));
+        var cut = Render<AtomRating>(p => p.Add(c => c.Rotation, 45));
         Assert.Contains("--rating-rotate:45deg;", cut.Find(".atom-rating").GetAttribute("style"));
     }
 
     [Fact]
     public void No_rotate_variable_when_rotation_unset()
     {
-        var cut = RenderComponent<AtomRating>(p => p.Add(c => c.Color, "#111"));
+        var cut = Render<AtomRating>(p => p.Add(c => c.Color, "#111"));
         Assert.DoesNotContain("--rating-rotate", cut.Find(".atom-rating").GetAttribute("style"));
     }
 
     [Fact]
     public void No_style_attribute_when_nothing_set()
     {
-        var cut = RenderComponent<AtomRating>();
+        var cut = Render<AtomRating>();
         Assert.False(cut.Find(".atom-rating").HasAttribute("style"));
     }
 
@@ -194,7 +194,7 @@ public class AtomRatingTests : TestContext
     public void Click_commits_snapped_value()
     {
         double? captured = null;
-        var cut = RenderComponent<AtomRating>(p => p
+        var cut = Render<AtomRating>(p => p
             .Add(c => c.Size, 20)
             .Add(c => c.ValueChanged, (double? v) => captured = v));
         // Click the 4th icon (index 3) at its right edge → value 4.
@@ -206,7 +206,7 @@ public class AtomRatingTests : TestContext
     public void Half_step_click_commits_half()
     {
         double? captured = null;
-        var cut = RenderComponent<AtomRating>(p => p
+        var cut = Render<AtomRating>(p => p
             .Add(c => c.Size, 20)
             .Add(c => c.Step, 0.5)
             .Add(c => c.ValueChanged, (double? v) => captured = v));
@@ -219,7 +219,7 @@ public class AtomRatingTests : TestContext
     public void Clearable_click_on_current_value_resets_to_null()
     {
         double? captured = 3;
-        var cut = RenderComponent<AtomRating>(p => p
+        var cut = Render<AtomRating>(p => p
             .Add(c => c.Value, 3.0)
             .Add(c => c.Size, 20)
             .Add(c => c.Step, 1.0)
@@ -234,7 +234,7 @@ public class AtomRatingTests : TestContext
     public void ArrowRight_increases_by_step()
     {
         double? captured = null;
-        var cut = RenderComponent<AtomRating>(p => p
+        var cut = Render<AtomRating>(p => p
             .Add(c => c.Step, 1.0)
             .Add(c => c.ValueChanged, (double? v) => captured = v));
         cut.Find(".atom-rating").KeyDown(new KeyboardEventArgs { Key = "ArrowRight" });
@@ -245,7 +245,7 @@ public class AtomRatingTests : TestContext
     public void Keyboard_does_nothing_when_readonly()
     {
         double? captured = 9;
-        var cut = RenderComponent<AtomRating>(p => p
+        var cut = Render<AtomRating>(p => p
             .Add(c => c.ReadOnly, true)
             .Add(c => c.ValueChanged, (double? v) => captured = v));
         cut.Find(".atom-rating").KeyDown(new KeyboardEventArgs { Key = "ArrowRight" });
@@ -257,7 +257,7 @@ public class AtomRatingTests : TestContext
     [Fact]
     public void CssClass_appends_to_root()
     {
-        var cut = RenderComponent<AtomRating>(p => p.Add(c => c.CssClass, "mine"));
+        var cut = Render<AtomRating>(p => p.Add(c => c.CssClass, "mine"));
         var cls = cut.Find(".atom-rating").GetAttribute("class");
         Assert.Contains("atom-rating", cls);
         Assert.Contains("mine", cls);
@@ -266,7 +266,7 @@ public class AtomRatingTests : TestContext
     [Fact]
     public void Additional_attributes_splat_onto_root()
     {
-        var cut = RenderComponent<AtomRating>(p => p
+        var cut = Render<AtomRating>(p => p
             .Add(c => c.ReadOnly, true)
             .AddUnmatched("title", "four stars"));
         Assert.Equal("four stars", cut.Find(".atom-rating").GetAttribute("title"));

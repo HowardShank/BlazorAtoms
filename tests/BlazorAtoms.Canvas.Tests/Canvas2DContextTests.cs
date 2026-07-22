@@ -2,7 +2,7 @@ namespace BlazorAtoms.Canvas.Tests;
 
 // The imperative escape hatch must batch a whole frame of ops into ONE interop call — that is the
 // guarantee that keeps it usable over a Blazor Server circuit (one round-trip, not one per op).
-public class Canvas2DContextTests : TestContext
+public class Canvas2DContextTests : BunitContext
 {
     [Fact]
     public async Task Batches_all_queued_ops_into_a_single_runCommands_call()
@@ -10,7 +10,7 @@ public class Canvas2DContextTests : TestContext
         JSInterop.Mode = JSRuntimeMode.Loose;
         var module = JSInterop.SetupModule("./_content/BlazorAtoms.Canvas/atom-canvas.js");
 
-        var cut = RenderComponent<AtomCanvas>();
+        var cut = Render<AtomCanvas>();
         var ctx = await cut.Instance.GetContext2DAsync();
 
         ctx.FillStyle("#0ea5e9")
@@ -32,7 +32,7 @@ public class Canvas2DContextTests : TestContext
         JSInterop.Mode = JSRuntimeMode.Loose;
         var module = JSInterop.SetupModule("./_content/BlazorAtoms.Canvas/atom-canvas.js");
 
-        var cut = RenderComponent<AtomCanvas>();
+        var cut = Render<AtomCanvas>();
         var ctx = await cut.Instance.GetContext2DAsync();
         await ctx.FlushAsync(); // nothing queued
 

@@ -2,12 +2,12 @@ using System.Text.RegularExpressions;
 
 namespace BlazorAtoms.Highlights.Tests;
 
-public class AtomHighlightTests : TestContext
+public class AtomHighlightTests : BunitContext
 {
     [Fact]
     public void Renders_Mark_For_SingleTerm()
     {
-        var cut = RenderComponent<AtomHighlight>(parameters => parameters
+        var cut = Render<AtomHighlight>(parameters => parameters
             .Add(p => p.Term, "Blazor")
             .AddChildContent("Build with Blazor."));
 
@@ -20,7 +20,7 @@ public class AtomHighlightTests : TestContext
     [Fact]
     public void CaseInsensitive_By_Default()
     {
-        var cut = RenderComponent<AtomHighlight>(parameters => parameters
+        var cut = Render<AtomHighlight>(parameters => parameters
             .Add(p => p.Term, "blazor")
             .AddChildContent("Use Blazor today."));
 
@@ -30,7 +30,7 @@ public class AtomHighlightTests : TestContext
     [Fact]
     public void CaseSensitive_Respects_Casing()
     {
-        var cut = RenderComponent<AtomHighlight>(parameters => parameters
+        var cut = Render<AtomHighlight>(parameters => parameters
             .Add(p => p.Term, "Blazor")
             .Add(p => p.CaseSensitive, true)
             .AddChildContent("blazor only"));
@@ -41,7 +41,7 @@ public class AtomHighlightTests : TestContext
     [Fact]
     public void WholeWord_Skips_Substrings()
     {
-        var cut = RenderComponent<AtomHighlight>(parameters => parameters
+        var cut = Render<AtomHighlight>(parameters => parameters
             .Add(p => p.Term, "team")
             .Add(p => p.WholeWord, true)
             .AddChildContent("teamwork is not team"));
@@ -52,7 +52,7 @@ public class AtomHighlightTests : TestContext
     [Fact]
     public void Multiple_Terms_Highlight()
     {
-        var cut = RenderComponent<AtomHighlight>(parameters => parameters
+        var cut = Render<AtomHighlight>(parameters => parameters
             .Add(p => p.Terms, new[] { "Blazor", "CSS" })
             .AddChildContent("Blazor plus CSS."));
 
@@ -62,7 +62,7 @@ public class AtomHighlightTests : TestContext
     [Fact]
     public void Underline_Style_Renders_Data_Attribute()
     {
-        var cut = RenderComponent<AtomHighlight>(parameters => parameters
+        var cut = Render<AtomHighlight>(parameters => parameters
             .Add(p => p.Term, "x")
             .Add(p => p.HighlightStyle, HighlightStyle.Underline)
             .AddChildContent("x"));
@@ -73,7 +73,7 @@ public class AtomHighlightTests : TestContext
     [Fact]
     public void No_Mark_When_No_Term()
     {
-        var cut = RenderComponent<AtomHighlight>(parameters => parameters
+        var cut = Render<AtomHighlight>(parameters => parameters
             .AddChildContent("nothing to see here"));
 
         Assert.Empty(cut.FindAll("mark"));

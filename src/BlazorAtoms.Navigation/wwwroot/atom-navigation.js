@@ -68,63 +68,89 @@ function trySelector(sel) {
 
 // ---- visibility watcher ------------------------------------------------------------------
 
-const WATCHERS = new WeakMap();
+// Keyed by a C#-generated string id, NOT by the ElementReference. During SPA-nav teardown the
+// element reference can stop marshaling, so an unwatch keyed on it would silently no-op and leave
+// the scroll listener attached — it then fires into an already-disposed DotNetObjectReference. A
+// string id always marshals, so unwatch(id) reliably removes the listener regardless of DOM state.
+const WATCHERS = new Map();
 
 // Toggle a data attribute on the button once the scroller passes `threshold` px. Uses a passive
 // listener and coalesces bursts of scroll events into one rAF callback so we touch the DOM at most
-// once per frame regardless of scroll frequency.
-export function watchVisibility(el, dotNet, threshold, scope, containerSelector) {
+// once per frame regardless of scroll frequency. `dotNet` may be null — when the consumer wires no
+// OnVisibilityChanged callback the component passes no DotNetObjectReference, and notify() no-ops.
+export function watchVisibility(id, el, dotNet, threshold, scope, containerSelector) {
     if (!el) return;
-    unwatch(el); // idempotent
+    unwatch(id); // idempotent
 
     const scroller = resolveScroller(el, scope, containerSelector);
     const target = scroller || window;
     let ticking = false;
+    let rafId = null;
     let lastVisible = null;
+    let disposed = false;
+
+    // Fire-and-forget: invokeMethodAsync returns a Promise, so a plain try/catch around the call
+    // (which only throws synchronously) can't observe rejection — an unhandled rejection surfaces
+    // as an uncaught error in the console (e.g. a stale call reaching an already-disposed
+    // DotNetObjectReference). Attach .catch() explicitly to actually swallow it.
+    const notify = (visible) => {
+        if (!dotNet) return;
+        try {
+            const p = dotNet.invokeMethodAsync('OnVisibilityChangedInternal', visible);
+            if (p && typeof p.catch === 'function') p.catch(() => { });
+        } catch { /* circuit/instance already gone */ }
+    };
 
     const measure = () => {
+        rafId = null;
         ticking = false;
+        if (disposed) return; // queued before teardown, torn down before this frame ran
         const y = scroller ? scroller.scrollTop : (window.scrollY || document.documentElement.scrollTop || 0);
         const visible = y >= threshold;
         if (visible !== lastVisible) {
             lastVisible = visible;
             el.setAttribute('data-visible', visible ? 'true' : 'false');
-            if (dotNet) {
-                // Fire-and-forget; ignore if the circuit is gone.
-                try { dotNet.invokeMethodAsync('OnVisibilityChangedInternal', visible); } catch { }
-            }
+            notify(visible);
         }
     };
 
     const onScroll = () => {
         if (ticking) return;
         ticking = true;
-        requestAnimationFrame(measure);
+        rafId = requestAnimationFrame(measure);
     };
 
     target.addEventListener('scroll', onScroll, { passive: true });
-    WATCHERS.set(el, { target, onScroll });
+    WATCHERS.set(id, {
+        target, onScroll,
+        cancel: () => {
+            disposed = true;
+            if (rafId !== null) cancelAnimationFrame(rafId);
+        },
+    });
     measure(); // set initial state
 }
 
-export function unwatch(el) {
-    const w = el && WATCHERS.get(el);
+export function unwatch(id) {
+    const w = id != null && WATCHERS.get(id);
     if (w) {
         w.target.removeEventListener('scroll', w.onScroll);
-        WATCHERS.delete(el);
+        w.cancel();
+        WATCHERS.delete(id);
     }
 }
 
 // ---- collision watcher (don't cover important content) -----------------------------------
 
-const OBSERVERS = new WeakMap();
+// Keyed by the same C#-generated string id as WATCHERS, for the same teardown-safety reason.
+const OBSERVERS = new Map();
 
 // Fade the button out while any element matching hideNearSelector is visible in the scroller
 // (footer, CTA, end-of-content), restore when it leaves. Sets data-collision on the button; the
 // scoped CSS hides it. IntersectionObserver root = the resolved scroller (null → viewport).
-export function watchCollision(el, hideNearSelector, scope, containerSelector) {
+export function watchCollision(id, el, hideNearSelector, scope, containerSelector) {
     if (!el || !hideNearSelector) return;
-    unwatchCollision(el);
+    unwatchCollision(id);
 
     let targets;
     try { targets = Array.from(document.querySelectorAll(hideNearSelector)); }
@@ -141,10 +167,10 @@ export function watchCollision(el, hideNearSelector, scope, containerSelector) {
     }, { root: root || null, threshold: 0 });
 
     targets.forEach(t => io.observe(t));
-    OBSERVERS.set(el, io);
+    OBSERVERS.set(id, io);
 }
 
-export function unwatchCollision(el) {
-    const io = el && OBSERVERS.get(el);
-    if (io) { io.disconnect(); OBSERVERS.delete(el); }
+export function unwatchCollision(id) {
+    const io = id != null && OBSERVERS.get(id);
+    if (io) { io.disconnect(); OBSERVERS.delete(id); }
 }

@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Components.Forms;
 
 namespace BlazorAtoms.Inputs.Tests;
 
-public class AtomCrtInputTests : TestContext
+public class AtomCrtInputTests : BunitContext
 {
     // Enum-name -> data-attribute-string. Keeps the Font theories data-driven so new CrtFont
     // values (e.g. SpecialElite, CutiveMono) are automatically covered as they're added — plus one
@@ -22,7 +22,7 @@ public class AtomCrtInputTests : TestContext
     [Fact]
     public void Renders_textarea_by_default()
     {
-        var cut = RenderComponent<AtomCrtInput>();
+        var cut = Render<AtomCrtInput>();
 
         Assert.NotNull(cut.Find("textarea"));
         Assert.Empty(cut.FindAll("input[type=text]"));
@@ -31,7 +31,7 @@ public class AtomCrtInputTests : TestContext
     [Fact]
     public void Multiline_false_renders_input_type_text()
     {
-        var cut = RenderComponent<AtomCrtInput>(p => p.Add(c => c.Multiline, false));
+        var cut = Render<AtomCrtInput>(p => p.Add(c => c.Multiline, false));
 
         Assert.NotNull(cut.Find("input[type=text]"));
         Assert.Empty(cut.FindAll("textarea"));
@@ -41,7 +41,7 @@ public class AtomCrtInputTests : TestContext
     public void Two_way_binding_updates_value_on_input()
     {
         string? bound = null;
-        var cut = RenderComponent<AtomCrtInput>(p => p
+        var cut = Render<AtomCrtInput>(p => p
             .Add(c => c.Value, "hello")
             .Add(c => c.ValueChanged, EventCallback.Factory.Create<string?>(this, v => bound = v)));
 
@@ -58,7 +58,7 @@ public class AtomCrtInputTests : TestContext
     [InlineData(CrtPhosphor.White, "white")]
     public void Phosphor_maps_to_data_attribute(CrtPhosphor phosphor, string expected)
     {
-        var cut = RenderComponent<AtomCrtInput>(p => p.Add(c => c.Phosphor, phosphor));
+        var cut = Render<AtomCrtInput>(p => p.Add(c => c.Phosphor, phosphor));
 
         Assert.Equal(expected, cut.Find(".atom-crt-input").GetAttribute("data-phosphor"));
     }
@@ -67,7 +67,7 @@ public class AtomCrtInputTests : TestContext
     [MemberData(nameof(AllFontsData))]
     public void Font_maps_to_data_attribute(CrtFont font, string expected)
     {
-        var cut = RenderComponent<AtomCrtInput>(p => p.Add(c => c.Font, font));
+        var cut = Render<AtomCrtInput>(p => p.Add(c => c.Font, font));
 
         Assert.Equal(expected, cut.Find(".atom-crt-input").GetAttribute("data-font"));
     }
@@ -75,7 +75,7 @@ public class AtomCrtInputTests : TestContext
     [Fact]
     public void Effect_flags_emit_data_attributes_when_true()
     {
-        var cut = RenderComponent<AtomCrtInput>();
+        var cut = Render<AtomCrtInput>();
 
         var root = cut.Find(".atom-crt-input");
         Assert.Equal("true", root.GetAttribute("data-glow"));
@@ -87,7 +87,7 @@ public class AtomCrtInputTests : TestContext
     [Fact]
     public void Effect_flags_omit_data_attributes_when_false()
     {
-        var cut = RenderComponent<AtomCrtInput>(p => p
+        var cut = Render<AtomCrtInput>(p => p
             .Add(c => c.Glow, false)
             .Add(c => c.Scanlines, false)
             .Add(c => c.Bezel, false)
@@ -103,7 +103,7 @@ public class AtomCrtInputTests : TestContext
     [Fact]
     public void Color_and_BackgroundColor_emit_custom_properties()
     {
-        var cut = RenderComponent<AtomCrtInput>(p => p
+        var cut = Render<AtomCrtInput>(p => p
             .Add(c => c.Color, "#00ff41")
             .Add(c => c.BackgroundColor, "#000000"));
 
@@ -115,7 +115,7 @@ public class AtomCrtInputTests : TestContext
     [Fact]
     public void Width_height_fontSize_emit_custom_properties()
     {
-        var cut = RenderComponent<AtomCrtInput>(p => p
+        var cut = Render<AtomCrtInput>(p => p
             .Add(c => c.Width, 480d)
             .Add(c => c.Height, 240d)
             .Add(c => c.FontSize, 20d));
@@ -130,7 +130,7 @@ public class AtomCrtInputTests : TestContext
     public void Disabled_greys_out_and_blocks_input()
     {
         string? changed = null;
-        var cut = RenderComponent<AtomCrtInput>(p => p
+        var cut = Render<AtomCrtInput>(p => p
             .Add(c => c.Disabled, true)
             .Add(c => c.Value, "before")
             .Add(c => c.ValueChanged, EventCallback.Factory.Create<string?>(this, v => changed = v)));
@@ -145,7 +145,7 @@ public class AtomCrtInputTests : TestContext
     [Fact]
     public void ReadOnly_equates_to_disabled()
     {
-        var cut = RenderComponent<AtomCrtInput>(p => p.Add(c => c.ReadOnly, true));
+        var cut = Render<AtomCrtInput>(p => p.Add(c => c.ReadOnly, true));
 
         Assert.Equal("disabled", cut.Find(".atom-crt-input").GetAttribute("data-state"));
         Assert.NotNull(cut.Find("textarea").GetAttribute("disabled"));
@@ -154,7 +154,7 @@ public class AtomCrtInputTests : TestContext
     [Fact]
     public void Visible_false_hides_via_display_none()
     {
-        var cut = RenderComponent<AtomCrtInput>(p => p.Add(c => c.Visible, false));
+        var cut = Render<AtomCrtInput>(p => p.Add(c => c.Visible, false));
 
         var style = cut.Find(".atom-crt-input").GetAttribute("style");
         Assert.Contains("display:none", style ?? "");
@@ -163,7 +163,7 @@ public class AtomCrtInputTests : TestContext
     [Fact]
     public void Rows_and_placeholder_flow_through_to_textarea()
     {
-        var cut = RenderComponent<AtomCrtInput>(p => p
+        var cut = Render<AtomCrtInput>(p => p
             .Add(c => c.Rows, 8)
             .Add(c => c.Placeholder, "> _"));
 
@@ -181,7 +181,7 @@ public class AtomCrtInputTests : TestContext
         messages.Add(editContext.Field(nameof(TestModel.Text)), "Required");
         editContext.NotifyValidationStateChanged();
 
-        var cut = RenderComponent<AtomCrtInput>(p => p
+        var cut = Render<AtomCrtInput>(p => p
             .AddCascadingValue(editContext)
             .Add(c => c.Value, model.Text)
             .Add(c => c.ValidationFor, () => model.Text));
@@ -196,7 +196,7 @@ public class AtomCrtInputTests : TestContext
     [Fact]
     public void Label_renders_as_label_element_when_set()
     {
-        var cut = RenderComponent<AtomCrtInput>(p => p.Add(c => c.Label, "Foo"));
+        var cut = Render<AtomCrtInput>(p => p.Add(c => c.Label, "Foo"));
 
         var label = cut.Find("label");
         Assert.Contains("Foo", label.TextContent);
@@ -205,7 +205,7 @@ public class AtomCrtInputTests : TestContext
     [Fact]
     public void Label_omitted_when_null()
     {
-        var cut = RenderComponent<AtomCrtInput>();
+        var cut = Render<AtomCrtInput>();
 
         Assert.Empty(cut.FindAll("label"));
     }
@@ -213,7 +213,7 @@ public class AtomCrtInputTests : TestContext
     [Fact]
     public void LabelCol_and_ControlCol_apply_classes()
     {
-        var cut = RenderComponent<AtomCrtInput>(p => p
+        var cut = Render<AtomCrtInput>(p => p
             .Add(c => c.Label, "L")
             .Add(c => c.LabelCol, "custom-label-col")
             .Add(c => c.ControlCol, "custom-control-col"));
@@ -225,7 +225,7 @@ public class AtomCrtInputTests : TestContext
     [Fact]
     public void HelpText_renders_in_subtext_on_happy_path()
     {
-        var cut = RenderComponent<AtomCrtInput>(p => p.Add(c => c.HelpText, "Press ENTER to continue"));
+        var cut = Render<AtomCrtInput>(p => p.Add(c => c.HelpText, "Press ENTER to continue"));
 
         var sub = cut.Find(".atom-crt-input-subtext");
         Assert.Contains("Press ENTER to continue", sub.TextContent);
@@ -234,7 +234,7 @@ public class AtomCrtInputTests : TestContext
     [Fact]
     public void AriaLabel_takes_precedence_over_Label()
     {
-        var cut = RenderComponent<AtomCrtInput>(p => p
+        var cut = Render<AtomCrtInput>(p => p
             .Add(c => c.Label, "LabelText")
             .Add(c => c.AriaLabel, "Explicit ARIA"));
 
@@ -244,7 +244,7 @@ public class AtomCrtInputTests : TestContext
     [Fact]
     public void AriaLabel_falls_back_to_Label_when_null()
     {
-        var cut = RenderComponent<AtomCrtInput>(p => p.Add(c => c.Label, "LabelText"));
+        var cut = Render<AtomCrtInput>(p => p.Add(c => c.Label, "LabelText"));
 
         Assert.Equal("LabelText", cut.Find("textarea").GetAttribute("aria-label"));
     }
@@ -252,7 +252,7 @@ public class AtomCrtInputTests : TestContext
     [Fact]
     public void Cols_flows_through_to_textarea()
     {
-        var cut = RenderComponent<AtomCrtInput>(p => p.Add(c => c.Cols, 40));
+        var cut = Render<AtomCrtInput>(p => p.Add(c => c.Cols, 40));
 
         Assert.Equal("40", cut.Find("textarea").GetAttribute("cols"));
     }
@@ -260,7 +260,7 @@ public class AtomCrtInputTests : TestContext
     [Fact]
     public void Height_emits_crt_height_var_alone()
     {
-        var cut = RenderComponent<AtomCrtInput>(p => p.Add(c => c.Height, 240d));
+        var cut = Render<AtomCrtInput>(p => p.Add(c => c.Height, 240d));
 
         var style = cut.Find(".atom-crt-input").GetAttribute("style") ?? "";
         Assert.Contains("--crt-height:240px", style);
@@ -282,7 +282,7 @@ public class AtomCrtInputTests : TestContext
 
         Expression<Func<string?>> valueExpr = () => model.Text;
 
-        var cut = RenderComponent<AtomCrtInput>(p => p
+        var cut = Render<AtomCrtInput>(p => p
             .AddCascadingValue(editContext)
             .Add(c => c.Value, model.Text)
             .Add(c => c.ValueExpression, valueExpr));
@@ -293,7 +293,7 @@ public class AtomCrtInputTests : TestContext
     [Fact]
     public void Field_disables_native_spellcheck()
     {
-        var cut = RenderComponent<AtomCrtInput>();
+        var cut = Render<AtomCrtInput>();
 
         Assert.Equal("false", cut.Find("textarea").GetAttribute("spellcheck"));
     }
@@ -301,7 +301,7 @@ public class AtomCrtInputTests : TestContext
     [Fact]
     public void Default_phosphor_is_green()
     {
-        var cut = RenderComponent<AtomCrtInput>();
+        var cut = Render<AtomCrtInput>();
 
         Assert.Equal("green", cut.Find(".atom-crt-input").GetAttribute("data-phosphor"));
     }

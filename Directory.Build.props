@@ -1,10 +1,8 @@
 <Project>
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RazorLangVersion>9.0</RazorLangVersion>
 
     <!-- Repo root (with trailing slash) so shared build assets resolve from any project depth. -->
     <RepoRoot>$(MSBuildThisFileDirectory)</RepoRoot>
@@ -14,6 +12,16 @@
     <Authors>Howard Shank</Authors>
     <Company>Howard Shank</Company>
     <Product>BlazorAtoms</Product>
+  </PropertyGroup>
+
+  <!-- Libraries and their tests multi-target net9.0 + net10.0 (one package/build serves both).
+       Demo apps are single-target net10.0 — an app only runs on one TFM at a time.
+       Checked against both slash directions — CI runs on Linux, local dev is Windows. -->
+  <PropertyGroup Condition="$(MSBuildProjectFullPath.Contains('\src\')) OR $(MSBuildProjectFullPath.Contains('/src/')) OR $(MSBuildProjectFullPath.Contains('\tests\')) OR $(MSBuildProjectFullPath.Contains('/tests/'))">
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+  </PropertyGroup>
+  <PropertyGroup Condition="$(MSBuildProjectFullPath.Contains('\samples\')) OR $(MSBuildProjectFullPath.Contains('/samples/'))">
+    <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
 
 </Project>

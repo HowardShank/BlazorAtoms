@@ -20,6 +20,9 @@ public partial class AtomScrollTo : AtomComponentBase, IAsyncDisposable
     private ElementReference _rootRef;
     private IJSObjectReference? _module;
     private DotNetObjectReference<AtomScrollTo>? _selfRef;
+    // Stable string handle for the JS-side watcher maps. Keyed on this (not the ElementReference)
+    // so teardown's unwatch(id) marshals reliably even when the element no longer resolves.
+    private readonly string _watchId = Guid.NewGuid().ToString("N");
     private bool _watching;
     private bool _collisionWatching;
 
@@ -202,13 +205,18 @@ public partial class AtomScrollTo : AtomComponentBase, IAsyncDisposable
 
             if (needVisibility)
             {
-                _selfRef ??= DotNetObjectReference.Create(this);
-                await module.InvokeVoidAsync("watchVisibility", _rootRef, _selfRef, VisibleAfter!.Value, scope, ScrollContainer);
+                // Only marshal a DotNetObjectReference when there's actually a callback to fire.
+                // Auto-hide (the data-visible toggle) is done entirely in JS, so with no
+                // OnVisibilityChanged delegate we pass null — JS never calls back into .NET and
+                // there is no reference that can go stale.
+                if (OnVisibilityChanged.HasDelegate)
+                    _selfRef ??= DotNetObjectReference.Create(this);
+                await module.InvokeVoidAsync("watchVisibility", _watchId, _rootRef, _selfRef, VisibleAfter!.Value, scope, ScrollContainer);
                 _watching = true;
             }
             if (needCollision)
             {
-                await module.InvokeVoidAsync("watchCollision", _rootRef, HideNear, scope, ScrollContainer);
+                await module.InvokeVoidAsync("watchCollision", _watchId, _rootRef, HideNear, scope, ScrollContainer);
                 _collisionWatching = true;
             }
         }
@@ -236,21 +244,32 @@ public partial class AtomScrollTo : AtomComponentBase, IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        if (_module is not null)
+        if (_module is { } module)
         {
-            try
-            {
-                if (_watching) await _module.InvokeVoidAsync("unwatch", _rootRef);
-                if (_collisionWatching) await _module.InvokeVoidAsync("unwatchCollision", _rootRef);
-                await _module.DisposeAsync();
-            }
-            catch (JSDisconnectedException) { }
-            catch (OperationCanceledException) { }
-            catch (ObjectDisposedException) { }
+            // Each teardown call gets its own short-lived token instead of relying on whatever
+            // ambient cancellation came with this DisposeAsync (e.g. a fast route-away can already
+            // be tearing down the JS side) — and each is isolated so one failing/timing out still
+            // lets the others run. Without this, a canceled "unwatch" call leaves the window/scroll
+            // listener attached, which then fires into an already-disposed DotNetObjectReference.
+            await TryJsAsync(() => _watching ? module.InvokeVoidAsync("unwatch", _watchId) : ValueTask.CompletedTask);
+            await TryJsAsync(() => _collisionWatching ? module.InvokeVoidAsync("unwatchCollision", _watchId) : ValueTask.CompletedTask);
+            await TryJsAsync(() => module.DisposeAsync());
             _module = null;
         }
         _selfRef?.Dispose();
         _selfRef = null;
         GC.SuppressFinalize(this);
+    }
+
+    private static async ValueTask TryJsAsync(Func<ValueTask> call)
+    {
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        try
+        {
+            await call().AsTask().WaitAsync(cts.Token);
+        }
+        catch (JSDisconnectedException) { }
+        catch (OperationCanceledException) { }
+        catch (ObjectDisposedException) { }
     }
 }

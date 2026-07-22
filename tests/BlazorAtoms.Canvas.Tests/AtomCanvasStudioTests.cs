@@ -5,7 +5,7 @@ namespace BlazorAtoms.Canvas.Tests;
 // The studio is a composite over AtomCanvas. bUnit can't run the real canvas/pointer JS, so we drive the
 // public/imperative API (which the toolbar + context both call) and assert model state, tool->mode mapping,
 // history, layers, JSON round-trip, and the slot/context extension points.
-public class AtomCanvasStudioTests : TestContext
+public class AtomCanvasStudioTests : BunitContext
 {
     public AtomCanvasStudioTests() => JSInterop.Mode = JSRuntimeMode.Loose;
 
@@ -15,7 +15,7 @@ public class AtomCanvasStudioTests : TestContext
     [Fact]
     public void Default_toolbar_and_canvas_render()
     {
-        var cut = RenderComponent<AtomCanvasStudio>();
+        var cut = Render<AtomCanvasStudio>();
         Assert.NotNull(cut.Find(".acs-toolbar"));
         Assert.Contains("Select", cut.Markup);
         Assert.Contains("Draw", cut.Markup);
@@ -32,7 +32,7 @@ public class AtomCanvasStudioTests : TestContext
     [InlineData(CanvasTool.Erase, "static")]
     public void Tool_maps_to_canvas_mode(CanvasTool tool, string mode)
     {
-        var cut = RenderComponent<AtomCanvasStudio>(p => p.Add(c => c.Tool, tool));
+        var cut = Render<AtomCanvasStudio>(p => p.Add(c => c.Tool, tool));
         Assert.Equal(mode, cut.Find("canvas.atom-canvas").GetAttribute("data-mode"));
     }
 
@@ -40,7 +40,7 @@ public class AtomCanvasStudioTests : TestContext
     public async Task Add_undo_redo_round_trip()
     {
         IReadOnlyList<CanvasShape>? cur = null;
-        var cut = RenderComponent<AtomCanvasStudio>(p => p.Add(c => c.ShapesChanged, Capture(v => cur = v)));
+        var cut = Render<AtomCanvasStudio>(p => p.Add(c => c.ShapesChanged, Capture(v => cur = v)));
 
         await cut.InvokeAsync(() => cut.Instance.AddShapeAsync(new CanvasRect(0, 0, 10, 10)));
         Assert.Single(cur!);
@@ -57,7 +57,7 @@ public class AtomCanvasStudioTests : TestContext
     {
         var rect = new CanvasRect(0, 0, 10, 10);
         IReadOnlyList<CanvasShape>? cur = null;
-        var cut = RenderComponent<AtomCanvasStudio>(p => p.Add(c => c.ShapesChanged, Capture(v => cur = v)));
+        var cut = Render<AtomCanvasStudio>(p => p.Add(c => c.ShapesChanged, Capture(v => cur = v)));
 
         await cut.InvokeAsync(() => cut.Instance.AddShapeAsync(rect));
         await cut.InvokeAsync(() => cut.Instance.SelectShape(rect.Id));
@@ -72,7 +72,7 @@ public class AtomCanvasStudioTests : TestContext
         var a = new CanvasRect(0, 0, 1, 1);
         var b = new CanvasCircle(5, 5, 2);
         IReadOnlyList<CanvasShape>? cur = null;
-        var cut = RenderComponent<AtomCanvasStudio>(p => p.Add(c => c.ShapesChanged, Capture(v => cur = v)));
+        var cut = Render<AtomCanvasStudio>(p => p.Add(c => c.ShapesChanged, Capture(v => cur = v)));
 
         await cut.InvokeAsync(() => cut.Instance.AddShapeAsync(a)); // [a]
         await cut.InvokeAsync(() => cut.Instance.AddShapeAsync(b)); // [a, b]
@@ -87,7 +87,7 @@ public class AtomCanvasStudioTests : TestContext
     {
         var rect = new CanvasRect(0, 0, 1, 1);
         IReadOnlyList<CanvasShape>? cur = null;
-        var cut = RenderComponent<AtomCanvasStudio>(p => p.Add(c => c.ShapesChanged, Capture(v => cur = v)));
+        var cut = Render<AtomCanvasStudio>(p => p.Add(c => c.ShapesChanged, Capture(v => cur = v)));
 
         await cut.InvokeAsync(() => cut.Instance.AddShapeAsync(rect));
         await cut.InvokeAsync(() => cut.Instance.ToggleVisibleAsync(rect.Id));
@@ -99,12 +99,12 @@ public class AtomCanvasStudioTests : TestContext
     public async Task Save_then_load_json_round_trips_the_model()
     {
         IReadOnlyList<CanvasShape>? cur = null;
-        var cut = RenderComponent<AtomCanvasStudio>(p => p.Add(c => c.ShapesChanged, Capture(v => cur = v)));
+        var cut = Render<AtomCanvasStudio>(p => p.Add(c => c.ShapesChanged, Capture(v => cur = v)));
         await cut.InvokeAsync(() => cut.Instance.AddShapeAsync(new CanvasRect(1, 2, 3, 4) { Fill = "#abc" }));
         await cut.InvokeAsync(() => cut.Instance.AddShapeAsync(new CanvasCircle(5, 5, 3)));
         var json = cut.Instance.SaveJson();
 
-        var cut2 = RenderComponent<AtomCanvasStudio>(p => p.Add(c => c.ShapesChanged, Capture(v => cur = v)));
+        var cut2 = Render<AtomCanvasStudio>(p => p.Add(c => c.ShapesChanged, Capture(v => cur = v)));
         var ok = false;
         await cut2.InvokeAsync(async () => ok = await cut2.Instance.LoadJsonAsync(json));
 
@@ -117,7 +117,7 @@ public class AtomCanvasStudioTests : TestContext
     [Fact]
     public async Task Load_invalid_json_returns_false()
     {
-        var cut = RenderComponent<AtomCanvasStudio>();
+        var cut = Render<AtomCanvasStudio>();
         var ok = true;
         await cut.InvokeAsync(async () => ok = await cut.Instance.LoadJsonAsync("{ not json"));
         Assert.False(ok);
@@ -126,7 +126,7 @@ public class AtomCanvasStudioTests : TestContext
     [Fact]
     public void Toolbar_slot_replaces_the_default_toolbar()
     {
-        var cut = RenderComponent<AtomCanvasStudio>(p => p
+        var cut = Render<AtomCanvasStudio>(p => p
             .Add(c => c.Toolbar, (AtomCanvasStudioContext ctx) =>
                 (RenderFragment)(b => b.AddMarkupContent(0, "<div class=\"custom-tb\">mine</div>"))));
 
@@ -137,7 +137,7 @@ public class AtomCanvasStudioTests : TestContext
     [Fact]
     public void ToolbarEnd_slot_receives_the_studio_context()
     {
-        var cut = RenderComponent<AtomCanvasStudio>(p => p
+        var cut = Render<AtomCanvasStudio>(p => p
             .Add(c => c.ToolbarEnd, (AtomCanvasStudioContext ctx) =>
                 (RenderFragment)(b => b.AddMarkupContent(0, $"<span class=\"cnt\">{ctx.ShapeCount}</span>"))));
 
@@ -148,7 +148,7 @@ public class AtomCanvasStudioTests : TestContext
     public void Custom_stamps_surface_in_the_palette()
     {
         var stamps = new[] { new CanvasStamp("x", "MyStamp", p => new CanvasRect(p.X, p.Y, 5, 5), "Ⓩ") };
-        var cut = RenderComponent<AtomCanvasStudio>(p => p.Add(c => c.Stamps, stamps));
+        var cut = Render<AtomCanvasStudio>(p => p.Add(c => c.Stamps, stamps));
 
         Assert.Single(cut.FindAll(".acs-stamp"));
         Assert.Contains("Ⓩ", cut.Markup);
@@ -157,7 +157,7 @@ public class AtomCanvasStudioTests : TestContext
     [Fact]
     public void Default_menu_bar_renders_standard_menus()
     {
-        var cut = RenderComponent<AtomCanvasStudio>();
+        var cut = Render<AtomCanvasStudio>();
         Assert.NotNull(cut.Find(".acs-menubar"));
         Assert.Equal(5, cut.FindAll(".acs-menu").Count); // File / Edit / View / Object / Help
         foreach (var label in new[] { "File", "Edit", "View", "Object", "Help" })
@@ -167,14 +167,14 @@ public class AtomCanvasStudioTests : TestContext
     [Fact]
     public void ShowMenuBar_false_hides_the_menu_bar()
     {
-        var cut = RenderComponent<AtomCanvasStudio>(p => p.Add(c => c.ShowMenuBar, false));
+        var cut = Render<AtomCanvasStudio>(p => p.Add(c => c.ShowMenuBar, false));
         Assert.Empty(cut.FindAll(".acs-menubar"));
     }
 
     [Fact]
     public void Menu_slot_replaces_the_default_menu_bar()
     {
-        var cut = RenderComponent<AtomCanvasStudio>(p => p
+        var cut = Render<AtomCanvasStudio>(p => p
             .Add(c => c.Menu, (AtomCanvasStudioContext ctx) =>
                 (RenderFragment)(b => b.AddMarkupContent(0, "<div class=\"custom-menu\">mine</div>"))));
 
@@ -185,7 +185,7 @@ public class AtomCanvasStudioTests : TestContext
     [Fact]
     public async Task View_menu_toggle_hides_the_layers_panel()
     {
-        var cut = RenderComponent<AtomCanvasStudio>();
+        var cut = Render<AtomCanvasStudio>();
         Assert.NotNull(cut.Find(".acs-layers"));
 
         await cut.InvokeAsync(() => cut.Instance.ToggleLayers());
@@ -198,7 +198,7 @@ public class AtomCanvasStudioTests : TestContext
     {
         var rect = new CanvasRect(0, 0, 10, 10); // no fill
         IReadOnlyList<CanvasShape>? cur = null;
-        var cut = RenderComponent<AtomCanvasStudio>(p => p.Add(c => c.ShapesChanged, Capture(v => cur = v)));
+        var cut = Render<AtomCanvasStudio>(p => p.Add(c => c.ShapesChanged, Capture(v => cur = v)));
 
         await cut.InvokeAsync(() => cut.Instance.AddShapeAsync(rect));
         await cut.InvokeAsync(() => cut.Instance.SelectShape(rect.Id));
@@ -213,7 +213,7 @@ public class AtomCanvasStudioTests : TestContext
     {
         var rect = new CanvasRect(0, 0, 10, 10);
         IReadOnlyList<CanvasShape>? cur = null;
-        var cut = RenderComponent<AtomCanvasStudio>(p => p.Add(c => c.ShapesChanged, Capture(v => cur = v)));
+        var cut = Render<AtomCanvasStudio>(p => p.Add(c => c.ShapesChanged, Capture(v => cur = v)));
 
         await cut.InvokeAsync(() => cut.Instance.AddShapeAsync(rect));
         await cut.InvokeAsync(() => cut.Instance.SelectShape(rect.Id));
@@ -226,7 +226,7 @@ public class AtomCanvasStudioTests : TestContext
     public async Task SetFillColor_with_no_selection_only_sets_the_default()
     {
         IReadOnlyList<CanvasShape>? cur = null;
-        var cut = RenderComponent<AtomCanvasStudio>(p => p.Add(c => c.ShapesChanged, Capture(v => cur = v)));
+        var cut = Render<AtomCanvasStudio>(p => p.Add(c => c.ShapesChanged, Capture(v => cur = v)));
 
         await cut.InvokeAsync(() => cut.Instance.SetFillColorAsync("#123456")); // nothing selected
         Assert.Null(cur); // no model change / ShapesChanged
@@ -235,7 +235,7 @@ public class AtomCanvasStudioTests : TestContext
     [Fact]
     public void Fill_color_picker_is_enabled_by_default_with_a_no_fill_button()
     {
-        var cut = RenderComponent<AtomCanvasStudio>();
+        var cut = Render<AtomCanvasStudio>();
         var fill = cut.FindAll("input[type=color]").First(i => i.GetAttribute("aria-label") == "Fill color");
         Assert.False(fill.HasAttribute("disabled")); // was disabled until a checkbox was ticked — the reported bug
         Assert.Contains("No fill", cut.Markup);
@@ -244,14 +244,14 @@ public class AtomCanvasStudioTests : TestContext
     [Fact]
     public void FillColor_param_change_after_init_is_adopted()
     {
-        var cut = RenderComponent<AtomCanvasStudio>(p => p
+        var cut = Render<AtomCanvasStudio>(p => p
             .Add(c => c.FillColor, "#111111")
             .Add(c => c.ToolbarEnd, (AtomCanvasStudioContext ctx) =>
                 (RenderFragment)(b => b.AddMarkupContent(0, $"<span class=\"fc\">{ctx.FillColor}</span>"))));
 
         Assert.Equal("#111111", cut.Find(".fc").TextContent);
 
-        cut.SetParametersAndRender(p => p.Add(c => c.FillColor, "#222222"));
+        cut.Render(p => p.Add(c => c.FillColor, "#222222"));
         Assert.Equal("#222222", cut.Find(".fc").TextContent);
     }
 }

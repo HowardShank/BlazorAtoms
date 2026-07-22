@@ -3,12 +3,12 @@ namespace BlazorAtoms.Tooltips.Tests;
 // Smoke tests — prove the trigger/bubble markup, aria wiring, placement, arrow, and
 // disabled-state behavior are wired correctly. No JS to test: everything is static Razor
 // output plus CSS, so bUnit's rendered markup is the full contract.
-public class AtomTooltipTests : TestContext
+public class AtomTooltipTests : BunitContext
 {
     [Fact]
     public void Renders_trigger_and_bubble()
     {
-        var cut = RenderComponent<AtomTooltip>(p => p
+        var cut = Render<AtomTooltip>(p => p
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
 
@@ -20,7 +20,7 @@ public class AtomTooltipTests : TestContext
     [Fact]
     public void Aria_describedby_matches_bubble_id()
     {
-        var cut = RenderComponent<AtomTooltip>(p => p
+        var cut = Render<AtomTooltip>(p => p
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
 
@@ -41,7 +41,7 @@ public class AtomTooltipTests : TestContext
     [InlineData(Placement.BottomRight, "bottom-right")]
     public void Placement_sets_data_placement_attribute(Placement placement, string expected)
     {
-        var cut = RenderComponent<AtomTooltip>(p => p
+        var cut = Render<AtomTooltip>(p => p
             .Add(c => c.Placement, placement)
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
@@ -58,7 +58,7 @@ public class AtomTooltipTests : TestContext
     [InlineData(TooltipShape.FoldedCorner, "folded")]
     public void Shape_sets_data_shape_attribute(TooltipShape shape, string expected)
     {
-        var cut = RenderComponent<AtomTooltip>(p => p
+        var cut = Render<AtomTooltip>(p => p
             .Add(c => c.Shape, shape)
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
@@ -72,7 +72,7 @@ public class AtomTooltipTests : TestContext
     public void Clip_path_shapes_suppress_arrow(TooltipShape shape)
     {
         // clip-path clips the arrow away, so it isn't rendered even with ShowArrow=true (default).
-        var cut = RenderComponent<AtomTooltip>(p => p
+        var cut = Render<AtomTooltip>(p => p
             .Add(c => c.Shape, shape)
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
@@ -83,7 +83,7 @@ public class AtomTooltipTests : TestContext
     [Fact]
     public void Thought_shape_keeps_arrow_element_for_trail()
     {
-        var cut = RenderComponent<AtomTooltip>(p => p
+        var cut = Render<AtomTooltip>(p => p
             .Add(c => c.Shape, TooltipShape.Thought)
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
@@ -97,7 +97,7 @@ public class AtomTooltipTests : TestContext
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
 
-        var cut = RenderComponent<AtomTooltip>(p => p
+        var cut = Render<AtomTooltip>(p => p
             .Add(c => c.Placement, Placement.Cursor)
             .Add(c => c.Text, "Follows cursor")
             .AddChildContent("<button>Trigger</button>"));
@@ -115,7 +115,7 @@ public class AtomTooltipTests : TestContext
     [Fact]
     public void ShowArrow_false_omits_arrow_element()
     {
-        var cut = RenderComponent<AtomTooltip>(p => p
+        var cut = Render<AtomTooltip>(p => p
             .Add(c => c.ShowArrow, false)
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
@@ -126,7 +126,7 @@ public class AtomTooltipTests : TestContext
     [Fact]
     public void Disabled_suppresses_bubble_but_keeps_trigger()
     {
-        var cut = RenderComponent<AtomTooltip>(p => p
+        var cut = Render<AtomTooltip>(p => p
             .Add(c => c.Disabled, true)
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
@@ -139,7 +139,7 @@ public class AtomTooltipTests : TestContext
     [Fact]
     public void TooltipContent_takes_priority_over_Text()
     {
-        var cut = RenderComponent<AtomTooltip>(p => p
+        var cut = Render<AtomTooltip>(p => p
             .Add(c => c.Text, "Ignored")
             .Add(c => c.TooltipContent, (RenderFragment)(builder => builder.AddMarkupContent(0, "<strong>Rich</strong>")))
             .AddChildContent("<button>Trigger</button>"));

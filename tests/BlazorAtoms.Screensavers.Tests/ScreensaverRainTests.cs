@@ -1,6 +1,6 @@
 namespace BlazorAtoms.Screensavers.Tests;
 
-public class ScreensaverRainTests : TestContext
+public class ScreensaverRainTests : BunitContext
 {
     private const string ModulePath = "./_content/BlazorAtoms.Screensavers/MatrixRain.js";
 
@@ -13,7 +13,7 @@ public class ScreensaverRainTests : TestContext
     [Fact]
     public void Renders_Canvas_With_Expected_Role_And_Class()
     {
-        var cut = RenderComponent<ScreensaverRain>();
+        var cut = Render<ScreensaverRain>();
 
         var canvas = cut.Find(".matrix-rain__canvas");
         Assert.NotNull(canvas.GetAttribute("id"));
@@ -23,7 +23,7 @@ public class ScreensaverRainTests : TestContext
     [Fact]
     public void Disabled_Suppresses_Canvas()
     {
-        var cut = RenderComponent<ScreensaverRain>(p => p.Add(c => c.Disabled, true));
+        var cut = Render<ScreensaverRain>(p => p.Add(c => c.Disabled, true));
 
         Assert.Empty(cut.FindAll(".matrix-rain__canvas"));
     }
@@ -31,7 +31,7 @@ public class ScreensaverRainTests : TestContext
     [Fact]
     public void Data_Glow_And_Scanlines_Attributes_Are_Set()
     {
-        var cut = RenderComponent<ScreensaverRain>(p => p
+        var cut = Render<ScreensaverRain>(p => p
             .Add(c => c.Glow, true)
             .Add(c => c.Scanlines, true));
 
@@ -43,7 +43,7 @@ public class ScreensaverRainTests : TestContext
     [Fact]
     public void Custom_Colors_Appear_In_Root_Style()
     {
-        var cut = RenderComponent<ScreensaverRain>(p => p
+        var cut = Render<ScreensaverRain>(p => p
             .Add(c => c.TextColor, "#FF0000")
             .Add(c => c.BackgroundColor, "#0000FF"));
 
@@ -55,7 +55,7 @@ public class ScreensaverRainTests : TestContext
     [Fact]
     public void Font_And_Size_Appear_In_Root_Style()
     {
-        var cut = RenderComponent<ScreensaverRain>(p => p
+        var cut = Render<ScreensaverRain>(p => p
             .Add(c => c.FontFamily, "'Courier New', monospace")
             .Add(c => c.FontSize, 24));
 
@@ -67,7 +67,7 @@ public class ScreensaverRainTests : TestContext
     [Fact]
     public void Speed_Appears_In_Root_Style()
     {
-        var cut = RenderComponent<ScreensaverRain>(p => p.Add(c => c.Speed, 2.5));
+        var cut = Render<ScreensaverRain>(p => p.Add(c => c.Speed, 2.5));
 
         var style = cut.Find(".matrix-rain").GetAttribute("style");
         Assert.Contains("--mr-speed:2.5", style);
@@ -76,7 +76,7 @@ public class ScreensaverRainTests : TestContext
     [Fact]
     public void Width_And_Height_Appear_In_Root_Style()
     {
-        var cut = RenderComponent<ScreensaverRain>(p => p
+        var cut = Render<ScreensaverRain>(p => p
             .Add(c => c.Width, "50%")
             .Add(c => c.Height, "400px"));
 
@@ -90,7 +90,7 @@ public class ScreensaverRainTests : TestContext
     {
         var module = JSInterop.SetupModule(ModulePath);
 
-        RenderComponent<ScreensaverRain>();
+        Render<ScreensaverRain>();
 
         module.VerifyInvoke("start");
     }
@@ -99,7 +99,7 @@ public class ScreensaverRainTests : TestContext
     public async Task StartAsync_Calls_Module_Start()
     {
         var module = JSInterop.SetupModule(ModulePath);
-        var cut = RenderComponent<ScreensaverRain>();
+        var cut = Render<ScreensaverRain>();
         await cut.Instance.StartAsync();
 
         Assert.Equal(2, module.Invocations.Count(i => i.Identifier == "start"));
@@ -109,7 +109,7 @@ public class ScreensaverRainTests : TestContext
     public async Task StopAsync_Calls_Module_Stop()
     {
         var module = JSInterop.SetupModule(ModulePath);
-        var cut = RenderComponent<ScreensaverRain>();
+        var cut = Render<ScreensaverRain>();
         await cut.Instance.StopAsync();
 
         module.VerifyInvoke("stop");
@@ -119,7 +119,7 @@ public class ScreensaverRainTests : TestContext
     public async Task DisposeAsync_Calls_Module_Dispose()
     {
         var module = JSInterop.SetupModule(ModulePath);
-        var cut = RenderComponent<ScreensaverRain>();
+        var cut = Render<ScreensaverRain>();
         await cut.Instance.DisposeAsync();
 
         module.VerifyInvoke("dispose");

@@ -14,7 +14,7 @@
     <RepositoryUrl>https://github.com/HowardShank/BlazorAtoms</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
 
-    <!-- Reproducible build + SourceLink + symbol package. net9 SDK bundles SourceLink in-box. -->
+    <!-- Reproducible build + SourceLink + symbol package (SourceLink ships in-box with the SDK). -->
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <IncludeSymbols>true</IncludeSymbols>

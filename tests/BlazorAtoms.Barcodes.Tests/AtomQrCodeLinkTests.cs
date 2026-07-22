@@ -10,18 +10,18 @@ public class AtomQrCodeLinkTests
     [Fact]
     public void No_anchor_when_neither_Href_nor_AutoLink_set()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
-        var cut = ctx.RenderComponent<AtomQrCode>(p => p.Add(x => x.Value, "https://example.com/"));
+        var cut = ctx.Render<AtomQrCode>(p => p.Add(x => x.Value, "https://example.com/"));
         Assert.Empty(cut.FindAll("a.atom-qrcode-link"));
     }
 
     [Fact]
     public void Explicit_Href_renders_anchor_with_target_and_secure_rel()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
-        var cut = ctx.RenderComponent<AtomQrCode>(p => p
+        var cut = ctx.Render<AtomQrCode>(p => p
             .Add(x => x.Value, "hello")
             .Add(x => x.Href, "https://example.com/x"));
 
@@ -34,9 +34,9 @@ public class AtomQrCodeLinkTests
     [Fact]
     public void AutoLink_wraps_when_Value_is_url()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
-        var cut = ctx.RenderComponent<AtomQrCode>(p => p
+        var cut = ctx.Render<AtomQrCode>(p => p
             .Add(x => x.Value, "https://example.com/x")
             .Add(x => x.AutoLink, true));
         Assert.Equal("https://example.com/x", cut.Find("a.atom-qrcode-link").GetAttribute("href"));
@@ -45,9 +45,9 @@ public class AtomQrCodeLinkTests
     [Fact]
     public void AutoLink_ignores_non_url_Value()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
-        var cut = ctx.RenderComponent<AtomQrCode>(p => p
+        var cut = ctx.Render<AtomQrCode>(p => p
             .Add(x => x.Value, "not a url")
             .Add(x => x.AutoLink, true));
         Assert.Empty(cut.FindAll("a.atom-qrcode-link"));
@@ -56,9 +56,9 @@ public class AtomQrCodeLinkTests
     [Fact]
     public void LinkTarget_flows_to_anchor()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
-        var cut = ctx.RenderComponent<AtomQrCode>(p => p
+        var cut = ctx.Render<AtomQrCode>(p => p
             .Add(x => x.Value, "x")
             .Add(x => x.Href, "https://example.com/")
             .Add(x => x.LinkTarget, "_self"));

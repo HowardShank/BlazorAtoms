@@ -1,11 +1,11 @@
 namespace BlazorAtoms.Tooltips.Tests;
 
-public class AtomPaintedTooltipTests : TestContext
+public class AtomPaintedTooltipTests : BunitContext
 {
     [Fact]
     public void Renders_trigger_bubble_and_svg()
     {
-        var cut = RenderComponent<AtomPaintedTooltip>(p => p
+        var cut = Render<AtomPaintedTooltip>(p => p
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
 
@@ -22,7 +22,7 @@ public class AtomPaintedTooltipTests : TestContext
     [InlineData(PaintedTooltipShape.FoldedCorner, "folded")]
     public void Shape_sets_data_shape_and_renders_path(PaintedTooltipShape shape, string expected)
     {
-        var cut = RenderComponent<AtomPaintedTooltip>(p => p
+        var cut = Render<AtomPaintedTooltip>(p => p
             .Add(c => c.Shape, shape)
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
@@ -34,7 +34,7 @@ public class AtomPaintedTooltipTests : TestContext
     [Fact]
     public void No_gradient_renders_no_defs_and_solid_fill()
     {
-        var cut = RenderComponent<AtomPaintedTooltip>(p => p
+        var cut = Render<AtomPaintedTooltip>(p => p
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
 
@@ -47,7 +47,7 @@ public class AtomPaintedTooltipTests : TestContext
     [Fact]
     public void Gradient_renders_defs_and_path_references_it()
     {
-        var cut = RenderComponent<AtomPaintedTooltip>(p => p
+        var cut = Render<AtomPaintedTooltip>(p => p
             .Add(c => c.Text, "Hello")
             .Add(c => c.GradientFrom, "#f97316")
             .Add(c => c.GradientTo, "#7c3aed")
@@ -71,12 +71,12 @@ public class AtomPaintedTooltipTests : TestContext
     [Fact]
     public void Shadow_toggles_has_shadow_class()
     {
-        var on = RenderComponent<AtomPaintedTooltip>(p => p
+        var on = Render<AtomPaintedTooltip>(p => p
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
         Assert.Contains("has-shadow", on.Find("[role='tooltip']").GetAttribute("class"));
 
-        var off = RenderComponent<AtomPaintedTooltip>(p => p
+        var off = Render<AtomPaintedTooltip>(p => p
             .Add(c => c.Shadow, false)
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
@@ -86,7 +86,7 @@ public class AtomPaintedTooltipTests : TestContext
     [Fact]
     public void No_alignment_set_omits_align_attributes()
     {
-        var cut = RenderComponent<AtomPaintedTooltip>(p => p
+        var cut = Render<AtomPaintedTooltip>(p => p
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
 
@@ -101,7 +101,7 @@ public class AtomPaintedTooltipTests : TestContext
     [InlineData(TooltipTextAlign.End, "end")]
     public void TextAlign_sets_data_halign(TooltipTextAlign align, string expected)
     {
-        var cut = RenderComponent<AtomPaintedTooltip>(p => p
+        var cut = Render<AtomPaintedTooltip>(p => p
             .Add(c => c.TextAlign, align)
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
@@ -115,7 +115,7 @@ public class AtomPaintedTooltipTests : TestContext
     [InlineData(TooltipVerticalAlign.Bottom, "bottom")]
     public void VerticalAlign_sets_data_valign(TooltipVerticalAlign align, string expected)
     {
-        var cut = RenderComponent<AtomPaintedTooltip>(p => p
+        var cut = Render<AtomPaintedTooltip>(p => p
             .Add(c => c.VerticalAlign, align)
             .Add(c => c.Text, "Hello")
             .AddChildContent("<button>Trigger</button>"));
@@ -128,7 +128,7 @@ public class AtomPaintedTooltipTests : TestContext
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
 
-        var cut = RenderComponent<AtomPaintedTooltip>(p => p
+        var cut = Render<AtomPaintedTooltip>(p => p
             .Add(c => c.Placement, Placement.Cursor)
             .Add(c => c.Text, "Follows cursor")
             .AddChildContent("<button>Trigger</button>"));

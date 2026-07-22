@@ -20,11 +20,11 @@ public class AutoScrollTests
     [Fact]
     public void First_render_imports_module_and_calls_enableAutoScroll_with_defaults()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         var module = ctx.JSInterop.SetupModule(ModulePath);
         module.SetupVoid("enableAutoScroll", _ => true).SetVoidResult();
 
-        ctx.RenderComponent<AtomDropzone<Card>>(p => p
+        ctx.Render<AtomDropzone<Card>>(p => p
             .Add(x => x.Items, new List<Card> { new("A") })
             .Add(x => x.ChildContent, CardTemplate));
 
@@ -37,11 +37,11 @@ public class AutoScrollTests
     [Fact]
     public void Custom_edge_and_speed_values_flow_to_JS()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         var module = ctx.JSInterop.SetupModule(ModulePath);
         module.SetupVoid("enableAutoScroll", _ => true).SetVoidResult();
 
-        ctx.RenderComponent<AtomDropzone<Card>>(p => p
+        ctx.Render<AtomDropzone<Card>>(p => p
             .Add(x => x.Items, new List<Card> { new("A") })
             .Add(x => x.ChildContent, CardTemplate)
             .Add(x => x.AutoScrollEdgeSize, 120)
@@ -55,9 +55,9 @@ public class AutoScrollTests
     [Fact]
     public void AutoScroll_false_skips_module_import_entirely()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         // Strict mode (default) — any JS call throws. Ensures no import happens.
-        ctx.RenderComponent<AtomDropzone<Card>>(p => p
+        ctx.Render<AtomDropzone<Card>>(p => p
             .Add(x => x.Items, new List<Card> { new("A") })
             .Add(x => x.ChildContent, CardTemplate)
             .Add(x => x.AutoScroll, false));
@@ -68,12 +68,12 @@ public class AutoScrollTests
     [Fact]
     public async Task Dispose_calls_disableAutoScroll_and_disposes_module()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         var module = ctx.JSInterop.SetupModule(ModulePath);
         module.SetupVoid("enableAutoScroll", _ => true).SetVoidResult();
         module.SetupVoid("disableAutoScroll", _ => true).SetVoidResult();
 
-        var cut = ctx.RenderComponent<AtomDropzone<Card>>(p => p
+        var cut = ctx.Render<AtomDropzone<Card>>(p => p
             .Add(x => x.Items, new List<Card> { new("A") })
             .Add(x => x.ChildContent, CardTemplate));
 
@@ -89,14 +89,14 @@ public class AutoScrollTests
     [Fact]
     public async Task Dispose_swallows_JSDisconnectedException_during_teardown()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         var module = ctx.JSInterop.SetupModule(ModulePath);
         module.SetupVoid("enableAutoScroll", _ => true).SetVoidResult();
         // disableAutoScroll throws on invoke — simulates a circuit that died between mount and dispose.
         module.SetupVoid("disableAutoScroll", _ => true)
               .SetException(new JSDisconnectedException("circuit gone"));
 
-        var cut = ctx.RenderComponent<AtomDropzone<Card>>(p => p
+        var cut = ctx.Render<AtomDropzone<Card>>(p => p
             .Add(x => x.Items, new List<Card> { new("A") })
             .Add(x => x.ChildContent, CardTemplate));
 
@@ -109,12 +109,12 @@ public class AutoScrollTests
     [Fact]
     public async Task Dispose_is_idempotent_when_called_twice()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         var module = ctx.JSInterop.SetupModule(ModulePath);
         module.SetupVoid("enableAutoScroll", _ => true).SetVoidResult();
         module.SetupVoid("disableAutoScroll", _ => true).SetVoidResult();
 
-        var cut = ctx.RenderComponent<AtomDropzone<Card>>(p => p
+        var cut = ctx.Render<AtomDropzone<Card>>(p => p
             .Add(x => x.Items, new List<Card> { new("A") })
             .Add(x => x.ChildContent, CardTemplate));
 
@@ -128,12 +128,12 @@ public class AutoScrollTests
     {
         // Simulates SSR / prerender / JS-unavailable environment: the import throws
         // InvalidOperationException. The component must render normally regardless.
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         var module = ctx.JSInterop.SetupModule(ModulePath);
         module.SetupVoid("enableAutoScroll", _ => true)
               .SetException(new InvalidOperationException("JS interop not available (prerender)"));
 
-        var cut = ctx.RenderComponent<AtomDropzone<Card>>(p => p
+        var cut = ctx.Render<AtomDropzone<Card>>(p => p
             .Add(x => x.Items, new List<Card> { new("A") })
             .Add(x => x.ChildContent, CardTemplate));
 

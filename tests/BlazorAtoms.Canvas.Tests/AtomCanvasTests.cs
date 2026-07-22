@@ -2,14 +2,14 @@ namespace BlazorAtoms.Canvas.Tests;
 
 // Markup contract + the JS-interop wiring (mocked). The pointer gesture itself is JS and can't run in
 // bUnit, so we exercise the [JSInvokable] callbacks directly — that is the JS -> C# half of the contract.
-public class AtomCanvasTests : TestContext
+public class AtomCanvasTests : BunitContext
 {
     public AtomCanvasTests() => JSInterop.Mode = JSRuntimeMode.Loose;
 
     [Fact]
     public void Renders_canvas_with_size_role_and_aria()
     {
-        var cut = RenderComponent<AtomCanvas>(p => p
+        var cut = Render<AtomCanvas>(p => p
             .Add(c => c.Width, 320)
             .Add(c => c.Height, 200)
             .Add(c => c.AriaLabel, "Sketch"));
@@ -29,14 +29,14 @@ public class AtomCanvasTests : TestContext
     [InlineData(CanvasMode.Pan, "pan")]
     public void Mode_sets_data_mode_attribute(CanvasMode mode, string expected)
     {
-        var cut = RenderComponent<AtomCanvas>(p => p.Add(c => c.Mode, mode));
+        var cut = Render<AtomCanvas>(p => p.Add(c => c.Mode, mode));
         Assert.Equal(expected, cut.Find("canvas").GetAttribute("data-mode"));
     }
 
     [Fact]
     public void Size_and_background_emit_style_variables()
     {
-        var cut = RenderComponent<AtomCanvas>(p => p
+        var cut = Render<AtomCanvas>(p => p
             .Add(c => c.Width, 100)
             .Add(c => c.Height, 50)
             .Add(c => c.BackgroundColor, "#eef"));
@@ -50,14 +50,14 @@ public class AtomCanvasTests : TestContext
     [Fact]
     public void Disabled_sets_data_disabled()
     {
-        var cut = RenderComponent<AtomCanvas>(p => p.Add(c => c.Disabled, true));
+        var cut = Render<AtomCanvas>(p => p.Add(c => c.Disabled, true));
         Assert.Equal("true", cut.Find("canvas").GetAttribute("data-disabled"));
     }
 
     [Fact]
     public void Imports_its_own_js_module_on_first_render()
     {
-        RenderComponent<AtomCanvas>();
+        Render<AtomCanvas>();
 
         Assert.Contains(JSInterop.Invocations, i =>
             i.Identifier == "import" &&
@@ -69,7 +69,7 @@ public class AtomCanvasTests : TestContext
     public async Task OnStrokeCommitted_appends_path_and_raises_changed_with_new_list()
     {
         IReadOnlyList<CanvasShape>? captured = null;
-        var cut = RenderComponent<AtomCanvas>(p => p
+        var cut = Render<AtomCanvas>(p => p
             .Add(c => c.Mode, CanvasMode.Draw)
             .Add(c => c.Shapes, new List<CanvasShape>())
             .Add(c => c.ShapesChanged,
@@ -88,7 +88,7 @@ public class AtomCanvasTests : TestContext
     {
         var rect = new CanvasRect(10, 10, 40, 20);
         IReadOnlyList<CanvasShape>? captured = null;
-        var cut = RenderComponent<AtomCanvas>(p => p
+        var cut = Render<AtomCanvas>(p => p
             .Add(c => c.Mode, CanvasMode.Select)
             .Add(c => c.Shapes, new List<CanvasShape> { rect })
             .Add(c => c.ShapesChanged,
@@ -106,7 +106,7 @@ public class AtomCanvasTests : TestContext
     public async Task OnShapeClicked_raises_callback_with_id()
     {
         string? clicked = null;
-        var cut = RenderComponent<AtomCanvas>(p => p
+        var cut = Render<AtomCanvas>(p => p
             .Add(c => c.OnShapeClick, EventCallback.Factory.Create<string>(this, id => clicked = id)));
 
         await cut.InvokeAsync(() => cut.Instance.OnShapeClicked("s123"));
@@ -118,7 +118,7 @@ public class AtomCanvasTests : TestContext
     public async Task NotifyShapeSelected_raises_OnShapeSelected_including_null()
     {
         string? sel = "seed";
-        var cut = RenderComponent<AtomCanvas>(p => p
+        var cut = Render<AtomCanvas>(p => p
             .Add(c => c.Mode, CanvasMode.Select)
             .Add(c => c.OnShapeSelected, EventCallback.Factory.Create<string?>(this, id => sel = id)));
 
@@ -133,7 +133,7 @@ public class AtomCanvasTests : TestContext
     public async Task NotifyCanvasClick_raises_OnCanvasClick_with_world_point()
     {
         CanvasPoint? pt = null;
-        var cut = RenderComponent<AtomCanvas>(p => p
+        var cut = Render<AtomCanvas>(p => p
             .Add(c => c.OnCanvasClick, EventCallback.Factory.Create<CanvasPoint>(this, w => pt = w)));
 
         await cut.InvokeAsync(() => cut.Instance.NotifyCanvasClick(12, 34));
@@ -147,7 +147,7 @@ public class AtomCanvasTests : TestContext
     public async Task NotifyViewChanged_raises_OnViewChanged()
     {
         CanvasView? v = null;
-        var cut = RenderComponent<AtomCanvas>(p => p
+        var cut = Render<AtomCanvas>(p => p
             .Add(c => c.OnViewChanged, EventCallback.Factory.Create<CanvasView>(this, x => v = x)));
 
         await cut.InvokeAsync(() => cut.Instance.NotifyViewChanged(5, 6, 2));

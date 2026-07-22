@@ -1,6 +1,6 @@
 namespace BlazorAtoms.Clocks.Tests;
 
-public class AtomClockPairTests : TestContext
+public class AtomClockPairTests : BunitContext
 {
     // Default SecondaryKind is Browser → touches JS; Loose mode keeps it from throwing.
     public AtomClockPairTests() => JSInterop.Mode = JSRuntimeMode.Loose;
@@ -8,7 +8,7 @@ public class AtomClockPairTests : TestContext
     [Fact]
     public void Renders_two_clocks_and_a_divider()
     {
-        var cut = RenderComponent<AtomClockPair>(p => p.Add(c => c.Live, false));
+        var cut = Render<AtomClockPair>(p => p.Add(c => c.Live, false));
 
         Assert.Equal(2, cut.FindAll(".atom-clock").Count);
         Assert.NotNull(cut.Find(".atom-clock-divider"));
@@ -17,7 +17,7 @@ public class AtomClockPairTests : TestContext
     [Fact]
     public void Default_labels_are_server_and_local()
     {
-        var cut = RenderComponent<AtomClockPair>(p => p.Add(c => c.Live, false));
+        var cut = Render<AtomClockPair>(p => p.Add(c => c.Live, false));
 
         var labels = cut.FindAll(".atom-clock-label");
         Assert.Equal("Server", labels[0].TextContent);
@@ -27,10 +27,10 @@ public class AtomClockPairTests : TestContext
     [Fact]
     public void Layout_sets_data_attribute()
     {
-        var side = RenderComponent<AtomClockPair>(p => p.Add(c => c.Live, false));
+        var side = Render<AtomClockPair>(p => p.Add(c => c.Live, false));
         Assert.Equal("side-by-side", side.Find(".atom-clock-pair").GetAttribute("data-layout"));
 
-        var stacked = RenderComponent<AtomClockPair>(p => p
+        var stacked = Render<AtomClockPair>(p => p
             .Add(c => c.Layout, ClockLayout.Stacked)
             .Add(c => c.Live, false));
         Assert.Equal("stacked", stacked.Find(".atom-clock-pair").GetAttribute("data-layout"));
@@ -39,7 +39,7 @@ public class AtomClockPairTests : TestContext
     [Fact]
     public void Custom_kinds_and_labels_flow_to_children()
     {
-        var cut = RenderComponent<AtomClockPair>(p => p
+        var cut = Render<AtomClockPair>(p => p
             .Add(c => c.PrimaryKind, ClockKind.Utc)
             .Add(c => c.PrimaryLabel, "UTC")
             .Add(c => c.SecondaryKind, ClockKind.Utc)
@@ -56,7 +56,7 @@ public class AtomClockPairTests : TestContext
     [Fact]
     public void Gap_token_emitted_when_set()
     {
-        var cut = RenderComponent<AtomClockPair>(p => p
+        var cut = Render<AtomClockPair>(p => p
             .Add(c => c.Gap, 20)
             .Add(c => c.Live, false));
 

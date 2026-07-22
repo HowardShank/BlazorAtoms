@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Components.Forms;
 
 namespace BlazorAtoms.Data.Tests;
 
-public class AtomDataHasherTests : TestContext
+public class AtomDataHasherTests : BunitContext
 {
     // Enum-name -> data-attribute-string wire form. Data-driven so new HashAlgorithmKind values
     // are exercised automatically the moment the dictionary grows a matching entry.
@@ -26,7 +26,7 @@ public class AtomDataHasherTests : TestContext
     [Fact]
     public void Renders_textarea_by_default()
     {
-        var cut = RenderComponent<AtomDataHasher>();
+        var cut = Render<AtomDataHasher>();
 
         Assert.NotNull(cut.Find("textarea"));
         Assert.Empty(cut.FindAll("input[type=text]"));
@@ -35,7 +35,7 @@ public class AtomDataHasherTests : TestContext
     [Fact]
     public void Multiline_false_renders_input_type_text()
     {
-        var cut = RenderComponent<AtomDataHasher>(p => p.Add(c => c.Multiline, false));
+        var cut = Render<AtomDataHasher>(p => p.Add(c => c.Multiline, false));
 
         Assert.NotNull(cut.Find("input[type=text]"));
         Assert.Empty(cut.FindAll("textarea"));
@@ -44,21 +44,21 @@ public class AtomDataHasherTests : TestContext
     [Fact]
     public void Default_algorithm_is_crc32()
     {
-        var cut = RenderComponent<AtomDataHasher>();
+        var cut = Render<AtomDataHasher>();
         Assert.Equal("crc32", cut.Find(".atom-data-hasher").GetAttribute("data-algorithm"));
     }
 
     [Fact]
     public void Show_algorithm_picker_default_true_renders_select()
     {
-        var cut = RenderComponent<AtomDataHasher>();
+        var cut = Render<AtomDataHasher>();
         Assert.NotNull(cut.Find(".atom-data-hasher-select"));
     }
 
     [Fact]
     public void Show_algorithm_picker_false_omits_select()
     {
-        var cut = RenderComponent<AtomDataHasher>(p => p.Add(c => c.ShowAlgorithmPicker, false));
+        var cut = Render<AtomDataHasher>(p => p.Add(c => c.ShowAlgorithmPicker, false));
         Assert.Empty(cut.FindAll(".atom-data-hasher-select"));
     }
 
@@ -68,7 +68,7 @@ public class AtomDataHasherTests : TestContext
     [MemberData(nameof(AllAlgos))]
     public void Algorithm_maps_to_data_attribute(HashAlgorithmKind alg, string expected)
     {
-        var cut = RenderComponent<AtomDataHasher>(p => p.Add(c => c.Algorithm, alg));
+        var cut = Render<AtomDataHasher>(p => p.Add(c => c.Algorithm, alg));
         Assert.Equal(expected, cut.Find(".atom-data-hasher").GetAttribute("data-algorithm"));
     }
 
@@ -77,7 +77,7 @@ public class AtomDataHasherTests : TestContext
     [Fact]
     public void Result_updates_when_value_provided()
     {
-        var cut = RenderComponent<AtomDataHasher>(p => p
+        var cut = Render<AtomDataHasher>(p => p
             .Add(c => c.Value, "123456789")
             .Add(c => c.Algorithm, HashAlgorithmKind.Crc32));
 
@@ -89,7 +89,7 @@ public class AtomDataHasherTests : TestContext
     public void Result_matches_computer_output(HashAlgorithmKind alg, string _)
     {
         const string input = "test-payload";
-        var cut = RenderComponent<AtomDataHasher>(p => p
+        var cut = Render<AtomDataHasher>(p => p
             .Add(c => c.Value, input)
             .Add(c => c.Algorithm, alg));
 
@@ -100,14 +100,14 @@ public class AtomDataHasherTests : TestContext
     [Fact]
     public void Result_empty_when_value_null_or_empty()
     {
-        var cut = RenderComponent<AtomDataHasher>(p => p.Add(c => c.Value, string.Empty));
+        var cut = Render<AtomDataHasher>(p => p.Add(c => c.Value, string.Empty));
         Assert.Equal("true", cut.Find(".atom-data-hasher-result-value").GetAttribute("data-empty"));
     }
 
     [Fact]
     public void Result_public_property_matches_rendered_value()
     {
-        var cut = RenderComponent<AtomDataHasher>(p => p
+        var cut = Render<AtomDataHasher>(p => p
             .Add(c => c.Value, "abc")
             .Add(c => c.Algorithm, HashAlgorithmKind.Sha256));
 
@@ -120,7 +120,7 @@ public class AtomDataHasherTests : TestContext
     public void Two_way_binding_updates_value_on_input()
     {
         string? bound = null;
-        var cut = RenderComponent<AtomDataHasher>(p => p
+        var cut = Render<AtomDataHasher>(p => p
             .Add(c => c.Value, "hello")
             .Add(c => c.ValueChanged, EventCallback.Factory.Create<string?>(this, v => bound = v)));
 
@@ -132,7 +132,7 @@ public class AtomDataHasherTests : TestContext
     public void Two_way_binding_algorithm_updates_on_select_change()
     {
         HashAlgorithmKind? bound = null;
-        var cut = RenderComponent<AtomDataHasher>(p => p
+        var cut = Render<AtomDataHasher>(p => p
             .Add(c => c.Algorithm, HashAlgorithmKind.Crc32)
             .Add(c => c.AlgorithmChanged, EventCallback.Factory.Create<HashAlgorithmKind>(this, v => bound = v)));
 
@@ -145,10 +145,10 @@ public class AtomDataHasherTests : TestContext
     [Fact]
     public void Label_renders_when_set_and_omitted_when_null()
     {
-        var withLabel = RenderComponent<AtomDataHasher>(p => p.Add(c => c.Label, "Payload"));
+        var withLabel = Render<AtomDataHasher>(p => p.Add(c => c.Label, "Payload"));
         Assert.Contains("Payload", withLabel.Find("label").TextContent);
 
-        var without = RenderComponent<AtomDataHasher>();
+        var without = Render<AtomDataHasher>();
         // Algo picker label is a <label> too; expect zero visible top-level Label, so the
         // OUTER form-label class ".atom-data-hasher-label" must not appear.
         Assert.Empty(without.FindAll(".atom-data-hasher-label"));
@@ -157,7 +157,7 @@ public class AtomDataHasherTests : TestContext
     [Fact]
     public void LabelCol_and_ControlCol_apply_classes()
     {
-        var cut = RenderComponent<AtomDataHasher>(p => p
+        var cut = Render<AtomDataHasher>(p => p
             .Add(c => c.Label, "L")
             .Add(c => c.LabelCol, "custom-label-col")
             .Add(c => c.ControlCol, "custom-control-col"));
@@ -169,14 +169,14 @@ public class AtomDataHasherTests : TestContext
     [Fact]
     public void HelpText_renders_in_subtext()
     {
-        var cut = RenderComponent<AtomDataHasher>(p => p.Add(c => c.HelpText, "Digest updates live."));
+        var cut = Render<AtomDataHasher>(p => p.Add(c => c.HelpText, "Digest updates live."));
         Assert.Contains("Digest updates live.", cut.Find(".atom-data-hasher-subtext").TextContent);
     }
 
     [Fact]
     public void AlgorithmLabel_and_ResultLabel_customize_visible_text()
     {
-        var cut = RenderComponent<AtomDataHasher>(p => p
+        var cut = Render<AtomDataHasher>(p => p
             .Add(c => c.AlgorithmLabel, "Engine")
             .Add(c => c.ResultLabel, "Digest"));
 
@@ -187,14 +187,14 @@ public class AtomDataHasherTests : TestContext
     [Fact]
     public void Placeholder_flows_through_to_field()
     {
-        var cut = RenderComponent<AtomDataHasher>(p => p.Add(c => c.Placeholder, "type here"));
+        var cut = Render<AtomDataHasher>(p => p.Add(c => c.Placeholder, "type here"));
         Assert.Equal("type here", cut.Find("textarea").GetAttribute("placeholder"));
     }
 
     [Fact]
     public void AriaLabel_takes_precedence_over_Label()
     {
-        var cut = RenderComponent<AtomDataHasher>(p => p
+        var cut = Render<AtomDataHasher>(p => p
             .Add(c => c.Label, "LabelText")
             .Add(c => c.AriaLabel, "Explicit ARIA"));
 
@@ -204,14 +204,14 @@ public class AtomDataHasherTests : TestContext
     [Fact]
     public void AriaLabel_falls_back_to_Label_when_null()
     {
-        var cut = RenderComponent<AtomDataHasher>(p => p.Add(c => c.Label, "LabelText"));
+        var cut = Render<AtomDataHasher>(p => p.Add(c => c.Label, "LabelText"));
         Assert.Equal("LabelText", cut.Find("textarea").GetAttribute("aria-label"));
     }
 
     [Fact]
     public void Rows_flows_through_to_textarea()
     {
-        var cut = RenderComponent<AtomDataHasher>(p => p.Add(c => c.Rows, 9));
+        var cut = Render<AtomDataHasher>(p => p.Add(c => c.Rows, 9));
         Assert.Equal("9", cut.Find("textarea").GetAttribute("rows"));
     }
 
@@ -221,7 +221,7 @@ public class AtomDataHasherTests : TestContext
     public void Disabled_greys_out_and_blocks_input()
     {
         string? changed = null;
-        var cut = RenderComponent<AtomDataHasher>(p => p
+        var cut = Render<AtomDataHasher>(p => p
             .Add(c => c.Disabled, true)
             .Add(c => c.Value, "before")
             .Add(c => c.ValueChanged, EventCallback.Factory.Create<string?>(this, v => changed = v)));
@@ -235,7 +235,7 @@ public class AtomDataHasherTests : TestContext
     [Fact]
     public void ReadOnly_equates_to_disabled()
     {
-        var cut = RenderComponent<AtomDataHasher>(p => p.Add(c => c.ReadOnly, true));
+        var cut = Render<AtomDataHasher>(p => p.Add(c => c.ReadOnly, true));
         Assert.Equal("disabled", cut.Find(".atom-data-hasher").GetAttribute("data-state"));
         Assert.NotNull(cut.Find("textarea").GetAttribute("disabled"));
     }
@@ -243,7 +243,7 @@ public class AtomDataHasherTests : TestContext
     [Fact]
     public void Visible_false_hides_via_display_none()
     {
-        var cut = RenderComponent<AtomDataHasher>(p => p.Add(c => c.Visible, false));
+        var cut = Render<AtomDataHasher>(p => p.Add(c => c.Visible, false));
         Assert.Contains("display:none", cut.Find(".atom-data-hasher").GetAttribute("style") ?? "");
     }
 
@@ -252,14 +252,14 @@ public class AtomDataHasherTests : TestContext
     [Fact]
     public void Width_emits_custom_property()
     {
-        var cut = RenderComponent<AtomDataHasher>(p => p.Add(c => c.Width, 640d));
+        var cut = Render<AtomDataHasher>(p => p.Add(c => c.Width, 640d));
         Assert.Contains("--hasher-width:640px", cut.Find(".atom-data-hasher").GetAttribute("style") ?? "");
     }
 
     [Fact]
     public void ResultColor_and_ResultBackgroundColor_emit_custom_properties()
     {
-        var cut = RenderComponent<AtomDataHasher>(p => p
+        var cut = Render<AtomDataHasher>(p => p
             .Add(c => c.ResultColor, "#00ff41")
             .Add(c => c.ResultBackgroundColor, "#000"));
 
@@ -271,7 +271,7 @@ public class AtomDataHasherTests : TestContext
     [Fact]
     public void ResultColor_defaults_absent_when_unset()
     {
-        var cut = RenderComponent<AtomDataHasher>();
+        var cut = Render<AtomDataHasher>();
         var style = cut.Find(".atom-data-hasher").GetAttribute("style") ?? "";
         Assert.DoesNotContain("--hasher-result-color", style);
         Assert.DoesNotContain("--hasher-result-bg", style);
@@ -282,12 +282,12 @@ public class AtomDataHasherTests : TestContext
     [Fact]
     public void Encoding_change_alters_digest()
     {
-        var utf8 = RenderComponent<AtomDataHasher>(p => p
+        var utf8 = Render<AtomDataHasher>(p => p
             .Add(c => c.Value, "é")
             .Add(c => c.Algorithm, HashAlgorithmKind.Sha256)
             .Add(c => c.Encoding, Encoding.UTF8));
 
-        var latin1 = RenderComponent<AtomDataHasher>(p => p
+        var latin1 = Render<AtomDataHasher>(p => p
             .Add(c => c.Value, "é")
             .Add(c => c.Algorithm, HashAlgorithmKind.Sha256)
             .Add(c => c.Encoding, Encoding.Latin1));
@@ -308,7 +308,7 @@ public class AtomDataHasherTests : TestContext
         messages.Add(editContext.Field(nameof(TestModel.Text)), "Required");
         editContext.NotifyValidationStateChanged();
 
-        var cut = RenderComponent<AtomDataHasher>(p => p
+        var cut = Render<AtomDataHasher>(p => p
             .AddCascadingValue(editContext)
             .Add(c => c.Value, model.Text)
             .Add(c => c.ValidationFor, () => model.Text));
@@ -329,7 +329,7 @@ public class AtomDataHasherTests : TestContext
 
         Expression<Func<string?>> valueExpr = () => model.Text;
 
-        var cut = RenderComponent<AtomDataHasher>(p => p
+        var cut = Render<AtomDataHasher>(p => p
             .AddCascadingValue(editContext)
             .Add(c => c.Value, model.Text)
             .Add(c => c.ValueExpression, valueExpr));
@@ -342,7 +342,7 @@ public class AtomDataHasherTests : TestContext
     [Fact]
     public void Result_panel_is_polite_live_region()
     {
-        var cut = RenderComponent<AtomDataHasher>();
+        var cut = Render<AtomDataHasher>();
         var panel = cut.Find(".atom-data-hasher-result");
         Assert.Equal("status", panel.GetAttribute("role"));
         Assert.Equal("polite", panel.GetAttribute("aria-live"));
@@ -351,7 +351,7 @@ public class AtomDataHasherTests : TestContext
     [Fact]
     public void Field_disables_native_spellcheck()
     {
-        var cut = RenderComponent<AtomDataHasher>();
+        var cut = Render<AtomDataHasher>();
         Assert.Equal("false", cut.Find("textarea").GetAttribute("spellcheck"));
     }
 

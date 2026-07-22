@@ -261,11 +261,11 @@ function pointerDown(el, st, e) {
         st.drawing = true;
         st.current = [localPos(el, st, e)];
         capture(el, e);
-        if (st.dotNet) st.dotNet.invokeMethodAsync("NotifyDrawStart");
+        if (st.dotNet) st.dotNet.invokeMethodAsync("NotifyDrawStart").catch(() => { });
     } else if (m === "select") {
         const hit = hitTest(st, localPos(el, st, e));
         st.selectedId = hit ? hit.id : null;
-        if (st.dotNet) st.dotNet.invokeMethodAsync("NotifyShapeSelected", st.selectedId);
+        if (st.dotNet) st.dotNet.invokeMethodAsync("NotifyShapeSelected", st.selectedId).catch(() => { });
         if (hit) {
             st.drawing = true;
             st.drag = { id: hit.id, dx: 0, dy: 0, lastX: e.clientX, lastY: e.clientY };
@@ -312,24 +312,24 @@ function pointerUp(el, st, e) {
         const pts = st.current.map(p => ({ x: p.x, y: p.y }));
         st.current = null;
         st.drawing = false;
-        if (st.dotNet && pts.length) st.dotNet.invokeMethodAsync("OnStrokeCommitted", pts);
+        if (st.dotNet && pts.length) st.dotNet.invokeMethodAsync("OnStrokeCommitted", pts).catch(() => { });
     } else if (st.mode === "select" && st.drag) {
         const d = st.drag;
         st.drag = null;
         st.drawing = false;
-        if (st.dotNet && (d.dx || d.dy)) st.dotNet.invokeMethodAsync("OnShapeMoved", d.id, d.dx, d.dy);
+        if (st.dotNet && (d.dx || d.dy)) st.dotNet.invokeMethodAsync("OnShapeMoved", d.id, d.dx, d.dy).catch(() => { });
     } else if (st.mode === "pan" && st.pan) {
         st.pan = null;
         st.drawing = false;
-        if (st.dotNet) st.dotNet.invokeMethodAsync("NotifyViewChanged", st.panX, st.panY, st.scale);
+        if (st.dotNet) st.dotNet.invokeMethodAsync("NotifyViewChanged", st.panX, st.panY, st.scale).catch(() => { });
     } else if (st.mode === "static" && st.click) {
         const c = st.click;
         st.click = null;
         st.drawing = false;
         if (!c.moved && st.dotNet) {
             const hit = hitTest(st, c.world, true);
-            if (hit) st.dotNet.invokeMethodAsync("OnShapeClicked", hit.id);
-            else st.dotNet.invokeMethodAsync("NotifyCanvasClick", c.world.x, c.world.y);
+            if (hit) st.dotNet.invokeMethodAsync("OnShapeClicked", hit.id).catch(() => { });
+            else st.dotNet.invokeMethodAsync("NotifyCanvasClick", c.world.x, c.world.y).catch(() => { });
         }
     } else {
         st.drawing = false;

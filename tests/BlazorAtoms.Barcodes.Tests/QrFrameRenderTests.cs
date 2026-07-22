@@ -15,9 +15,9 @@ public class QrFrameRenderTests
     [InlineData(FrameShape.Torn, "<rect")]
     public void FrameShape_emits_expected_element(FrameShape shape, string mustContain)
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
-        var cut = ctx.RenderComponent<AtomQrCode>(p => p
+        var cut = ctx.Render<AtomQrCode>(p => p
             .Add(x => x.Value, "hi")
             .Add(x => x.FrameShape, shape));
         Assert.Contains(mustContain, cut.Instance.GetSvg());
@@ -26,9 +26,9 @@ public class QrFrameRenderTests
     [Fact]
     public void No_frame_by_default_backwards_compatible()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
-        var cut = ctx.RenderComponent<AtomQrCode>(p => p.Add(x => x.Value, "hi"));
+        var cut = ctx.Render<AtomQrCode>(p => p.Add(x => x.Value, "hi"));
         // Default FrameShape.None → no filter defs, no banner text.
         var svg = cut.Instance.GetSvg();
         Assert.DoesNotContain("<filter", svg);
@@ -43,9 +43,9 @@ public class QrFrameRenderTests
     [InlineData(FrameBanner.Inline)]
     public void FrameBanner_emits_text(FrameBanner banner)
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
-        var cut = ctx.RenderComponent<AtomQrCode>(p => p
+        var cut = ctx.Render<AtomQrCode>(p => p
             .Add(x => x.Value, "hi")
             .Add(x => x.FrameShape, FrameShape.Square)
             .Add(x => x.FrameBanner, banner)
@@ -56,9 +56,9 @@ public class QrFrameRenderTests
     [Fact]
     public void FrameShadow_emits_filter_def()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
-        var cut = ctx.RenderComponent<AtomQrCode>(p => p
+        var cut = ctx.Render<AtomQrCode>(p => p
             .Add(x => x.Value, "hi")
             .Add(x => x.FrameShape, FrameShape.Rounded)
             .Add(x => x.FrameShadow, true));
@@ -70,9 +70,9 @@ public class QrFrameRenderTests
     [Fact]
     public void FrameInverted_fills_with_stroke_color()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
-        var cut = ctx.RenderComponent<AtomQrCode>(p => p
+        var cut = ctx.Render<AtomQrCode>(p => p
             .Add(x => x.Value, "hi")
             .Add(x => x.FrameShape, FrameShape.Rounded)
             .Add(x => x.FrameInverted, true)

@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace BlazorAtoms.Avatars.Tests;
 
-public class AtomAvatarGroupTests : TestContext
+public class AtomAvatarGroupTests : BunitContext
 {
     private static readonly IReadOnlyList<string> Four =
         new[] { "Ada Lovelace", "Grace Hopper", "Alan Turing", "Katherine Johnson" };
@@ -11,14 +11,14 @@ public class AtomAvatarGroupTests : TestContext
     [Fact]
     public void Names_render_one_avatar_each_when_no_max()
     {
-        var cut = RenderComponent<AtomAvatarGroup>(p => p.Add(c => c.Names, Four));
+        var cut = Render<AtomAvatarGroup>(p => p.Add(c => c.Names, Four));
         Assert.Equal(4, cut.FindAll(".atom-avatar").Count);
     }
 
     [Fact]
     public void Max_caps_and_adds_overflow_chip()
     {
-        var cut = RenderComponent<AtomAvatarGroup>(p => p
+        var cut = Render<AtomAvatarGroup>(p => p
             .Add(c => c.Names, Four)
             .Add(c => c.Max, 2));
 
@@ -31,7 +31,7 @@ public class AtomAvatarGroupTests : TestContext
     [Fact]
     public void No_overflow_chip_when_within_max()
     {
-        var cut = RenderComponent<AtomAvatarGroup>(p => p
+        var cut = Render<AtomAvatarGroup>(p => p
             .Add(c => c.Names, Four)
             .Add(c => c.Max, 4));
         Assert.DoesNotContain(cut.FindAll(".atom-avatar-initials").Select(e => e.TextContent), t => t.StartsWith("+"));
@@ -40,7 +40,7 @@ public class AtomAvatarGroupTests : TestContext
     [Fact]
     public void ChildContent_used_when_no_names()
     {
-        var cut = RenderComponent<AtomAvatarGroup>(p => p
+        var cut = Render<AtomAvatarGroup>(p => p
             .AddChildContent<AtomAvatar>(a => a.Add(c => c.Src, "/a.jpg"))
             .AddChildContent<AtomAvatar>(a => a.Add(c => c.Src, "/b.jpg")));
         Assert.Equal(2, cut.FindAll(".atom-avatar").Count);
@@ -49,7 +49,7 @@ public class AtomAvatarGroupTests : TestContext
     [Fact]
     public void Root_emits_overlap_and_ring_tokens()
     {
-        var cut = RenderComponent<AtomAvatarGroup>(p => p
+        var cut = Render<AtomAvatarGroup>(p => p
             .Add(c => c.Names, Four)
             .Add(c => c.Overlap, 16)
             .Add(c => c.RingWidth, 3)

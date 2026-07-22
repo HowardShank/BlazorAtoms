@@ -7,7 +7,7 @@ namespace BlazorAtoms.Highlights.Tests;
 // real. We assert the JS-interop contract (module import + the highlightTextInElement call and its
 // arguments) and prove the component doesn't care about nesting depth by rendering an actual
 // Grandparent -> Parent -> Child component chain as its ChildContent.
-public class AtomHighlighterTests : TestContext
+public class AtomHighlighterTests : BunitContext
 {
     public AtomHighlighterTests() => JSInterop.Mode = JSRuntimeMode.Loose;
 
@@ -16,7 +16,7 @@ public class AtomHighlighterTests : TestContext
     [Fact]
     public void Imports_its_own_js_module_on_first_render()
     {
-        RenderComponent<AtomHighlighter>(p => p.AddChildContent("hello"));
+        Render<AtomHighlighter>(p => p.AddChildContent("hello"));
 
         Assert.Contains(JSInterop.Invocations, i =>
             i.Identifier == "import" &&
@@ -30,7 +30,7 @@ public class AtomHighlighterTests : TestContext
         JSInterop.SetupModule(ModulePath);
         var keywords = new[] { "Blazor", "C#" };
 
-        RenderComponent<AtomHighlighter>(p => p
+        Render<AtomHighlighter>(p => p
             .Add(c => c.Keywords, keywords)
             .Add(c => c.HighlightClass, "my-mark")
             .AddChildContent("Build with Blazor."));
@@ -48,7 +48,7 @@ public class AtomHighlighterTests : TestContext
         // left over from a previous non-empty Keywords value would never get cleaned up.
         JSInterop.SetupModule(ModulePath);
 
-        RenderComponent<AtomHighlighter>(p => p.AddChildContent("Build with Blazor."));
+        Render<AtomHighlighter>(p => p.AddChildContent("Build with Blazor."));
 
         var call = Assert.Single(JSInterop.Invocations, i => i.Identifier == "highlightTextInElement");
         Assert.Empty(call.Arguments[1] as string[] ?? []);
@@ -59,7 +59,7 @@ public class AtomHighlighterTests : TestContext
     {
         JSInterop.SetupModule(ModulePath);
 
-        RenderComponent<AtomHighlighter>(p => p
+        Render<AtomHighlighter>(p => p
             .Add(c => c.Keywords, new[] { "Blazor" })
             .AddChildContent("Build with Blazor."));
 
@@ -80,7 +80,7 @@ public class AtomHighlighterTests : TestContext
     {
         JSInterop.SetupModule(ModulePath);
 
-        RenderComponent<AtomHighlighter>(p => p
+        Render<AtomHighlighter>(p => p
             .Add(c => c.Keywords, new[] { "Blazor" })
             .Add(c => c.HighlightStyle, style)
             .AddChildContent("Build with Blazor."));
@@ -94,7 +94,7 @@ public class AtomHighlighterTests : TestContext
     {
         JSInterop.SetupModule(ModulePath);
 
-        RenderComponent<AtomHighlighter>(p => p
+        Render<AtomHighlighter>(p => p
             .Add(c => c.Keywords, new[] { "Blazor" })
             .Add(c => c.CaseSensitive, true)
             .Add(c => c.WholeWord, true)
@@ -113,14 +113,14 @@ public class AtomHighlighterTests : TestContext
         // unmark() could strip an inner instance's marks just because they share HighlightClass.
         JSInterop.SetupModule(ModulePath);
 
-        RenderComponent<AtomHighlighter>(p => p
+        Render<AtomHighlighter>(p => p
             .Add(c => c.Keywords, new[] { "Blazor" })
             .AddChildContent("Build with Blazor."));
-        RenderComponent<AtomHighlighter>(p => p
+        Render<AtomHighlighter>(p => p
             .Add(c => c.Keywords, new[] { "Blazor" })
             .AddChildContent("Build with Blazor."));
 
-        // bUnit renders synchronously, so each RenderComponent call above fully completes
+        // bUnit renders synchronously, so each Render call above fully completes
         // (including its own OnAfterRenderAsync) before the next one starts — invocation order
         // reflects render order, one per instance.
         var calls = JSInterop.Invocations.Where(i => i.Identifier == "highlightTextInElement").ToList();
@@ -140,13 +140,13 @@ public class AtomHighlighterTests : TestContext
         // across a given instance's lifetime to find and clean up that instance's own previous marks.
         JSInterop.SetupModule(ModulePath);
 
-        var cut = RenderComponent<AtomHighlighter>(p => p
+        var cut = Render<AtomHighlighter>(p => p
             .Add(c => c.Keywords, new[] { "Blazor" })
             .AddChildContent("Build with Blazor."));
         var firstOwner = ReadOption<string>(
             JSInterop.Invocations.Last(i => i.Identifier == "highlightTextInElement").Arguments[3]!, "owner");
 
-        cut.SetParametersAndRender(p => p.Add(c => c.Keywords, new[] { "Blazor", "C#" }));
+        cut.Render(p => p.Add(c => c.Keywords, new[] { "Blazor", "C#" }));
         var secondOwner = ReadOption<string>(
             JSInterop.Invocations.Last(i => i.Identifier == "highlightTextInElement").Arguments[3]!, "owner");
 
@@ -158,7 +158,7 @@ public class AtomHighlighterTests : TestContext
     {
         JSInterop.SetupModule(ModulePath);
 
-        var cut = RenderComponent<AtomHighlighter>(p => p
+        var cut = Render<AtomHighlighter>(p => p
             .Add(c => c.Background, "#112233")
             .Add(c => c.Color, "#ffffff")
             .Add(c => c.Radius, 4)
@@ -175,7 +175,7 @@ public class AtomHighlighterTests : TestContext
     [Fact]
     public void No_style_attribute_when_no_style_params_set()
     {
-        var cut = RenderComponent<AtomHighlighter>(p => p.AddChildContent("Build with Blazor."));
+        var cut = Render<AtomHighlighter>(p => p.AddChildContent("Build with Blazor."));
 
         Assert.Null(cut.Find("div").GetAttribute("style"));
     }
@@ -185,7 +185,7 @@ public class AtomHighlighterTests : TestContext
     {
         JSInterop.SetupModule(ModulePath);
 
-        var cut = RenderComponent<AtomHighlighter>(p => p
+        var cut = Render<AtomHighlighter>(p => p
             .Add(c => c.Keywords, new[] { "Blazor", "C#" })
             .Add(c => c.ChildContent, (RenderTreeBuilder builder) =>
             {

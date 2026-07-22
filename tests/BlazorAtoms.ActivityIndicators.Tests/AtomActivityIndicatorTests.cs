@@ -2,12 +2,12 @@ namespace BlazorAtoms.ActivityIndicators.Tests;
 
 // Smoke tests — prove the wrapper's discovery, name resolution, parameter
 // filtering, and unknown-name callback are wired correctly.
-public class AtomActivityIndicatorTests : TestContext
+public class AtomActivityIndicatorTests : BunitContext
 {
     [Fact]
     public void No_name_renders_a_random_indicator()
     {
-        var cut = RenderComponent<AtomActivityIndicator>();
+        var cut = Render<AtomActivityIndicator>();
 
         // A round AtomActivity* indicator was discovered and rendered.
         Assert.NotNull(cut.Find("svg"));
@@ -19,7 +19,7 @@ public class AtomActivityIndicatorTests : TestContext
     [InlineData("Gears")]            // "AtomActivity" prefix is optional
     public void Named_resolves_the_specific_indicator(string name)
     {
-        var cut = RenderComponent<AtomActivityIndicator>(p => p.Add(c => c.Name, name));
+        var cut = Render<AtomActivityIndicator>(p => p.Add(c => c.Name, name));
 
         Assert.Contains("activity-gears", cut.Markup);
     }
@@ -28,7 +28,7 @@ public class AtomActivityIndicatorTests : TestContext
     public void Unsupported_parameter_is_filtered_not_thrown()
     {
         // AtomActivitySwarm declares no Fill; forwarding it must be silently dropped, never throw.
-        var cut = RenderComponent<AtomActivityIndicator>(p => p
+        var cut = Render<AtomActivityIndicator>(p => p
             .Add(c => c.Name, "Swarm")
             .Add(c => c.Fill, "red"));
 
@@ -41,7 +41,7 @@ public class AtomActivityIndicatorTests : TestContext
         var called = 0;
         string? requested = null;
 
-        var cut = RenderComponent<AtomActivityIndicator>(p => p
+        var cut = Render<AtomActivityIndicator>(p => p
             .Add(c => c.Name, "DoesNotExist")
             .Add(c => c.OnUnknownName, EventCallback.Factory.Create<string>(this, s => { called++; requested = s; })));
 
@@ -55,7 +55,7 @@ public class AtomActivityIndicatorTests : TestContext
     [Fact]
     public void Svg_root_class_appends_and_splat_passes_through()
     {
-        var cut = RenderComponent<Indicators.AtomActivityDna>(p => p
+        var cut = Render<Indicators.AtomActivityDna>(p => p
             .Add(c => c.CssClass, "brand")
             .AddUnmatched("data-test", "z"));
         var svg = cut.Find("svg");
@@ -66,7 +66,7 @@ public class AtomActivityIndicatorTests : TestContext
     [Fact]
     public void Wrapper_forwards_class_and_splat_to_chosen_indicator()
     {
-        var cut = RenderComponent<AtomActivityIndicator>(p => p
+        var cut = Render<AtomActivityIndicator>(p => p
             .Add(c => c.Name, "Gears")
             .Add(c => c.CssClass, "brand")
             .AddUnmatched("data-test", "z"));

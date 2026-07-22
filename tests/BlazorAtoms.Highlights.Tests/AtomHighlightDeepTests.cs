@@ -1,11 +1,11 @@
 namespace BlazorAtoms.Highlights.Tests;
 
-public class AtomHighlightDeepTests : TestContext
+public class AtomHighlightDeepTests : BunitContext
 {
     [Fact]
     public void Highlights_Text_Inside_Markup()
     {
-        var cut = RenderComponent<AtomHighlightDeep>(parameters => parameters
+        var cut = Render<AtomHighlightDeep>(parameters => parameters
             .Add(p => p.Term, "Blazor")
             .Add(p => p.Html, "<p>Build with <strong>Blazor</strong> today.</p>"));
 
@@ -24,7 +24,7 @@ public class AtomHighlightDeepTests : TestContext
     [Fact]
     public void Highlights_All_Occurrences_Across_Elements()
     {
-        var cut = RenderComponent<AtomHighlightDeep>(parameters => parameters
+        var cut = Render<AtomHighlightDeep>(parameters => parameters
             .Add(p => p.Term, "CSS")
             .Add(p => p.Html, "<h4>CSS Example</h4><ul><li>CSS isolation</li><li>Modern CSS</li></ul>"));
 
@@ -36,7 +36,7 @@ public class AtomHighlightDeepTests : TestContext
     [Fact]
     public void Multiple_Terms_Are_Highlighted()
     {
-        var cut = RenderComponent<AtomHighlightDeep>(parameters => parameters
+        var cut = Render<AtomHighlightDeep>(parameters => parameters
             .Add(p => p.Terms, new[] { "Blazor", "CSS" })
             .Add(p => p.Html, "<p>Blazor and CSS together.</p>"));
 
@@ -47,7 +47,7 @@ public class AtomHighlightDeepTests : TestContext
     [Fact]
     public void Case_Insensitive_By_Default()
     {
-        var cut = RenderComponent<AtomHighlightDeep>(parameters => parameters
+        var cut = Render<AtomHighlightDeep>(parameters => parameters
             .Add(p => p.Term, "blazor")
             .Add(p => p.Html, "<p>Blazor and BLAZOR.</p>"));
 
@@ -58,7 +58,7 @@ public class AtomHighlightDeepTests : TestContext
     [Fact]
     public void Case_Sensitive_Respects_Casing()
     {
-        var cut = RenderComponent<AtomHighlightDeep>(parameters => parameters
+        var cut = Render<AtomHighlightDeep>(parameters => parameters
             .Add(p => p.Term, "Blazor")
             .Add(p => p.CaseSensitive, true)
             .Add(p => p.Html, "<p>Blazor and blazor.</p>"));
@@ -71,7 +71,7 @@ public class AtomHighlightDeepTests : TestContext
     [Fact]
     public void WholeWord_Does_Not_Match_Substrings()
     {
-        var cut = RenderComponent<AtomHighlightDeep>(parameters => parameters
+        var cut = Render<AtomHighlightDeep>(parameters => parameters
             .Add(p => p.Term, "b")
             .Add(p => p.WholeWord, true)
             .Add(p => p.Html, "<p>a button with b inside.</p>"));
@@ -84,7 +84,7 @@ public class AtomHighlightDeepTests : TestContext
     [Fact]
     public void Does_Not_Highlight_Inside_Tags_Or_Attributes()
     {
-        var cut = RenderComponent<AtomHighlightDeep>(parameters => parameters
+        var cut = Render<AtomHighlightDeep>(parameters => parameters
             .Add(p => p.Term, "target")
             .Add(p => p.Html, "<a href='x' target='_blank'>link target here</a>"));
 
@@ -100,7 +100,7 @@ public class AtomHighlightDeepTests : TestContext
     [Fact]
     public void Empty_Terms_Render_Original_Markup_Unchanged()
     {
-        var cut = RenderComponent<AtomHighlightDeep>(parameters => parameters
+        var cut = Render<AtomHighlightDeep>(parameters => parameters
             .Add(p => p.Html, "<p>Nothing to highlight.</p>"));
 
         Assert.Empty(cut.FindAll("mark.atom-highlight"));
@@ -110,23 +110,23 @@ public class AtomHighlightDeepTests : TestContext
     [Fact]
     public void Re_Highlights_Correctly_When_Terms_Change()
     {
-        var cut = RenderComponent<AtomHighlightDeep>(parameters => parameters
+        var cut = Render<AtomHighlightDeep>(parameters => parameters
             .Add(p => p.Term, "CSS")
             .Add(p => p.Html, "<p>Blazor and CSS and a button.</p>"));
 
         Assert.Single(cut.FindAll("mark.atom-highlight"));
 
         // Simulate the playground: change the term repeatedly.
-        cut.SetParametersAndRender(parameters => parameters.Add(p => p.Term, "Blazor"));
+        cut.Render(parameters => parameters.Add(p => p.Term, "Blazor"));
         var marks = cut.FindAll("mark.atom-highlight");
         Assert.Single(marks);
         Assert.Equal("Blazor", marks[0].TextContent);
 
-        cut.SetParametersAndRender(parameters => parameters.Add(p => p.Term, "b"));
+        cut.Render(parameters => parameters.Add(p => p.Term, "b"));
         // "b" is a substring: Blazor, button -> 2 matches (case-insensitive).
         Assert.Equal(2, cut.FindAll("mark.atom-highlight").Count);
 
-        cut.SetParametersAndRender(parameters => parameters.Add(p => p.Term, "and"));
+        cut.Render(parameters => parameters.Add(p => p.Term, "and"));
         Assert.Equal(2, cut.FindAll("mark.atom-highlight").Count);
     }
 }

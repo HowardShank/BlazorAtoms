@@ -5,12 +5,12 @@ using Microsoft.AspNetCore.Components.Web;
 
 namespace BlazorAtoms.Clocks.Tests;
 
-public class AtomTimeZonePickerTests : TestContext
+public class AtomTimeZonePickerTests : BunitContext
 {
     private IRenderedComponent<AtomTimeZonePicker> Render(Action<ComponentParameterCollectionBuilder<AtomTimeZonePicker>>? extra = null)
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
-        return RenderComponent<AtomTimeZonePicker>(p => extra?.Invoke(p));
+        return Render<AtomTimeZonePicker>(p => extra?.Invoke(p));
     }
 
     private static void Open(IRenderedComponent<AtomTimeZonePicker> cut) => cut.Find(".tzp-trigger").Click();
@@ -136,7 +136,7 @@ public class AtomTimeZonePickerTests : TestContext
         var module = JSInterop.SetupModule("./_content/BlazorAtoms.Clocks/atom-clocks.js");
         module.Setup<string?>("timezoneId").SetResult("Asia/Tokyo");
 
-        var cut = RenderComponent<AtomTimeZonePicker>(p => p
+        var cut = Render<AtomTimeZonePicker>(p => p
             .Add(c => c.ValueChanged, EventCallback.Factory.Create<string?>(this, v => got = v)));
         Open(cut);
         cut.Find(".tzp-detect").Click();

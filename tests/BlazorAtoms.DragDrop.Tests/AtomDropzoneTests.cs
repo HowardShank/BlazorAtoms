@@ -24,11 +24,11 @@ public class AtomDropzoneTests
     [Fact]
     public void Renders_root_with_expected_class_and_orientation_attributes()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         var items = new List<Card> { new("A") };
 
-        var cut = ctx.RenderComponent<AtomDropzone<Card>>(p => p
+        var cut = ctx.Render<AtomDropzone<Card>>(p => p
             .Add(x => x.Items, items)
             .Add(x => x.ChildContent, CardTemplate));
 
@@ -40,11 +40,11 @@ public class AtomDropzoneTests
     [Fact]
     public void Renders_one_draggable_wrapper_per_item()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         var items = new List<Card> { new("A"), new("B"), new("C") };
 
-        var cut = ctx.RenderComponent<AtomDropzone<Card>>(p => p
+        var cut = ctx.Render<AtomDropzone<Card>>(p => p
             .Add(x => x.Items, items)
             .Add(x => x.ChildContent, CardTemplate));
 
@@ -56,11 +56,11 @@ public class AtomDropzoneTests
     [Fact]
     public void Renders_spacer_above_first_item_and_below_every_item()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         var items = new List<Card> { new("A"), new("B") };
 
-        var cut = ctx.RenderComponent<AtomDropzone<Card>>(p => p
+        var cut = ctx.Render<AtomDropzone<Card>>(p => p
             .Add(x => x.Items, items)
             .Add(x => x.ChildContent, CardTemplate));
 
@@ -72,10 +72,10 @@ public class AtomDropzoneTests
     [Fact]
     public void Renders_empty_state_when_items_is_empty()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
 
-        var cut = ctx.RenderComponent<AtomDropzone<Card>>(p => p
+        var cut = ctx.Render<AtomDropzone<Card>>(p => p
             .Add(x => x.Items, new List<Card>())
             .Add(x => x.ChildContent, CardTemplate));
 
@@ -86,10 +86,10 @@ public class AtomDropzoneTests
     [Fact]
     public void EmptyContent_slot_overrides_default_empty_label()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
 
-        var cut = ctx.RenderComponent<AtomDropzone<Card>>(p => p
+        var cut = ctx.Render<AtomDropzone<Card>>(p => p
             .Add(x => x.Items, new List<Card>())
             .Add(x => x.ChildContent, CardTemplate)
             .Add(x => x.EmptyContent, (RenderFragment)(b => b.AddContent(0, "Nothing here"))));
@@ -104,11 +104,11 @@ public class AtomDropzoneTests
     [InlineData(DropzoneOrientation.Grid, "grid")]
     public void Orientation_maps_to_data_orientation_attribute(DropzoneOrientation orientation, string expected)
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         var items = new List<Card> { new("A") };
 
-        var cut = ctx.RenderComponent<AtomDropzone<Card>>(p => p
+        var cut = ctx.Render<AtomDropzone<Card>>(p => p
             .Add(x => x.Items, items)
             .Add(x => x.ChildContent, CardTemplate)
             .Add(x => x.Orientation, orientation));
@@ -119,11 +119,11 @@ public class AtomDropzoneTests
     [Fact]
     public void Group_flows_through_to_data_group_attribute()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         var items = new List<Card> { new("A") };
 
-        var cut = ctx.RenderComponent<AtomDropzone<Card>>(p => p
+        var cut = ctx.Render<AtomDropzone<Card>>(p => p
             .Add(x => x.Items, items)
             .Add(x => x.ChildContent, CardTemplate)
             .Add(x => x.Group, "cards"));
@@ -134,11 +134,11 @@ public class AtomDropzoneTests
     [Fact]
     public void AllowsDrag_false_disables_draggable_and_marks_wrapper_nodrag()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         var items = new List<Card> { new("A") };
 
-        var cut = ctx.RenderComponent<AtomDropzone<Card>>(p => p
+        var cut = ctx.Render<AtomDropzone<Card>>(p => p
             .Add(x => x.Items, items)
             .Add(x => x.ChildContent, CardTemplate)
             .Add(x => x.AllowsDrag, _ => false));
@@ -151,11 +151,11 @@ public class AtomDropzoneTests
     [Fact]
     public void Disabled_zone_marks_every_wrapper_undraggable()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         var items = new List<Card> { new("A"), new("B") };
 
-        var cut = ctx.RenderComponent<AtomDropzone<Card>>(p => p
+        var cut = ctx.Render<AtomDropzone<Card>>(p => p
             .Add(x => x.Items, items)
             .Add(x => x.ChildContent, CardTemplate)
             .Add(x => x.Disabled, true));
@@ -167,11 +167,11 @@ public class AtomDropzoneTests
     [Fact]
     public void ItemWrapperClass_delegate_appends_extra_classes_per_item()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         var items = new List<Card> { new("A"), new("B") };
 
-        var cut = ctx.RenderComponent<AtomDropzone<Card>>(p => p
+        var cut = ctx.Render<AtomDropzone<Card>>(p => p
             .Add(x => x.Items, items)
             .Add(x => x.ChildContent, CardTemplate)
             .Add(x => x.ItemWrapperClass, c => c.Title == "A" ? "highlight" : ""));
@@ -184,11 +184,11 @@ public class AtomDropzoneTests
     [Fact]
     public void Visible_false_emits_display_none_in_root_style()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         var items = new List<Card> { new("A") };
 
-        var cut = ctx.RenderComponent<AtomDropzone<Card>>(p => p
+        var cut = ctx.Render<AtomDropzone<Card>>(p => p
             .Add(x => x.Items, items)
             .Add(x => x.ChildContent, CardTemplate)
             .Add(x => x.Visible, false));
@@ -199,11 +199,11 @@ public class AtomDropzoneTests
     [Fact]
     public void HighlightColor_DenyColor_Gap_emit_custom_properties()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         var items = new List<Card> { new("A") };
 
-        var cut = ctx.RenderComponent<AtomDropzone<Card>>(p => p
+        var cut = ctx.Render<AtomDropzone<Card>>(p => p
             .Add(x => x.Items, items)
             .Add(x => x.ChildContent, CardTemplate)
             .Add(x => x.HighlightColor, "#00ff00")
@@ -219,11 +219,11 @@ public class AtomDropzoneTests
     [Fact]
     public void Footer_content_renders_after_items()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         var items = new List<Card> { new("A") };
 
-        var cut = ctx.RenderComponent<AtomDropzone<Card>>(p => p
+        var cut = ctx.Render<AtomDropzone<Card>>(p => p
             .Add(x => x.Items, items)
             .Add(x => x.ChildContent, CardTemplate)
             .Add(x => x.Footer, (RenderFragment)(b =>
@@ -241,11 +241,11 @@ public class AtomDropzoneTests
     [Fact]
     public void ChildContent_template_receives_each_item()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         var items = new List<Card> { new("Alpha"), new("Beta") };
 
-        var cut = ctx.RenderComponent<AtomDropzone<Card>>(p => p
+        var cut = ctx.Render<AtomDropzone<Card>>(p => p
             .Add(x => x.Items, items)
             .Add(x => x.ChildContent, CardTemplate));
 
@@ -256,12 +256,12 @@ public class AtomDropzoneTests
     [Fact]
     public void Read_only_Items_throws_on_render()
     {
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         IList<Card> readOnly = new List<Card> { new("A") }.AsReadOnly();
 
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            ctx.RenderComponent<AtomDropzone<Card>>(p => p
+            ctx.Render<AtomDropzone<Card>>(p => p
                 .Add(x => x.Items, readOnly)
                 .Add(x => x.ChildContent, CardTemplate)));
 
@@ -272,12 +272,12 @@ public class AtomDropzoneTests
     public void AtomDropzoneGroup_cascades_context_to_children()
     {
         // A group wraps two zones — both mount without error and the context resolves.
-        using var ctx = new TestContext();
+        using var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         var a = new List<Card> { new("A") };
         var b = new List<Card> { new("B") };
 
-        var cut = ctx.RenderComponent<AtomDropzoneGroup<Card>>(p => p
+        var cut = ctx.Render<AtomDropzoneGroup<Card>>(p => p
             .Add(x => x.ChildContent, (RenderFragment)(builder =>
             {
                 builder.OpenComponent<AtomDropzone<Card>>(0);
