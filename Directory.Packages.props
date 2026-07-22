@@ -1,10 +1,8 @@
 <Project>
-
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
-
   <!-- Versions are defined here once; csproj files use versionless <PackageReference>.
        Multi-targeted libraries/tests need a version per TFM build pass. -->
   <ItemGroup>
@@ -12,9 +10,8 @@
     <PackageVersion Include="Microsoft.AspNetCore.Components.Web" Version="10.0.10" Condition="'$(TargetFramework)'=='net10.0'" />
     <!-- QR image decoder for AtomQrCodeImage (pure managed, works in Server + WASM). -->
     <PackageVersion Include="ZXing.Net" Version="0.16.11" />
-    <PackageVersion Include="SixLabors.ImageSharp" Version="2.1.11" />
+    <PackageVersion Include="SixLabors.ImageSharp" Version="2.1.13" />
   </ItemGroup>
-
   <!-- Demo host/client dependencies. Also pulled in transitively by bunit (per-TFM) now that
        CentralPackageTransitivePinningEnabled is on, so this needs the same per-TFM split as
        Components.Web above — an unconditioned pin here clobbers bunit's net9.0-pass dependency. -->
@@ -24,7 +21,6 @@
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.0.18" Condition="'$(TargetFramework)'=='net9.0'" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.10" Condition="'$(TargetFramework)'=='net10.0'" />
   </ItemGroup>
-
   <!-- Test dependencies -->
   <ItemGroup>
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
@@ -35,5 +31,4 @@
          GHSA-pgww-w46g-26qg, mXSS via MathML annotation-xml, fixed in 1.5.0). Pin up to latest stable. -->
     <PackageVersion Include="AngleSharp" Version="1.5.2" />
   </ItemGroup>
-
 </Project>
