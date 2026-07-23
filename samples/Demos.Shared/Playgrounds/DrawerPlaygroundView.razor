@@ -12,13 +12,18 @@
 </p>
 <p><a href="/">&larr; Back to home</a></p>
 
-<div class="drawer-preview">
+<div class="drawer-preview @(AnchorSel == AtomDrawerAnchor.Container ? "contained" : "")">
     <button type="button" class="drawer-preview-btn" @onclick="() => IsOpen = true">
         Open Drawer
     </button>
+    @if (AnchorSel == AtomDrawerAnchor.Container)
+    {
+        <span class="drawer-preview-hint">Container anchor: the boxed area below is the positioned ancestor — the drawer and backdrop stay confined to it.</span>
+    }
 
     <AtomDrawer @bind-Open="IsOpen"
                 Position="PositionSel"
+                Anchor="AnchorSel"
                 Transition="TransitionSel"
                 AnimationDuration="AnimationDuration"
                 Width="@Nz(Width)"
@@ -59,6 +64,12 @@
         <label>Position</label>
         <select @bind="PositionSel">
             @foreach (var p in Positions) { <option value="@p">@p</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Anchor</label>
+        <select @bind="AnchorSel">
+            @foreach (var a in Anchors) { <option value="@a">@a</option> }
         </select>
     </div>
     <div class="ctrl">
@@ -198,9 +209,14 @@
 <style>
     .drawer-preview { display:flex; align-items:center; justify-content:center; min-height:12rem;
         background:#fff; border:1px solid #d0d0d8; border-radius:12px; padding:2rem; margin-bottom:1.5rem; }
+    /* Container-anchor demo: this becomes the drawer's positioned ancestor. overflow:hidden makes
+       the boundary visually obvious — the drawer/backdrop must stay inside it, not spill over. */
+    .drawer-preview.contained { position:relative; overflow:hidden; min-height:20rem; }
     .drawer-preview-btn { padding:.75rem 1.5rem; border:1px solid #2563eb; border-radius:8px;
         background:#2563eb; color:#fff; font-size:1rem; cursor:pointer; }
     .drawer-preview-btn:hover { background:#1d4ed8; }
+    .drawer-preview-hint { position:absolute; top:.5rem; left:.5rem; right:.5rem; text-align:center;
+        font-size:.78rem; color:#6b7785; z-index:1; }
     .drawer-action-btn { padding:.5rem 1rem; border:1px solid #d0d0d8; border-radius:6px;
         background:#f3f4f6; color:#111; cursor:pointer; }
     .drawer-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem 1.5rem;
@@ -229,9 +245,11 @@
 @code {
     private static readonly AtomDrawerPosition[] Positions = (AtomDrawerPosition[])Enum.GetValues(typeof(AtomDrawerPosition));
     private static readonly AtomDrawerTransition[] Transitions = (AtomDrawerTransition[])Enum.GetValues(typeof(AtomDrawerTransition));
+    private static readonly AtomDrawerAnchor[] Anchors = (AtomDrawerAnchor[])Enum.GetValues(typeof(AtomDrawerAnchor));
 
     private bool IsOpen;
     private AtomDrawerPosition PositionSel = AtomDrawerPosition.Left;
+    private AtomDrawerAnchor AnchorSel = AtomDrawerAnchor.Viewport;
     private AtomDrawerTransition TransitionSel = AtomDrawerTransition.Slide;
     private int AnimationDuration = 240;
     private string Width = "";
@@ -295,6 +313,7 @@
         {
             var sb = new StringBuilder("<AtomDrawer @bind-Open=\"isOpen\"");
             if (PositionSel != AtomDrawerPosition.Left) sb.Append($" Position=\"AtomDrawerPosition.{PositionSel}\"");
+            if (AnchorSel != AtomDrawerAnchor.Viewport) sb.Append($" Anchor=\"AtomDrawerAnchor.{AnchorSel}\"");
             if (TransitionSel != AtomDrawerTransition.Slide) sb.Append($" Transition=\"AtomDrawerTransition.{TransitionSel}\"");
             if (AnimationDuration != 240) sb.Append($" AnimationDuration=\"{AnimationDuration}\"");
             if (!string.IsNullOrEmpty(Width)) sb.Append($" Width=\"{Width}\"");

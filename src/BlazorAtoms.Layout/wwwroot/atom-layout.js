@@ -53,15 +53,15 @@ export function activate(el, dotNet, options) {
         if (!opts.trapFocus || e.key !== 'Tab') return;
 
         const items = focusables(el);
-        if (items.length === 0) { e.preventDefault(); el.focus(); return; }
+        if (items.length === 0) { e.preventDefault(); el.focus({ preventScroll: true }); return; }
 
         const first = items[0];
         const last = items[items.length - 1];
         const active = document.activeElement;
         if (e.shiftKey && (active === first || !el.contains(active))) {
-            e.preventDefault(); last.focus();
+            e.preventDefault(); last.focus({ preventScroll: true });
         } else if (!e.shiftKey && (active === last || !el.contains(active))) {
-            e.preventDefault(); first.focus();
+            e.preventDefault(); first.focus({ preventScroll: true });
         }
     };
 
@@ -69,8 +69,18 @@ export function activate(el, dotNet, options) {
     STATE.set(el, { onKeyDown, prevFocus, prevBodyOverflow, lockScroll: !!opts.lockScroll });
 
     // Initial focus: first focusable element, else the panel itself (needs tabindex="-1").
+    // { preventScroll: true } is required here: a Container-anchored drawer sliding in via
+    // transform (Slide/Bounce) is still mid-animation at this point, so its untransformed box can
+    // sit partially outside the container's visible area. `overflow: hidden` on that container
+    // still permits PROGRAMMATIC scrolling even with no visible scrollbar, and a plain .focus()
+    // call asks the browser to scroll the newly-focused element into view — so as the drawer's
+    // transform continued to animate, the browser fought to keep scrolling the container to
+    // compensate, panning the container's own content (very visible for Right/Bottom positions,
+    // whose off-screen box sits further from the container's scroll origin than Left/Top's).
+    // preventScroll suppresses that entirely; the drawer's own CSS transition is what should move
+    // it into view, not a browser-driven scroll of an ancestor.
     const items = focusables(el);
-    (items[0] || el).focus();
+    (items[0] || el).focus({ preventScroll: true });
 }
 
 // Undo activate(): remove the listener, unlock scroll, restore focus to where it was before open.
@@ -80,5 +90,5 @@ export function deactivate(el) {
     el.removeEventListener('keydown', s.onKeyDown);
     if (s.lockScroll) document.body.style.overflow = s.prevBodyOverflow || '';
     STATE.delete(el);
-    try { s.prevFocus?.focus(); } catch { /* element gone */ }
+    try { s.prevFocus?.focus({ preventScroll: true }); } catch { /* element gone */ }
 }

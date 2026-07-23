@@ -5,7 +5,7 @@
 {
     @if (ShowBackdrop)
     {
-        <div class="atom-drawer-backdrop" @onclick="OnBackdropClickAsync"></div>
+        <div class="@BackdropClasses" @onclick="OnBackdropClickAsync"></div>
     }
 
     <aside @ref="_panelRef"

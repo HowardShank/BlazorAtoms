@@ -94,6 +94,60 @@ public class AtomDrawerTests
     }
 
     [Fact]
+    public void Viewport_anchor_is_the_default_no_anchor_class()
+    {
+        using var ctx = new BunitContext();
+        ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+        var cut = ctx.Render<AtomDrawer>(p => p.Add(x => x.Open, true));
+        Assert.DoesNotContain("atom-drawer-anchor-container", cut.Find("aside").ClassList);
+    }
+
+    [Fact]
+    public void Container_anchor_adds_class_to_panel_and_backdrop()
+    {
+        using var ctx = new BunitContext();
+        ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+        var cut = ctx.Render<AtomDrawer>(p => p
+            .Add(x => x.Open, true)
+            .Add(x => x.Anchor, AtomDrawerAnchor.Container));
+
+        Assert.Contains("atom-drawer-anchor-container", cut.Find("aside").ClassList);
+        Assert.Contains("atom-drawer-anchor-container", cut.Find(".atom-drawer-backdrop").ClassList);
+    }
+
+    [Fact]
+    public void Container_anchor_uses_percent_instead_of_viewport_units()
+    {
+        // Vertical position (Top) spans the cross axis (width) 100vw under Viewport anchor, but
+        // vw/vh would measure the whole page — not the containing ancestor — so Container anchor
+        // must use 100% instead.
+        using var ctx = new BunitContext();
+        ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+        var cut = ctx.Render<AtomDrawer>(p => p
+            .Add(x => x.Open, true)
+            .Add(x => x.Position, AtomDrawerPosition.Top)
+            .Add(x => x.Anchor, AtomDrawerAnchor.Container));
+
+        var style = cut.Find("aside").GetAttribute("style");
+        Assert.Contains("--atom-drawer-width:100%", style);
+        Assert.DoesNotContain("100vw", style);
+    }
+
+    [Fact]
+    public void Explicit_width_overrides_container_anchor_percent_default()
+    {
+        using var ctx = new BunitContext();
+        ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+        var cut = ctx.Render<AtomDrawer>(p => p
+            .Add(x => x.Open, true)
+            .Add(x => x.Anchor, AtomDrawerAnchor.Container)
+            .Add(x => x.Width, "320px"));
+
+        var style = cut.Find("aside").GetAttribute("style");
+        Assert.Contains("--atom-drawer-width:320px", style);
+    }
+
+    [Fact]
     public void ShowCloseButton_false_hides_button()
     {
         using var ctx = new BunitContext();

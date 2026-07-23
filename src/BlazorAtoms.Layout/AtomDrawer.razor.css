@@ -107,6 +107,16 @@
     }
 }
 
+/* Container anchor: confine the drawer AND its backdrop to the nearest positioned ancestor instead
+   of the viewport. Applied to both .atom-drawer and .atom-drawer-backdrop, each equal specificity
+   to this single-class selector — must stay declared AFTER both of those base rules (above) to win
+   the cascade for `position` on either element. Falls back to the initial containing block
+   (behaves like an absolutely-positioned, page-scrolling element) if the consumer didn't give an
+   ancestor a non-static position — same as any other absolutely positioned element. */
+.atom-drawer-anchor-container {
+    position: absolute;
+}
+
 /* Transitions: initial hidden state */
 .atom-drawer-slide.atom-drawer-left {
     transform: translateX(-100%);

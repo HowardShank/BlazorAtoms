@@ -6,11 +6,13 @@ using Microsoft.JSInterop;
 namespace BlazorAtoms.Layout;
 
 /// <summary>
-/// An overlay drawer panel that opens from any viewport edge with configurable transitions,
-/// sizing, and styling. Supports a close button, backdrop click to close, header/footer slots,
-/// and child content. While open it behaves as a modal: it traps focus, closes on Escape, and
-/// locks body scroll (each toggleable). Designed for viewport anchoring with upgrade path to
-/// container anchoring.
+/// An overlay drawer panel that opens from any edge with configurable transitions, sizing, and
+/// styling. Supports a close button, backdrop click to close, header/footer slots, and child
+/// content. While open it behaves as a modal: it traps focus, closes on Escape, and locks body
+/// scroll (each toggleable). Anchors to the viewport by default (<see cref="Anchor"/>), or to the
+/// nearest positioned ancestor when set to <see cref="AtomDrawerAnchor.Container"/> — both the
+/// drawer and its backdrop then stay confined to (and scroll with) that ancestor instead of
+/// floating over the whole page.
 /// </summary>
 public partial class AtomDrawer : AtomComponentBase, IAsyncDisposable
 {
@@ -30,9 +32,16 @@ public partial class AtomDrawer : AtomComponentBase, IAsyncDisposable
     [Parameter]
     public EventCallback<bool> OpenChanged { get; set; }
 
-    /// <summary>Which viewport edge the drawer opens from.</summary>
+    /// <summary>Which edge the drawer opens from — a viewport edge, or an edge of its
+    /// <see cref="Anchor"/>ed container.</summary>
     [Parameter]
     public AtomDrawerPosition Position { get; set; } = AtomDrawerPosition.Left;
+
+    /// <summary>What the drawer and its backdrop are positioned against. Default
+    /// <see cref="AtomDrawerAnchor.Viewport"/>. Set <see cref="AtomDrawerAnchor.Container"/> to
+    /// confine the drawer to the nearest positioned ancestor instead of floating over the whole page.</summary>
+    [Parameter]
+    public AtomDrawerAnchor Anchor { get; set; } = AtomDrawerAnchor.Viewport;
 
     /// <summary>Enter animation style.</summary>
     [Parameter]
@@ -194,8 +203,15 @@ public partial class AtomDrawer : AtomComponentBase, IAsyncDisposable
     private bool IsHorizontal => Position is AtomDrawerPosition.Left or AtomDrawerPosition.Right;
     private bool IsVertical => Position is AtomDrawerPosition.Top or AtomDrawerPosition.Bottom;
 
-    private string EffectiveWidth => NormalizeLength(Width) ?? (IsVertical ? "100vw" : "280px");
-    private string EffectiveHeight => NormalizeLength(Height) ?? (IsHorizontal ? "100vh" : "240px");
+    // Viewport anchor spans the full viewport axis (vw/vh); Container anchor fills its positioned
+    // ancestor instead (100%), since vw/vh would measure the whole page, not the container.
+    private bool IsContainerAnchored => Anchor == AtomDrawerAnchor.Container;
+
+    private string EffectiveWidth => NormalizeLength(Width)
+        ?? (IsVertical ? (IsContainerAnchored ? "100%" : "100vw") : "280px");
+
+    private string EffectiveHeight => NormalizeLength(Height)
+        ?? (IsHorizontal ? (IsContainerAnchored ? "100%" : "100vh") : "240px");
 
     private static string? NormalizeLength(string? value)
     {
@@ -260,10 +276,17 @@ public partial class AtomDrawer : AtomComponentBase, IAsyncDisposable
     }
 
     private string DrawerClasses =>
-        $"atom-drawer atom-drawer-{Position.ToString().ToLowerInvariant()} atom-drawer-{Transition.ToString().ToLowerInvariant()}";
+        $"atom-drawer atom-drawer-{Position.ToString().ToLowerInvariant()} atom-drawer-{Transition.ToString().ToLowerInvariant()}"
+        + (IsContainerAnchored ? " atom-drawer-anchor-container" : "");
 
     // Base classes plus the open-state class once the enter frame has run (see OnAfterRender).
     private string OpenAwareClasses => _entered ? $"{DrawerClasses} atom-drawer-open" : DrawerClasses;
+
+    // The backdrop is a separate element, so it needs its own (much smaller) class computation —
+    // deliberately NOT run through ClassAttr, which would leak the caller's CssClass (meant for the
+    // drawer panel) onto the backdrop too.
+    private string BackdropClasses =>
+        IsContainerAnchored ? "atom-drawer-backdrop atom-drawer-anchor-container" : "atom-drawer-backdrop";
 
     // Close driven from inside the drawer (close button / backdrop). Flips Open, notifies the
     // parent binding, and runs the same close transition as an external Open=false.
