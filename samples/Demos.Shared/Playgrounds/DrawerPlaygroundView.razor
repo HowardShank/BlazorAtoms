@@ -1,0 +1,347 @@
+@page "/playground/drawer"
+@using BlazorAtoms.Layout
+@using System.Globalization
+@using System.Text
+
+<PageTitle>AtomDrawer Playground</PageTitle>
+
+<h1>AtomDrawer playground</h1>
+<p>
+    An overlay drawer panel that opens from any viewport edge. Choose the position, transition,
+    size, and styling; the live preview and generated markup update immediately.
+</p>
+<p><a href="/">&larr; Back to home</a></p>
+
+<div class="drawer-preview">
+    <button type="button" class="drawer-preview-btn" @onclick="() => IsOpen = true">
+        Open Drawer
+    </button>
+
+    <AtomDrawer @bind-Open="IsOpen"
+                Position="PositionSel"
+                Transition="TransitionSel"
+                AnimationDuration="AnimationDuration"
+                Width="@Nz(Width)"
+                Height="@Nz(Height)"
+                MinWidth="@Nz(MinWidth)"
+                MinHeight="@Nz(MinHeight)"
+                MaxWidth="@Nz(MaxWidth)"
+                MaxHeight="@Nz(MaxHeight)"
+                BorderWidth="BorderWidthV"
+                BorderColor="@Nz(BorderColorV)"
+                BorderRadius="BorderRadiusV"
+                BackgroundColor="@Nz(BackgroundColorV)"
+                BackdropColor="@Nz(BackdropColorV)"
+                ShowShadow="ShowShadow"
+                ShadowColor="@Nz(ShadowColorV)"
+                ShadowBlur="ShadowBlurV"
+                ShadowSpread="ShadowSpreadV"
+                ShadowOffsetX="@(AutoShadowOffset ? null : ShadowOffsetXV)"
+                ShadowOffsetY="@(AutoShadowOffset ? null : ShadowOffsetYV)"
+                ShowBackdrop="ShowBackdrop"
+                ShowCloseButton="ShowCloseButton"
+                CloseOnBackdropClick="CloseOnBackdropClick"
+                CloseOnEscape="CloseOnEscape"
+                TrapFocus="TrapFocus"
+                LockScroll="LockScroll"
+                ZIndex="ZIndexV"
+                CssClass="@Nz(CssClassV)"
+                Style="@Nz(StyleV)"
+                OnOpen="OnOpened"
+                OnClose="OnClosed"
+                HeaderContent="HeaderFragment"
+                ChildContent="BodyFragment"
+                FooterContent="FooterFragment" />
+</div>
+
+<div class="drawer-controls">
+    <div class="ctrl">
+        <label>Position</label>
+        <select @bind="PositionSel">
+            @foreach (var p in Positions) { <option value="@p">@p</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Transition</label>
+        <select @bind="TransitionSel">
+            @foreach (var t in Transitions) { <option value="@t">@t</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Animation duration (ms) <span class="val">@AnimationDuration</span></label>
+        <input type="range" min="0" max="1000" step="50" @bind="AnimationDuration" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>Width</label>
+        <input type="text" @bind="Width" @bind:event="oninput" placeholder="auto" />
+    </div>
+    <div class="ctrl">
+        <label>Height</label>
+        <input type="text" @bind="Height" @bind:event="oninput" placeholder="auto" />
+    </div>
+    <div class="ctrl">
+        <label>Min width</label>
+        <input type="text" @bind="MinWidth" @bind:event="oninput" placeholder="none" />
+    </div>
+    <div class="ctrl">
+        <label>Min height</label>
+        <input type="text" @bind="MinHeight" @bind:event="oninput" placeholder="none" />
+    </div>
+    <div class="ctrl">
+        <label>Max width</label>
+        <input type="text" @bind="MaxWidth" @bind:event="oninput" placeholder="none" />
+    </div>
+    <div class="ctrl">
+        <label>Max height</label>
+        <input type="text" @bind="MaxHeight" @bind:event="oninput" placeholder="none" />
+    </div>
+    <div class="ctrl">
+        <label>Border width (px) <span class="val">@BorderWidthV</span></label>
+        <input type="range" min="0" max="10" step="1" @bind="BorderWidthV" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>Border color</label>
+        <div class="row color">
+            <input type="color" @bind="BorderColorV" @bind:event="oninput" />
+            <input type="text" @bind="BorderColorV" @bind:event="oninput" placeholder="none" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Border radius (px) <span class="val">@BorderRadiusV</span></label>
+        <input type="range" min="0" max="32" step="1" @bind="BorderRadiusV" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>Background color</label>
+        <div class="row color">
+            <input type="color" @bind="BackgroundColorV" @bind:event="oninput" />
+            <input type="text" @bind="BackgroundColorV" @bind:event="oninput" placeholder="none" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Backdrop color</label>
+        <div class="row color">
+            <input type="color" @bind="BackdropColorV" @bind:event="oninput" />
+            <input type="text" @bind="BackdropColorV" @bind:event="oninput" placeholder="rgba(0,0,0,0.5)" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Shadow (floating appearance)</label>
+        <div class="row"><input type="checkbox" id="dShadow" @bind="ShowShadow" /><label for="dShadow" class="inline">Show shadow</label></div>
+    </div>
+    <div class="ctrl">
+        <label>Shadow color</label>
+        <div class="row color">
+            <input type="color" @bind="ShadowColorV" @bind:event="oninput" />
+            <input type="text" @bind="ShadowColorV" @bind:event="oninput" placeholder="rgba(0,0,0,0.25)" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Shadow blur (px) <span class="val">@ShadowBlurV</span></label>
+        <input type="range" min="0" max="64" step="1" @bind="ShadowBlurV" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>Shadow spread (px) <span class="val">@ShadowSpreadV</span></label>
+        <input type="range" min="-16" max="32" step="1" @bind="ShadowSpreadV" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>Shadow offset</label>
+        <div class="row"><input type="checkbox" id="dAutoOffset" @bind="AutoShadowOffset" /><label for="dAutoOffset" class="inline">Auto (bias away from pinned edge)</label></div>
+    </div>
+    <div class="ctrl">
+        <label>Shadow offset X (px) <span class="val">@ShadowOffsetXV</span></label>
+        <input type="range" min="-32" max="32" step="1" @bind="ShadowOffsetXV" @bind:event="oninput" disabled="@AutoShadowOffset" />
+    </div>
+    <div class="ctrl">
+        <label>Shadow offset Y (px) <span class="val">@ShadowOffsetYV</span></label>
+        <input type="range" min="-32" max="32" step="1" @bind="ShadowOffsetYV" @bind:event="oninput" disabled="@AutoShadowOffset" />
+    </div>
+    <div class="ctrl">
+        <label>Z-index</label>
+        <input type="number" @bind="ZIndexV" placeholder="1000" />
+    </div>
+    <div class="ctrl">
+        <label>Options</label>
+        <div class="row"><input type="checkbox" id="dBack" @bind="ShowBackdrop" /><label for="dBack" class="inline">Show backdrop</label></div>
+        <div class="row"><input type="checkbox" id="dClose" @bind="ShowCloseButton" /><label for="dClose" class="inline">Show close button</label></div>
+        <div class="row"><input type="checkbox" id="dBackdropClose" @bind="CloseOnBackdropClick" /><label for="dBackdropClose" class="inline">Close on backdrop click</label></div>
+        <div class="row"><input type="checkbox" id="dEsc" @bind="CloseOnEscape" /><label for="dEsc" class="inline">Close on Escape</label></div>
+        <div class="row"><input type="checkbox" id="dTrap" @bind="TrapFocus" /><label for="dTrap" class="inline">Trap focus</label></div>
+        <div class="row"><input type="checkbox" id="dLock" @bind="LockScroll" /><label for="dLock" class="inline">Lock body scroll</label></div>
+    </div>
+    <div class="ctrl">
+        <label>Header slot</label>
+        <div class="row"><input type="checkbox" id="dShowHeader" @bind="ShowHeader" /><label for="dShowHeader" class="inline">Show header</label></div>
+        <input type="text" @bind="HeaderText" @bind:event="oninput" placeholder="Header text" />
+    </div>
+    <div class="ctrl">
+        <label>Footer slot</label>
+        <div class="row"><input type="checkbox" id="dShowFooter" @bind="ShowFooter" /><label for="dShowFooter" class="inline">Show footer</label></div>
+        <input type="text" @bind="FooterText" @bind:event="oninput" placeholder="Footer text" />
+    </div>
+    <div class="ctrl">
+        <label>Extra class (CssClass)</label>
+        <input type="text" @bind="CssClassV" @bind:event="oninput" placeholder="none" />
+    </div>
+    <div class="ctrl">
+        <label>Extra style (Style)</label>
+        <input type="text" @bind="StyleV" @bind:event="oninput" placeholder="none" />
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(EventLog))
+{
+    <div class="drawer-event-log">@EventLog</div>
+}
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomDrawerExample.razor" />
+
+<style>
+    .drawer-preview { display:flex; align-items:center; justify-content:center; min-height:12rem;
+        background:#fff; border:1px solid #d0d0d8; border-radius:12px; padding:2rem; margin-bottom:1.5rem; }
+    .drawer-preview-btn { padding:.75rem 1.5rem; border:1px solid #2563eb; border-radius:8px;
+        background:#2563eb; color:#fff; font-size:1rem; cursor:pointer; }
+    .drawer-preview-btn:hover { background:#1d4ed8; }
+    .drawer-action-btn { padding:.5rem 1rem; border:1px solid #d0d0d8; border-radius:6px;
+        background:#f3f4f6; color:#111; cursor:pointer; }
+    .drawer-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem 1.5rem;
+        background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem;
+        color:#cfd8e3; margin-bottom:1.5rem; }
+    .drawer-controls .ctrl { display:flex; flex-direction:column; gap:.4rem; }
+    .drawer-controls label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3;
+        display:flex; justify-content:space-between; gap:.5rem; }
+    .drawer-controls label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
+    .drawer-controls input[type=range] { width:100%; accent-color:#2563eb; }
+    .drawer-controls input[type=text], .drawer-controls input[type=number], .drawer-controls select {
+        padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330;
+        background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; }
+    .drawer-controls .row { display:flex; align-items:center; gap:.5rem; }
+    .drawer-controls .row input[type=checkbox] { accent-color:#2563eb; width:16px; height:16px; }
+    .drawer-controls .row.color { gap:.4rem; }
+    .drawer-controls .row.color input[type=color] { flex:none; width:38px; height:32px; padding:2px;
+        background:#070b10; border:1px solid #1b2330; border-radius:6px; cursor:pointer; }
+    .drawer-controls .row label.inline { text-transform:none; letter-spacing:0; color:#cfd8e3;
+        font-size:.85rem; justify-content:flex-start; }
+    .drawer-event-log { background:#0d1118; border:1px solid #1b2330; border-radius:8px;
+        padding:.75rem 1rem; color:#5fb7c9; font-family:ui-monospace,Consolas,monospace;
+        font-size:.85rem; margin-bottom:1.5rem; }
+</style>
+
+@code {
+    private static readonly AtomDrawerPosition[] Positions = (AtomDrawerPosition[])Enum.GetValues(typeof(AtomDrawerPosition));
+    private static readonly AtomDrawerTransition[] Transitions = (AtomDrawerTransition[])Enum.GetValues(typeof(AtomDrawerTransition));
+
+    private bool IsOpen;
+    private AtomDrawerPosition PositionSel = AtomDrawerPosition.Left;
+    private AtomDrawerTransition TransitionSel = AtomDrawerTransition.Slide;
+    private int AnimationDuration = 240;
+    private string Width = "";
+    private string Height = "";
+    private string MinWidth = "";
+    private string MinHeight = "";
+    private string MaxWidth = "";
+    private string MaxHeight = "";
+    private int BorderWidthV = 0;
+    private string BorderColorV = "";
+    private int BorderRadiusV = 0;
+    private string BackgroundColorV = "#ffffff";
+    private string BackdropColorV = "rgba(0,0,0,0.5)";
+    private bool ShowShadow;
+    private string ShadowColorV = "rgba(0,0,0,0.25)";
+    private double ShadowBlurV = 16;
+    private double ShadowSpreadV = 0;
+    private bool AutoShadowOffset = true;
+    private double ShadowOffsetXV = 0;
+    private double ShadowOffsetYV = 0;
+    private bool ShowBackdrop = true;
+    private bool ShowCloseButton = true;
+    private bool CloseOnBackdropClick = true;
+    private bool CloseOnEscape = true;
+    private bool TrapFocus = true;
+    private bool LockScroll = true;
+    private int ZIndexV = 1000;
+    private string CssClassV = "";
+    private string StyleV = "";
+    private string EventLog = "";
+    private bool ShowHeader = true;
+    private string HeaderText = "Drawer Header";
+    private bool ShowFooter = true;
+    private string FooterText = "Drawer footer slot";
+
+    // Header/footer are optional slots — passed as attribute RenderFragments so they can be null
+    // (omitted) when the toggle is off, which a named-child-element slot can't express.
+    private RenderFragment? HeaderFragment =>
+        ShowHeader ? @<h2 style="margin:0;font-size:1.25rem;">@HeaderText</h2> : null;
+
+    private RenderFragment? FooterFragment =>
+        ShowFooter ? @<small style="color:#666;">@FooterText</small> : null;
+
+    private RenderFragment BodyFragment => @<text>
+        <p>This is the drawer body content.</p>
+        <p>Position: <strong>@PositionSel</strong></p>
+        <p>Transition: <strong>@TransitionSel</strong></p>
+        <button type="button" class="drawer-action-btn" @onclick="() => IsOpen = false">
+            Close from content
+        </button>
+    </text>;
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
+
+    private void OnOpened() => EventLog = $"{DateTime.Now:HH:mm:ss.fff} — Opened";
+    private void OnClosed() => EventLog = $"{DateTime.Now:HH:mm:ss.fff} — Closed";
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new StringBuilder("<AtomDrawer @bind-Open=\"isOpen\"");
+            if (PositionSel != AtomDrawerPosition.Left) sb.Append($" Position=\"AtomDrawerPosition.{PositionSel}\"");
+            if (TransitionSel != AtomDrawerTransition.Slide) sb.Append($" Transition=\"AtomDrawerTransition.{TransitionSel}\"");
+            if (AnimationDuration != 240) sb.Append($" AnimationDuration=\"{AnimationDuration}\"");
+            if (!string.IsNullOrEmpty(Width)) sb.Append($" Width=\"{Width}\"");
+            if (!string.IsNullOrEmpty(Height)) sb.Append($" Height=\"{Height}\"");
+            if (!string.IsNullOrEmpty(MinWidth)) sb.Append($" MinWidth=\"{MinWidth}\"");
+            if (!string.IsNullOrEmpty(MinHeight)) sb.Append($" MinHeight=\"{MinHeight}\"");
+            if (!string.IsNullOrEmpty(MaxWidth)) sb.Append($" MaxWidth=\"{MaxWidth}\"");
+            if (!string.IsNullOrEmpty(MaxHeight)) sb.Append($" MaxHeight=\"{MaxHeight}\"");
+            if (BorderWidthV != 0) sb.Append($" BorderWidth=\"{BorderWidthV}\"");
+            if (!string.IsNullOrEmpty(BorderColorV)) sb.Append($" BorderColor=\"{BorderColorV}\"");
+            if (BorderRadiusV != 0) sb.Append($" BorderRadius=\"{BorderRadiusV}\"");
+            if (!string.Equals(BackgroundColorV, "#ffffff", StringComparison.OrdinalIgnoreCase)) sb.Append($" BackgroundColor=\"{BackgroundColorV}\"");
+            if (!string.Equals(BackdropColorV, "rgba(0,0,0,0.5)", StringComparison.OrdinalIgnoreCase)) sb.Append($" BackdropColor=\"{BackdropColorV}\"");
+            if (ShowShadow)
+            {
+                sb.Append(" ShowShadow=\"true\"");
+                if (!string.Equals(ShadowColorV, "rgba(0,0,0,0.25)", StringComparison.OrdinalIgnoreCase)) sb.Append($" ShadowColor=\"{ShadowColorV}\"");
+                if (ShadowBlurV != 16) sb.Append($" ShadowBlur=\"{ShadowBlurV}\"");
+                if (ShadowSpreadV != 0) sb.Append($" ShadowSpread=\"{ShadowSpreadV}\"");
+                if (!AutoShadowOffset)
+                {
+                    sb.Append($" ShadowOffsetX=\"{ShadowOffsetXV}\" ShadowOffsetY=\"{ShadowOffsetYV}\"");
+                }
+            }
+            if (!ShowBackdrop) sb.Append(" ShowBackdrop=\"false\"");
+            if (!ShowCloseButton) sb.Append(" ShowCloseButton=\"false\"");
+            if (!CloseOnBackdropClick) sb.Append(" CloseOnBackdropClick=\"false\"");
+            if (!CloseOnEscape) sb.Append(" CloseOnEscape=\"false\"");
+            if (!TrapFocus) sb.Append(" TrapFocus=\"false\"");
+            if (!LockScroll) sb.Append(" LockScroll=\"false\"");
+            if (ZIndexV != 1000) sb.Append($" ZIndex=\"{ZIndexV}\"");
+            if (!string.IsNullOrEmpty(CssClassV)) sb.Append($" CssClass=\"{CssClassV}\"");
+            if (!string.IsNullOrEmpty(StyleV)) sb.Append($" Style=\"{StyleV}\"");
+            sb.Append(">\n");
+            if (ShowHeader)
+            {
+                sb.Append($"    <HeaderContent><h2>{HeaderText}</h2></HeaderContent>\n");
+            }
+            sb.Append("    <ChildContent>\n");
+            sb.Append("        <p>Your drawer content here.</p>\n");
+            sb.Append("    </ChildContent>\n");
+            if (ShowFooter)
+            {
+                sb.Append($"    <FooterContent><small>{FooterText}</small></FooterContent>\n");
+            }
+            sb.Append("</AtomDrawer>");
+            return sb.ToString();
+        }
+    }
+}

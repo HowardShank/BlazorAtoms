@@ -1,0 +1,38 @@
+@using BlazorAtoms.Layout
+@inherits BlazorAtoms.Shared.AtomComponentBase
+
+@if (_visible)
+{
+    @if (ShowBackdrop)
+    {
+        <div class="atom-drawer-backdrop" @onclick="OnBackdropClickAsync"></div>
+    }
+
+    <aside @ref="_panelRef"
+           class="@ClassAttr(OpenAwareClasses)"
+           style="@StyleAttr(GetDrawerStyle())"
+           role="dialog"
+           aria-modal="true"
+           tabindex="-1">
+        @if (ShowCloseButton)
+        {
+            <button type="button" class="atom-drawer-close" @onclick="CloseAsync" aria-label="Close">
+                <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M4 4 l8 8 M4 12 l8 -8" stroke="currentColor" stroke-width="2" fill="none" />
+                </svg>
+            </button>
+        }
+
+        @if (HeaderContent is not null)
+        {
+            <header class="atom-drawer-header">@HeaderContent</header>
+        }
+
+        <div class="atom-drawer-body">@ChildContent</div>
+
+        @if (FooterContent is not null)
+        {
+            <footer class="atom-drawer-footer">@FooterContent</footer>
+        }
+    </aside>
+}

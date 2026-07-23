@@ -1,0 +1,225 @@
+/* AtomDrawer base styles */
+
+.atom-drawer {
+    position: fixed;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    overflow: auto;
+    background: var(--atom-drawer-bg, #ffffff);
+    border: var(--atom-drawer-border-width, 0) solid var(--atom-drawer-border-color, transparent);
+    border-radius: var(--atom-drawer-border-radius, 0);
+    box-shadow: var(--atom-drawer-shadow, none);
+    width: var(--atom-drawer-width);
+    height: var(--atom-drawer-height);
+    min-width: var(--atom-drawer-min-width, auto);
+    min-height: var(--atom-drawer-min-height, auto);
+    max-width: var(--atom-drawer-max-width, none);
+    max-height: var(--atom-drawer-max-height, none);
+    z-index: var(--atom-drawer-z-drawer, 1000);
+    transition-duration: var(--atom-drawer-duration, 240ms);
+    transition-property: transform, opacity, clip-path;
+    transition-timing-function: ease-out;
+}
+
+.atom-drawer-left {
+    top: 0;
+    left: 0;
+    bottom: 0;
+}
+
+.atom-drawer-right {
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.atom-drawer-top {
+    top: 0;
+    left: 0;
+    right: 0;
+}
+
+.atom-drawer-bottom {
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.atom-drawer-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 2rem;
+    height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: currentColor;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 150ms ease;
+}
+
+.atom-drawer-close:hover {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+.atom-drawer-close:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+.atom-drawer-header {
+    flex-shrink: 0;
+    margin-bottom: 1rem;
+    padding-right: 2rem;
+}
+
+.atom-drawer-body {
+    flex: 1 1 auto;
+    overflow: auto;
+}
+
+.atom-drawer-footer {
+    flex-shrink: 0;
+    margin-top: 1rem;
+}
+
+.atom-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background: var(--atom-drawer-backdrop-color, rgba(0, 0, 0, 0.5));
+    z-index: var(--atom-drawer-z-backdrop, 999);
+    animation: atom-drawer-backdrop-in 200ms ease forwards;
+}
+
+@keyframes atom-drawer-backdrop-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Transitions: initial hidden state */
+.atom-drawer-slide.atom-drawer-left {
+    transform: translateX(-100%);
+}
+
+.atom-drawer-slide.atom-drawer-right {
+    transform: translateX(100%);
+}
+
+.atom-drawer-slide.atom-drawer-top {
+    transform: translateY(-100%);
+}
+
+.atom-drawer-slide.atom-drawer-bottom {
+    transform: translateY(100%);
+}
+
+.atom-drawer-fade {
+    opacity: 0;
+}
+
+.atom-drawer-pop {
+    opacity: 0;
+    transform: scale(0.96);
+}
+
+.atom-drawer-bounce {
+    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.atom-drawer-bounce.atom-drawer-left {
+    transform: translateX(-100%);
+}
+
+.atom-drawer-bounce.atom-drawer-right {
+    transform: translateX(100%);
+}
+
+.atom-drawer-bounce.atom-drawer-top {
+    transform: translateY(-100%);
+}
+
+.atom-drawer-bounce.atom-drawer-bottom {
+    transform: translateY(100%);
+}
+
+.atom-drawer-grow {
+    transition-property: clip-path, opacity;
+    transform: none !important;
+}
+
+/* Grow reveals the panel via clip-path, which — unlike overflow — clips the element's OWN
+   box-shadow too, not just its children. Each inset() below pulls back the three edges that
+   AREN'T animating by that edge's shadow-reach custom property (0 when no shadow is set, so this
+   is a no-op otherwise), so the shadow stays visible instead of being clipped exactly at the
+   border box. The animating edge itself goes 100% (fully hidden) → its own reach (fully revealed,
+   consistent with the other three) between the closed and open rules below. */
+
+.atom-drawer-grow.atom-drawer-left {
+    clip-path: inset(
+        calc(-1 * var(--atom-drawer-shadow-top, 0px))
+        100%
+        calc(-1 * var(--atom-drawer-shadow-bottom, 0px))
+        calc(-1 * var(--atom-drawer-shadow-left, 0px)));
+}
+
+.atom-drawer-grow.atom-drawer-right {
+    clip-path: inset(
+        calc(-1 * var(--atom-drawer-shadow-top, 0px))
+        calc(-1 * var(--atom-drawer-shadow-right, 0px))
+        calc(-1 * var(--atom-drawer-shadow-bottom, 0px))
+        100%);
+}
+
+.atom-drawer-grow.atom-drawer-top {
+    clip-path: inset(
+        calc(-1 * var(--atom-drawer-shadow-top, 0px))
+        calc(-1 * var(--atom-drawer-shadow-right, 0px))
+        100%
+        calc(-1 * var(--atom-drawer-shadow-left, 0px)));
+}
+
+.atom-drawer-grow.atom-drawer-bottom {
+    clip-path: inset(
+        100%
+        calc(-1 * var(--atom-drawer-shadow-right, 0px))
+        calc(-1 * var(--atom-drawer-shadow-bottom, 0px))
+        calc(-1 * var(--atom-drawer-shadow-left, 0px)));
+}
+
+/* Transitions: open state */
+.atom-drawer.atom-drawer-open {
+    transform: translate(0, 0);
+    opacity: 1;
+}
+
+/* Pop transition needs the transform reset to identity too */
+.atom-drawer.atom-drawer-open.atom-drawer-pop {
+    transform: scale(1);
+}
+
+/* clip-path only ever applies to the Grow transition (its closed state is a zero-size inset).
+   Scoped to .atom-drawer-grow specifically — applying `inset(0 0 0 0)` unconditionally to every
+   open drawer clips exactly at the border box, which cuts off box-shadow (it paints outside the
+   box) and clip-path doesn't interpolate from `none`, so it snaps at the END of the transition —
+   the shadow would show mid-animation then vanish the instant the drawer finished opening. All
+   four edges relax by their shadow-reach here (0 when no shadow) — including whichever edge was
+   the 100%-clipped animating one in the closed rule above, now that it's reached fully open. */
+.atom-drawer.atom-drawer-open.atom-drawer-grow {
+    transform: none !important;
+    clip-path: inset(
+        calc(-1 * var(--atom-drawer-shadow-top, 0px))
+        calc(-1 * var(--atom-drawer-shadow-right, 0px))
+        calc(-1 * var(--atom-drawer-shadow-bottom, 0px))
+        calc(-1 * var(--atom-drawer-shadow-left, 0px)));
+}
