@@ -25,21 +25,38 @@ Include:
 You should get an acknowledgment within a few days. If confirmed, a fix will be prepared and a
 new package version published; you'll be credited in the advisory unless you ask not to be.
 
+A report may be declined or closed without action if, in BlazorAtoms maintainers opinion, it:
+
+* does not affect a supported version
+* affects only an unsupported or end-of-life version
+* is not a security vulnerability
+* depends on unsafe, unsupported, or unintended use
+* depends on a vulnerable application, environment, dependency, configuration, or deployment outside the BlazorAtoms library itself
+* lacks sufficient information for assessment
+* is duplicative
+* has already been fixed
+* is otherwise outside the scope of this policy
+* If a vulnerability is accepted, BlazorAtoms may handle it through GitHub Security * Advisories and, where appropriate, CVE assignment.
+* is not reproducible
+
+BlazorAtoms maintainers do not guarantee any response time, fix time, release date, advisory publication date, CVE assignment, workaround, mitigation, or particular outcome for any report.
+
 ## Scope
 This policy applies only to security vulnerabilities in BlazorAtoms libraries themselves.
 
 This policy does not apply to:
 
-customer applications
-customer products
-customer deployments
-customer infrastructure
-customer data
-third-party services
-unsupported versions
-end-of-life versions
-forks or modified versions
-usage outside the documented or intended behavior of the relevant library
+* customer applications
+* customer products
+* customer deployments
+* customer infrastructure
+* customer data
+* third-party services
+* unsupported versions
+* end-of-life versions
+* forks or modified versions
+* usage outside the documented or intended behavior of the relevant library
+
 Organizations using BlazorAtoms libraries are responsible for assessing, securing, testing, monitoring, updating, and maintaining their own applications, products, deployments, infrastructure, and supply chains.
 
 

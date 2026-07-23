@@ -2,11 +2,8 @@
 
 ## General Enhancements
 - Add ARIA attributes for better accessibility.
-- 
-## Range Input Components
-- Enahance the range input component to support custom styling and theming options.
-- Add tick marks
-- Add optional handle tooltips to display the current value.
+
+## Activity Indicator Components
 
 ## Avatar Components
 - Add support for custom shapes (e.g., square, rounded, circular).
@@ -16,7 +13,9 @@
 - N/A
 
 ## Barcodes Components
-- Save as SVG/PNG.
+- N/A
+
+## Breadcrumb Components
 
 ## Canvas Components
 - N/A
@@ -34,7 +33,11 @@
 - N/A
 
 ## Inputs Components
-- N/A
+
+* ### Range Input Components
+* Enhance the range input component to support custom styling and theming options.
+* Add tick marks
+* Add optional handle tooltips to display the current value.
 
 ## Navigation Components
 - Add Scroll To component.
