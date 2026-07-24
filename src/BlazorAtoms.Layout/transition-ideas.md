@@ -4,7 +4,7 @@ https://prismic.io/blog/css-ui-features
 
 seperators = `===`
 
-1. The Smooth Fade & Scale This gives an elegant, native app-like feel by having the element grow slightly as it fades in.css
+DONE 1. The Smooth Fade & Scale This gives an elegant, native app-like feel by having the element grow slightly as it fades in.css
 
 .fade-scale-in {
   opacity: 0;
@@ -34,7 +34,7 @@ DONE 2. The Slide-Up RevealGreat for text blocks or cards, this mimics a theatri
 
 ===
 
-3. The Shift & BlurBy combining a horizontal slide with a subtle blur effect, this transition creates a high-end, dynamic entrance.css
+DONE 3. The Shift & BlurBy combining a horizontal slide with a subtle blur effect, this transition creates a high-end, dynamic entrance.css
 .shift-blur-in {
   opacity: 0;
   transform: translateX(-20px);

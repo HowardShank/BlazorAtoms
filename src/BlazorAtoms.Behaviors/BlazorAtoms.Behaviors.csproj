@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <Import Project="$(RepoRoot)build\Packable.props" />
+  <Import Project="$(RepoRoot)build\Shared.props" />
+  <Import Project="$(RepoRoot)build\SharedJs.props" />
+
+  <PropertyGroup>
+    <PackageId>BlazorAtoms.Behaviors</PackageId>
+    <Title>Blazor Behaviors</Title>
+    <Description>Headless behavior helpers for Blazor with no visuals of their own. Ships AtomBrowserSupport — a cached runtime CSS-feature-support check (wraps CSS.supports() via a tiny self-imported JS module) — and TransitionState, a reusable enter/exit animation state machine other components can drive directly. Future: ClickOutside, FocusTrap, Clipboard, Portal.</Description>
+    <PackageTags>Blazor;Behaviors;CapabilityDetection;CssSupports;WebAssembly;Server</PackageTags>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BlazorAtoms.Behaviors.Tests" />
+  </ItemGroup>
+
+</Project>

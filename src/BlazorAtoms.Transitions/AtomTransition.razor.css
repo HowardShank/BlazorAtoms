@@ -1,0 +1,417 @@
+/* AtomTransition base styles.
+
+   The wrapper stays mounted permanently — visibility is a pure CSS class toggle
+   (".atom-transition-shown" present or absent), never a DOM add/remove. Each effect below states
+   its own closed ("hidden") look as the default rule, its open look scoped to ".atom-transition-shown",
+   and an @starting-style block declaring the closed look as the synthetic "before" state for a
+   freshly-shown element's first style calculation — modern browsers get a smooth entrance with no
+   JS at all. @starting-style is simply ignored on unsupported browsers (no error, no branching
+   needed here) — BlazorAtoms.Transitions.AtomTransition pairs this CSS with a JS nextFrame()
+   fallback (via BlazorAtoms.Behaviors.TransitionState) so those browsers still animate the very
+   first appearance; every later Show toggle animates in any browser through this same CSS alone. */
+
+.atom-transition {
+    transition-duration: var(--atom-transition-duration, 240ms);
+    transition-timing-function: ease-out;
+}
+
+.atom-transition-fade {
+    opacity: 0;
+    pointer-events: none;
+    transition-property: opacity;
+}
+
+.atom-transition-fade.atom-transition-shown {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+@starting-style {
+    .atom-transition-fade.atom-transition-shown {
+        opacity: 0;
+    }
+}
+
+.atom-transition-pop {
+    opacity: 0;
+    transform: scale(0.96);
+    pointer-events: none;
+    transition-property: opacity, transform;
+}
+
+.atom-transition-pop.atom-transition-shown {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}
+
+@starting-style {
+    .atom-transition-pop.atom-transition-shown {
+        opacity: 0;
+        transform: scale(0.96);
+    }
+}
+
+.atom-transition-fadescale {
+    opacity: 0;
+    transform: scale(0.95);
+    pointer-events: none;
+    transition-property: opacity, transform;
+}
+
+.atom-transition-fadescale.atom-transition-shown {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}
+
+@starting-style {
+    .atom-transition-fadescale.atom-transition-shown {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+}
+
+.atom-transition-slideup {
+    opacity: 0;
+    transform: translateY(30px);
+    pointer-events: none;
+    transition-property: opacity, transform;
+}
+
+.atom-transition-slideup.atom-transition-shown {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+@starting-style {
+    .atom-transition-slideup.atom-transition-shown {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+}
+
+.atom-transition-slidedown {
+    opacity: 0;
+    transform: translateY(-30px);
+    pointer-events: none;
+    transition-property: opacity, transform;
+}
+
+.atom-transition-slidedown.atom-transition-shown {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+@starting-style {
+    .atom-transition-slidedown.atom-transition-shown {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+}
+
+.atom-transition-slideleft {
+    opacity: 0;
+    transform: translateX(-30px);
+    pointer-events: none;
+    transition-property: opacity, transform;
+}
+
+.atom-transition-slideleft.atom-transition-shown {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+@starting-style {
+    .atom-transition-slideleft.atom-transition-shown {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+}
+
+.atom-transition-slideright {
+    opacity: 0;
+    transform: translateX(30px);
+    pointer-events: none;
+    transition-property: opacity, transform;
+}
+
+.atom-transition-slideright.atom-transition-shown {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+@starting-style {
+    .atom-transition-slideright.atom-transition-shown {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+}
+
+.atom-transition-shiftblur {
+    opacity: 0;
+    transform: translateX(-20px);
+    filter: blur(5px);
+    pointer-events: none;
+    transition-property: opacity, transform, filter;
+}
+
+.atom-transition-shiftblur.atom-transition-shown {
+    opacity: 1;
+    transform: translateX(0);
+    filter: blur(0);
+    pointer-events: auto;
+}
+
+@starting-style {
+    .atom-transition-shiftblur.atom-transition-shown {
+        opacity: 0;
+        transform: translateX(-20px);
+        filter: blur(5px);
+    }
+}
+
+.atom-transition-flipy20 {
+    opacity: 0;
+    transform: perspective(600px) rotateY(-20deg);
+    pointer-events: none;
+    transition-property: opacity, transform;
+}
+
+.atom-transition-flipy20.atom-transition-shown {
+    opacity: 1;
+    transform: perspective(600px) rotateY(0deg);
+    pointer-events: auto;
+}
+
+@starting-style {
+    .atom-transition-flipy20.atom-transition-shown {
+        opacity: 0;
+        transform: perspective(600px) rotateY(-20deg);
+    }
+}
+
+.atom-transition-flipyneg20 {
+    opacity: 0;
+    transform: perspective(600px) rotateY(20deg);
+    pointer-events: none;
+    transition-property: opacity, transform;
+}
+
+.atom-transition-flipyneg20.atom-transition-shown {
+    opacity: 1;
+    transform: perspective(600px) rotateY(0deg);
+    pointer-events: auto;
+}
+
+@starting-style {
+    .atom-transition-flipyneg20.atom-transition-shown {
+        opacity: 0;
+        transform: perspective(600px) rotateY(20deg);
+    }
+}
+
+.atom-transition-flipx20 {
+    opacity: 0;
+    transform: perspective(600px) rotateX(-20deg);
+    pointer-events: none;
+    transition-property: opacity, transform;
+}
+
+.atom-transition-flipx20.atom-transition-shown {
+    opacity: 1;
+    transform: perspective(600px) rotateX(0deg);
+    pointer-events: auto;
+}
+
+@starting-style {
+    .atom-transition-flipx20.atom-transition-shown {
+        opacity: 0;
+        transform: perspective(600px) rotateX(-20deg);
+    }
+}
+
+.atom-transition-flipxneg20 {
+    opacity: 0;
+    transform: perspective(600px) rotateX(20deg);
+    pointer-events: none;
+    transition-property: opacity, transform;
+}
+
+.atom-transition-flipxneg20.atom-transition-shown {
+    opacity: 1;
+    transform: perspective(600px) rotateX(0deg);
+    pointer-events: auto;
+}
+
+@starting-style {
+    .atom-transition-flipxneg20.atom-transition-shown {
+        opacity: 0;
+        transform: perspective(600px) rotateX(20deg);
+    }
+}
+
+/* Bounce variants: same transform values as their Slide* counterparts, with an elastic
+   overshoot easing instead of the default ease-out. */
+
+.atom-transition-bounceup {
+    opacity: 0;
+    transform: translateY(30px);
+    pointer-events: none;
+    transition-property: opacity, transform;
+    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.atom-transition-bounceup.atom-transition-shown {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+@starting-style {
+    .atom-transition-bounceup.atom-transition-shown {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+}
+
+.atom-transition-bouncedown {
+    opacity: 0;
+    transform: translateY(-30px);
+    pointer-events: none;
+    transition-property: opacity, transform;
+    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.atom-transition-bouncedown.atom-transition-shown {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+@starting-style {
+    .atom-transition-bouncedown.atom-transition-shown {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+}
+
+.atom-transition-bounceleft {
+    opacity: 0;
+    transform: translateX(-30px);
+    pointer-events: none;
+    transition-property: opacity, transform;
+    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.atom-transition-bounceleft.atom-transition-shown {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+@starting-style {
+    .atom-transition-bounceleft.atom-transition-shown {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+}
+
+.atom-transition-bounceright {
+    opacity: 0;
+    transform: translateX(30px);
+    pointer-events: none;
+    transition-property: opacity, transform;
+    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.atom-transition-bounceright.atom-transition-shown {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+@starting-style {
+    .atom-transition-bounceright.atom-transition-shown {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+}
+
+/* Grow variants: reveal via clip-path expanding from the named edge, rather than a
+   transform/opacity fade — no anchored "position" concept here (unlike AtomDrawer's edge-pinned
+   Grow), so each variant just names which edge the reveal originates from. No shadow-reach
+   preservation (AtomDrawer's Grow needs that because it renders its own box-shadow; this generic
+   wrapper doesn't own the child content's styling). */
+
+.atom-transition-growleft {
+    clip-path: inset(0 100% 0 0);
+    pointer-events: none;
+    transition-property: clip-path;
+}
+
+.atom-transition-growleft.atom-transition-shown {
+    clip-path: inset(0 0 0 0);
+    pointer-events: auto;
+}
+
+@starting-style {
+    .atom-transition-growleft.atom-transition-shown {
+        clip-path: inset(0 100% 0 0);
+    }
+}
+
+.atom-transition-growright {
+    clip-path: inset(0 0 0 100%);
+    pointer-events: none;
+    transition-property: clip-path;
+}
+
+.atom-transition-growright.atom-transition-shown {
+    clip-path: inset(0 0 0 0);
+    pointer-events: auto;
+}
+
+@starting-style {
+    .atom-transition-growright.atom-transition-shown {
+        clip-path: inset(0 0 0 100%);
+    }
+}
+
+.atom-transition-growtop {
+    clip-path: inset(0 0 100% 0);
+    pointer-events: none;
+    transition-property: clip-path;
+}
+
+.atom-transition-growtop.atom-transition-shown {
+    clip-path: inset(0 0 0 0);
+    pointer-events: auto;
+}
+
+@starting-style {
+    .atom-transition-growtop.atom-transition-shown {
+        clip-path: inset(0 0 100% 0);
+    }
+}
+
+.atom-transition-growbottom {
+    clip-path: inset(100% 0 0 0);
+    pointer-events: none;
+    transition-property: clip-path;
+}
+
+.atom-transition-growbottom.atom-transition-shown {
+    clip-path: inset(0 0 0 0);
+    pointer-events: auto;
+}
+
+@starting-style {
+    .atom-transition-growbottom.atom-transition-shown {
+        clip-path: inset(100% 0 0 0);
+    }
+}

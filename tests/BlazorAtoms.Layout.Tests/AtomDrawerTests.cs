@@ -56,6 +56,12 @@ public class AtomDrawerTests
     [InlineData(AtomDrawerTransition.Slide, "atom-drawer-slide")]
     [InlineData(AtomDrawerTransition.Fade, "atom-drawer-fade")]
     [InlineData(AtomDrawerTransition.Grow, "atom-drawer-grow")]
+    [InlineData(AtomDrawerTransition.FlipY20, "atom-drawer-flipy20")]
+    [InlineData(AtomDrawerTransition.FlipYNeg20, "atom-drawer-flipyneg20")]
+    [InlineData(AtomDrawerTransition.FlipX20, "atom-drawer-flipx20")]
+    [InlineData(AtomDrawerTransition.FlipXNeg20, "atom-drawer-flipxneg20")]
+    [InlineData(AtomDrawerTransition.ShiftBlur, "atom-drawer-shiftblur")]
+    [InlineData(AtomDrawerTransition.FadeScale, "atom-drawer-fadescale")]
     public void Transition_emits_class(AtomDrawerTransition t, string cls)
     {
         using var ctx = new BunitContext();

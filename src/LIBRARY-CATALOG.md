@@ -13,6 +13,12 @@ usable in any Blazor render mode.
 > a greenfield app, a legacy page, or alongside a heavy component suite (MudBlazor, Radzen,
 > Fluent, Telerik) without conflict. Take one component, take one library, or take several; you
 > never inherit a large framework just to use a spinner.
+>
+> **One deliberate exception:** `BlazorAtoms.Transitions` carries a real `ProjectReference` to
+> `BlazorAtoms.Behaviors`, for the runtime CSS-capability check its `@starting-style`/JS-fallback
+> hybrid needs. This is a genuine shared *capability* package (not a grab-bag "Core"), scoped and
+> acknowledged rather than silently breaking the 0-deps rule — every other library still stands
+> alone.
 
 ## Naming convention
 
@@ -69,7 +75,7 @@ rating icons, QR/barcodes, skeleton shapes, and icons.
 | `BlazorAtoms.Avatars` *(shipped)* | AtomAvatar — silhouette (solid/gradient) or image, cropped to circle/square/rounded/squircle/hexagon, bg color/gradient+angle, border ring · AtomInitialsAvatar — initials from name w/ deterministic palette color · AtomAvatarGroup — overlapping stack from names w/ "+N" overflow |
 | `BlazorAtoms.Ratings` *(shipped)* | AtomRating — one component for both a read-only display (true fractional fill, e.g. 4.3/5) and an interactive input (hover preview, click, keyboard, snapping `Step`). Value is `double?` so `null` is a distinct "unrated" state; clearable; built-in star/heart/circle/square/diamond/triangle/thumb/bolt shapes or a custom SVG path; per-instance colors; optional value + count label |
 | `BlazorAtoms.Layout` | **AtomDrawer** — overlay drawer panel with position (left/right/top/bottom), transitions (slide/fade/pop/bounce/grow), sizing, and declarative styling; future: container anchoring. AtomStack, AtomGrid, AtomDivider, AtomSpacer, AtomCenter, AtomAspectRatio (planned). |
-| `BlazorAtoms.Transitions` | AtomFade, AtomSlide, AtomCollapse, AtomScale (CSS-only) |
+| `BlazorAtoms.Transitions` *(shipped)* | **AtomTransition** — generic wrapper that plays a CSS enter/exit transition (`AtomTransitionEffect`: Fade, Pop, FadeScale, SlideUp/Down/Left/Right, ShiftBlur, FlipY20/FlipYNeg20/FlipX20/FlipXNeg20) around arbitrary child content on a `Show` toggle. CSS-native (`@starting-style`) where supported, JS fallback elsewhere — see JavaScript policy note below. |
 | `BlazorAtoms.Barcodes` *(implemented)* | AtomBarcode (1D), AtomQrCode (2D) — own C# encoder → SVG; generation only |
 | `BlazorAtoms.Data` *(shipped)* | AtomDataHasher — live CRC-32 / CRC-64 / MD5 / SHA-256 / SHA-512 hex-digest panel over a text input; CRC engines implemented in-library (no `System.IO.Hashing` dependency), cryptographic engines wrap `System.Security.Cryptography`; algorithm picker toggle, `EditContext`-aware validation, `Multiline` textarea vs single-line input, `ResultColor`/`ResultBackgroundColor` theming; no JS |
 | `BlazorAtoms.DragDrop` *(shipped)* | AtomDropzone&lt;TItem&gt; — generic drag-and-drop list using native HTML5 DnD (no JS), single-list reorder + cross-zone transfer with explicit group scoping via `<AtomDropzoneGroup>` and/or `Group=` key, `Accepts` / `AllowsDrag` / `CopyItem` / `MaxItems` / `InstantReplace` predicates, Vertical / Horizontal / Grid orientation, `Virtualize` support, scoped CSS with `--dropzone-highlight-color` / `--dropzone-deny-color` / `--dropzone-gap` custom properties, all events surfaced as `EventCallback<>`; pure `DropzoneEngine` reorder helper exposed for headless use |
@@ -85,7 +91,7 @@ On-brand standout: **`Charts`** — SVG, JS-free, same DNA as the activity indic
 - **Avatars** — circular/square images that stand in for a person or entity. `AtomInitialsAvatar` falls back to initials (or a placeholder) when there's no photo; `AtomAvatarGroup` stacks several with overlap and a "+N" overflow. Common in team lists, comment threads, and assignee rows.
 - **Ratings** — star/heart scales in a single component. `AtomRating` shows a read-only score with true fractional fill (★★★★☆ 4.3/5) or, by default, is an interactive input (hover preview, click, keyboard) that snaps to a configurable `Step` (whole, half, or finer). The value is `double?` so `null` is a distinct "unrated" state (not a real 0); also clearable, a built-in icon shape or a custom SVG path, and an optional value/count label. *(Shipped as one `AtomRating` — the earlier two-component `AtomRatingInput` split was dropped in favor of a `ReadOnly` toggle.)*
 - **Layout** — invisible structural building blocks: stack (spacing), grid, divider, spacer, centering — the scaffolding you arrange other components inside.
-- **Transitions** — reusable enter/leave animations (fade, slide, collapse, scale) wrapped around content that appears or disappears. CSS-only.
+- **Transitions** — `AtomTransition` wraps arbitrary content and plays a reusable enter/leave animation (fade, slide, flip, ...) whenever `Show` toggles. CSS-native (`@starting-style`) on modern browsers with a JS fallback elsewhere, decided at runtime via `BlazorAtoms.Behaviors`'s capability check — see that library's entry and the JavaScript policy note below for the one deliberate dependency exception this creates.
 - **DragDrop** — generic list drag-and-drop with `AtomDropzone<TItem>`. Native HTML5 DnD only (no JS), single-list reorder + cross-zone transfer via an outer `<AtomDropzoneGroup>` cascading context, optional `Group` key for finer scoping, `Accepts` / `AllowsDrag` / `CopyItem` / `MaxItems` / `InstantReplace` predicates, and Vertical / Horizontal / Grid orientation.
 - **Barcodes** — machine-readable graphics generated from a value, rendered as SVG. "Barcode" is the umbrella: `AtomBarcode` for 1D/linear (Code128, EAN-13, Code39…) and `AtomQrCode` for 2D/matrix (QR). **Generation only, using our own C# encoder** — a third-party lib (QRCoder/ZXing) would break the 0-dep rule. Note: *reading/scanning* a code needs a camera + JS → a separate Tier C concern, not part of this library. *(Implemented: Code39, Code128, EAN-13, UPC-A, ITF, Codabar (1D) + QR byte-mode v1–40 (2D), verified by ZXing round-trip / reference tests.)*
 
@@ -126,7 +132,7 @@ On-brand standout: **`Charts`** — SVG, JS-free, same DNA as the activity indic
 | `BlazorAtoms.Pickers` (Date / Time / Color) | popup/calendar logic; color picker is closer to JS-free |
 | `BlazorAtoms.Tables` / `DataGrid` | a simple table is JS-free; sorting/virtualization is heavy |
 | `BlazorAtoms.Navigation` *(shipped)* | AtomScrollTo — scroll-to-top/bottom or scroll-to-anchor button; default SVG chevron or custom-icon slot, tooltip/aria, page-or-container scope, optional auto-hide-until-scrolled (passive + rAF-coalesced watcher); self-imports `atom-navigation.js` for smooth scroll + visibility. *Planned:* Breadcrumbs, Pagination, Stepper. |
-| `BlazorAtoms.Behaviors` (ClickOutside, FocusTrap, Clipboard, Portal) | headless, but several need JS interop |
+| `BlazorAtoms.Behaviors` *(shipped)* | **AtomBrowserSupport** — cached runtime CSS-feature-support check (`CSS.supports()` via a tiny self-imported JS module) · **TransitionState** — reusable enter/exit animation state machine, the engine behind `BlazorAtoms.Transitions`'s `AtomTransition`, usable directly by future components (carousel, text animation, image effects) without wrapper markup. *Planned:* ClickOutside, FocusTrap, Clipboard, Portal. |
 
 **What each does:**
 - **Canvas** — native `<canvas>` drawing behind a clean C# API: a declarative shape model, freehand ink (signature capture), and drag-to-move, plus a batched raw-2D-context escape hatch. Tops out at `AtomCanvasStudio`, a full drop-in workbench (toolbar/stamps/layers/undo-redo/zoom/save-load) that is extensible via slots + a cascading context. The family's first raster surface; owns its own tiny JS module so consumers write no interop.
@@ -134,7 +140,7 @@ On-brand standout: **`Charts`** — SVG, JS-free, same DNA as the activity indic
 - **Pickers** — specialized value selectors for date, time, and color.
 - **Tables** — tabular data display, from a simple static table up to a sortable/virtualized data grid.
 - **Navigation** — moving around an app. Shipped: `AtomScrollTo` (scroll-to-top/bottom/anchor button, page or container scope, auto-hide-until-scrolled). Planned: breadcrumbs, pagination, stepper.
-- **Behaviors** — headless helpers with no visuals of their own: click-outside, focus-trap, clipboard copy, portal.
+- **Behaviors** — headless helpers with no visuals of their own. Shipped: `AtomBrowserSupport` (runtime CSS-feature detection) and `TransitionState` (the enter/exit engine behind `AtomTransition`). Planned: click-outside, focus-trap, clipboard copy, portal.
 
 ---
 

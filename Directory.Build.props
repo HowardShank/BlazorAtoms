@@ -7,6 +7,14 @@
     <!-- Repo root (with trailing slash) so shared build assets resolve from any project depth. -->
     <RepoRoot>$(MSBuildThisFileDirectory)</RepoRoot>
 
+    <!-- Visual Studio's "Fast Up-to-Date Check" skips re-invoking MSBuild on F5/Debug based on a
+         cached heuristic, not a real evaluation — it has repeatedly served stale output in this
+         repo after adding a new ProjectReference, a new component type in a referenced project, or
+         a new file produced by a custom MSBuild Target (e.g. build/SharedJs.props's copy target),
+         even though `dotnet build`/`dotnet run` from the CLI picked the change up immediately.
+         Disabling it forces VS to always run a real MSBuild evaluation before running/debugging. -->
+    <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
+
     <!-- Shared package identity. Per-library PackageId/Version live in each csproj;
          shared pack settings (license/icon/urls/SourceLink) live in build/Packable.props. -->
     <Authors>Howard Shank</Authors>

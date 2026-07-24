@@ -1,0 +1,121 @@
+@page "/playground/transition"
+@using BlazorAtoms.Transitions
+@using System.Text
+
+<PageTitle>AtomTransition Playground</PageTitle>
+
+<h1>AtomTransition playground</h1>
+<p>
+    A generic wrapper that plays a CSS enter/exit transition around arbitrary child content
+    whenever <code>Show</code> toggles. Choose the effect and duration; the live preview and
+    generated markup update immediately.
+</p>
+<p><a href="/">&larr; Back to home</a></p>
+
+<div class="transition-preview">
+    <button type="button" class="transition-preview-btn" @onclick="() => Show = !Show">
+        @(Show ? "Hide" : "Show")
+    </button>
+
+    <div class="transition-preview-stage">
+        <AtomTransition Show="@Show"
+                        Effect="@EffectSel"
+                        Duration="@Duration"
+                        CssClass="@Nz(CssClassV)"
+                        Style="@Nz(StyleV)"
+                        OnEntered="@OnEntered"
+                        OnExited="@OnExited">
+            <div class="transition-preview-card">
+                <strong>@EffectSel</strong>
+                <p>This card fades/slides/flips in and out.</p>
+            </div>
+        </AtomTransition>
+    </div>
+</div>
+
+<div class="transition-controls">
+    <div class="ctrl">
+        <label>Effect</label>
+        <select @bind="EffectSel">
+            @foreach (var e in Effects) { <option value="@e">@e</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Duration (ms) <span class="val">@Duration</span></label>
+        <input type="range" min="0" max="4000" step="50" @bind="Duration" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>Extra class (CssClass)</label>
+        <input type="text" @bind="CssClassV" @bind:event="oninput" placeholder="none" />
+    </div>
+    <div class="ctrl">
+        <label>Extra style (Style)</label>
+        <input type="text" @bind="StyleV" @bind:event="oninput" placeholder="none" />
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(EventLog))
+{
+    <div class="transition-event-log">@EventLog</div>
+}
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomTransitionExample.razor" />
+
+<style>
+    .transition-preview { display:flex; flex-direction:column; align-items:center; gap:1.5rem;
+        min-height:14rem; background:#fff; border:1px solid #d0d0d8; border-radius:12px;
+        padding:2rem; margin-bottom:1.5rem; }
+    .transition-preview-btn { padding:.75rem 1.5rem; border:1px solid #2563eb; border-radius:8px;
+        background:#2563eb; color:#fff; font-size:1rem; cursor:pointer; }
+    .transition-preview-btn:hover { background:#1d4ed8; }
+    .transition-preview-stage { display:flex; align-items:center; justify-content:center;
+        min-height:6rem; width:100%; }
+    .transition-preview-card { padding:1rem 1.5rem; border:1px solid #2563eb; border-radius:10px;
+        background:#eff6ff; color:#1e3a8a; text-align:center; }
+    .transition-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem 1.5rem;
+        background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem;
+        color:#cfd8e3; margin-bottom:1.5rem; }
+    .transition-controls .ctrl { display:flex; flex-direction:column; gap:.4rem; }
+    .transition-controls label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3;
+        display:flex; justify-content:space-between; gap:.5rem; }
+    .transition-controls label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
+    .transition-controls input[type=range] { width:100%; accent-color:#2563eb; }
+    .transition-controls input[type=text], .transition-controls select {
+        padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330;
+        background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; }
+    .transition-event-log { background:#0d1118; border:1px solid #1b2330; border-radius:8px;
+        padding:.75rem 1rem; color:#5fb7c9; font-family:ui-monospace,Consolas,monospace;
+        font-size:.85rem; margin-bottom:1.5rem; }
+</style>
+
+@code {
+    private static readonly AtomTransitionEffect[] Effects = (AtomTransitionEffect[])Enum.GetValues(typeof(AtomTransitionEffect));
+
+    private bool Show;
+    private AtomTransitionEffect EffectSel = AtomTransitionEffect.Fade;
+    private int Duration = 240;
+    private string CssClassV = "";
+    private string StyleV = "";
+    private string EventLog = "";
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
+
+    private void OnEntered() => EventLog = $"{DateTime.Now:HH:mm:ss.fff} — Entered";
+    private void OnExited() => EventLog = $"{DateTime.Now:HH:mm:ss.fff} — Exited";
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new StringBuilder("<AtomTransition Show=\"show\"");
+            if (EffectSel != AtomTransitionEffect.Fade) sb.Append($" Effect=\"AtomTransitionEffect.{EffectSel}\"");
+            if (Duration != 240) sb.Append($" Duration=\"{Duration}\"");
+            if (!string.IsNullOrEmpty(CssClassV)) sb.Append($" CssClass=\"{CssClassV}\"");
+            if (!string.IsNullOrEmpty(StyleV)) sb.Append($" Style=\"{StyleV}\"");
+            sb.Append(">\n");
+            sb.Append("    <div class=\"card\">Your content here.</div>\n");
+            sb.Append("</AtomTransition>");
+            return sb.ToString();
+        }
+    }
+}

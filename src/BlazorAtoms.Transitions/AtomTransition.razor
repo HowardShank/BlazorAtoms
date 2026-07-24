@@ -1,0 +1,4 @@
+@inherits AtomComponentBase
+<div @attributes="AdditionalAttributes" class="@Classes" style="@TransitionStyle" aria-hidden="@(_state.Shown ? "false" : "true")">
+    @ChildContent
+</div>

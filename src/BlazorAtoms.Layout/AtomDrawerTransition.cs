@@ -11,5 +11,10 @@ public enum AtomDrawerTransition
     Bounce,
     Grow,
     FadeScale,
-    SlideUpIn
+    SlideUpIn,
+    ShiftBlur,
+    FlipY20,
+    FlipYNeg20,
+    FlipX20,
+    FlipXNeg20
 }

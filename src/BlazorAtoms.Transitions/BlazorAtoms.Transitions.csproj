@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <Import Project="$(RepoRoot)build\Packable.props" />
+
+  <!--
+    No Shared.props import here: BlazorAtoms.Shared's source is already compiled into
+    BlazorAtoms.Behaviors (below), which this package references directly. Importing Shared.props
+    again here would compile a SECOND, distinct copy of AtomComponentBase/StyleVars into this
+    assembly — a different type from the one in Behaviors.dll despite the identical name/namespace,
+    which breaks partial-class inheritance the moment a .razor.cs file uses one and the .razor
+    file's generated partial resolves the other.
+  -->
+
+
+  <PropertyGroup>
+    <PackageId>BlazorAtoms.Transitions</PackageId>
+    <Title>Blazor Transitions</Title>
+    <Description>Reusable enter/leave transitions for Blazor. Ships AtomTransition — a generic wrapper that plays a CSS transition (fade, pop, slide, flip, ...) around arbitrary child content on a Show toggle, using a modern CSS-native path (@starting-style) where supported and a JS fallback elsewhere, decided at runtime via BlazorAtoms.Behaviors.</Description>
+    <PackageTags>Blazor;Transitions;Animation;Fade;Slide;CSS;WebAssembly;Server</PackageTags>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BlazorAtoms.Behaviors\BlazorAtoms.Behaviors.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BlazorAtoms.Transitions.Tests" />
+  </ItemGroup>
+
+</Project>

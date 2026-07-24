@@ -13,7 +13,8 @@
 - `samples/BlazorWebApp{Svr,Wasm,Auto}Demo/` — thin wrapper pages for Server, standalone WASM, and Auto render modes.
 
 ## Project Conventions
-- `Directory.Build.props` sets `net9.0`, `Nullable=enable`, `ImplicitUsings=enable`, `RepoRoot`.
+- `Directory.Build.props` sets `net9.0`, `Nullable=enable`, `ImplicitUsings=enable`, `RepoRoot`, and `DisableFastUpToDateCheck` (Visual Studio's F5/Debug up-to-date heuristic has repeatedly served stale builds in this repo after a new `ProjectReference`, a new component type in a referenced project, or a new file from a custom MSBuild `Target` — this forces a real MSBuild evaluation every time instead).
+- After adding a **new project to the solution** (not just a new file in an existing one), do one full "Rebuild Solution" in Visual Studio — `DisableFastUpToDateCheck` doesn't help here, since VS hasn't loaded the new project into its project system at all until a real solution-level build runs.
 - Library csprojs import `build/Packable.props` (pack/NuGet settings) and `build/Shared.props` (compiles `BlazorAtoms.Shared` source in; no project reference).
 - Each package references only `Microsoft.AspNetCore.Components.Web` (plus framework packages).
 - Public component names are `Atom<Name>`; library root namespace is `BlazorAtoms.<Area>`.

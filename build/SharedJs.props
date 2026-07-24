@@ -1,0 +1,50 @@
+<Project>
+
+  <!--
+    Copies BlazorAtoms.Shared's shared JS helpers into the importing library's own wwwroot/shared/
+    as a static web asset, at build time. Mirrors Shared.props's ".cs compiled in" trick for JS:
+    no project reference, no runtime dependency — each package still ships a fully standalone JS
+    module, just with less hand-copied duplication of small cross-cutting helpers (nextFrame, etc.).
+    A library opts in with: <Import Project="$(RepoRoot)build\SharedJs.props" />
+
+    Indirection through $(IntermediateOutputPath) (rather than a Content item pointing straight at
+    the canonical source under BlazorAtoms.Shared) is required: when two packages that both import
+    this file end up referenced by the same consuming app (e.g. a demo host referencing both
+    BlazorAtoms.Layout and BlazorAtoms.Transitions, the latter pulling in BlazorAtoms.Behaviors),
+    the SDK's DiscoverPrecompressedAssets task dedupes by each asset's original source path across
+    the WHOLE aggregated static-web-asset graph — two Content items both tracing back to the exact
+    same absolute path crashes it ("An item with the same key has already been added"). Copying
+    into each project's own (always project-unique) intermediate directory first gives every
+    package a distinct source path, even though the bytes are identical.
+  -->
+  <PropertyGroup>
+    <SharedJsIntermediateDir>$(IntermediateOutputPath)sharedjs\</SharedJsIntermediateDir>
+  </PropertyGroup>
+
+  <Target Name="CopySharedJsToIntermediate"
+          BeforeTargets="AssignTargetPaths;GetCopyToOutputDirectoryItems;ResolveStaticWebAssetsInputs;ResolveStaticWebAssetsInputsUpdated;AssignTargetPathsForStaticWebAssets"
+          Inputs="$(RepoRoot)src\BlazorAtoms.Shared\js\next-frame.js"
+          Outputs="$(SharedJsIntermediateDir)next-frame.js">
+    <!--
+      Explicit Inputs/Outputs (rather than relying solely on the Copy task's SkipUnchangedFiles)
+      so MSBuild's own incremental-build engine can determine staleness on its own — independent
+      of any build driver's own up-to-date heuristics (see DisableFastUpToDateCheck in
+      Directory.Build.props for the Visual Studio side of this).
+    -->
+    <ItemGroup>
+      <_SharedJsSource Include="$(RepoRoot)src\BlazorAtoms.Shared\js\**\*.js" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_SharedJsSource)"
+          DestinationFolder="$(SharedJsIntermediateDir)"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+  <ItemGroup>
+    <!-- Literal (non-wildcard) path: MSBuild only needs wildcard globs to resolve at evaluation
+         time, so this is safe to reference before CopySharedJsToIntermediate has produced it. -->
+    <Content Include="$(SharedJsIntermediateDir)next-frame.js" Link="wwwroot\shared\next-frame.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>
