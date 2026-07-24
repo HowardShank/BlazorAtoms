@@ -1,0 +1,43 @@
+/* AtomTextLava: static scoped CSS — like AtomTextScramble, the keyframe shapes here don't depend
+   on runtime data, so no per-instance <style> generation is needed. */
+
+.atom-text-lava {
+    position: relative;
+    display: inline-block;
+    padding: .5rem 1.25rem;
+    border-radius: 10px;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 30% 120%, var(--atom-text-lava-bg-hot), transparent 60%),
+        radial-gradient(circle at 70% 130%, var(--atom-text-lava-bg-cool), transparent 55%),
+        linear-gradient(0deg, var(--atom-text-lava-bg-base-dark), var(--atom-text-lava-bg-base-light));
+    background-size: 200% 200%;
+    /* Ambient — always loops regardless of Loop, which only governs the word's own rise/sink. */
+    animation: atom-text-lava-bg-kf 6s ease-in-out infinite;
+}
+
+@keyframes atom-text-lava-bg-kf {
+    0%, 100% { background-position: 0% 0%, 100% 100%, 0 0; }
+    50% { background-position: 100% 100%, 0% 0%, 0 0; }
+}
+
+.atom-text-lava-word {
+    position: relative;
+    display: inline-block;
+    color: #fff8ee;
+    font-weight: bold;
+    text-shadow: 0 0 8px var(--atom-text-lava-glow), 0 0 18px var(--atom-text-lava-glow);
+    animation-name: atom-text-lava-rise-kf;
+    animation-timing-function: ease-in-out;
+}
+
+@keyframes atom-text-lava-rise-kf {
+    0% { transform: translateY(var(--atom-text-lava-rise-distance)); opacity: .3; }
+    60% { transform: translateY(calc(var(--atom-text-lava-rise-distance) * -0.15)); opacity: 1; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-text-lava { animation: none !important; }
+    .atom-text-lava-word { animation: none !important; transform: none !important; opacity: 1 !important; }
+}

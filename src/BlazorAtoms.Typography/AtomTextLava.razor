@@ -1,0 +1,24 @@
+@inherits AtomComponentBase
+
+@*
+    AtomTextLava.razor
+    -------------------
+    Zero-JS single-word effect: an animated molten-gradient background (always looping — the lava
+    itself is ambient regardless of Loop) with the word rising up out of it. One keyframe set
+    (atom-text-lava-rise-kf) drives both trigger modes — Loop just flips
+    animation-iteration-count/direction, no second keyframe block needed:
+      - Loop=false (one-shot): iteration-count 1, direction normal, fill-mode forwards — rises once
+        from below and holds at rest.
+      - Loop=true (default): iteration-count infinite, direction alternate — plays forward (rise to
+        rest) then backward (sink back below) forever, i.e. bubbling up and down.
+*@
+
+@if (!CancellationToken.IsCancellationRequested && !string.IsNullOrEmpty(Word))
+{
+    <span @key="_replayKey"
+          @attributes="AdditionalAttributes"
+          class="@ClassAttr("atom-text-lava")"
+          style="@StyleAttr(RootStyle)">
+        <span class="atom-text-lava-word" style="@WordStyle">@Word</span>
+    </span>
+}

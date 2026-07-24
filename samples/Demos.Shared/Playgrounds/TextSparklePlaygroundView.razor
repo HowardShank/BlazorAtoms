@@ -1,0 +1,117 @@
+@page "/playground/textsparkle"
+@using BlazorAtoms.Typography
+
+<PageTitle>AtomTextSparkle Playground</PageTitle>
+
+<h1>AtomTextSparkle playground</h1>
+<p>
+    A zero-JS hover effect: layered 3D text-shadow, a colorized glare sweep, and SVG sparkles that
+    pop in around the text. Pure CSS <code>:hover</code>/<code>:active</code> — hover the preview
+    below to see it. Renders a real <code>&lt;a&gt;</code> when <code>Href</code> is set, or a
+    focusable non-link element otherwise.
+</p>
+<p><a href="/">&larr; Back to home</a></p>
+
+<div class="textsparkle-preview">
+    <AtomTextSparkle Text="@Text"
+                        Href="@(string.IsNullOrEmpty(Href) ? null : Href)"
+                        Color="@Color"
+                        ShadowColor="@ShadowColor"
+                        GlareColor="@GlareColor"
+                        SparkleCount="@SparkleCount"
+                        FontSize="@FontSize" />
+</div>
+
+<div class="textsparkle-controls">
+    <div class="ctrl">
+        <label>Text</label>
+        <input type="text" @bind="Text" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>Href (blank = non-link, focusable)</label>
+        <input type="text" @bind="Href" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Sparkle count</label>
+        <input type="range" min="0" max="12" step="1" @bind="SparkleCount" @bind:event="oninput" />
+        <span class="textsparkle-val">@SparkleCount</span>
+    </div>
+    <div class="ctrl">
+        <label>Font size</label>
+        <input type="text" @bind="FontSize" @bind:event="oninput" placeholder="1.5rem" />
+    </div>
+    <div class="ctrl">
+        <label>Text color</label>
+        <div class="textsparkle-color-row">
+            <input type="color" @bind="Color" @bind:event="oninput" />
+            <input type="text" @bind="Color" @bind:event="oninput" placeholder="#eab308" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Shadow color</label>
+        <div class="textsparkle-color-row">
+            <input type="color" @bind="ShadowColor" @bind:event="oninput" />
+            <input type="text" @bind="ShadowColor" @bind:event="oninput" placeholder="#a16207" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Glare / sparkle color</label>
+        <div class="textsparkle-color-row">
+            <input type="color" @bind="GlareColorHex" @bind:event="oninput" />
+            <input type="text" @bind="GlareColor" @bind:event="oninput" placeholder="hsl(0 0% 100% / 0.75)" />
+        </div>
+    </div>
+</div>
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomTextSparkleExample.razor" />
+
+<style>
+    .textsparkle-preview { display:flex; align-items:center; justify-content:center; min-height:8rem;
+        background:#1a1a1a; border-radius:12px; padding:2rem; margin-bottom:1.5rem; }
+    .textsparkle-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem 1.5rem;
+        background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem;
+        color:#cfd8e3; margin-bottom:1.5rem; }
+    .textsparkle-controls .ctrl { display:flex; flex-direction:column; gap:.4rem; }
+    .textsparkle-controls label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; }
+    .textsparkle-controls input[type=text], .textsparkle-controls input[type=range] {
+        padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330;
+        background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; }
+    .textsparkle-val { color:#5fb7c9; font-family:ui-monospace,monospace; font-size:.85rem; }
+    .textsparkle-color-row { display:flex; gap:.5rem; align-items:center; }
+    .textsparkle-color-row input[type=color] { padding:0; width:2.75rem; height:2.2rem; flex:0 0 auto; }
+    .textsparkle-color-row input[type=text] { flex:1 1 auto; min-width:0; }
+</style>
+
+@code {
+    private string Text = "Click!";
+    private string Href = "";
+    private int SparkleCount = 5;
+    private string FontSize = "1.5rem";
+    private string Color = "#eab308";
+    private string ShadowColor = "#a16207";
+    private string GlareColor = "hsl(0 0% 100% / 0.75)";
+
+    // The glare/sparkle default is an hsl()-with-alpha string, which <input type=color> can't
+    // parse — this bridges a plain hex value into GlareColor without disturbing a hand-typed
+    // hsl()/rgba() value the user might prefer to keep.
+    private string GlareColorHex
+    {
+        get => GlareColor.StartsWith('#') ? GlareColor : "#ffffff";
+        set => GlareColor = value;
+    }
+
+    private string Snippet
+    {
+        get
+        {
+            var attrs = $"Text=\"{Text}\"";
+            if (!string.IsNullOrEmpty(Href)) attrs += $" Href=\"{Href}\"";
+            if (Color != "#eab308") attrs += $" Color=\"{Color}\"";
+            if (ShadowColor != "#a16207") attrs += $" ShadowColor=\"{ShadowColor}\"";
+            if (GlareColor != "hsl(0 0% 100% / 0.75)") attrs += $" GlareColor=\"{GlareColor}\"";
+            if (SparkleCount != 5) attrs += $" SparkleCount=\"{SparkleCount}\"";
+            if (FontSize != "1.5rem") attrs += $" FontSize=\"{FontSize}\"";
+            return $"<AtomTextSparkle {attrs} />";
+        }
+    }
+}

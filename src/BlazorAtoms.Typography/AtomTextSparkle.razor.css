@@ -1,0 +1,88 @@
+/* AtomTextSparkle: static scoped CSS. The trigger is plain CSS :hover/:active — no per-instance
+   <style> generation, no C# state; sparkle scatter positions vary inline per <svg> (set in
+   code-behind) but the keyframes/rules themselves are fixed. */
+
+.atom-text-sparkle {
+    position: relative;
+    display: inline-block;
+    padding: .5em .75em;
+    border-radius: 999px;
+    text-decoration: none;
+    font-size: var(--atom-text-sparkle-font-size);
+    transition: background .2s;
+    --atom-text-sparkle-hover: 0.4;
+    --atom-text-sparkle-pos: 0;
+}
+
+.atom-text-sparkle:hover {
+    background: rgba(0, 0, 0, .08);
+    --atom-text-sparkle-hover: 1;
+}
+
+.atom-text-sparkle:active {
+    --atom-text-sparkle-hover: 0;
+}
+
+.atom-text-sparkle-label {
+    position: relative;
+    display: inline-block;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: transparent;
+    transition: transform .2s;
+    text-shadow:
+        calc(var(--atom-text-sparkle-hover) * 0em) calc(var(--atom-text-sparkle-hover) * 0em) var(--atom-text-sparkle-shadow),
+        calc(var(--atom-text-sparkle-hover) * -0.02em) calc(var(--atom-text-sparkle-hover) * 0.02em) var(--atom-text-sparkle-shadow),
+        calc(var(--atom-text-sparkle-hover) * -0.04em) calc(var(--atom-text-sparkle-hover) * 0.04em) var(--atom-text-sparkle-shadow),
+        calc(var(--atom-text-sparkle-hover) * -0.06em) calc(var(--atom-text-sparkle-hover) * 0.06em) var(--atom-text-sparkle-shadow),
+        calc(var(--atom-text-sparkle-hover) * -0.08em) calc(var(--atom-text-sparkle-hover) * 0.08em) var(--atom-text-sparkle-shadow),
+        calc(var(--atom-text-sparkle-hover) * -0.1em) calc(var(--atom-text-sparkle-hover) * 0.1em) var(--atom-text-sparkle-shadow);
+    transform: translate(calc(var(--atom-text-sparkle-hover) * 0.1em), calc(var(--atom-text-sparkle-hover) * -0.1em));
+}
+
+.atom-text-sparkle-glare {
+    position: absolute;
+    inset: .5em .75em;
+    background:
+        linear-gradient(108deg, transparent 0 55%, var(--atom-text-sparkle-glare) 55% 60%, transparent 60% 70%, var(--atom-text-sparkle-glare) 70% 85%, transparent 85%) calc(var(--atom-text-sparkle-pos) * -200%) 0 / 200% 100%,
+        var(--atom-text-sparkle-color);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    text-shadow: none;
+    z-index: 2;
+    transition: transform .2s, background-position 0s;
+}
+
+.atom-text-sparkle:hover .atom-text-sparkle-glare {
+    --atom-text-sparkle-pos: 1;
+    transition: transform .2s, background-position calc(var(--atom-text-sparkle-hover) * 1.5s) calc(var(--atom-text-sparkle-hover) * .25s);
+}
+
+.atom-text-sparkle:active .atom-text-sparkle-glare {
+    --atom-text-sparkle-pos: 1;
+}
+
+.atom-text-sparkle-svg {
+    position: absolute;
+    z-index: 3;
+    width: .5em;
+    aspect-ratio: 1;
+    color: var(--atom-text-sparkle-glare);
+    transform: translate(-50%, -50%) scale(0);
+}
+
+.atom-text-sparkle:hover .atom-text-sparkle-svg {
+    animation: atom-text-sparkle-kf .75s var(--atom-text-sparkle-delay) both;
+}
+
+@keyframes atom-text-sparkle-kf {
+    50% { transform: translate(-50%, -50%) scale(var(--atom-text-sparkle-scale, 1)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-text-sparkle-svg, .atom-text-sparkle-label, .atom-text-sparkle-glare {
+        animation: none !important;
+        transition: none !important;
+    }
+}

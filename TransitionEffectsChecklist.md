@@ -34,6 +34,22 @@ the order effects actually get triaged from `src/BlazorAtoms.Layout/transition-i
       breakpoints don't depend on runtime data here, only the per-character stagger multiplier
       does), `@key`-based remount replaces the demo's jQuery class-toggle restart trick.
       Playground: `/playground/textscramble`.
+- [x] `BlazorAtoms.Typography` → **`AtomTextLava`** *(shipped)* — routes: "molten lava effect that
+      text rises from." Single word (matches `AtomTextScramble`'s specialized shape), default
+      trigger is loop (bubbles up/down forever), `Loop="false"` opts into a one-shot rise-and-hold.
+      Scope includes the lava background visual, not just the text motion. Zero-JS: one
+      `@keyframes` block reused for both trigger modes via `animation-direction`/
+      `iteration-count`/`fill-mode` alone (no second keyframe generator, no per-instance CSS).
+      Playground: `/playground/textlava`.
+- [x] `BlazorAtoms.Typography` → **`AtomTextSparkle`** *(shipped)* — routes: "sparkly shiny text"
+      (hover-triggered layered 3D text-shadow + glare sweep + SVG sparkles). Trigger is hover-focus,
+      element is generic text/link — the first Typography component whose trigger is pure CSS
+      `:hover`/`:active` with no C# state at all (cheaper even than `AtomTextScramble`'s
+      `@key`-remount). Colorization via `Color`/`ShadowColor`/`GlareColor`; sparkle scatter count
+      via `SparkleCount`, placed by a pure function of index (not `System.Random`, to avoid a
+      hydration-mismatch jump between server-rendered and interactive markup). `Href` optional —
+      renders a real `<a>` when set, a focusable non-link otherwise.
+      Playground: `/playground/textsparkle`.
 - [ ] `BlazorAtoms.Progress` — alternative home for loader effects if determinate rather than
       indeterminate (decide per-effect against `ActivityIndicators` above).
 

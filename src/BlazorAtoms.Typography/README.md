@@ -8,6 +8,11 @@ Text primitives for Blazor. Ships:
 - **`AtomTextScramble`** — a zero-JS one-shot entrance animation for a single word, splitting it
   into characters that fly/drop/spin in with a staggered delay (7 effects). Not a cycling
   component like `AtomTextCycle` — deliberately single-word/specialized.
+- **`AtomTextLava`** — a zero-JS single word rising up out of an animated molten-lava-gradient
+  background. `Loop` (default on) makes it bubble up and down forever; off, it rises once and holds.
+- **`AtomTextSparkle`** — a zero-JS hover effect: layered 3D text-shadow, a colorized glare sweep,
+  and SVG sparkles that pop in around the text. Pure CSS `:hover`/`:active` — the only Typography
+  component whose trigger needs no C# state at all.
 
 ## Install
 
@@ -137,12 +142,87 @@ JS class-toggle trick needed.
 Plus the shared escape hatch on every Atom component (`CssClass`, `Style`, arbitrary splatted
 attributes) on the root `<span>`, and the public `Replay()` method described above.
 
+## AtomTextLava
+
+```razor
+<AtomTextLava Word="MOLTEN" />
+<AtomTextLava Word="STEADY" Loop="false" />
+```
+
+A single word rising up out of an animated molten-lava-gradient background. The lava background
+always loops — it's ambient, not tied to the word's own state. `Loop` (default `true`) controls
+only whether the word itself keeps bubbling up and down forever, or rises once and holds.
+
+Both trigger modes reuse the exact same `@keyframes` — `Loop` just flips
+`animation-iteration-count`/`animation-direction`/`animation-fill-mode` on the word:
+
+- `Loop="true"` *(default)*: `iteration-count: infinite; direction: alternate` — plays forward
+  (rise to rest) then backward (sink back below) forever.
+- `Loop="false"`: `iteration-count: 1; direction: normal; fill-mode: forwards` — rises once from
+  below and holds at rest.
+
+### Parameters
+
+| Parameter | Type | Default | Notes |
+|---|---|---|---|
+| `Word` | `string` | *required* | The word/short phrase rising out of the lava. Empty renders nothing. |
+| `Loop` | `bool` | `true` | Bubble up/down forever, or rise once and hold. |
+| `RiseDistance` | `string` | `"1.5rem"` | How far below rest the word starts (and, when looping, sinks back to). Any CSS length. |
+| `Duration` | `string` | `"1.2s"` | How long one rise (or rise/sink half-cycle) takes. Any CSS time. |
+| `GlowColor` | `string` | `"#ff5500"` | Color of the heat-glow text-shadow. |
+| `BgColorHot` | `string` | `"#ff6a00"` | Color of the hotter of the two radial-gradient lava blobs. |
+| `BgColorCool` | `string` | `"#ff2d00"` | Color of the cooler of the two radial-gradient lava blobs. |
+| `BgColorBaseDark` | `string` | `"#3a0a00"` | Darker end (top) of the base linear-gradient behind the blobs. |
+| `BgColorBaseLight` | `string` | `"#1a0500"` | Lighter end (bottom) of the base linear-gradient behind the blobs. |
+
+Plus the public `Replay()` method — same `@key`-remount trick `AtomTextScramble` uses — to rerun
+the rise from its initial state on demand, regardless of `Loop`.
+
+Plus the shared escape hatch on every Atom component (`CssClass`, `Style`, arbitrary splatted
+attributes) on the root `<span>`.
+
+## AtomTextSparkle
+
+```razor
+<AtomTextSparkle Text="Click!" Href="/somewhere" />
+<AtomTextSparkle Text="Sparkly Shiny Text" SparkleCount="8" Color="#e879f9" GlareColor="#fff" />
+```
+
+A hover effect, not a toggle/loop/one-shot one — the only Typography component whose trigger is
+pure CSS `:hover`/`:active` with no C# state behind it at all. Renders a real `<a href>` when
+`Href` is set; otherwise a focusable (`tabindex="0"`) non-link element with the identical hover
+effect. On hover: a layered 3D text-shadow lifts the text, a colorized glare sweep animates across
+a clipped-text overlay, and `SparkleCount` SVG sparkles pop in at scattered positions around it.
+
+Sparkle positions are placed by a pure function of index (`x = i*53 % 100`, etc.), not
+`System.Random` — a time-seeded random would scatter sparkles differently between the
+server-rendered markup and the first interactive re-render, causing a visible jump on hydration; a
+deterministic function of the index can't.
+
+### Parameters
+
+| Parameter | Type | Default | Notes |
+|---|---|---|---|
+| `Text` | `string` | *required* | The text to display. Empty renders nothing. |
+| `Href` | `string?` | `null` | Optional link target — renders `<a href>` when set, a focusable non-link otherwise. |
+| `Color` | `string` | `"#eab308"` | Fill color of the glare-sweep text layer. |
+| `ShadowColor` | `string` | `"#a16207"` | Color of the layered 3D text-shadow. |
+| `GlareColor` | `string` | `"hsl(0 0% 100% / 0.75)"` | Color of the glare sweep and the sparkle SVGs. |
+| `SparkleCount` | `int` | `5` | How many sparkle SVGs scatter around the text. |
+| `FontSize` | `string` | `"1.5rem"` | Text size — sparkle size and shadow depth scale off this (`em`-based). |
+
+Plus the shared escape hatch on every Atom component (`CssClass`, `Style`, arbitrary splatted
+attributes) on the root element.
+
 ## Notes
 
 - **Zero JS.** Pure CSS `animation`/`@keyframes` — no `IJSObjectReference`, works identically in
   every render mode including static SSR. `AtomTextCycle`'s keyframes are generated server/
-  client-side in C# (per-instance, sized to word count); `AtomTextScramble`'s are static (word
-  length only affects the stagger multiplier, not the keyframe shape).
-- **Accessibility.** Both components respect `prefers-reduced-motion: reduce` (animation disabled,
-  final/first state shown immediately). `AtomTextCycle`'s duplicate wrap-around row is
-  `aria-hidden`.
+  client-side in C# (per-instance, sized to word count); `AtomTextScramble`'s, `AtomTextLava`'s,
+  and `AtomTextSparkle`'s are static (their keyframe shapes never depend on instance data).
+  `AtomTextSparkle`'s trigger is plain CSS `:hover`/`:active` — it needs no C# state at all, unlike
+  the others' click/loop-driven triggers.
+- **Accessibility.** All four components respect `prefers-reduced-motion: reduce` (animation
+  disabled, final/first state shown immediately). `AtomTextCycle`'s duplicate wrap-around row is
+  `aria-hidden`; `AtomTextSparkle` without `Href` still gets `tabindex="0"` so keyboard users can
+  focus and trigger `:focus`-adjacent styling if you add it via `CssClass`.

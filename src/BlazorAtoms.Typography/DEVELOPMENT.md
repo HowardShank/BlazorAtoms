@@ -135,3 +135,71 @@ me force a replay of the exact same word," which a boolean toggle can't express 
 edge-triggered diff. A public method on the component instance (`@ref`) matches how one-shot,
 imperative actions are idiomatically exposed in Blazor, and keeps the zero-argument common case
 (`<AtomTextScramble Word="@word" />`, plays automatically, no wiring) free of required plumbing.
+
+## AtomTextLava — one keyframe set, two trigger modes via CSS props alone
+
+Requested as "text rises from a molten lava effect." Clarified up front (per the routing plan:
+name the trigger and the element type before building) that: (a) the default trigger is a
+continuous loop (bubbling up/down), with one-shot rise-and-hold as an opt-out via a `Loop` param
+rather than the other way around; (b) scope includes the lava background visual itself, not just
+the text motion; (c) it's single-word, matching `AtomTextScramble`'s specialized (not
+list-cycling) shape.
+
+Unlike `AtomTextCycle`, `Loop` doesn't need a second keyframe generator or even two static
+keyframe blocks — the same `atom-text-cycle`-style trick applies but is even cheaper here:
+
+- The rise keyframe is a plain 0% → 60% (slight overshoot) → 100% (rest) block.
+- **One-shot** (`Loop="false"`) plays it forward once, `fill-mode: forwards` holds the 100% (rest)
+  state.
+- **Loop** (`Loop="true"`, default) plays the *same* keyframes with `animation-direction: alternate`
+  and `iteration-count: infinite` — forward is rise-to-rest, backward (CSS auto-reverses the same
+  keyframe) is rest-to-below, so the word bubbles up and down forever with no extra CSS at all.
+
+This mirrors `AtomTextCycle`'s reverse-via-`animation-direction` trick (reusing one generated
+keyframe block for the "opposite" behavior instead of writing a second one), applied here to get
+a full loop out of a keyframe block that was only ever written to go one direction.
+
+The lava background itself (`@keyframes atom-text-lava-bg-kf`, animating `background-position`
+across three layered radial/linear gradients) always loops regardless of `Loop` — it's ambient
+molten texture, conceptually independent of whether the *word* is currently rising once or
+bubbling forever. Like `AtomTextScramble`, none of this needs per-instance-generated CSS: the
+keyframe shapes are fixed; only `RiseDistance`/`Duration`/`GlowColor` (all CSS custom properties or
+plain `animation-*` properties set inline) vary per instance, so it all lives in static scoped CSS.
+
+## AtomTextSparkle — the only Typography component with no C# behind its trigger
+
+Sourced from a "sparkly shiny text" hover-button demo (layered 3D text-shadow, a clipped-text
+glare-sweep overlay, 5 hardcoded SVG sparkles with per-index position/scale/delay, all driven by
+plain CSS `:hover`/`:active` toggling custom properties — no JS at all in the original beyond a
+repeat-animation convenience that doesn't apply here since hover naturally re-triggers).
+
+Unlike every other Typography component so far, the trigger here needed **zero** C# — no
+`[Parameter] bool`, no `@key`-remount, no timer. `:hover`/`:active` are declarative CSS states; the
+component's only job is emitting the markup and CSS custom properties (`--atom-text-sparkle-hover`,
+`--atom-text-sparkle-pos`) that the scoped stylesheet's `:hover`/`:active` selectors flip. This is
+the cheapest possible trigger contract — cheaper even than `AtomTextScramble`'s `@key`-remount —
+because hover/active are states the browser already tracks; there's nothing to replicate in C#.
+
+Two aspects that *did* need code-behind, matching this session's earlier "wire up like other
+controls" and "allow colorization" asks:
+
+1. **Colorization.** Three independent color parameters (`Color` for the glare-fill text, distinct
+   from `ShadowColor` for the 3D shadow, distinct again from `GlareColor` for both the sweep
+   highlight and the sparkle SVG fill) rather than one — the original demo hardcodes all three to
+   fixed yellow/white values, but they serve visually distinct roles and a consumer re-skinning the
+   effect (e.g. to match a brand palette) needs to control them independently. Set as CSS custom
+   properties on the root, same pattern as `AtomTextLava`'s `GlowColor`/`BgColor*`.
+2. **Sparkle count.** The original hardcodes exactly 5 `<svg>` elements with hand-picked
+   `--x`/`--y`/`--s`/`--d` values. `SparkleCount` generalizes this to any count via
+   `GetSparkle(index)` — a **pure function of the index**, deliberately not `System.Random`:
+   a time/instance-seeded random would place sparkles differently in the server-rendered markup
+   than in the first interactive client re-render (Blazor Server/WebAssembly hydration), producing
+   a visible "jump" as sparkles silently relocate. A pure function of `index` alone produces
+   identical output on every render pass, matching the zero-JS/works-in-every-render-mode
+   guarantee the rest of this library already makes.
+
+`Href` is optional (unlike the original, which always wraps in `<a href="#">"` — a common but
+real anti-pattern for non-navigating hover effects). When absent, the root renders as the same
+`<a>` element with the `href` attribute omitted (Blazor omits `null`-valued string attributes
+entirely) plus `tabindex="0"` so the effect stays keyboard-focusable without asserting link
+semantics it doesn't have.

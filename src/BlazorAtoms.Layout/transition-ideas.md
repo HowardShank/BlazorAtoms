@@ -177,7 +177,7 @@ The simple text animation creates a vertical text-flipping effect inside the #fl
 ===
 
 
-2. CSS text animation
+DONE 2. CSS text animation
 
 Pure CSS Text animation
 
