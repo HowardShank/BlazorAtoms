@@ -157,7 +157,7 @@
             <div class="qr-ctrl qr-wide">
                 <label>Or upload from disk</label>
                 <div class="row">
-                    <InputFile OnChange="OnLogoFileSelected" accept="image/*" />
+                    <InputFile OnChange="@OnLogoFileSelected" accept="image/*" />
                     <button type="button" class="qr-btn qr-btn-alt" @onclick="ClearLogo" disabled="@(LogoBytes is null)">Clear file</button>
                 </div>
             </div>

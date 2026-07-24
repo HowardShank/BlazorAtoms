@@ -60,7 +60,7 @@
                     Size="@(StripFace == ClockFace.Analog ? AnalogSize : Size)"
                     ShowSeconds="@ShowSeconds" ShowMinuteTicks="@MinuteTicks" ShowNumerals="@Numerals"
                     SortByOffset="@StripSort" ShowRelativeOffset="@StripRel"
-                    HighlightViewerZone="@StripViewer" Selectable="@StripSelect" OnSelect="OnStripSelect"
+                    HighlightViewerZone="@StripViewer" Selectable="@StripSelect" OnSelect="@OnStripSelect"
                     Gap="@StripGap" HighlightColor="@Blank(StripHighlight)" ReferenceTimeZoneId="@Blank(StripRef)" />
 </div>
 

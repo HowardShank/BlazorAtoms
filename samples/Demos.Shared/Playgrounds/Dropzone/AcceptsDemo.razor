@@ -6,7 +6,7 @@
     <div class="demo-row two">
         <div>
             <div class="demo-heading">First Dropzone</div>
-            <AtomDropzone TItem="TodoItem" Items="ListA" Group="ac">
+            <AtomDropzone TItem="TodoItem" Items="@ListA" Group="ac">
                 <ChildContent Context="c">
                     <div class="demo-bluecard">@c.Title</div>
                 </ChildContent>
@@ -14,8 +14,8 @@
         </div>
         <div>
             <div class="demo-heading">Second Dropzone (fun only)</div>
-            <AtomDropzone TItem="TodoItem" Items="ListB" Group="ac"
-                          Accepts="AcceptFun"
+            <AtomDropzone TItem="TodoItem" Items="@ListB" Group="ac"
+                          Accepts="@AcceptFun"
                           OnItemDropRejected="i => _lastRejected = i">
                 <ChildContent Context="c">
                     <div class="demo-blackcard">@c.Title</div>

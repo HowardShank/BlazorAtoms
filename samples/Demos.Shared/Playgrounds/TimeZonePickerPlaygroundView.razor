@@ -31,7 +31,7 @@
                         CssClass="@Nz(HatchClass)" Style="@Nz(HatchStyle)" title="@Nz(HatchTitle)" />
     @if (Zone is not null && PickedTz is not null)
     {
-        <AtomClock TimeZone="PickedTz" Label="@Zone" Format="h:mm:ss tt" />
+        <AtomClock TimeZone="@PickedTz" Label="@Zone" Format="h:mm:ss tt" />
     }
     else
     {

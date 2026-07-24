@@ -6,7 +6,7 @@
     <div class="demo-row">
         <div>
             <div class="demo-heading">To Do List</div>
-            <AtomDropzone TItem="TodoItem" Items="ToDo" Group="k"
+            <AtomDropzone TItem="TodoItem" Items="@ToDo" Group="k"
                           OnItemDrop="i => _lastDropped = i">
                 <ChildContent Context="c">
                     <div class="demo-kanban-card todo">
@@ -21,7 +21,7 @@
         </div>
         <div>
             <div class="demo-heading">In Progress Column</div>
-            <AtomDropzone TItem="TodoItem" Items="InProgress" Group="k"
+            <AtomDropzone TItem="TodoItem" Items="@InProgress" Group="k"
                           OnItemDrop="i => _lastDropped = i">
                 <ChildContent Context="c">
                     <div class="demo-kanban-card wip">
@@ -33,7 +33,7 @@
         </div>
         <div>
             <div class="demo-heading">Completed</div>
-            <AtomDropzone TItem="TodoItem" Items="Done" Group="k"
+            <AtomDropzone TItem="TodoItem" Items="@Done" Group="k"
                           OnItemDrop="i => _lastDropped = i">
                 <ChildContent Context="c">
                     <div class="demo-kanban-card done">

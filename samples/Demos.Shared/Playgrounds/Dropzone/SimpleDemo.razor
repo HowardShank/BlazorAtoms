@@ -7,7 +7,7 @@
     <button type="button" @onclick="Add">Add</button>
 </div>
 
-<AtomDropzone TItem="TodoItem" Items="Todos">
+<AtomDropzone TItem="TodoItem" Items="@Todos">
     <ChildContent Context="item">
         <div class="demo-simple-item">
             <span>@item.Title</span>

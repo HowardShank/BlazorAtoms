@@ -51,7 +51,7 @@ DONE 3. The Shift & BlurBy combining a horizontal slide with a subtle blur effec
 
 ===
 
-4. The 3D Card FlipPerfect for image galleries or feature sections, this flips the element on the Y-axis to reveal it.css
+DONE 4. The 3D Card FlipPerfect for image galleries or feature sections, this flips the element on the Y-axis to reveal it.css
 .flip-in {
   opacity: 0;
   transform: perspective(600px) rotateY(-20deg);

@@ -18,7 +18,7 @@
                          Src="@(Bytes is null ? Nz(ImageSrc) : null)"
                          Bytes="@Bytes" MimeType="@MimeType" Size="@Size"
                          Href="@Nz(LinkHref)" AutoLink="@AutoLink" LinkTarget="@LinkTarget"
-                         OnDecoded="OnDecodedHandler" />
+                         OnDecoded="@OnDecodedHandler" />
     }
     else
     {
@@ -43,7 +43,7 @@
     <div class="qri-ctrl qri-wide">
         <label>Load from disk</label>
         <div class="row">
-            <InputFile OnChange="OnFileSelected" accept="image/*" />
+            <InputFile OnChange="@OnFileSelected" accept="image/*" />
             <button type="button" class="qri-btn" @onclick="PasteFromClipboard">Paste from clipboard</button>
             <button type="button" class="qri-btn" @onclick="ManualDecode" disabled="@(!HasImage)">Decode now</button>
             <button type="button" class="qri-btn qri-btn-alt" @onclick="ClearBytes" disabled="@(Bytes is null)">Clear file</button>

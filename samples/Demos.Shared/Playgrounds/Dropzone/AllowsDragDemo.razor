@@ -4,8 +4,8 @@
 
 <AtomDropzoneGroup TItem="TodoItem">
     <div class="demo-heading">First Dropzone</div>
-    <AtomDropzone TItem="TodoItem" Items="ListA" Group="ad"
-                  AllowsDrag="OnlyItem1"
+    <AtomDropzone TItem="TodoItem" Items="@ListA" Group="ad"
+                  AllowsDrag="@OnlyItem1"
                   OnItemDrop="i => _lastDropped = i">
         <ChildContent Context="c">
             <div class="@(c.IsNew ? "demo-bluecard" : "demo-blackcard")">@c.Title</div>
@@ -13,8 +13,8 @@
     </AtomDropzone>
 
     <div class="demo-heading">Second Dropzone</div>
-    <AtomDropzone TItem="TodoItem" Items="ListB" Group="ad"
-                  AllowsDrag="OnlyItem1"
+    <AtomDropzone TItem="TodoItem" Items="@ListB" Group="ad"
+                  AllowsDrag="@OnlyItem1"
                   OnItemDrop="i => _lastDropped = i">
         <ChildContent Context="c">
             <div class="@(c.IsNew ? "demo-bluecard" : "demo-blackcard")">@c.Title</div>

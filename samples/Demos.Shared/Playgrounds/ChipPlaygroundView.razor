@@ -41,7 +41,7 @@
             <AtomChip Text="@Text" Variant="@Variant" Appearance="@Appearance" Size="@Size" Height="@Height" Radius="@Radius"
                       Selected="@Selected" Disabled="@Disabled"
                       OnClick="@ChipClick"
-                      Removable="@Removable" OnRemove="OnChipRemove"
+                      Removable="@Removable" OnRemove="@OnChipRemove"
                       Background="@Blank(Bg)" TextColor="@Blank(Fg)" BorderColor="@Blank(BorderCol)"
                       FontFamily="@Blank(FontFam)" FontWeight="@Blank(FontWt)" FontStyle="@(Italic ? "italic" : null)" LetterSpacing="@Blank(Spacing)" TextTransform="@(Upper ? "uppercase" : null)"
                       Icon="@(ShowIcon ? IconFragment : null)"

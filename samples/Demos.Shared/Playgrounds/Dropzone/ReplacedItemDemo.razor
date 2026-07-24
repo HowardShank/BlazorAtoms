@@ -6,7 +6,7 @@
     Dropped item: <strong>@_dropped</strong> · Replaced item: <strong>@_replaced</strong>
 </div>
 
-<AtomDropzone TItem="string" Items="Cells" Orientation="DropzoneOrientation.Grid" InstantReplace="true"
+<AtomDropzone TItem="string" Items="@Cells" Orientation="DropzoneOrientation.Grid" InstantReplace="true"
               OnItemDrop="i => { _dropped = i; StateHasChanged(); }"
               OnReplacedItemDrop="i => { _replaced = i; StateHasChanged(); }">
     <ChildContent Context="c">
