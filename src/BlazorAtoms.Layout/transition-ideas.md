@@ -4,7 +4,9 @@ https://prismic.io/blog/css-ui-features
 
 seperators = `===`
 
-1. The Smooth Fade & ScaleThis gives an elegant, native app-like feel by having the element grow slightly as it fades in.css.fade-scale-in {
+1. The Smooth Fade & Scale This gives an elegant, native app-like feel by having the element grow slightly as it fades in.css
+
+.fade-scale-in {
   opacity: 0;
   transform: scale(0.95);
   transition: opacity 0.4s ease-out, transform 0.4s ease-out;
@@ -17,7 +19,8 @@ seperators = `===`
 
 ===
 
-2. The Slide-Up RevealGreat for text blocks or cards, this mimics a theatrical curtain rising as the element slides up into view.css.slide-up-in {
+DONE 2. The Slide-Up RevealGreat for text blocks or cards, this mimics a theatrical curtain rising as the element slides up into view.css
+.slide-up-in {
   opacity: 0;
   transform: translateY(30px);
   transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
@@ -31,7 +34,8 @@ seperators = `===`
 
 ===
 
-3. The Shift & BlurBy combining a horizontal slide with a subtle blur effect, this transition creates a high-end, dynamic entrance.css.shift-blur-in {
+3. The Shift & BlurBy combining a horizontal slide with a subtle blur effect, this transition creates a high-end, dynamic entrance.css
+.shift-blur-in {
   opacity: 0;
   transform: translateX(-20px);
   filter: blur(5px);
@@ -47,7 +51,8 @@ seperators = `===`
 
 ===
 
-4. The 3D Card FlipPerfect for image galleries or feature sections, this flips the element on the Y-axis to reveal it.css.flip-in {
+4. The 3D Card FlipPerfect for image galleries or feature sections, this flips the element on the Y-axis to reveal it.css
+.flip-in {
   opacity: 0;
   transform: perspective(600px) rotateY(-20deg);
   transition: opacity 0.5s ease, transform 0.5s ease;

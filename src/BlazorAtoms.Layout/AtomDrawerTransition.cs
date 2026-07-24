@@ -9,5 +9,7 @@ public enum AtomDrawerTransition
     Fade,
     Pop,
     Bounce,
-    Grow
+    Grow,
+    FadeScale,
+    SlideUpIn
 }

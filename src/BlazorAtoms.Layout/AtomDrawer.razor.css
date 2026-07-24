@@ -143,8 +143,28 @@
     transform: scale(0.96);
 }
 
+.atom-drawer-fadescale {
+    opacity: 0;
+    transform: scale(0.95);
+}
+
+.atom-drawer-slideupin {
+    opacity: 0;
+    transform: translateY(30px);
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 .atom-drawer-bounce {
-    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+    /*
+        Bounce / elastic easing.
+        This six-parameter cubic-bezier defines an enter animation that overshoots the target
+        (bounce) and then settles with an additional control point for finer control over the
+        final approach. The first four values (0.34, 1.56, 0.64, 1) create an overshoot from 0
+        beyond 1 and back; the trailing (0.88, 1) dampens the final settle to reduce extra wiggle.
+        Applied to the transform/clip-path/opacity transitions on the drawer panel.
+    */
+/*    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);*/
+    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1, 0.88, 1);
 }
 
 .atom-drawer-bounce.atom-drawer-left {
@@ -216,6 +236,16 @@
 /* Pop transition needs the transform reset to identity too */
 .atom-drawer.atom-drawer-open.atom-drawer-pop {
     transform: scale(1);
+}
+
+/* FadeScale needs the same transform reset to identity */
+.atom-drawer.atom-drawer-open.atom-drawer-fadescale {
+    transform: scale(1);
+}
+
+.atom-drawer.atom-drawer-open.atom-drawer-slideupin {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 /* clip-path only ever applies to the Grow transition (its closed state is a zero-size inset).
