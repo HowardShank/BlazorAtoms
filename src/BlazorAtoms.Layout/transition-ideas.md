@@ -85,7 +85,7 @@ How to Trigger ThemTo trigger these animations when the user scrolls the element
 ===
 
 
-1. Simple text animation
+DONE 1. Simple text animation
 
 Simple CSS text animation
 

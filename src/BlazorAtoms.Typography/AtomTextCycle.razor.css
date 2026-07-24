@@ -1,0 +1,61 @@
+/* AtomTextCycle base styles.
+
+   The animation itself (@@keyframes atom-text-cycle-{v|h|spin}-n{N}) is generated in code-behind,
+   sized to Words.Count and motion kind (vertical/horizontal slide, or spin), and injected as an
+   inline <style> block — it can't live here since a static scoped stylesheet can't vary its
+   keyframe percentages per instance. This file only holds the instance-independent layout, which
+   only has two real shapes: vertical (used by both vertical Slide AND Spin — Spin is a vertical
+   slide with a rotate() riding along on the same transform, not a layout of its own) and
+   horizontal. */
+
+.atom-text-cycle {
+    display: inline-block;
+    vertical-align: bottom;
+}
+
+.atom-text-cycle-viewport {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: bottom;
+}
+
+/* Vertical (BottomToTop / TopToBottom): items stack in normal flow, track slides on the Y axis. */
+
+.atom-text-cycle-axis-v .atom-text-cycle-track {
+    display: block;
+}
+
+.atom-text-cycle-axis-v .atom-text-cycle-item {
+    display: block;
+    height: var(--atom-text-cycle-item-height);
+    line-height: var(--atom-text-cycle-item-height);
+    text-align: center;
+}
+
+/* Horizontal (LeftToRight / RightToLeft): items sit in a row, track slides on the X axis. */
+
+.atom-text-cycle-axis-h .atom-text-cycle-track {
+    display: flex;
+}
+
+.atom-text-cycle-axis-h .atom-text-cycle-item {
+    display: flex;
+    flex: 0 0 var(--atom-text-cycle-item-width);
+    width: var(--atom-text-cycle-item-width);
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+/* Spin (Clockwise / CounterClockwise) needs no CSS of its own: it reuses the vertical axis rules
+   above unchanged (a normal horizontal line of text, one word visible at a time, revealed via
+   translateY) — the only difference is a rotate() riding along on the *same* generated transform
+   (see AtomTextCycle.razor.cs), so the word also spins in place while it slides into view. */
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-text-cycle-track {
+        animation: none !important;
+        transform: none !important;
+    }
+}

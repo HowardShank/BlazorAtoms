@@ -1,0 +1,37 @@
+@inherits AtomComponentBase
+
+@*
+    AtomTextCycle.razor
+    --------------------
+    Zero-JS flip-cascade word rotator: cycles through Words in an infinite loop, one word visible
+    at a time — sitting in a normal horizontal line, revealed via translateY/translateX — sliding
+    or (Spin) also rotating in place per Effect. Purely CSS-driven — the @@keyframes percentage
+    breakpoints depend on Words.Count and the duplicate-first-word wrap row, so they're generated
+    in code-behind and emitted as a small inline <style> block (same self-contained-markup pattern
+    AtomHighlight uses for its stylesheet <link>), rather than living in the static scoped
+    .razor.css which can't vary by instance data.
+*@
+
+@if (!CancellationToken.IsCancellationRequested && Words is { Count: > 0 })
+{
+    @if (Words.Count > 1)
+    {
+        <style>@_keyframesCss</style>
+    }
+    <span @attributes="AdditionalAttributes"
+          class="@ClassAttr($"atom-text-cycle {AxisClass}")"
+          style="@StyleAttr(null)">
+        <span class="atom-text-cycle-viewport" style="@ViewportStyle">
+            <span class="atom-text-cycle-track" style="@TrackStyle">
+                @foreach (var word in Words)
+                {
+                    <span class="atom-text-cycle-item">@word</span>
+                }
+                @if (Words.Count > 1)
+                {
+                    <span class="atom-text-cycle-item" aria-hidden="true">@Words[0]</span>
+                }
+            </span>
+        </span>
+    </span>
+}

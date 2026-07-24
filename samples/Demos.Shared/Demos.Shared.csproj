@@ -30,6 +30,7 @@
     <ProjectReference Include="..\..\src\BlazorAtoms.Breadcrumbs\BlazorAtoms.Breadcrumbs.csproj" />
     <ProjectReference Include="..\..\src\BlazorAtoms.Layout\BlazorAtoms.Layout.csproj" />
     <ProjectReference Include="..\..\src\BlazorAtoms.Transitions\BlazorAtoms.Transitions.csproj" />
+    <ProjectReference Include="..\..\src\BlazorAtoms.Typography\BlazorAtoms.Typography.csproj" />
   </ItemGroup>
 
 </Project>

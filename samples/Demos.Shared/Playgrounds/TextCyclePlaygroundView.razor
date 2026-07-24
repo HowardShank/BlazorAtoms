@@ -1,0 +1,217 @@
+@page "/playground/textcycle"
+@using BlazorAtoms.Typography
+@using System.Text
+
+<PageTitle>AtomTextCycle Playground</PageTitle>
+
+<h1>AtomTextCycle playground</h1>
+<p>
+    A zero-JS flip-cascade word rotator: cycles through <code>Words</code> in an infinite loop, one
+    at a time — sliding, or spinning in place (Spin rides a <code>rotate()</code> on the same
+    transform the vertical slide already uses, so the word spins fast-to-slow and lands upright as
+    it arrives). Edit the word list, timing, font, and alignment below — font-size/weight live on
+    the surrounding sentence so "Make"/"Superb!" and the cycling word always match.
+</p>
+<p><a href="/">&larr; Back to home</a></p>
+
+<div class="textcycle-preview">
+    <p class="textcycle-preview-sentence" style="@SentenceStyle">
+        <span>Make</span>
+        <AtomTextCycle Words="@Words"
+                        Duration="@Duration"
+                        SlideRatio="@SlideRatio"
+                        Easing="@Easing"
+                        Effect="@Effect"
+                        SpinTurns="@SpinTurns"
+                        ItemHeight="@ItemHeight"
+                        ItemWidth="@ItemWidth"
+                        CssClass="textcycle-preview-cycle"
+                        Style="@CycleStyle" />
+        <span>Superb!</span>
+    </p>
+</div>
+
+<p class="textcycle-preview-label">Stacked layout (same word list/timing/font — <code>flex-direction:column</code> instead of a row)</p>
+<div class="textcycle-preview textcycle-preview-stacked">
+    <p class="textcycle-preview-sentence textcycle-preview-sentence-stacked" style="@SentenceStyle">
+        <span>Make</span>
+        <AtomTextCycle Words="@Words"
+                        Duration="@Duration"
+                        SlideRatio="@SlideRatio"
+                        Easing="@Easing"
+                        Effect="@Effect"
+                        SpinTurns="@SpinTurns"
+                        ItemHeight="@ItemHeight"
+                        ItemWidth="@ItemWidth"
+                        CssClass="textcycle-preview-cycle"
+                        Style="@CycleStyle" />
+        <span>Superb!</span>
+    </p>
+</div>
+
+<div class="textcycle-controls">
+    <div class="ctrl ctrl-wide">
+        <label>Words (one per line)</label>
+        <textarea rows="5" @bind="WordsText" @bind:event="oninput"></textarea>
+    </div>
+    <div class="ctrl">
+        <label>Duration (ms) <span class="val">@Duration</span></label>
+        <input type="range" min="1000" max="10000" step="250" @bind="Duration" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>Slide ratio <span class="val">@SlideRatio.ToString("0.00")</span></label>
+        <input type="range" min="0.02" max="0.5" step="0.01" @bind="SlideRatio" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>Effect</label>
+        <select @bind="Effect">
+            <option value="@TextCycleEffect.SlideBottomToTop">Slide: Bottom → Top</option>
+            <option value="@TextCycleEffect.SlideTopToBottom">Slide: Top → Bottom</option>
+            <option value="@TextCycleEffect.SlideLeftToRight">Slide: Left → Right</option>
+            <option value="@TextCycleEffect.SlideRightToLeft">Slide: Right → Left</option>
+            <option value="@TextCycleEffect.SpinClockwise">Spin: Clockwise</option>
+            <option value="@TextCycleEffect.SpinCounterClockwise">Spin: Counter-clockwise</option>
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Spin turns (Spin only) <span class="val">@SpinTurns</span></label>
+        <input type="range" min="1" max="6" step="1" @bind="SpinTurns" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>Item height (vertical slide + Spin)</label>
+        <input type="text" @bind="ItemHeight" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>Item width (horizontal slide only)</label>
+        <input type="text" @bind="ItemWidth" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>Easing</label>
+        <select @bind="Easing">
+            <option value="ease-in-out">ease-in-out</option>
+            <option value="ease-out">ease-out (fast-to-slow, best for Spin)</option>
+            <option value="ease">ease</option>
+            <option value="linear">linear</option>
+            <option value="cubic-bezier(0.16, 1, 0.3, 1)">cubic-bezier(0.16, 1, 0.3, 1)</option>
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Font size</label>
+        <input type="text" @bind="FontSize" @bind:event="oninput" placeholder="1.5rem" />
+    </div>
+    <div class="ctrl">
+        <label>Font weight</label>
+        <select @bind="FontWeight">
+            <option value="normal">normal</option>
+            <option value="600">600</option>
+            <option value="bold">bold</option>
+            <option value="800">800</option>
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Alignment (Make / cycle / Superb!)</label>
+        <select @bind="AlignItems">
+            <option value="baseline">baseline</option>
+            <option value="center">center</option>
+            <option value="flex-end">flex-end (bottom)</option>
+            <option value="flex-start">flex-start (top)</option>
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Extra style (AtomTextCycle only)</label>
+        <input type="text" @bind="ExtraStyleV" @bind:event="oninput" placeholder="none" />
+    </div>
+</div>
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomTextCycleExample.razor" />
+
+<h2>Raw CSS reference: a single element spinning continuously</h2>
+<p>
+    A plain, non-cycling baseline for comparison — the exact pattern from a raw HTML/CSS spin demo
+    (<code>animation: spin 1s linear infinite</code>, <code>rotate(0deg)</code> →
+    <code>rotate(360deg)</code>, <code>transform-origin: center</code>). No word list, no hold/land
+    logic — just confirms a single span/div spinning forever around its own center looks right
+    before layering the cycling behavior on top.
+</p>
+<div class="textcycle-raw-demo">
+    <span class="textcycle-raw-spin">⚙️ SPIN</span>
+</div>
+
+<style>
+    .textcycle-preview { display:flex; align-items:center; justify-content:center; min-height:8rem;
+        background:#fff; border:1px solid #d0d0d8; border-radius:12px; padding:2rem; margin-bottom:1.5rem; }
+    .textcycle-preview-sentence { display:flex; gap:.5rem; margin:0; color:#999; text-transform:uppercase; }
+    .textcycle-preview-label { font-size:.85rem; color:#8794a3; margin:0 0 .5rem; }
+    .textcycle-preview-sentence-stacked { flex-direction:column !important; align-items:center !important; gap:.25rem; }
+    .textcycle-preview-cycle { color:#fff; }
+    ::deep .textcycle-preview-cycle .atom-text-cycle-item { background:#2563eb; border-radius:6px;
+        padding:0 .6rem; }
+    .textcycle-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem 1.5rem;
+        background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem;
+        color:#cfd8e3; margin-bottom:1.5rem; }
+    .textcycle-controls .ctrl { display:flex; flex-direction:column; gap:.4rem; }
+    .textcycle-controls .ctrl-wide { grid-column:1 / -1; }
+    .textcycle-controls label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3;
+        display:flex; justify-content:space-between; gap:.5rem; }
+    .textcycle-controls label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
+    .textcycle-controls input[type=range] { width:100%; accent-color:#2563eb; }
+    .textcycle-controls input[type=text], .textcycle-controls select, .textcycle-controls textarea {
+        padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330;
+        background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; resize:vertical; }
+    .textcycle-raw-demo { display:flex; justify-content:center; align-items:center; min-height:8rem;
+        background:#111; border-radius:12px; margin-bottom:1.5rem; }
+    .textcycle-raw-spin { font-size:3rem; font-weight:bold; display:inline-block; color:#fff;
+        animation:textcycle-raw-spin-kf 1s linear infinite; transform-origin:center center; }
+    @@keyframes textcycle-raw-spin-kf {
+        from { transform:rotate(0deg); }
+        to { transform:rotate(360deg); }
+    }
+</style>
+
+@code {
+    private string WordsText = "development\nrelationships\nEverything";
+    private int Duration = 4000;
+    private double SlideRatio = 0.12;
+    private string Easing = "ease-in-out";
+    private TextCycleEffect Effect = TextCycleEffect.SlideBottomToTop;
+    private int SpinTurns = 2;
+    private string ItemHeight = "3.5rem";
+    private string ItemWidth = "13rem";
+    private string FontSize = "1.5rem";
+    private string FontWeight = "bold";
+    private string AlignItems = "flex-end";
+    private string ExtraStyleV = "background-color:red;";
+
+    private IReadOnlyList<string> Words =>
+        WordsText.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    // Font-size/weight live on the sentence container so "Make"/"Superb!" and AtomTextCycle's own
+    // (unstyled) item text inherit the exact same values — one source of truth instead of trying
+    // to keep two independently-typed style strings in sync.
+    private string SentenceStyle =>
+        $"font-size:{FontSize};font-weight:{FontWeight};align-items:{AlignItems};";
+
+    private string? CycleStyle => string.IsNullOrEmpty(ExtraStyleV) ? null : ExtraStyleV;
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new StringBuilder();
+            sb.Append("<AtomTextCycle Words=\"words\"");
+            if (Duration != 5000) sb.Append($" Duration=\"{Duration}\"");
+            if (SlideRatio != 0.12) sb.Append($" SlideRatio=\"{SlideRatio.ToString("0.00")}\"");
+            if (Effect != TextCycleEffect.SlideBottomToTop) sb.Append($" Effect=\"TextCycleEffect.{Effect}\"");
+            if (SpinTurns != 2) sb.Append($" SpinTurns=\"{SpinTurns}\"");
+            if (ItemHeight != "3.5rem") sb.Append($" ItemHeight=\"{ItemHeight}\"");
+            if (ItemWidth != "8rem") sb.Append($" ItemWidth=\"{ItemWidth}\"");
+            if (Easing != "ease-in-out") sb.Append($" Easing=\"{Easing}\"");
+            if (!string.IsNullOrEmpty(ExtraStyleV)) sb.Append($" Style=\"{ExtraStyleV}\"");
+            sb.Append(" />\n<!-- font-size/font-weight set on a surrounding element so \"Make\"/\"Superb!\" and the cycling word match -->\n\n@code {\n");
+            sb.Append("    private readonly string[] words = { ");
+            sb.Append(string.Join(", ", Words.Select(w => $"\"{w}\"")));
+            sb.Append(" };\n}");
+            return sb.ToString();
+        }
+    }
+}
