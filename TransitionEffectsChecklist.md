@@ -26,6 +26,14 @@ the order effects actually get triaged from `src/BlazorAtoms.Layout/transition-i
       (vertical word-flip loop). Zero-JS, per-instance-generated `@keyframes` sized to word count.
       Playground: `/playground/textcycle`. Still open in this library: `AtomText` for hover text
       effects, sparkly shiny text, and other text-specific hover/loop animations.
+- [x] `BlazorAtoms.Typography` → **`AtomTextScramble`** *(shipped)* — routes: "pure CSS text
+      animation" (per-character fly/drop/spin-in demo, 7 effects). Different trigger contract from
+      `AtomTextCycle`: single word, one-shot (auto-plays on mount/word-change), optional manual
+      replay via a public `Replay()` method — not a Words-list infinite loop, and not a
+      toggle-driven `Show` like `AtomTransition` either. Zero-JS: static scoped CSS (keyframe %
+      breakpoints don't depend on runtime data here, only the per-character stagger multiplier
+      does), `@key`-based remount replaces the demo's jQuery class-toggle restart trick.
+      Playground: `/playground/textscramble`.
 - [ ] `BlazorAtoms.Progress` — alternative home for loader effects if determinate rather than
       indeterminate (decide per-effect against `ActivityIndicators` above).
 

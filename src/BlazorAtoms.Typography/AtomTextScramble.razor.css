@@ -1,0 +1,110 @@
+/* AtomTextScramble base styles + all 7 effects.
+
+   Unlike AtomTextCycle, none of this depends on runtime data (the keyframe percentages are fixed;
+   only the per-character stagger *multiplier* varies, via the --atom-text-scramble-stagger custom
+   property set on the root from code-behind), so it can all live here as static scoped CSS instead
+   of being generated per-instance. */
+
+.atom-text-scramble {
+    display: inline-block;
+}
+
+.atom-text-scramble-char {
+    display: inline-block;
+    opacity: 0;
+    animation-duration: var(--atom-text-scramble-duration);
+    animation-fill-mode: forwards;
+    animation-timing-function: ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-text-scramble-char {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+    }
+}
+
+/* RevolveScale */
+.atom-text-scramble-revolve-scale .atom-text-scramble-char {
+    color: #24a8e6;
+    transform: translate(-150px, -50px) rotate(-180deg) scale(3);
+    animation-name: atom-text-scramble-revolve-scale-kf;
+}
+@keyframes atom-text-scramble-revolve-scale-kf {
+    60% { transform: translate(20px, 20px) rotate(30deg) scale(.3); }
+    100% { transform: translate(0) rotate(0) scale(1); opacity: 1; }
+}
+
+/* BallDrop */
+.atom-text-scramble-ball-drop .atom-text-scramble-char {
+    color: #a5cb21;
+    transform: translate(200px, -100px) scale(2);
+    animation-name: atom-text-scramble-ball-drop-kf;
+}
+@keyframes atom-text-scramble-ball-drop-kf {
+    60% { transform: translate(0, 20px) rotate(-180deg) scale(.5); }
+    100% { transform: translate(0) rotate(0deg) scale(1); opacity: 1; }
+}
+
+/* SideSlide */
+.atom-text-scramble-side-slide .atom-text-scramble-char {
+    color: #b10e81;
+    transform: translate(-300px, 0) scale(0);
+    animation-name: atom-text-scramble-side-slide-kf;
+}
+@keyframes atom-text-scramble-side-slide-kf {
+    60% { transform: translate(20px, 0) scale(1); color: #b10e81; }
+    80% { transform: translate(20px, 0) scale(1); color: #b10e81; }
+    99% { transform: translate(0) scale(1.2); color: #00f0ff; }
+    100% { transform: translate(0) scale(1); opacity: 1; color: #b10e81; }
+}
+
+/* RevolveDrop */
+.atom-text-scramble-revolve-drop .atom-text-scramble-char {
+    color: #8d6a00;
+    transform: translate(0, -100px) rotate(360deg) scale(0);
+    animation-name: atom-text-scramble-revolve-drop-kf;
+}
+@keyframes atom-text-scramble-revolve-drop-kf {
+    30% { transform: translate(0, -50px) rotate(180deg) scale(1); }
+    60% { transform: translate(0, 20px) scale(.8) rotate(0deg); }
+    100% { transform: translate(0) scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* DropVanish */
+.atom-text-scramble-drop-vanish .atom-text-scramble-char {
+    color: #dd3f0f;
+    transform: translate(0, -100px) rotate(360deg) scale(0);
+    animation-name: atom-text-scramble-drop-vanish-kf;
+}
+@keyframes atom-text-scramble-drop-vanish-kf {
+    30% { transform: translate(0, -50px) rotate(180deg) scale(1); }
+    50% { transform: translate(0, 20px) scale(.8) rotate(0deg); opacity: 1; }
+    80% { transform: translate(-100px, -100px) scale(1.5) rotate(-180deg); opacity: 0; }
+    100% { transform: translate(0) scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* Twister */
+.atom-text-scramble-twister .atom-text-scramble-char {
+    color: #ddb40f;
+    transform: rotate(-180deg) translate(150px, 0);
+    animation-name: atom-text-scramble-twister-kf;
+}
+@keyframes atom-text-scramble-twister-kf {
+    10% { opacity: 1; }
+    100% { transform: rotate(0deg) translate(0); opacity: 1; }
+}
+
+/* LeftRight */
+.atom-text-scramble-left-right .atom-text-scramble-char {
+    color: #348c04;
+    transform: translate(-150px, 0) scale(.3);
+    animation-name: atom-text-scramble-left-right-kf;
+}
+@keyframes atom-text-scramble-left-right-kf {
+    40% { transform: translate(50px, 0) scale(.7); opacity: 1; color: #348c04; }
+    60% { color: #0f40ba; }
+    80% { transform: translate(0) scale(2); opacity: 0; }
+    100% { transform: translate(0) scale(1); opacity: 1; }
+}

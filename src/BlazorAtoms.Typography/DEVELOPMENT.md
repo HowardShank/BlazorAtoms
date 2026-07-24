@@ -86,3 +86,52 @@ what "spinning" actually meant to them.
 Net effect on `AtomTextCycle.razor.css`: Spin needs **no CSS of its own** — attempts 2 and 3's
 `transform-style: preserve-3d` / `perspective` / `backface-visibility` / `position: absolute` /
 custom `overflow: visible` rules are all gone. It's just the vertical-axis rules, unchanged.
+
+## AtomTextScramble — a deliberately different shape from AtomTextCycle
+
+Sourced from a classic per-character "pure CSS text animation" demo (7 named effects, hardcoded
+`<span>` per letter, jQuery `.repeat` click handler that re-adds a CSS class to restart the
+animation). Reviewed against the demo before building, rather than porting it as-is, because three
+things in the raw demo don't scale to a reusable component:
+
+1. **Hardcoded per-character `<span>`s in markup.** Fine for a one-off demo with a known word, not
+   for a component whose consumer passes an arbitrary `Word`. Fixed by having the component itself
+   split `Word` into a `<span>` per character (a plain `@for` over the string) — the consumer only
+   ever supplies a string.
+2. **`nth-of-type` delay rules hardcoded up to 20 characters.** Caps word length at whatever the
+   author anticipated. Fixed the same way `AtomTextCycle` avoids per-instance-sized CSS for
+   *unrelated* reasons here: each character's `animation-delay` is
+   `calc(var(--atom-text-scramble-stagger) * i)` set inline per span, so there's no length cap and
+   no CSS rule count tied to word length.
+3. **7 separate hardcoded CSS classes/keyframe sets, one per "animation" div in the demo.** Ported
+   1:1 as a `TextScrambleEffect` enum (`RevolveScale`/`BallDrop`/`SideSlide`/`RevolveDrop`/
+   `DropVanish`/`Twister`/`LeftRight`) selecting one root class — but only the selected effect's
+   rule ever applies to a given instance; nothing about the enum forces all 7 keyframe blocks to be
+   "loaded" at runtime beyond however the browser parses the stylesheet once.
+4. **jQuery `.repeat` handler that removes then re-adds the `animate` class after a `setTimeout`** —
+   pure JS busywork to force the browser to restart a CSS animation. The Blazor-native equivalent
+   is `@key`: bumping an internal counter used as the character-group's `@key` forces Blazor to
+   *destroy and rebuild* the DOM subtree (rather than diff/patch it), which restarts the CSS
+   animation for free — no JS, no class-toggle trick, no `setTimeout`.
+
+### Why this is a new component, not a mode on AtomTextCycle
+
+Requester explicitly clarified this is **not** a word-list cycling component: `AtomTextCycle`
+cycles through a list, one whole word visible at a time, forever. `AtomTextScramble` is
+single-word and specialized — it plays once (per word), automatically, with an *optional* trigger
+(the public `Replay()` method) rather than `AtomTextCycle`'s mandatory infinite CSS loop. The
+per-instance-generated-`@keyframes` machinery `AtomTextCycle` needs (because its loop's percentage
+breakpoints depend on `Words.Count`) has no equivalent need here — `AtomTextScramble`'s keyframes
+are the same shape regardless of how long `Word` is, so they're plain static scoped CSS. Trying to
+force both into one component/enum would have coupled two genuinely different animation contracts
+(infinite list-cycle vs. one-shot single-word-with-optional-replay) for no shared benefit.
+
+### Why `Replay()` is a method, not a `[Parameter]`
+
+An earlier design sketch considered a boolean `[Parameter] Trigger` toggled by the consumer
+(mirroring `AtomTransition`'s `Show`), but that shape assumes the consumer already has a piece of
+state to flip — awkward for the common "just show me a word once" case, and doubly awkward for "let
+me force a replay of the exact same word," which a boolean toggle can't express without an
+edge-triggered diff. A public method on the component instance (`@ref`) matches how one-shot,
+imperative actions are idiomatically exposed in Blazor, and keeps the zero-argument common case
+(`<AtomTextScramble Word="@word" />`, plays automatically, no wiring) free of required plumbing.

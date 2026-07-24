@@ -1,0 +1,30 @@
+@inherits AtomComponentBase
+
+@*
+    AtomTextScramble.razor
+    -----------------------
+    Zero-JS, one-shot per-character entrance animation for a single Word — not a list-cycling
+    component like AtomTextCycle. Splits Word into individual character spans and staggers each
+    one's animation-delay via a CSS custom property. Unlike AtomTextCycle, the @@keyframes
+    percentage breakpoints here don't depend on runtime data (only the stagger *multiplier* does),
+    so all 7 effects live in the static scoped .razor.css — no per-instance <style> generation
+    needed.
+
+    Plays automatically on first render and whenever Word changes (@@key="_replayKey" forces the
+    subtree to remount, which restarts the CSS animation) — no external trigger required. Call the
+    public Replay() method (via @@ref) to force a replay of the same word on demand.
+*@
+
+@if (!CancellationToken.IsCancellationRequested && !string.IsNullOrEmpty(Word))
+{
+    <span @key="_replayKey"
+          @attributes="AdditionalAttributes"
+          class="@ClassAttr($"atom-text-scramble {EffectClass}")"
+          style="@StyleAttr($"--atom-text-scramble-stagger:{StaggerDelay};--atom-text-scramble-duration:{AnimationDuration};")">
+        @for (var i = 0; i < Word.Length; i++)
+        {
+            var index = i;
+            <span class="atom-text-scramble-char" style="animation-delay:calc(var(--atom-text-scramble-stagger) * @index);">@Word[index]</span>
+        }
+    </span>
+}

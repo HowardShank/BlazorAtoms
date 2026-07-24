@@ -1,8 +1,13 @@
 # BlazorAtoms.Typography
 
-Text primitives for Blazor. Ships **`AtomTextCycle`** — a zero-JS flip-cascade word rotator:
-cycles through a list of words/phrases in an infinite loop, one at a time, sliding (4 directions)
-or spinning in place fast-to-slow before landing upright (2 directions).
+Text primitives for Blazor. Ships:
+
+- **`AtomTextCycle`** — a zero-JS flip-cascade word rotator: cycles through a list of
+  words/phrases in an infinite loop, one at a time, sliding (4 directions) or spinning in place
+  fast-to-slow before landing upright (2 directions).
+- **`AtomTextScramble`** — a zero-JS one-shot entrance animation for a single word, splitting it
+  into characters that fly/drop/spin in with a staggered delay (7 effects). Not a cycling
+  component like `AtomTextCycle` — deliberately single-word/specialized.
 
 ## Install
 
@@ -69,9 +74,75 @@ keyframe generator.
 Plus the shared escape hatch on every Atom component (`CssClass`, `Style`, arbitrary splatted
 attributes) on the root `<span>`.
 
+## AtomTextScramble
+
+```razor
+<AtomTextScramble Word="AWESOME" Effect="TextScrambleEffect.RevolveScale" />
+```
+
+A single word, split into one `<span>` per character, each flying/dropping/spinning into place with
+a per-character stagger delay. Not a cycling component — pass a new `Word` when you have one, and
+it replays automatically. **This is not `AtomTextCycle`**: no word list, no infinite loop — one
+word, one animation, optionally repeatable.
+
+### How it animates
+
+Unlike `AtomTextCycle`, the `@keyframes` percentage breakpoints here are fixed (they don't depend
+on word length — only the per-character *delay multiplier* does), so all 7 effects ship as static
+scoped CSS — no per-instance `<style>` generation needed. Each character gets
+`animation-delay: calc(var(--atom-text-scramble-stagger) * i)` for its index `i`.
+
+### Replaying
+
+The animation plays automatically on first render and again whenever `Word` changes — no trigger
+is required for the common case. To replay the *same* word on demand (e.g. a "Repeat Animation"
+button, matching the classic demo this component is based on), grab a component reference and call
+`Replay()`:
+
+```razor
+<AtomTextScramble @ref="_scramble" Word="AWESOME" />
+<button @onclick="() => _scramble.Replay()">Repeat Animation</button>
+
+@code {
+    private AtomTextScramble _scramble = default!;
+}
+```
+
+Internally, both the automatic replay-on-change and `Replay()` work the same way: bumping an
+internal counter used as the root `<span>`'s `@key`, forcing Blazor to tear down and rebuild the
+character spans (rather than diff/patch them) — which is what restarts the CSS animation, with no
+JS class-toggle trick needed.
+
+### Effect
+
+| Effect | Motion |
+|---|---|
+| `RevolveScale` *(default)* | Flies in from the upper-left, rotating and shrinking from an oversized start. |
+| `BallDrop` | Drops in from the upper-right like a bouncing ball. |
+| `SideSlide` | Slides in from the left, overshoots, settles with a color flash. |
+| `RevolveDrop` | Spins down from above, unrolling into place. |
+| `DropVanish` | Like `RevolveDrop`, but flings off to the upper-left mid-flight before settling. |
+| `Twister` | Twists in from a rotated, offset start position. |
+| `LeftRight` | Slides in from the left, overshoots past center with a color change, then settles. |
+
+### Parameters
+
+| Parameter | Type | Default | Notes |
+|---|---|---|---|
+| `Word` | `string` | *required* | The word/short phrase to animate in, one character at a time. Empty renders nothing. |
+| `Effect` | `TextScrambleEffect` | `RevolveScale` | Which entrance animation each character plays — see above. |
+| `StaggerDelay` | `string` | `"0.05s"` | Delay added per character index. Any CSS time. |
+| `AnimationDuration` | `string` | `"0.5s"` | How long each character's own animation takes. Any CSS time. |
+
+Plus the shared escape hatch on every Atom component (`CssClass`, `Style`, arbitrary splatted
+attributes) on the root `<span>`, and the public `Replay()` method described above.
+
 ## Notes
 
-- **Zero JS.** Pure CSS `animation`/`@keyframes`, generated server/client-side in C# — no
-  `IJSObjectReference`, works identically in every render mode including static SSR.
-- **Accessibility.** Respects `prefers-reduced-motion: reduce` (animation disabled, first word
-  shown). The duplicate wrap-around row is `aria-hidden`.
+- **Zero JS.** Pure CSS `animation`/`@keyframes` — no `IJSObjectReference`, works identically in
+  every render mode including static SSR. `AtomTextCycle`'s keyframes are generated server/
+  client-side in C# (per-instance, sized to word count); `AtomTextScramble`'s are static (word
+  length only affects the stagger multiplier, not the keyframe shape).
+- **Accessibility.** Both components respect `prefers-reduced-motion: reduce` (animation disabled,
+  final/first state shown immediately). `AtomTextCycle`'s duplicate wrap-around row is
+  `aria-hidden`.
