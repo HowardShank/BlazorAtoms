@@ -1,8 +1,12 @@
 # BlazorAtoms.Transitions
 
-Reusable enter/leave transitions for Blazor. Ships **`AtomTransition`** — a generic wrapper that
-plays a CSS transition (fade, pop, slide, flip, ...) around arbitrary child content whenever
-`Show` toggles.
+Reusable enter/leave and hover transitions for Blazor. Ships:
+
+- **`AtomTransition`** — a generic wrapper that plays a CSS transition (fade, pop, slide, flip,
+  ...) around arbitrary child content whenever `Show` toggles.
+- **`AtomHoverEffect`** — a generic wrapper that plays a hover-triggered effect (sparkle, ...)
+  around arbitrary child content. Unlike `AtomTransition`, the trigger is plain CSS
+  `:hover`/`:active` — no C# state, no toggle parameter.
 
 Unlike an overlay component (e.g. `AtomDrawer`), the wrapped element stays mounted permanently —
 visibility is a pure CSS class toggle. On browsers that support `@starting-style`, the very first
@@ -52,6 +56,47 @@ JS involved either way.
 
 Plus the shared escape hatch on every Atom component (`CssClass`, `Style`, arbitrary splatted
 attributes) on the root `<div>`.
+
+## AtomHoverEffect
+
+```razor
+<AtomHoverEffect Href="/somewhere">
+    <span>Click!</span>
+</AtomHoverEffect>
+
+<AtomHoverEffect GlowColor="#e879f9" SparkleCount="8" ScaleAmount="1.15">
+    <img src="icon.png" alt="" />
+</AtomHoverEffect>
+```
+
+A generic hover-effect wrapper — matches `AtomTransition`'s "wraps arbitrary `ChildContent`" shape,
+but the trigger is plain CSS `:hover`/`:active` rather than a `Show` boolean, so there's no C#
+state behind it at all. Renders a real `<a href>` when `Href` is set; otherwise a focusable
+(`tabindex="0"`) non-link element with the same hover effect. `Effect` picks the treatment —
+`Sparkle` (the only member so far) scales the content up slightly, adds a colored glow, and pops
+`SparkleCount` SVG sparkles in at scattered positions around it.
+
+This can't reuse `AtomTextSparkle`'s (`BlazorAtoms.Typography`) layered 3D text-shadow/glare-sweep
+trick — that only works because it clips a gradient to text glyphs. For arbitrary content, the
+hover treatment is a `filter: drop-shadow(...)` glow plus a `transform: scale(...)` instead.
+
+Sparkle positions are placed by a pure function of index, not `System.Random` — a time-seeded
+random would scatter sparkles differently between server-rendered and first interactive markup,
+causing a visible jump on hydration.
+
+### Parameters
+
+| Parameter | Type | Default | Notes |
+|---|---|---|---|
+| `ChildContent` | `RenderFragment?` | `null` | The content the effect wraps — any element. |
+| `Effect` | `HoverEffect` | `Sparkle` | Which hover treatment to play. |
+| `Href` | `string?` | `null` | Optional link target — renders `<a href>` when set, a focusable non-link otherwise. |
+| `GlowColor` | `string` | `"#eab308"` | Color of the glow and sparkle SVGs. |
+| `SparkleCount` | `int` | `5` | How many sparkle SVGs scatter around the content. Ignored for effects that don't use sparkles. |
+| `ScaleAmount` | `double` | `1.05` | How much the content scales up on hover. |
+
+Plus the shared escape hatch on every Atom component (`CssClass`, `Style`, arbitrary splatted
+attributes) on the root element.
 
 ## Notes
 

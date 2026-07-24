@@ -5,12 +5,16 @@
 .atom-text-sparkle {
     position: relative;
     display: inline-block;
-    padding: .5em .75em;
+    /* Extra right/top padding absorbs the hover translate(+0.1em,-0.1em) paint-shift — without
+       slack here, the last glyph (e.g. "!") visually crowds/clips against the box edge on hover. */
+    padding: .6em 1.1em .6em .85em;
     border-radius: 999px;
     text-decoration: none;
     font-size: var(--atom-text-sparkle-font-size);
+    overflow: visible;
     transition: background .2s;
-    --atom-text-sparkle-hover: 0.4;
+    /* Idle hover=0: no shadow/lift at rest, so hovering is a clear reveal, not a subtle bump. */
+    --atom-text-sparkle-hover: 0;
     --atom-text-sparkle-pos: 0;
 }
 
@@ -21,6 +25,11 @@
 
 .atom-text-sparkle:active {
     --atom-text-sparkle-hover: 0;
+}
+
+.atom-text-sparkle-textwrap {
+    position: relative;
+    display: inline-block;
 }
 
 .atom-text-sparkle-label {
@@ -40,9 +49,13 @@
     transform: translate(calc(var(--atom-text-sparkle-hover) * 0.1em), calc(var(--atom-text-sparkle-hover) * -0.1em));
 }
 
+/* Pinned to the exact same box as the base label (its shared .atom-text-sparkle-textwrap
+   ancestor), not independently inset off the root's padding — the two were previously sized off
+   different boxes, so at intermediate hover states they'd drift apart, reading as a ghosted
+   "second shadow." inset:0 here guarantees pixel-identical registration always. */
 .atom-text-sparkle-glare {
     position: absolute;
-    inset: .5em .75em;
+    inset: 0;
     background:
         linear-gradient(108deg, transparent 0 55%, var(--atom-text-sparkle-glare) 55% 60%, transparent 60% 70%, var(--atom-text-sparkle-glare) 70% 85%, transparent 85%) calc(var(--atom-text-sparkle-pos) * -200%) 0 / 200% 100%,
         var(--atom-text-sparkle-color);

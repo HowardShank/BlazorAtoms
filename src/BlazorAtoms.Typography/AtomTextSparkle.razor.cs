@@ -44,7 +44,9 @@ public partial class AtomTextSparkle
     private static SparklePosition GetSparkle(int index) => new(
         X: (index * 53) % 100,
         Y: 20 + (index * 37) % 70,
-        Scale: 0.8 + (index % 4) * 0.15,
+        // Wide 0.4–1.6 range (5 buckets) so sparkles read as genuinely varied in size, not the
+        // narrow 0.8–1.25 cluster the original formula produced.
+        Scale: 0.4 + (index % 5) * 0.3,
         DelayStep: 1 + (index % 4));
 
     private static string SparkleStyle(SparklePosition s) =>

@@ -50,6 +50,14 @@ the order effects actually get triaged from `src/BlazorAtoms.Layout/transition-i
       hydration-mismatch jump between server-rendered and interactive markup). `Href` optional —
       renders a real `<a>` when set, a focusable non-link otherwise.
       Playground: `/playground/textsparkle`.
+- [x] `BlazorAtoms.Transitions` → **`AtomHoverEffect`** *(shipped)* — generic-wrapper sibling of
+      `AtomTransition` (same "arbitrary `ChildContent`" shape) but hover-triggered rather than
+      `Show`-toggled: pure CSS `:hover`/`:active`, zero C# state. Added after `AtomTextSparkle`
+      turned out to be the wrong shape for the actual ask — the requester wanted a wrapper around
+      *any* element, not a fixed `Text` string, so `AtomTextSparkle` (text-specific, kept as-is)
+      and `AtomHoverEffect` (generic, new) both ship. `HoverEffect` enum (`Sparkle` first member)
+      is the extensible family — future hover effects add enum members here, same pattern as
+      `AtomTransitionEffect`. Playground: `/playground/hovereffect`.
 - [ ] `BlazorAtoms.Progress` — alternative home for loader effects if determinate rather than
       indeterminate (decide per-effect against `ActivityIndicators` above).
 

@@ -1,0 +1,102 @@
+@page "/playground/hovereffect"
+@using BlazorAtoms.Transitions
+
+<PageTitle>AtomHoverEffect Playground</PageTitle>
+
+<h1>AtomHoverEffect playground</h1>
+<p>
+    A zero-JS hover-effect wrapper — unlike <code>AtomTransition</code> (which toggles on a
+    <code>Show</code> boolean), the trigger here is plain CSS <code>:hover</code>/<code>:active</code>,
+    no C# state at all. Wraps <em>any</em> child content (not just text — see
+    <code>AtomTextSparkle</code> in <code>BlazorAtoms.Typography</code> for the text-specific
+    version with layered 3D shadow/glare). Hover the preview below to see it.
+</p>
+<p><a href="/">&larr; Back to home</a></p>
+
+<div class="hovereffect-preview">
+    <AtomHoverEffect Effect="@Effect"
+                        Href="@(string.IsNullOrEmpty(Href) ? null : Href)"
+                        GlowColor="@GlowColor"
+                        SparkleCount="@SparkleCount"
+                        ScaleAmount="@ScaleAmount">
+        <span class="hovereffect-child">@ChildText</span>
+    </AtomHoverEffect>
+</div>
+
+<div class="hovereffect-controls">
+    <div class="ctrl">
+        <label>Child text (wrapped content)</label>
+        <input type="text" @bind="ChildText" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>Effect</label>
+        <select @bind="Effect">
+            <option value="@HoverEffect.Sparkle">Sparkle</option>
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Href (blank = non-link, focusable)</label>
+        <input type="text" @bind="Href" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Sparkle count</label>
+        <input type="range" min="0" max="12" step="1" @bind="SparkleCount" @bind:event="oninput" />
+        <span class="hovereffect-val">@SparkleCount</span>
+    </div>
+    <div class="ctrl">
+        <label>Scale amount <span class="hovereffect-val">@ScaleAmount.ToString("0.00")</span></label>
+        <input type="range" min="1" max="1.5" step="0.01" @bind="ScaleAmount" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>Glow / sparkle color</label>
+        <div class="hovereffect-color-row">
+            <input type="color" @bind="GlowColor" @bind:event="oninput" />
+            <input type="text" @bind="GlowColor" @bind:event="oninput" placeholder="#eab308" />
+        </div>
+    </div>
+</div>
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomHoverEffectExample.razor" />
+
+<style>
+    .hovereffect-preview { display:flex; align-items:center; justify-content:center; min-height:8rem;
+        background:#1a1a1a; border-radius:12px; padding:2rem; margin-bottom:1.5rem; }
+    .hovereffect-child { display:inline-block; padding:.75rem 1.5rem; border-radius:8px;
+        background:#2563eb; color:#fff; font-weight:bold; font-size:1.25rem; }
+    .hovereffect-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem 1.5rem;
+        background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem;
+        color:#cfd8e3; margin-bottom:1.5rem; }
+    .hovereffect-controls .ctrl { display:flex; flex-direction:column; gap:.4rem; }
+    .hovereffect-controls label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3;
+        display:flex; justify-content:space-between; gap:.5rem; }
+    .hovereffect-controls input[type=text], .hovereffect-controls input[type=range], .hovereffect-controls select {
+        padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330;
+        background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; }
+    .hovereffect-val { color:#5fb7c9; font-family:ui-monospace,monospace; font-size:.85rem; text-transform:none; }
+    .hovereffect-color-row { display:flex; gap:.5rem; align-items:center; }
+    .hovereffect-color-row input[type=color] { padding:0; width:2.75rem; height:2.2rem; flex:0 0 auto; }
+    .hovereffect-color-row input[type=text] { flex:1 1 auto; min-width:0; }
+</style>
+
+@code {
+    private string ChildText = "Click!";
+    private HoverEffect Effect = HoverEffect.Sparkle;
+    private string Href = "";
+    private int SparkleCount = 5;
+    private double ScaleAmount = 1.05;
+    private string GlowColor = "#eab308";
+
+    private string Snippet
+    {
+        get
+        {
+            var attrs = "";
+            if (Effect != HoverEffect.Sparkle) attrs += $" Effect=\"HoverEffect.{Effect}\"";
+            if (!string.IsNullOrEmpty(Href)) attrs += $" Href=\"{Href}\"";
+            if (GlowColor != "#eab308") attrs += $" GlowColor=\"{GlowColor}\"";
+            if (SparkleCount != 5) attrs += $" SparkleCount=\"{SparkleCount}\"";
+            if (ScaleAmount != 1.05) attrs += $" ScaleAmount=\"{ScaleAmount.ToString("0.00")}\"";
+            return $"<AtomHoverEffect{attrs}>\n    <span>{ChildText}</span>\n</AtomHoverEffect>";
+        }
+    }
+}

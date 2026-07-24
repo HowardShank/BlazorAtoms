@@ -1,0 +1,45 @@
+/* AtomHoverEffect: static scoped CSS. Trigger is plain CSS :hover/:active — no per-instance
+   <style>, no C# state. Sparkle positions vary inline per <svg> (set in code-behind) but the
+   rules/keyframes themselves are fixed. */
+
+.atom-hover-effect {
+    position: relative;
+    display: inline-block;
+    text-decoration: none;
+    color: inherit;
+}
+
+.atom-hover-effect-content {
+    display: inline-block;
+    transform-origin: center;
+    transition: transform .2s, filter .2s;
+}
+
+.atom-hover-effect-sparkle:hover .atom-hover-effect-content {
+    transform: scale(var(--atom-hover-effect-scale));
+    filter: drop-shadow(0 0 .6em var(--atom-hover-effect-glow));
+}
+
+.atom-hover-effect-svg {
+    position: absolute;
+    z-index: 3;
+    width: 1.25em;
+    aspect-ratio: 1;
+    color: var(--atom-hover-effect-glow);
+    transform: translate(-50%, -50%) scale(0);
+}
+
+.atom-hover-effect-sparkle:hover .atom-hover-effect-svg {
+    animation: atom-hover-effect-sparkle-kf .75s var(--atom-hover-effect-sparkle-delay) both;
+}
+
+@keyframes atom-hover-effect-sparkle-kf {
+    50% { transform: translate(-50%, -50%) scale(var(--atom-hover-effect-sparkle-scale, 1)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-hover-effect-content, .atom-hover-effect-svg {
+        animation: none !important;
+        transition: none !important;
+    }
+}
