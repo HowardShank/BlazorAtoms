@@ -1,0 +1,44 @@
+/* AtomScrollProgressBar: static scoped CSS. .atom-scroll-progress-track is position:fixed but its
+   left/width are set as inline px by atom-progress.js (measured from the real scroll container) —
+   a fixed element's percentage sizes resolve against the VIEWPORT, which is wrong here whenever
+   the scroll container is narrower than the full viewport (e.g. next to a sidebar). The inner
+   .atom-scroll-progress-bar is the actual 0%→100% fill, sized relative to the TRACK. Both
+   animation-name/keyframes are static; the animation-timeline binding itself is always assigned
+   by atom-progress.js (see that file for why implicit "nearest ancestor" resolution isn't
+   reliable enough for a position:fixed element) — pre-JS (SSR/prerender), the fill simply sits at
+   its base width:0% with no timeline attached. */
+
+.atom-scroll-progress-track {
+    position: fixed;
+    left: 0;
+    width: 100%; /* pre-JS default; atom-progress.js overrides with the measured container width */
+    height: var(--atom-scroll-progress-height);
+    overflow: hidden;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.atom-scroll-progress-track-top {
+    top: 0;
+}
+
+.atom-scroll-progress-track-bottom {
+    bottom: 0;
+}
+
+.atom-scroll-progress-bar {
+    width: 0%;
+    height: 100%;
+    background-color: var(--atom-scroll-progress-color);
+
+    animation-name: atom-scroll-progress-kf;
+    animation-fill-mode: both;
+    /* Scroll-driven animations are 1:1 with the user's own scroll input, not autoplaying motion —
+       common guidance is they don't need to respect prefers-reduced-motion the way a timed
+       animation would, so there's no reduced-motion override here. */
+}
+
+@keyframes atom-scroll-progress-kf {
+    from { width: 0%; }
+    to { width: 100%; }
+}

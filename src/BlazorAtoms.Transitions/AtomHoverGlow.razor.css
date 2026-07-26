@@ -1,0 +1,51 @@
+/* AtomHoverGlow: static scoped CSS. Two independent paths reach the same visual result:
+   - Native: anchor-name is assigned (by plain CSS, not JS) to whichever direct child currently
+     matches :hover/:focus-within; the indicator's position-anchor always points at that shared
+     name, so the browser itself resolves "wherever that is right now" every frame, for any number
+     of children, with no enumeration needed.
+   - Fallback (atom-hover-glow.js, only imported when anchor positioning is unsupported): JS sets
+     the indicator's left/top/width/height inline from the hovered child's getBoundingClientRect.
+     Inline styles win over the anchor()-based rules below (which compute as invalid and are
+     ignored in that case anyway), so both paths can share one stylesheet with no fallback-only
+     class needed. */
+
+.atom-hover-glow {
+    position: relative;
+    display: block;
+}
+
+.atom-hover-glow > :is(:hover, :focus-within) {
+    anchor-name: --atom-hover-glow-active;
+}
+
+.atom-hover-glow-indicator {
+    position: absolute;
+    position-anchor: --atom-hover-glow-active;
+    left: anchor(--atom-hover-glow-active left);
+    right: anchor(--atom-hover-glow-active right);
+    top: anchor(--atom-hover-glow-active top);
+    bottom: anchor(--atom-hover-glow-active bottom);
+    border-radius: var(--atom-hover-glow-radius);
+    background: radial-gradient(var(--atom-hover-glow-color), transparent) border-box;
+    box-shadow: 0 0 var(--atom-hover-glow-blur) var(--atom-hover-glow-color);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 0;
+    /* Idle (nothing hovered): fade out immediately, but wait until fully invisible before
+       snapping position/size back — avoids a visible slide-to-nowhere after mouseleave. While
+       something IS hovered, the :has() rule below zeroes every delay so moving between adjacent
+       children slides/fades instantly instead. */
+    transition: opacity 700ms, inset 300ms, width 300ms, height 300ms;
+    transition-delay: 0ms, 700ms, 700ms, 700ms;
+}
+
+.atom-hover-glow:has(> :hover, > :focus-within) .atom-hover-glow-indicator {
+    opacity: 1;
+    transition-delay: 0ms, 0ms, 0ms, 0ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-hover-glow-indicator {
+        transition: none !important;
+    }
+}

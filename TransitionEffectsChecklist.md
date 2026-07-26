@@ -58,8 +58,28 @@ the order effects actually get triaged from `src/BlazorAtoms.Layout/transition-i
       and `AtomHoverEffect` (generic, new) both ship. `HoverEffect` enum (`Sparkle` first member)
       is the extensible family — future hover effects add enum members here, same pattern as
       `AtomTransitionEffect`. Playground: `/playground/hovereffect`.
-- [ ] `BlazorAtoms.Progress` — alternative home for loader effects if determinate rather than
-      indeterminate (decide per-effect against `ActivityIndicators` above).
+- [x] `BlazorAtoms.Transitions` → **`AtomHoverGlow`** *(shipped)* — routes: "nav active-tab glow
+      that follows the hovered item," generalized from an `<a>`-only demo to wrap *any* direct
+      children (per explicit ask). Trigger is hover-focus, but structurally different from
+      `AtomHoverEffect`/`AtomTextSparkle`: tracks a *group* of children and glows whichever one is
+      active, not a single wrapped item. Primary path is pure CSS anchor positioning
+      (`anchor-name`/`position-anchor`/`anchor()`) — **Chromium-only today, no Firefox/Safari** —
+      with an explicit, user-approved JS fallback (`atom-hover-glow.js`, event delegation +
+      `getBoundingClientRect()`) for browsers without it, detected via
+      `BlazorAtoms.Behaviors.AtomBrowserSupport`. The one hover-effect component in this family
+      that isn't zero-JS on every browser. Playground: `/playground/hoverglow`.
+- [x] `BlazorAtoms.Progress` → **`AtomScrollProgressBar`** *(shipped)* — routes: "scroll reading
+      progress bar." New trigger category for this family: scroll-driven/continuous, not
+      toggle/hover/loop/click. First member of the previously-empty `BlazorAtoms.Progress` package.
+      Primary path is a pure CSS scroll-driven animation (`animation-timeline: scroll()`) —
+      **Chromium-only today** — with a user-approved JS fallback (`atom-progress.js`, scroll/resize
+      listener) for other browsers. Unlike `AtomHoverGlow`'s fallback, this one does its own inline
+      `CSS.supports` check rather than referencing `BlazorAtoms.Behaviors.AtomBrowserSupport` — a
+      second package with that dependency would turn "one deliberate exception" into a pattern, and
+      a single-use inline check is only 3 lines. Playground: `/playground/scrollprogress`. Still
+      open in this library: AtomProgressBar (determinate `Value`), AtomProgressRing,
+      AtomProgressSteps, AtomMeter — also open: alternative home for loader effects if determinate
+      rather than indeterminate (decide per-effect against `ActivityIndicators` above).
 
 ## Needs a new package (not yet in the catalog)
 

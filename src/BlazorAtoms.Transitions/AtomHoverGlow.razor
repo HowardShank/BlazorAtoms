@@ -1,0 +1,22 @@
+@inherits AtomComponentBase
+
+@*
+    AtomHoverGlow.razor
+    ---------------------
+    Zero-JS-by-default hover effect: a soft glow follows whichever DIRECT child is currently
+    hovered/focused, sliding smoothly between them (nav-menu "active tab" style, but generalized
+    to wrap ANY child content, not just <a> tags). Primary path is pure CSS anchor positioning
+    (anchor-name/position-anchor/anchor()) — Chromium-only today. On browsers without it,
+    OnAfterRenderAsync lazy-imports atom-hover-glow.js, which achieves the identical visual result
+    by tracking direct-child bounding boxes via event delegation instead. Either way the consumer
+    writes the same markup; the capability check (AtomBrowserSupport, from BlazorAtoms.Behaviors)
+    decides which path runs.
+*@
+
+<div @attributes="AdditionalAttributes"
+     @ref="_containerRef"
+     class="@ClassAttr("atom-hover-glow")"
+     style="@StyleAttr(RootStyle)">
+    @ChildContent
+    <div @ref="_indicatorRef" class="atom-hover-glow-indicator" aria-hidden="true"></div>
+</div>

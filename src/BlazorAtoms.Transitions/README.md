@@ -7,6 +7,9 @@ Reusable enter/leave and hover transitions for Blazor. Ships:
 - **`AtomHoverEffect`** — a generic wrapper that plays a hover-triggered effect (sparkle, ...)
   around arbitrary child content. Unlike `AtomTransition`, the trigger is plain CSS
   `:hover`/`:active` — no C# state, no toggle parameter.
+- **`AtomHoverGlow`** — wraps several children (any elements, not just links) and glows whichever
+  one is currently hovered/focused, sliding between them. Pure CSS anchor positioning where
+  supported (Chromium today); a JS fallback reproduces the same effect on Firefox/Safari.
 
 Unlike an overlay component (e.g. `AtomDrawer`), the wrapped element stays mounted permanently —
 visibility is a pure CSS class toggle. On browsers that support `@starting-style`, the very first
@@ -97,6 +100,54 @@ causing a visible jump on hydration.
 
 Plus the shared escape hatch on every Atom component (`CssClass`, `Style`, arbitrary splatted
 attributes) on the root element.
+
+## AtomHoverGlow
+
+```razor
+<AtomHoverGlow>
+    <a href="/">Home</a>
+    <a href="/about">About</a>
+    <a href="/contact">Contact</a>
+</AtomHoverGlow>
+
+<AtomHoverGlow GlowColor="#22d3ee" GlowRadius="0.75rem">
+    <div class="card">Card 1</div>
+    <button>Card 2</button>
+</AtomHoverGlow>
+```
+
+A soft glow follows whichever **direct child** is currently hovered or contains focus, sliding
+between them — the classic nav-menu "active tab" indicator, generalized to wrap any elements
+(links, buttons, cards, whatever), not just `<a>` tags.
+
+### How it works — and the one real caveat
+
+The primary path is pure CSS **anchor positioning** (`anchor-name`/`position-anchor`/`anchor()`):
+whichever direct child currently matches `:hover`/`:focus-within` claims a shared anchor name via
+a plain selector (`.atom-hover-glow > :is(:hover, :focus-within) { anchor-name: ... }`); the glow
+indicator's `position-anchor` always points at that name, so the browser resolves "wherever that
+is right now" itself — no JS, no enumerating children, works for any number of them.
+
+**Anchor positioning is Chromium-only today** (not yet in Firefox or Safari). On browsers without
+it, the component lazy-imports a small fallback JS module (`atom-hover-glow.js`) from
+`OnAfterRenderAsync`, detected via `BlazorAtoms.Behaviors.AtomBrowserSupport`'s
+`CSS.supports('anchor-name', ...)` check (the same capability-detection helper `AtomTransition`
+uses for `@starting-style`). The fallback uses event delegation on the container (`mouseover`/
+`focusin`) to find the hovered direct child and positions the indicator with plain
+`getBoundingClientRect()` math — same visual result, different mechanism. Supporting browsers
+never fetch this module at all.
+
+### Parameters
+
+| Parameter | Type | Default | Notes |
+|---|---|---|---|
+| `ChildContent` | `RenderFragment?` | `null` | The wrapped content — any elements; the glow tracks whichever direct child is hovered/focused. |
+| `GlowColor` | `string` | `"#ff1493"` | Color of the glow. |
+| `GlowBlur` | `string` | `"32px"` | Blur radius of the glow's outer box-shadow. Any CSS length. |
+| `GlowRadius` | `string` | `"0.5rem"` | Corner radius of the glow indicator — tune to roughly match your children's own shape. |
+
+Plus the shared escape hatch on every Atom component (`CssClass`, `Style`, arbitrary splatted
+attributes) on the root `<div>`.
 
 ## Notes
 

@@ -1,0 +1,31 @@
+@inherits AtomComponentBase
+
+@*
+    AtomScrollProgressBar.razor
+    -----------------------------
+    A fixed reading-progress bar whose fill width tracks how far down the page the user has
+    scrolled. Two nested elements, not one:
+      - .atom-scroll-progress-track — position:fixed, but percentage/viewport sizing is wrong for
+        it: a fixed element's % sizes resolve against the VIEWPORT, not its scroll container, so a
+        naive single fixed div would always span the full screen width even inside a narrower
+        content area (e.g. next to a sidebar). atom-progress.js measures the real scroll
+        container's bounding rect once (+ on resize) and sets this track's left/width in px to
+        match it, so it visually aligns with the content column instead of the whole viewport.
+      - .atom-scroll-progress-bar — the actual 0%→100% fill, sized relative to the TRACK (not the
+        viewport), via the same scroll-timeline/manual-listener logic as before.
+    OnAfterRenderAsync always imports atom-progress.js — even on browsers with native CSS
+    scroll-driven animations (Chromium today), a small one-time JS call is needed both for the
+    track sizing above and to explicitly NAME a scroll-timeline on the real scroll container
+    (animation-timeline: scroll()'s implicit "nearest ancestor" auto-detection does NOT work for a
+    fixed-position element — verified live that Chrome resolves it via the fixed element's
+    reparented containing-block chain, not DOM ancestry). See atom-progress.js for the full
+    explanation and the fallback used on browsers without scroll-driven animations at all. Either
+    way the consumer just drops this in once, near the top of a page — no wrapping, no ChildContent.
+*@
+
+<div @attributes="AdditionalAttributes"
+     @ref="_trackRef"
+     class="@ClassAttr($"atom-scroll-progress-track atom-scroll-progress-track-{PositionClass}")"
+     style="@StyleAttr(RootStyle)">
+    <div @ref="_barRef" class="atom-scroll-progress-bar"></div>
+</div>

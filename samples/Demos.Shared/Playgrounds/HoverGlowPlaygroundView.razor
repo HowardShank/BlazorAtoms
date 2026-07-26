@@ -1,0 +1,92 @@
+@page "/playground/hoverglow"
+@using BlazorAtoms.Transitions
+
+<PageTitle>AtomHoverGlow Playground</PageTitle>
+
+<h1>AtomHoverGlow playground</h1>
+<p>
+    Wraps arbitrary child content — a glow follows whichever <em>direct child</em> is currently
+    hovered or focused, sliding smoothly between them (nav-menu "active tab" style, generalized to
+    any children). Pure CSS anchor positioning where supported (Chromium today); a JS fallback
+    (event-delegation + bounding-box tracking) reproduces the same effect on Firefox/Safari, which
+    don't support anchor positioning yet. Hover the items below either way — same look.
+</p>
+<p><a href="/">&larr; Back to home</a></p>
+
+<div class="hoverglow-preview">
+    <AtomHoverGlow GlowColor="@GlowColor" GlowBlur="@GlowBlur" GlowRadius="@GlowRadius" CssClass="hoverglow-nav">
+        <a href="#">Home</a>
+        <a href="#">About</a>
+        <a href="#">Articles</a>
+        <a href="#">Contact</a>
+    </AtomHoverGlow>
+</div>
+
+<p class="hoverglow-preview-label">Works on non-link children too (buttons, cards, anything):</p>
+<div class="hoverglow-preview">
+    <AtomHoverGlow GlowColor="@GlowColor" GlowBlur="@GlowBlur" GlowRadius="@GlowRadius" CssClass="hoverglow-cards">
+        <div class="hoverglow-card">Card 1</div>
+        <div class="hoverglow-card">Card 2</div>
+        <div class="hoverglow-card">Card 3</div>
+    </AtomHoverGlow>
+</div>
+
+<div class="hoverglow-controls">
+    <div class="ctrl">
+        <label>Glow color</label>
+        <div class="hoverglow-color-row">
+            <input type="color" @bind="GlowColor" @bind:event="oninput" />
+            <input type="text" @bind="GlowColor" @bind:event="oninput" placeholder="#ff1493" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Glow blur</label>
+        <input type="text" @bind="GlowBlur" @bind:event="oninput" placeholder="32px" />
+    </div>
+    <div class="ctrl">
+        <label>Glow corner radius</label>
+        <input type="text" @bind="GlowRadius" @bind:event="oninput" placeholder="0.5rem" />
+    </div>
+</div>
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomHoverGlowExample.razor" />
+
+<style>
+    .hoverglow-preview { display:flex; align-items:center; justify-content:center; min-height:6rem;
+        background:#111; border-radius:12px; padding:2rem; margin-bottom:1rem; }
+    .hoverglow-preview-label { font-size:.85rem; color:#8794a3; margin:0 0 .5rem; }
+    .hoverglow-nav { display:flex; gap:1rem; }
+    .hoverglow-nav a { color:#fff; text-decoration:none; padding:.5rem 1rem; border-radius:2rem;
+        border:2px solid hsl(0 0% 100% / .25); background:hsl(0 0% 20%); }
+    .hoverglow-cards { display:flex; gap:1rem; }
+    .hoverglow-card { color:#fff; padding:1rem 1.5rem; border-radius:.5rem;
+        border:2px solid hsl(0 0% 100% / .25); background:hsl(0 0% 20%); }
+    .hoverglow-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem 1.5rem;
+        background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem;
+        color:#cfd8e3; margin-bottom:1.5rem; }
+    .hoverglow-controls .ctrl { display:flex; flex-direction:column; gap:.4rem; }
+    .hoverglow-controls label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; }
+    .hoverglow-controls input[type=text] { padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330;
+        background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; }
+    .hoverglow-color-row { display:flex; gap:.5rem; align-items:center; }
+    .hoverglow-color-row input[type=color] { padding:0; width:2.75rem; height:2.2rem; flex:0 0 auto; }
+    .hoverglow-color-row input[type=text] { flex:1 1 auto; min-width:0; }
+</style>
+
+@code {
+    private string GlowColor = "#ff1493";
+    private string GlowBlur = "32px";
+    private string GlowRadius = "0.5rem";
+
+    private string Snippet
+    {
+        get
+        {
+            var attrs = "";
+            if (GlowColor != "#ff1493") attrs += $" GlowColor=\"{GlowColor}\"";
+            if (GlowBlur != "32px") attrs += $" GlowBlur=\"{GlowBlur}\"";
+            if (GlowRadius != "0.5rem") attrs += $" GlowRadius=\"{GlowRadius}\"";
+            return $"<AtomHoverGlow{attrs}>\n    <a href=\"/\">Home</a>\n    <a href=\"/about\">About</a>\n    <a href=\"/contact\">Contact</a>\n</AtomHoverGlow>";
+        }
+    }
+}

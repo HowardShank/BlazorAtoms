@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <Import Project="$(RepoRoot)build\Packable.props" />
+  <Import Project="$(RepoRoot)build\Shared.props" />
+
+  <PropertyGroup>
+    <PackageId>BlazorAtoms.Progress</PackageId>
+    <Title>Blazor Progress</Title>
+    <Description>Progress indicators for Blazor. Ships AtomScrollProgressBar — a fixed reading-progress bar tracking page scroll position, CSS scroll-driven-animation-native where supported with a small JS fallback elsewhere.</Description>
+    <PackageTags>Blazor;Progress;ScrollProgress;CSS;WebAssembly;Server</PackageTags>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BlazorAtoms.Progress.Tests" />
+  </ItemGroup>
+
+</Project>

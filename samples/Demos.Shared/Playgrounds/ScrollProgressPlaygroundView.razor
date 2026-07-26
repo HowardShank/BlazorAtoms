@@ -1,0 +1,89 @@
+@page "/playground/scrollprogress"
+@using BlazorAtoms.Progress
+
+<PageTitle>AtomScrollProgressBar Playground</PageTitle>
+
+<AtomScrollProgressBar Color="@Color" Height="@Height" Position="@Position" />
+
+<div class="scrollprogress-page">
+    <h1>AtomScrollProgressBar playground</h1>
+    <p>
+        A fixed reading-progress bar tracking how far down the page you've scrolled — pure CSS
+        scroll-driven animation (Chromium today), JS fallback (scroll listener) elsewhere. Scroll
+        this page to see it move. Controls below don't scroll with the page.
+    </p>
+    <p><a href="/">&larr; Back to home</a></p>
+
+    <div class="scrollprogress-controls">
+        <div class="ctrl">
+            <label>Color</label>
+            <div class="scrollprogress-color-row">
+                <input type="color" @bind="Color" @bind:event="oninput" />
+                <input type="text" @bind="Color" @bind:event="oninput" placeholder="#e6175d" />
+            </div>
+        </div>
+        <div class="ctrl">
+            <label>Height</label>
+            <input type="text" @bind="Height" @bind:event="oninput" placeholder="12px" />
+        </div>
+        <div class="ctrl">
+            <label>Position</label>
+            <select @bind="Position">
+                <option value="@ScrollProgressPosition.Top">Top</option>
+                <option value="@ScrollProgressPosition.Bottom">Bottom</option>
+            </select>
+        </div>
+    </div>
+
+    <CodeSnippetBox Code="@Snippet" FileName="AtomScrollProgressBarExample.razor" />
+
+    <article class="scrollprogress-article">
+        @for (var i = 0; i < 12; i++)
+        {
+            <p>
+                Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium
+                doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore
+                veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam
+                voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur
+                magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est,
+                qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non
+                numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat
+                voluptatem.
+            </p>
+        }
+    </article>
+</div>
+
+<style>
+    .scrollprogress-page { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 6rem; }
+    .scrollprogress-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem 1.5rem;
+        background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem;
+        color:#cfd8e3; margin-bottom:1.5rem; }
+    .scrollprogress-controls .ctrl { display:flex; flex-direction:column; gap:.4rem; }
+    .scrollprogress-controls label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; }
+    .scrollprogress-controls input[type=text], .scrollprogress-controls select {
+        padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330;
+        background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; }
+    .scrollprogress-color-row { display:flex; gap:.5rem; align-items:center; }
+    .scrollprogress-color-row input[type=color] { padding:0; width:2.75rem; height:2.2rem; flex:0 0 auto; }
+    .scrollprogress-color-row input[type=text] { flex:1 1 auto; min-width:0; }
+    .scrollprogress-article { line-height: 2; color: #333; }
+</style>
+
+@code {
+    private string Color = "#e6175d";
+    private string Height = "12px";
+    private ScrollProgressPosition Position = ScrollProgressPosition.Top;
+
+    private string Snippet
+    {
+        get
+        {
+            var attrs = "";
+            if (Color != "#e6175d") attrs += $" Color=\"{Color}\"";
+            if (Height != "12px") attrs += $" Height=\"{Height}\"";
+            if (Position != ScrollProgressPosition.Top) attrs += $" Position=\"ScrollProgressPosition.{Position}\"";
+            return $"<AtomScrollProgressBar{attrs} />";
+        }
+    }
+}
