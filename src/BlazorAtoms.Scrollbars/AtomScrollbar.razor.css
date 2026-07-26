@@ -1,0 +1,45 @@
+.atom-scrollbar {
+    height: var(--atom-scrollbar-box-height);
+    width: var(--atom-scrollbar-box-width);
+
+    /* Firefox-only fallback (WebKit ignores these two properties). */
+    scrollbar-color: var(--atom-scrollbar-firefox-color);
+    scrollbar-width: var(--atom-scrollbar-firefox-width);
+}
+
+.atom-scrollbar-axis-vertical {
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.atom-scrollbar-axis-horizontal {
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.atom-scrollbar-axis-both {
+    overflow-x: auto;
+    overflow-y: auto;
+}
+
+/* WebKit (Chrome/Edge/Safari) — full control, ignored by Firefox. */
+.atom-scrollbar::-webkit-scrollbar {
+    width: var(--atom-scrollbar-size);
+    height: var(--atom-scrollbar-size);
+}
+
+.atom-scrollbar::-webkit-scrollbar-track {
+    background-color: var(--atom-scrollbar-track-color);
+    border-radius: var(--atom-scrollbar-track-radius);
+}
+
+.atom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--atom-scrollbar-thumb-bg);
+    border-radius: var(--atom-scrollbar-thumb-radius);
+    border: var(--atom-scrollbar-thumb-border);
+    background-clip: padding-box;
+}
+
+.atom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--atom-scrollbar-thumb-hover-bg);
+}

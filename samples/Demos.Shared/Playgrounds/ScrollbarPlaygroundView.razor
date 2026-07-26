@@ -1,0 +1,174 @@
+@page "/playground/scrollbar"
+@using BlazorAtoms.Scrollbars
+
+<PageTitle>AtomScrollbar Playground</PageTitle>
+
+<div class="scrollbar-page">
+    <h1>AtomScrollbar playground</h1>
+    <p>
+        Wraps any content in a scroll box with a custom-themed scrollbar — full control (size,
+        colors, gradient, radius, border, hover) on Chrome/Edge/Safari via
+        <code>::-webkit-scrollbar</code>; Firefox falls back to <code>scrollbar-color</code>/
+        <code>scrollbar-width</code> (solid colors only, no gradient/radius/hover there). Zero JS.
+    </p>
+    <p><a href="/">&larr; Back to home</a></p>
+
+    <div class="scrollbar-controls">
+        <div class="ctrl">
+            <label>Axis</label>
+            <select @bind="Axis">
+                <option value="@ScrollbarAxis.Vertical">Vertical</option>
+                <option value="@ScrollbarAxis.Horizontal">Horizontal</option>
+                <option value="@ScrollbarAxis.Both">Both</option>
+            </select>
+        </div>
+        <div class="ctrl">
+            <label>Box height</label>
+            <input type="text" @bind="BoxHeight" @bind:event="oninput" placeholder="300px" />
+        </div>
+        <div class="ctrl">
+            <label>Box width</label>
+            <input type="text" @bind="BoxWidth" @bind:event="oninput" placeholder="100%" />
+        </div>
+        <div class="ctrl">
+            <label>Scrollbar size</label>
+            <input type="text" @bind="ScrollbarSize" @bind:event="oninput" placeholder="12px" />
+        </div>
+        <div class="ctrl">
+            <label>Track color</label>
+            <div class="scrollbar-color-row">
+                <input type="color" @bind="TrackColor" @bind:event="oninput" />
+                <input type="text" @bind="TrackColor" @bind:event="oninput" />
+            </div>
+        </div>
+        <div class="ctrl">
+            <label>Track radius</label>
+            <input type="text" @bind="TrackBorderRadius" @bind:event="oninput" placeholder="0px" />
+        </div>
+        <div class="ctrl">
+            <label>Thumb color</label>
+            <div class="scrollbar-color-row">
+                <input type="color" @bind="ThumbColor" @bind:event="oninput" />
+                <input type="text" @bind="ThumbColor" @bind:event="oninput" />
+            </div>
+        </div>
+        <div class="ctrl">
+            <label>Thumb gradient end (blank = solid)</label>
+            <div class="scrollbar-color-row">
+                <input type="color" value="@(ThumbGradientEnd ?? "#000000")"
+                       @onchange="@((ChangeEventArgs e) => ThumbGradientEnd = (string?)e.Value)" />
+                <input type="text" @bind="ThumbGradientEnd" @bind:event="oninput" placeholder="e.g. #19911D" />
+            </div>
+        </div>
+        <div class="ctrl">
+            <label>Thumb gradient angle (only if gradient end set)</label>
+            <input type="text" @bind="ThumbGradientAngle" @bind:event="oninput" placeholder="180deg" />
+        </div>
+        <div class="ctrl">
+            <label>Thumb hover color (blank = same as thumb)</label>
+            <input type="text" @bind="ThumbHoverColor" @bind:event="oninput" placeholder="e.g. #D62929" />
+        </div>
+        <div class="ctrl">
+            <label>Thumb radius</label>
+            <input type="text" @bind="ThumbBorderRadius" @bind:event="oninput" placeholder="0px" />
+        </div>
+        <div class="ctrl">
+            <label>Thumb border (blank = none)</label>
+            <input type="text" @bind="ThumbBorder" @bind:event="oninput" placeholder="e.g. 2px solid #555555" />
+        </div>
+    </div>
+
+    <CodeSnippetBox Code="@Snippet" FileName="AtomScrollbarExample.razor" />
+
+    <div class="scrollbar-demo-wrap">
+        <AtomScrollbar Axis="Axis" BoxHeight="@Nz(BoxHeight, "300px")" BoxWidth="@Nz(BoxWidth, "100%")"
+                       ScrollbarSize="@Nz(ScrollbarSize, "12px")"
+                       TrackColor="@Nz(TrackColor, "#f5f5f5")" TrackBorderRadius="@Nz(TrackBorderRadius, "0px")"
+                       ThumbColor="@Nz(ThumbColor, "#555")" ThumbGradientEnd="@NzNull(ThumbGradientEnd)"
+                       ThumbGradientAngle="@Nz(ThumbGradientAngle, "180deg")" ThumbHoverColor="@NzNull(ThumbHoverColor)"
+                       ThumbBorderRadius="@Nz(ThumbBorderRadius, "0px")" ThumbBorder="@NzNull(ThumbBorder)">
+            @if (Axis == ScrollbarAxis.Horizontal)
+            {
+                <div class="scrollbar-demo-row">
+                    @for (var i = 1; i <= 20; i++)
+                    {
+                        <div class="scrollbar-demo-card">Card @i</div>
+                    }
+                </div>
+            }
+            else
+            {
+                <article class="scrollbar-demo-article">
+                    @for (var i = 0; i < 14; i++)
+                    {
+                        <p>
+                            Sed ut perspiciatis unde omnis iste natus error sit voluptatem
+                            accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae
+                            ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt
+                            explicabo.
+                        </p>
+                    }
+                </article>
+            }
+        </AtomScrollbar>
+    </div>
+</div>
+
+<style>
+    .scrollbar-page { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 6rem; }
+    .scrollbar-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem 1.5rem;
+        background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem;
+        color:#cfd8e3; margin-bottom:1.5rem; }
+    .scrollbar-controls .ctrl { display:flex; flex-direction:column; gap:.4rem; }
+    .scrollbar-controls label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; }
+    .scrollbar-controls input[type=text], .scrollbar-controls select {
+        padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330;
+        background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; }
+    .scrollbar-color-row { display:flex; gap:.5rem; align-items:center; }
+    .scrollbar-color-row input[type=color] { padding:0; width:2.75rem; height:2.2rem; flex:0 0 auto; }
+    .scrollbar-color-row input[type=text] { flex:1 1 auto; min-width:0; }
+    .scrollbar-demo-wrap { border:1px solid #1b2330; border-radius:12px; padding:1rem; }
+    .scrollbar-demo-article { line-height: 1.8; color: #333; }
+    .scrollbar-demo-row { display:flex; gap:1rem; }
+    .scrollbar-demo-card { flex:0 0 auto; width:140px; height:100px; display:flex; align-items:center;
+        justify-content:center; background:#eef2f6; border-radius:8px; color:#333; }
+</style>
+
+@code {
+    private ScrollbarAxis Axis = ScrollbarAxis.Vertical;
+    private string BoxHeight = "300px";
+    private string BoxWidth = "100%";
+    private string ScrollbarSize = "12px";
+    private string TrackColor = "#f5f5f5";
+    private string TrackBorderRadius = "0px";
+    private string ThumbColor = "#555555";
+    private string? ThumbGradientEnd;
+    private string ThumbGradientAngle = "180deg";
+    private string? ThumbHoverColor;
+    private string ThumbBorderRadius = "0px";
+    private string? ThumbBorder;
+
+    private static string Nz(string s, string fallback) => string.IsNullOrEmpty(s) ? fallback : s;
+    private static string? NzNull(string? s) => string.IsNullOrEmpty(s) ? null : s;
+
+    private string Snippet
+    {
+        get
+        {
+            var attrs = "";
+            if (Axis != ScrollbarAxis.Vertical) attrs += $" Axis=\"ScrollbarAxis.{Axis}\"";
+            if (BoxHeight != "300px") attrs += $" BoxHeight=\"{BoxHeight}\"";
+            if (BoxWidth != "100%") attrs += $" BoxWidth=\"{BoxWidth}\"";
+            if (ScrollbarSize != "12px") attrs += $" ScrollbarSize=\"{ScrollbarSize}\"";
+            if (TrackColor != "#f5f5f5") attrs += $" TrackColor=\"{TrackColor}\"";
+            if (TrackBorderRadius != "0px") attrs += $" TrackBorderRadius=\"{TrackBorderRadius}\"";
+            if (ThumbColor != "#555555") attrs += $" ThumbColor=\"{ThumbColor}\"";
+            if (!string.IsNullOrEmpty(ThumbGradientEnd)) attrs += $" ThumbGradientEnd=\"{ThumbGradientEnd}\"";
+            if (!string.IsNullOrEmpty(ThumbGradientEnd) && ThumbGradientAngle != "180deg") attrs += $" ThumbGradientAngle=\"{ThumbGradientAngle}\"";
+            if (!string.IsNullOrEmpty(ThumbHoverColor)) attrs += $" ThumbHoverColor=\"{ThumbHoverColor}\"";
+            if (ThumbBorderRadius != "0px") attrs += $" ThumbBorderRadius=\"{ThumbBorderRadius}\"";
+            if (!string.IsNullOrEmpty(ThumbBorder)) attrs += $" ThumbBorder=\"{ThumbBorder}\"";
+            return $"<AtomScrollbar{attrs}>\n    ...\n</AtomScrollbar>";
+        }
+    }
+}

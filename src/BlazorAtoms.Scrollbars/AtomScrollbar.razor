@@ -1,0 +1,18 @@
+@inherits AtomComponentBase
+
+@*
+    AtomScrollbar.razor
+    --------------------
+    Zero-JS generic wrapper: gives its ChildContent its own scroll box with a themed scrollbar
+    (color, size, gradient, radius) instead of the browser's default chrome. Full control on
+    WebKit browsers (Chrome/Edge/Safari) via ::-webkit-scrollbar/-track/-thumb pseudo-elements,
+    scoped to this component's own scroll div. Firefox only exposes scrollbar-color (thumb + track,
+    two solid colors) and scrollbar-width (thin/auto/none) — no gradient/radius/hover there, so it
+    falls back to a solid ThumbColor. No trigger state at all: purely declarative styling, always on.
+*@
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr($"atom-scrollbar {AxisClass}")"
+     style="@StyleAttr(RootStyle)">
+    @ChildContent
+</div>

@@ -32,6 +32,7 @@
     <ProjectReference Include="..\..\src\BlazorAtoms.Transitions\BlazorAtoms.Transitions.csproj" />
     <ProjectReference Include="..\..\src\BlazorAtoms.Typography\BlazorAtoms.Typography.csproj" />
     <ProjectReference Include="..\..\src\BlazorAtoms.Progress\BlazorAtoms.Progress.csproj" />
+    <ProjectReference Include="..\..\src\BlazorAtoms.Scrollbars\BlazorAtoms.Scrollbars.csproj" />
   </ItemGroup>
 
 </Project>
