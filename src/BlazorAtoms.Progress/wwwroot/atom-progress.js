@@ -54,7 +54,17 @@ export function attachScrollProgress(track, bar) {
         const name = '--atom-scroll-progress-' + Math.random().toString(36).slice(2);
         scrollParent.style.setProperty('scroll-timeline-name', name);
         scrollParent.style.setProperty('scroll-timeline-axis', 'y');
+        // Never set animation-name from here — Blazor's CSS isolation renames
+        // atom-scroll-progress-kf with a build-time scope hash (e.g.
+        // atom-scroll-progress-kf-b-xxxxx), so a hardcoded JS-side literal doesn't match and
+        // silently no-ops the animation (broke Chrome the first time this was tried). The name
+        // and keyframes stay declared in AtomScrollProgressBar.razor.css, defaulting to
+        // animation-play-state:paused (so browsers that never reach this branch — no
+        // scroll-driven animation support — never run it at all, avoiding the separate
+        // instant-snap-to-100%-and-hold bug that caused Firefox's "always full width" symptom).
+        // Here we only ever set animation-timeline + play-state.
         bar.style.setProperty('animation-timeline', name);
+        bar.style.setProperty('animation-play-state', 'running');
         return;
     }
 

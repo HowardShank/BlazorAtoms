@@ -2,11 +2,13 @@
    left/width are set as inline px by atom-progress.js (measured from the real scroll container) —
    a fixed element's percentage sizes resolve against the VIEWPORT, which is wrong here whenever
    the scroll container is narrower than the full viewport (e.g. next to a sidebar). The inner
-   .atom-scroll-progress-bar is the actual 0%→100% fill, sized relative to the TRACK. Both
-   animation-name/keyframes are static; the animation-timeline binding itself is always assigned
-   by atom-progress.js (see that file for why implicit "nearest ancestor" resolution isn't
-   reliable enough for a position:fixed element) — pre-JS (SSR/prerender), the fill simply sits at
-   its base width:0% with no timeline attached. */
+   .atom-scroll-progress-bar is the actual 0%→100% fill, sized relative to the TRACK.
+   animation-name/keyframes live here (so Blazor's CSS-isolation scoping applies to them
+   correctly) but start animation-play-state:paused — atom-progress.js only ever sets
+   animation-timeline + animation-play-state:running on its native-support branch, never
+   animation-name (see the comment on .atom-scroll-progress-bar below for why). Pre-JS
+   (SSR/prerender) and on the JS-fallback branch, the animation stays paused and the fill sits at
+   its plain width (0% base, or whatever the fallback listener last set). */
 
 .atom-scroll-progress-track {
     position: fixed;
@@ -33,9 +35,20 @@
 
     animation-name: atom-scroll-progress-kf;
     animation-fill-mode: both;
-    /* Scroll-driven animations are 1:1 with the user's own scroll input, not autoplaying motion —
+    /* Paused by default. Blazor's CSS isolation renames atom-scroll-progress-kf with a scope
+       hash at build time (e.g. atom-scroll-progress-kf-b-xxxxx) — atom-progress.js can't spell
+       that name and must NOT try to (a fixed JS-side name string broke Chrome the first time
+       this was tried). Instead JS only ever sets animation-timeline + animation-play-state, never
+       animation-name — the name/keyframes stay wired here where the scoping is handled for it.
+       Paused means: on a browser without scroll-driven animations (no animation-timeline ever
+       set), the animation never runs at all — no implicit animation-duration:0s snap-to-end-and
+       -hold, which is what caused Firefox to show a permanent full-width bar (see
+       atom-progress.js). The JS fallback branch (also for those browsers) drives width directly
+       via inline style instead, with the animation safely paused and irrelevant throughout.
+       Scroll-driven animations are 1:1 with the user's own scroll input, not autoplaying motion —
        common guidance is they don't need to respect prefers-reduced-motion the way a timed
-       animation would, so there's no reduced-motion override here. */
+       animation would, so there's no reduced-motion override here either. */
+    animation-play-state: paused;
 }
 
 @keyframes atom-scroll-progress-kf {
