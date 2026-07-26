@@ -18,6 +18,7 @@ public partial class AtomScrollProgressBar : IAsyncDisposable
     private ElementReference _barRef;
     private IJSObjectReference? _module;
     private bool _attachAttempted;
+    private ScrollProgressPosition? _lastAttachedPosition;
 
     /// <summary>Color of the progress bar.</summary>
     [Parameter] public string Color { get; set; } = "#e6175d";
@@ -25,7 +26,8 @@ public partial class AtomScrollProgressBar : IAsyncDisposable
     /// <summary>Thickness of the bar. Any CSS length.</summary>
     [Parameter] public string Height { get; set; } = "12px";
 
-    /// <summary>Which edge of the viewport the bar sticks to.</summary>
+    /// <summary>Which edge of the scroll container (not the raw viewport — see atom-progress.js)
+    /// the bar sticks to.</summary>
     [Parameter] public ScrollProgressPosition Position { get; set; } = ScrollProgressPosition.Top;
 
     private string PositionClass => Position.ToString().ToLowerInvariant();
@@ -37,21 +39,39 @@ public partial class AtomScrollProgressBar : IAsyncDisposable
     /// <inheritdoc />
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || _attachAttempted)
+        if (firstRender && !_attachAttempted)
         {
+            _attachAttempted = true;
+            _lastAttachedPosition = Position;
+
+            try
+            {
+                _module = await JS.InvokeAsync<IJSObjectReference>("import", ModulePath);
+                await _module.InvokeVoidAsync("attachScrollProgress", _trackRef, _barRef, PositionClass);
+            }
+            catch (JSDisconnectedException) { }
+            catch (OperationCanceledException) { }
+            catch (JSException) { }
+
             return;
         }
 
-        _attachAttempted = true;
-
-        try
+        // Attach only ever runs once (above). If Position changes afterward — e.g. a playground
+        // dropdown — the track's inline top/bottom from the original attach would otherwise linger
+        // and fight the new CSS class, so re-sync explicitly via updatePosition instead of
+        // re-running the whole attach (which would rebind a second scroll-timeline needlessly).
+        if (_module is not null && _lastAttachedPosition != Position)
         {
-            _module = await JS.InvokeAsync<IJSObjectReference>("import", ModulePath);
-            await _module.InvokeVoidAsync("attachScrollProgress", _trackRef, _barRef);
+            _lastAttachedPosition = Position;
+
+            try
+            {
+                await _module.InvokeVoidAsync("updatePosition", _trackRef, PositionClass);
+            }
+            catch (JSDisconnectedException) { }
+            catch (OperationCanceledException) { }
+            catch (JSException) { }
         }
-        catch (JSDisconnectedException) { }
-        catch (OperationCanceledException) { }
-        catch (JSException) { }
     }
 
     /// <inheritdoc />
