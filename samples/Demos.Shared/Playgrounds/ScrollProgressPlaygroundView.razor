@@ -3,7 +3,7 @@
 
 <PageTitle>AtomScrollProgressBar Playground</PageTitle>
 
-<AtomScrollProgressBar Color="@Color" Height="@Height" Position="@Position" />
+<AtomScrollProgressBar Color="@Color" Height="@Height" Position="@Position" Width="@Nz(Width)" Align="@Align" />
 
 <div class="scrollprogress-page">
     <h1>AtomScrollProgressBar playground</h1>
@@ -30,6 +30,18 @@
             <select @bind="Position">
                 <option value="@ScrollProgressPosition.Top">Top</option>
                 <option value="@ScrollProgressPosition.Bottom">Bottom</option>
+            </select>
+        </div>
+        <div class="ctrl">
+            <label>Width (blank = full container)</label>
+            <input type="text" @bind="Width" @bind:event="oninput" placeholder="e.g. 60%, 400px, 20rem" />
+        </div>
+        <div class="ctrl">
+            <label>Align (only matters if Width is set)</label>
+            <select @bind="Align">
+                <option value="@ScrollProgressAlign.Start">Start</option>
+                <option value="@ScrollProgressAlign.Center">Center</option>
+                <option value="@ScrollProgressAlign.End">End</option>
             </select>
         </div>
     </div>
@@ -73,6 +85,10 @@
     private string Color = "#e6175d";
     private string Height = "12px";
     private ScrollProgressPosition Position = ScrollProgressPosition.Top;
+    private string Width = "";
+    private ScrollProgressAlign Align = ScrollProgressAlign.Start;
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
 
     private string Snippet
     {
@@ -82,6 +98,8 @@
             if (Color != "#e6175d") attrs += $" Color=\"{Color}\"";
             if (Height != "12px") attrs += $" Height=\"{Height}\"";
             if (Position != ScrollProgressPosition.Top) attrs += $" Position=\"ScrollProgressPosition.{Position}\"";
+            if (!string.IsNullOrEmpty(Width)) attrs += $" Width=\"{Width}\"";
+            if (Align != ScrollProgressAlign.Start) attrs += $" Align=\"ScrollProgressAlign.{Align}\"";
             return $"<AtomScrollProgressBar{attrs} />";
         }
     }

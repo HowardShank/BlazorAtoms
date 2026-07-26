@@ -11,6 +11,60 @@ namespace BlazorAtoms.Progress.Tests;
 /// scroll container by JS); the inner .atom-scroll-progress-bar is the 0%→100% fill.</summary>
 public class AtomScrollProgressBarTests
 {
+    private const string ModulePath = "./_content/BlazorAtoms.Progress/atom-progress.js";
+
+    [Fact]
+    public void Default_Width_and_Align_flow_into_the_attach_call_as_null_and_start()
+    {
+        using var ctx = new BunitContext();
+        var module = ctx.JSInterop.SetupModule(ModulePath);
+        module.SetupVoid("attachScrollProgress", _ => true).SetVoidResult();
+
+        ctx.Render<AtomScrollProgressBar>();
+
+        var call = module.VerifyInvoke("attachScrollProgress");
+        // track ref, bar ref, position, width, align
+        Assert.Equal("top", call.Arguments[2]);
+        Assert.Null(call.Arguments[3]);
+        Assert.Equal("start", call.Arguments[4]);
+    }
+
+    [Fact]
+    public void Width_and_Align_flow_into_the_attach_call()
+    {
+        using var ctx = new BunitContext();
+        var module = ctx.JSInterop.SetupModule(ModulePath);
+        module.SetupVoid("attachScrollProgress", _ => true).SetVoidResult();
+
+        ctx.Render<AtomScrollProgressBar>(p => p
+            .Add(x => x.Width, "60%")
+            .Add(x => x.Align, ScrollProgressAlign.Center));
+
+        var call = module.VerifyInvoke("attachScrollProgress");
+        Assert.Equal("60%", call.Arguments[3]);
+        Assert.Equal("center", call.Arguments[4]);
+    }
+
+    [Fact]
+    public void Changing_Width_after_first_render_calls_updateLayout_not_a_second_attach()
+    {
+        using var ctx = new BunitContext();
+        var module = ctx.JSInterop.SetupModule(ModulePath);
+        module.SetupVoid("attachScrollProgress", _ => true).SetVoidResult();
+        module.SetupVoid("updateLayout", _ => true).SetVoidResult();
+
+        var cut = ctx.Render<AtomScrollProgressBar>(p => p.Add(x => x.Width, "50%"));
+        Assert.Single(module.Invocations, i => i.Identifier == "attachScrollProgress");
+
+        cut.Render(p => p.Add(x => x.Width, "80%").Add(x => x.Align, ScrollProgressAlign.End));
+
+        Assert.Single(module.Invocations, i => i.Identifier == "attachScrollProgress");
+        var call = module.VerifyInvoke("updateLayout");
+        // track ref, position, width, align
+        Assert.Equal("80%", call.Arguments[2]);
+        Assert.Equal("end", call.Arguments[3]);
+    }
+
     [Fact]
     public void Renders_track_and_fill_bar()
     {

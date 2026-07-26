@@ -46,10 +46,33 @@ same detected scroll container, setting `width` directly from
 |---|---|---|---|
 | `Color` | `string` | `"#e6175d"` | Color of the bar. |
 | `Height` | `string` | `"12px"` | Thickness of the bar. Any CSS length. |
-| `Position` | `ScrollProgressPosition` | `Top` | Which edge of the viewport the bar sticks to (`Top`/`Bottom`). |
+| `Position` | `ScrollProgressPosition` | `Top` | Which edge of the scroll container the bar sticks to (`Top`/`Bottom`) — not the raw viewport edge; see below. |
+| `Width` | `string?` | `null` | Width of the track. Any standard CSS length (`"50%"`, `"300px"`, `"20rem"`, ...), resolved against the scroll container, not the viewport. `null` (default) spans the full container width. |
+| `Align` | `ScrollProgressAlign` | `Start` | Horizontal alignment of the track within the container when `Width` makes it narrower (`Start`/`Center`/`End`). |
 
 Plus the shared escape hatch on every Atom component (`CssClass`, `Style`, arbitrary splatted
 attributes) on the root `<div>`.
+
+### Sizing and positioning against the container, not the viewport
+
+A `position: fixed` element's percentages (`width`, `left`) and `top: 0`/`bottom: 0` normally
+resolve against the *viewport* — wrong for an app-shell layout where the actual scroll container
+is narrower than (and offset from) the full screen (e.g. next to a sidebar, below a fixed header).
+`atom-progress.js` measures the real scroll container's bounding box and:
+
+- sets the track's `left`/`width` in px to match the container horizontally (or, when `Width` is
+  set, resolves that length against the container and positions it per `Align`),
+- sets `top` (or `bottom`) in px to match the container's own edge, not the viewport's,
+- re-syncs on window resize, on the container's own scroll, and whenever `Position`/`Width`/`Align`
+  change at runtime.
+
+`Width` accepts any CSS length. Rather than reimplementing unit math for `%`/`px`/`rem`/`vw`/
+`calc()`/etc., the module applies it to a hidden probe element placed *inside* the actual scroll
+container and reads back its resolved pixel width — the same technique the browser already uses,
+so arbitrary units "just work." One CSS nuance worth knowing: a percentage `Width` resolves
+against the container's *content box* (excluding its own padding), per standard CSS percentage
+resolution — this is correct behavior, not a quirk, but can surprise you if you expected it against
+the container's full visual (border-box) width.
 
 ## Notes
 

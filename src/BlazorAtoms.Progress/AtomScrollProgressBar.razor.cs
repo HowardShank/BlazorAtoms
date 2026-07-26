@@ -18,7 +18,7 @@ public partial class AtomScrollProgressBar : IAsyncDisposable
     private ElementReference _barRef;
     private IJSObjectReference? _module;
     private bool _attachAttempted;
-    private ScrollProgressPosition? _lastAttachedPosition;
+    private (ScrollProgressPosition Position, string? Width, ScrollProgressAlign Align)? _lastLayout;
 
     /// <summary>Color of the progress bar.</summary>
     [Parameter] public string Color { get; set; } = "#e6175d";
@@ -30,6 +30,15 @@ public partial class AtomScrollProgressBar : IAsyncDisposable
     /// the bar sticks to.</summary>
     [Parameter] public ScrollProgressPosition Position { get; set; } = ScrollProgressPosition.Top;
 
+    /// <summary>Width of the track. Any standard CSS length (<c>"50%"</c>, <c>"300px"</c>,
+    /// <c>"20rem"</c>, ...) — resolved against the scroll container, not the viewport. Null
+    /// (default) spans the full container width.</summary>
+    [Parameter] public string? Width { get; set; }
+
+    /// <summary>Horizontal alignment of the track within the scroll container, when
+    /// <see cref="Width"/> makes it narrower than the container.</summary>
+    [Parameter] public ScrollProgressAlign Align { get; set; } = ScrollProgressAlign.Start;
+
     private string PositionClass => Position.ToString().ToLowerInvariant();
 
     private string RootStyle =>
@@ -39,15 +48,18 @@ public partial class AtomScrollProgressBar : IAsyncDisposable
     /// <inheritdoc />
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        var current = (Position, Width, Align);
+
         if (firstRender && !_attachAttempted)
         {
             _attachAttempted = true;
-            _lastAttachedPosition = Position;
+            _lastLayout = current;
 
             try
             {
                 _module = await JS.InvokeAsync<IJSObjectReference>("import", ModulePath);
-                await _module.InvokeVoidAsync("attachScrollProgress", _trackRef, _barRef, PositionClass);
+                await _module.InvokeVoidAsync("attachScrollProgress", _trackRef, _barRef,
+                    PositionClass, Width, Align.ToString().ToLowerInvariant());
             }
             catch (JSDisconnectedException) { }
             catch (OperationCanceledException) { }
@@ -56,17 +68,19 @@ public partial class AtomScrollProgressBar : IAsyncDisposable
             return;
         }
 
-        // Attach only ever runs once (above). If Position changes afterward — e.g. a playground
-        // dropdown — the track's inline top/bottom from the original attach would otherwise linger
-        // and fight the new CSS class, so re-sync explicitly via updatePosition instead of
-        // re-running the whole attach (which would rebind a second scroll-timeline needlessly).
-        if (_module is not null && _lastAttachedPosition != Position)
+        // Attach only ever runs once (above). If Position/Width/Align change afterward — e.g. a
+        // playground control — the track's inline geometry from the original attach would
+        // otherwise linger and fight the new values, so re-sync explicitly via updateLayout
+        // instead of re-running the whole attach (which would rebind a second scroll-timeline
+        // needlessly).
+        if (_module is not null && _lastLayout != current)
         {
-            _lastAttachedPosition = Position;
+            _lastLayout = current;
 
             try
             {
-                await _module.InvokeVoidAsync("updatePosition", _trackRef, PositionClass);
+                await _module.InvokeVoidAsync("updateLayout", _trackRef,
+                    PositionClass, Width, Align.ToString().ToLowerInvariant());
             }
             catch (JSDisconnectedException) { }
             catch (OperationCanceledException) { }
