@@ -232,11 +232,16 @@ public class AtomCrtDisplayTests : BunitContext
     }
 
     [Fact]
-    public async Task Loop_true_restarts_after_finish()
+    public void Loop_true_restarts_after_finish()
     {
-        // Value "A" completes in ~2ms at 500 CPS; 20ms loop delay; run for ~120ms so the loop
-        // completes at least twice. The stable state after each loop iteration still shows "A" —
-        // this is a regression guard that Loop doesn't leave the field blanked out permanently.
+        // Regression guard that Loop doesn't leave the field blanked out permanently.
+        //
+        // This must POLL, not sample one instant. Each loop iteration deliberately resets
+        // _displayedLength to 0 and renders that blank frame (AtomCrtDisplay.razor.cs) — that's what
+        // a retype animation looks like — so at any given moment the field may legitimately hold
+        // only the cursor. A single delay-then-assert therefore races the animation: it failed 5 runs
+        // in 6 locally. The blank window is also far wider than the configured 2ms/char suggests,
+        // because Task.Delay can't resolve below the ~15ms Windows timer tick.
         var cut = Render<AtomCrtDisplay>(p => p
             .Add(c => c.Value, "A")
             .Add(c => c.Animate, true)
@@ -244,9 +249,11 @@ public class AtomCrtDisplayTests : BunitContext
             .Add(c => c.Loop, true)
             .Add(c => c.LoopDelayMs, 20));
 
-        await Task.Delay(120);
-        cut.Render();
-        Assert.Contains("A", cut.Find(".atom-crt-display-field").TextContent);
+        // Passes as soon as a typed frame appears; only fails if the field NEVER shows the value,
+        // which is the actual regression being guarded against.
+        cut.WaitForAssertion(
+            () => Assert.Contains("A", cut.Find(".atom-crt-display-field").TextContent),
+            TimeSpan.FromSeconds(5));
     }
 
     [Fact]
