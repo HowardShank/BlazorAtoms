@@ -98,7 +98,9 @@ public partial class AtomCrtDisplay : AtomComponentBase, IAsyncDisposable
     [Parameter] public bool Animate { get; set; } = true;
 
     /// <summary>Typing speed in characters per second. Default 20 (fast, readable). Clamped to
-    /// at least 0.1 to avoid a stall.</summary>
+    /// at least 0.1 to avoid a stall. Speeds past roughly 62 cps are reached by revealing several
+    /// characters per animation step rather than by shortening the wait — see
+    /// <see cref="ComputeTypingSchedule"/> for why.</summary>
     [Parameter] public double CharactersPerSecond { get; set; } = 20;
 
     /// <summary>When true, restarts the animation after finishing (after <see cref="LoopDelayMs"/>).
@@ -142,21 +144,48 @@ public partial class AtomCrtDisplay : AtomComponentBase, IAsyncDisposable
         _ = RunAsync(cts.Token);
     }
 
+    // Windows' default system timer tick is ~15.6ms, and Task.Delay cannot resolve below it: a
+    // requested 2ms delay still sleeps ~16ms. Advancing one character per delay therefore capped
+    // typing at ~64 cps no matter how high CharactersPerSecond was set, so every value above that
+    // produced the same visible speed.
+    private const int MinResolvableDelayMs = 16;
+
+    /// <summary>Turns a characters-per-second rate into a (delay, characters-per-step) pair the
+    /// <see cref="Task.Delay"/> loop can actually honor. Rates slow enough for the system timer to
+    /// resolve keep a stride of 1 — one character per delay, unchanged. Faster rates hold the delay
+    /// at the timer tick and reveal several characters per step instead, which is the only way to
+    /// exceed the tick rate without JS.</summary>
+    internal static (int DelayMs, int Stride) ComputeTypingSchedule(double charactersPerSecond)
+    {
+        var msPerChar = 1000.0 / Math.Max(0.1, charactersPerSecond);
+
+        // Truncating to int here (rather than rounding) preserves the original timing exactly for
+        // every speed that was already achievable.
+        if (msPerChar >= MinResolvableDelayMs) return ((int)msPerChar, 1);
+
+        // Rounding — not truncating — keeps the effective rate closest to what was asked for.
+        var stride = Math.Max(1, (int)Math.Round(MinResolvableDelayMs / msPerChar));
+        return (MinResolvableDelayMs, stride);
+    }
+
     private async Task RunAsync(CancellationToken ct)
     {
         var value = Value ?? "";
-        var delayMs = Math.Max(1, (int)(1000.0 / Math.Max(0.1, CharactersPerSecond)));
+        var (delayMs, stride) = ComputeTypingSchedule(CharactersPerSecond);
         try
         {
             do
             {
                 _displayedLength = 0;
                 await InvokeAsync(StateHasChanged);
-                for (var i = 1; i <= value.Length; i++)
+                for (var i = stride; ; i += stride)
                 {
                     await Task.Delay(delayMs, ct);
-                    _displayedLength = i;
+                    // Clamped so the final step lands exactly on the last character instead of
+                    // overshooting when stride doesn't divide the length evenly.
+                    _displayedLength = Math.Min(i, value.Length);
                     await InvokeAsync(StateHasChanged);
+                    if (i >= value.Length) break;
                 }
                 if (!Loop) return;
                 await Task.Delay(Math.Max(0, LoopDelayMs), ct);

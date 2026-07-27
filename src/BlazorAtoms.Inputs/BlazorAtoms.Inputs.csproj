@@ -19,4 +19,8 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="BlazorAtoms.Inputs.Tests" />
+  </ItemGroup>
+
 </Project>

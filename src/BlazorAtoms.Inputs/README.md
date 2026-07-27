@@ -334,10 +334,24 @@ Additional parameters that are display-specific:
 |---|---|---|---|
 | `Value` | `string?` | — | Text to display (one-way; there is no `ValueChanged`). |
 | `Animate` | `bool` | `true` | Types the value one character at a time. `false` shows the full value immediately. |
-| `CharactersPerSecond` | `double` | `20` | Typing speed. Clamped to `≥ 0.1`. Value changes restart from the start. |
+| `CharactersPerSecond` | `double` | `20` | Typing speed. Clamped to `≥ 0.1`. Value changes restart from the start. Past ~62 cps, characters are revealed in batches — see below. |
 | `Loop` | `bool` | `false` | Restarts the animation after finishing (after `LoopDelayMs`). |
 | `LoopDelayMs` | `int` | `1500` | Pause between loop iterations when `Loop="true"`. |
 
 The block-cursor after the typed text is the same `CursorBlink` toggle as `AtomCrtInput`; when the
 placeholder is showing (no value), the cursor is hidden — it would read strangely hanging off empty
 text.
+
+### A note on high typing speeds
+
+The animation is driven by `Task.Delay`, which cannot resolve below the operating system's timer
+tick — about **15.6ms on Windows**. A requested 2ms wait sleeps ~16ms regardless.
+
+Up to ~62 cps this is invisible: one character is revealed per wait, and the wait is long enough to
+be honored exactly. Above that, the wait is held at the tick and *several* characters are revealed
+per step instead (`CharactersPerSecond="500"` → 8 characters every 16ms). The overall rate is
+correct, but the reveal is stepped rather than strictly per-character — at those speeds the
+difference isn't perceptible anyway.
+
+Practical consequence: very high values still work, but the effective rate is quantized to
+multiples of ~62.5 cps, so e.g. `700` and `750` render identically.

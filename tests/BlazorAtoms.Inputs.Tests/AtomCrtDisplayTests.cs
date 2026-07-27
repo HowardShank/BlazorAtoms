@@ -256,6 +256,91 @@ public class AtomCrtDisplayTests : BunitContext
             TimeSpan.FromSeconds(5));
     }
 
+    // ---- typing-speed ceiling --------------------------------------------------------------
+    // Task.Delay can't resolve below the ~15.6ms Windows timer tick, so one-character-per-delay
+    // capped typing at ~64 cps and silently ignored anything higher. AtomCrtDisplay now pins the
+    // delay at the tick past that point and advances a stride of characters per step instead.
+    // These assert the schedule directly rather than timing the animation — a wall-clock assertion
+    // tight enough to prove the rate would be flaky on CI.
+
+    [Theory]
+    [InlineData(0.5, 2000, 1)]   // clamped-slow end
+    [InlineData(20, 50, 1)]      // the default
+    [InlineData(62.5, 16, 1)]    // exactly at the tick — still one char per delay
+    public void Speeds_the_timer_can_resolve_keep_a_stride_of_one(double cps, int expectedDelay, int expectedStride)
+    {
+        var (delayMs, stride) = AtomCrtDisplay.ComputeTypingSchedule(cps);
+
+        Assert.Equal(expectedDelay, delayMs);
+        Assert.Equal(expectedStride, stride);
+    }
+
+    [Theory]
+    [InlineData(125, 2)]
+    [InlineData(500, 8)]
+    [InlineData(1000, 16)]
+    public void Speeds_past_the_timer_tick_hold_the_delay_and_raise_the_stride(double cps, int expectedStride)
+    {
+        var (delayMs, stride) = AtomCrtDisplay.ComputeTypingSchedule(cps);
+
+        // Delay must not drop below the tick — shortening it further buys nothing and only makes
+        // the configured rate a lie.
+        Assert.Equal(16, delayMs);
+        Assert.Equal(expectedStride, stride);
+    }
+
+    [Theory]
+    [InlineData(20)]
+    [InlineData(125)]
+    [InlineData(500)]
+    [InlineData(2000)]
+    public void Effective_rate_tracks_the_requested_rate(double cps)
+    {
+        var (delayMs, stride) = AtomCrtDisplay.ComputeTypingSchedule(cps);
+
+        var effective = stride * 1000.0 / delayMs;
+        // Within 15%: stride and delay are both integers, so exact rates aren't representable.
+        // The point is that raising CharactersPerSecond now actually raises the speed.
+        Assert.InRange(effective, cps * 0.85, cps * 1.15);
+    }
+
+    [Theory]
+    [InlineData(0.1)]
+    [InlineData(1)]
+    [InlineData(20)]
+    [InlineData(60)]
+    public void Already_achievable_speeds_keep_their_original_delay(double cps)
+    {
+        // Regression guard: the stride change must not alter timing for any speed that already
+        // worked. This is the delay the pre-stride implementation computed.
+        var originalDelayMs = Math.Max(1, (int)(1000.0 / Math.Max(0.1, cps)));
+
+        var (delayMs, stride) = AtomCrtDisplay.ComputeTypingSchedule(cps);
+
+        Assert.Equal(originalDelayMs, delayMs);
+        Assert.Equal(1, stride);
+    }
+
+    [Fact]
+    public void High_CharactersPerSecond_finishes_far_sooner_than_one_char_per_tick_allows()
+    {
+        // 205 chars at 2000 cps => stride 32, so ~7 steps of 16ms (~112ms). One character per tick
+        // would need 205 * 16ms = ~3.3s, so this fails outright against the old implementation
+        // while leaving a wide enough margin not to be flaky.
+        //
+        // 205 is deliberately not a multiple of the stride — it also covers the final clamped step.
+        var value = new string('X', 205);
+
+        var cut = Render<AtomCrtDisplay>(p => p
+            .Add(c => c.Value, value)
+            .Add(c => c.Animate, true)
+            .Add(c => c.CharactersPerSecond, 2000));
+
+        cut.WaitForAssertion(
+            () => Assert.Equal(value, cut.Find(".atom-crt-display-field").TextContent.TrimEnd('█')),
+            TimeSpan.FromSeconds(1));
+    }
+
     [Fact]
     public void Root_carries_status_role_and_polite_live_region()
     {
