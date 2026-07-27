@@ -51,11 +51,11 @@ scroll-lock, smart positioning, clipboard, Resize/IntersectionObserver) — and 
 
 ## Graphics policy
 
-Every graphic the components draw is **inline SVG** — vector, crisp at any zoom/DPI, themeable via
+Most every graphic the components draw is **inline SVG** — vector, crisp at any zoom/DPI, themeable via
 CSS custom properties and `currentColor`, animatable in CSS. This covers charts, gauges, sparklines,
 rating icons, QR/barcodes, skeleton shapes, and icons.
 
-- **No raster for our own chrome** — no PNG/JPG UI assets, ever.
+- **No/Limited raster for our own chrome** — want crisp clear SVG, not PNG/JPG UI assets, whenever possible.
 - **Avoid `<canvas>`** (it is raster *and* needs JS); use SVG unless there is a hard performance reason.
 - The only raster we own is the 128×128 NuGet package icon (packaging metadata, never shipped into
   apps). **User content** (an avatar photo, an image inside a card) is raster by nature — we render
