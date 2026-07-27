@@ -1,0 +1,174 @@
+/* Hover flip. Two stacked faces inside a preserve-3d wrapper; hovering rotates the wrapper 180deg
+   so the back face comes forward. The back face is pre-rotated 180deg so it reads correctly (and
+   isn't mirrored) once it faces the viewer.
+
+   perspective goes on the OUTER element, not the rotating one: applied to the rotating element it
+   would be recomputed as that element turns, flattening the foreshortening. On the parent it acts
+   as a fixed viewing frustum, which is what gives the flip depth. */
+
+.atom-card-flip {
+    position: relative;
+    box-sizing: border-box;
+    width: var(--atom-card-width);
+    height: var(--atom-card-height);
+    /* A bare width on a flex child still shrinks (flex-shrink defaults to 1). */
+    flex: 0 0 auto;
+    perspective: var(--atom-card-flip-perspective);
+    font-family: inherit;
+    container-type: inline-size;
+
+    animation-name: atom-card-flip-pop;
+    animation-duration: .7s;
+    animation-timing-function: cubic-bezier(.26, .53, .74, 1.48);
+    animation-fill-mode: backwards;
+}
+
+.atom-card-flip *,
+.atom-card-flip *::before,
+.atom-card-flip *::after {
+    /* Scoped CSS gets no global `* { box-sizing: border-box }` reset, and padding on the faces
+       would otherwise inflate them past the 100% this layout depends on. */
+    box-sizing: border-box;
+}
+
+.atom-card-flip-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform .7s cubic-bezier(.26, .53, .74, 1.48);
+}
+
+.atom-card-flip-face {
+    position: absolute;
+    inset: 0;
+    /* Without this the far face shows through the near one during and after the turn. */
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border: var(--atom-card-border-width) solid var(--atom-card-border-color);
+    overflow: hidden;
+}
+
+.atom-card-flip-front {
+    background: var(--atom-card-accent);
+}
+
+.atom-card-flip-back {
+    display: grid;
+    padding: 3cqw 4cqw;
+    background: var(--atom-card-flip-back-color);
+    box-shadow: inset 1px 1px 15px 0 rgba(0, 0, 0, .4);
+    overflow-y: auto;
+    color: #222;
+}
+
+.atom-card-flip-image {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+
+    animation-name: atom-card-flip-fade;
+    animation-duration: .7s;
+    animation-delay: .6s;
+    animation-timing-function: ease-out;
+    animation-fill-mode: backwards;
+}
+
+.atom-card-flip-front-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1.5rem .75rem;
+    pointer-events: none;
+}
+
+/* ---- Axis variants. The back face's pre-rotation must match the axis the wrapper turns on,
+   otherwise the revealed content ends up mirrored. ---- */
+
+.atom-card-flip-axis-y .atom-card-flip-back { transform: rotateY(180deg); }
+.atom-card-flip-axis-y:hover .atom-card-flip-inner { transform: rotateY(180deg); }
+
+.atom-card-flip-axis-x .atom-card-flip-back { transform: rotateX(180deg); }
+.atom-card-flip-axis-x:hover .atom-card-flip-inner { transform: rotateX(180deg); }
+
+/* ---- Chrome ---- */
+
+.atom-card-flip-title {
+    font-size: clamp(1rem, 4.5cqw, 2.5rem);
+    text-align: center;
+    color: #fff;
+    margin: 0;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
+
+    animation-name: atom-card-flip-slide-in, atom-card-flip-pop;
+    animation-duration: .7s;
+    animation-delay: 1.2s;
+    animation-timing-function: cubic-bezier(.26, .53, .74, 1.48);
+    animation-fill-mode: backwards;
+}
+
+.atom-card-flip-subtitle {
+    font-size: max(10pt, 1.75cqw);
+    color: #fff;
+    margin: 0;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
+
+    animation-name: atom-card-flip-slide-in, atom-card-flip-pop;
+    animation-duration: .7s;
+    animation-delay: 1.5s;
+    animation-timing-function: cubic-bezier(.26, .53, .74, 1.48);
+    animation-fill-mode: backwards;
+}
+
+.atom-card-flip-dots {
+    position: absolute;
+    bottom: 1rem;
+    right: 2rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    width: 70px;
+    height: 1.5rem;
+}
+
+.atom-card-flip-dot {
+    width: 1rem;
+    height: 1rem;
+    background: var(--atom-card-dot-color);
+    border: 1px solid var(--atom-card-dot-border-color);
+    border-radius: 50%;
+    transition: background .3s ease-in-out;
+
+    animation-name: atom-card-flip-slide-up;
+    animation-duration: .7s;
+    animation-timing-function: cubic-bezier(.26, .53, .74, 1.48);
+    animation-fill-mode: backwards;
+}
+
+.atom-card-flip:hover .atom-card-flip-dot {
+    background: var(--atom-card-dot-hover-color);
+}
+
+@keyframes atom-card-flip-pop {
+    0% { opacity: 0; transform: scale(.5, .5); }
+    100% { opacity: 1; transform: scale(1, 1); }
+}
+
+@keyframes atom-card-flip-fade {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@keyframes atom-card-flip-slide-in {
+    0% { opacity: 0; transform: translate(-40px, 0); }
+    100% { opacity: 1; transform: translate(0, 0); }
+}
+
+@keyframes atom-card-flip-slide-up {
+    0% { opacity: 0; transform: translateY(3em); }
+    100% { opacity: 1; transform: translateY(0); }
+}

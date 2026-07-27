@@ -1,0 +1,257 @@
+/* Hover page-curl (corner fold).
+   Three layers: the body panel (bottom), the front sheet (middle) with a triangle clipped out of
+   the hovered corner, and the fold (top) — the lifted corner drawn folded back ONTO the sheet.
+
+   Why the fold sits on the sheet rather than inside the clipped-out area: physically, when a corner
+   flips up, its underside lands mirrored across the fold diagonal, i.e. over the page face. Drawing
+   it there leaves the whole clipped region free to show the body panel, which is the point. Putting
+   the fold in the cut instead would cover exactly what the peel is supposed to uncover.
+
+   Every clip-path here is a 5-point polygon (and every fold a 3-point one) at BOTH rest and hover.
+   That is deliberate: clip-path only interpolates between polygons with matching vertex counts, so
+   keeping the counts equal is what makes the peel animate instead of snapping.
+
+   Scope note: this is a fold, not a photorealistic curl. CSS cannot warp a plane — a real curl needs
+   an SVG displacement filter or WebGL. Flagged as a known trade before building. */
+
+.atom-card-curl {
+    position: relative;
+    box-sizing: border-box;
+    width: var(--atom-card-width);
+    height: var(--atom-card-height);
+    /* A bare width on a flex child still shrinks (flex-shrink defaults to 1). */
+    flex: 0 0 auto;
+    border: var(--atom-card-border-width) solid var(--atom-card-border-color);
+    overflow: hidden;
+    font-family: inherit;
+    container-type: inline-size;
+
+    animation-name: atom-card-curl-pop;
+    animation-duration: .7s;
+    animation-timing-function: cubic-bezier(.26, .53, .74, 1.48);
+    animation-fill-mode: backwards;
+}
+
+.atom-card-curl *,
+.atom-card-curl *::before,
+.atom-card-curl *::after {
+    /* Scoped CSS gets no global `* { box-sizing: border-box }` reset, and padding on the body panel
+       would otherwise inflate it past the 100% this layout depends on. */
+    box-sizing: border-box;
+}
+
+.atom-card-curl-body {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    align-content: end;
+    padding: 3cqw 4cqw;
+    background: var(--atom-card-curl-body-color);
+    box-shadow: inset 1px 1px 15px 0 rgba(0, 0, 0, .35);
+    overflow-y: auto;
+    color: #222;
+    z-index: 0;
+}
+
+.atom-card-curl-sheet {
+    position: absolute;
+    inset: 0;
+    background: var(--atom-card-accent);
+    z-index: 1;
+    transition: clip-path .45s ease-in-out;
+}
+
+.atom-card-curl-image {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+
+    animation-name: atom-card-curl-fade;
+    animation-duration: .7s;
+    animation-delay: .6s;
+    animation-timing-function: ease-out;
+    animation-fill-mode: backwards;
+}
+
+.atom-card-curl-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    padding: 1.5rem .75rem;
+    pointer-events: none;
+}
+
+.atom-card-curl-fold {
+    position: absolute;
+    width: var(--atom-card-curl-resting-size);
+    height: var(--atom-card-curl-resting-size);
+    z-index: 2;
+    pointer-events: none;
+    filter: drop-shadow(0 0 .4rem rgba(0, 0, 0, .35));
+    transition: width .45s ease-in-out, height .45s ease-in-out;
+}
+
+.atom-card-curl:hover .atom-card-curl-fold {
+    width: var(--atom-card-curl-size);
+    height: var(--atom-card-curl-size);
+}
+
+/* ---- Corner variants: the sheet's clipped corner, plus the fold's placement, triangle, and
+   shading direction. ---- */
+
+/* Bottom-right */
+.atom-card-curl-bottomright .atom-card-curl-sheet {
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--atom-card-curl-resting-size)),
+                       calc(100% - var(--atom-card-curl-resting-size)) 100%, 0 100%);
+}
+.atom-card-curl-bottomright:hover .atom-card-curl-sheet {
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--atom-card-curl-size)),
+                       calc(100% - var(--atom-card-curl-size)) 100%, 0 100%);
+}
+.atom-card-curl-bottomright .atom-card-curl-fold {
+    bottom: 0;
+    right: 0;
+    clip-path: polygon(0 0, 100% 0, 0 100%);
+    background: linear-gradient(135deg,
+                                var(--atom-card-curl-fold-color) 0%,
+                                rgba(0, 0, 0, .18) 100%);
+}
+
+/* Bottom-left */
+.atom-card-curl-bottomleft .atom-card-curl-sheet {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, var(--atom-card-curl-resting-size) 100%,
+                       0 calc(100% - var(--atom-card-curl-resting-size)));
+}
+.atom-card-curl-bottomleft:hover .atom-card-curl-sheet {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, var(--atom-card-curl-size) 100%,
+                       0 calc(100% - var(--atom-card-curl-size)));
+}
+.atom-card-curl-bottomleft .atom-card-curl-fold {
+    bottom: 0;
+    left: 0;
+    clip-path: polygon(0 0, 100% 0, 100% 100%);
+    background: linear-gradient(225deg,
+                                var(--atom-card-curl-fold-color) 0%,
+                                rgba(0, 0, 0, .18) 100%);
+}
+
+/* Top-right */
+.atom-card-curl-topright .atom-card-curl-sheet {
+    clip-path: polygon(0 0, calc(100% - var(--atom-card-curl-resting-size)) 0,
+                       100% var(--atom-card-curl-resting-size), 100% 100%, 0 100%);
+}
+.atom-card-curl-topright:hover .atom-card-curl-sheet {
+    clip-path: polygon(0 0, calc(100% - var(--atom-card-curl-size)) 0,
+                       100% var(--atom-card-curl-size), 100% 100%, 0 100%);
+}
+.atom-card-curl-topright .atom-card-curl-fold {
+    top: 0;
+    right: 0;
+    clip-path: polygon(0 0, 0 100%, 100% 100%);
+    background: linear-gradient(45deg,
+                                var(--atom-card-curl-fold-color) 0%,
+                                rgba(0, 0, 0, .18) 100%);
+}
+
+/* Top-left */
+.atom-card-curl-topleft .atom-card-curl-sheet {
+    clip-path: polygon(var(--atom-card-curl-resting-size) 0, 100% 0, 100% 100%, 0 100%,
+                       0 var(--atom-card-curl-resting-size));
+}
+.atom-card-curl-topleft:hover .atom-card-curl-sheet {
+    clip-path: polygon(var(--atom-card-curl-size) 0, 100% 0, 100% 100%, 0 100%,
+                       0 var(--atom-card-curl-size));
+}
+.atom-card-curl-topleft .atom-card-curl-fold {
+    top: 0;
+    left: 0;
+    clip-path: polygon(100% 0, 100% 100%, 0 100%);
+    background: linear-gradient(315deg,
+                                var(--atom-card-curl-fold-color) 0%,
+                                rgba(0, 0, 0, .18) 100%);
+}
+
+/* ---- Chrome ---- */
+
+.atom-card-curl-title {
+    font-size: clamp(1rem, 4.5cqw, 2.5rem);
+    text-align: center;
+    color: #fff;
+    margin: 0;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
+
+    animation-name: atom-card-curl-slide-in, atom-card-curl-pop;
+    animation-duration: .7s;
+    animation-delay: 1.2s;
+    animation-timing-function: cubic-bezier(.26, .53, .74, 1.48);
+    animation-fill-mode: backwards;
+}
+
+.atom-card-curl-subtitle {
+    font-size: max(10pt, 1.75cqw);
+    text-align: center;
+    color: #fff;
+    margin: 0;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
+
+    animation-name: atom-card-curl-slide-in, atom-card-curl-pop;
+    animation-duration: .7s;
+    animation-delay: 1.5s;
+    animation-timing-function: cubic-bezier(.26, .53, .74, 1.48);
+    animation-fill-mode: backwards;
+}
+
+.atom-card-curl-dots {
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    width: 70px;
+    height: 1.5rem;
+}
+
+.atom-card-curl-dot {
+    width: 1rem;
+    height: 1rem;
+    background: var(--atom-card-dot-color);
+    border: 1px solid var(--atom-card-dot-border-color);
+    border-radius: 50%;
+    transition: background .3s ease-in-out;
+
+    animation-name: atom-card-curl-slide-up;
+    animation-duration: .7s;
+    animation-timing-function: cubic-bezier(.26, .53, .74, 1.48);
+    animation-fill-mode: backwards;
+}
+
+.atom-card-curl:hover .atom-card-curl-dot {
+    background: var(--atom-card-dot-hover-color);
+}
+
+@keyframes atom-card-curl-pop {
+    0% { opacity: 0; transform: scale(.5, .5); }
+    100% { opacity: 1; transform: scale(1, 1); }
+}
+
+@keyframes atom-card-curl-fade {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@keyframes atom-card-curl-slide-in {
+    0% { opacity: 0; transform: translate(-40px, 0); }
+    100% { opacity: 1; transform: translate(0, 0); }
+}
+
+@keyframes atom-card-curl-slide-up {
+    0% { opacity: 0; transform: translateY(3em); }
+    100% { opacity: 1; transform: translateY(0); }
+}

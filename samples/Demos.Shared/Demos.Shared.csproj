@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="wwwroot\beach-tree.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
   </ItemGroup>
 
@@ -33,6 +37,7 @@
     <ProjectReference Include="..\..\src\BlazorAtoms.Typography\BlazorAtoms.Typography.csproj" />
     <ProjectReference Include="..\..\src\BlazorAtoms.Progress\BlazorAtoms.Progress.csproj" />
     <ProjectReference Include="..\..\src\BlazorAtoms.Scrollbars\BlazorAtoms.Scrollbars.csproj" />
+    <ProjectReference Include="..\..\src\BlazorAtoms.Cards\BlazorAtoms.Cards.csproj" />
   </ItemGroup>
 
 </Project>

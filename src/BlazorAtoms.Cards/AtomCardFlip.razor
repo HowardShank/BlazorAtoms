@@ -1,0 +1,45 @@
+@inherits AtomCardBase
+
+@*
+    AtomCardFlip.razor
+    ------------------
+    Zero-JS hover-flip card: front face carries the background image + title/subtitle + dot
+    indicator, back face carries BodyContent. On hover the whole card rotates 180deg around
+    FlipAxis. Pure CSS (:hover + transform-style: preserve-3d), no C# trigger state.
+
+    Note there is no RevealSize here — nothing is partially uncovered, the card turns as a whole.
+    That is exactly why this is its own component rather than an enum member on AtomCardReveal:
+    a shared enum would put RevealSize on a type where it means nothing.
+*@
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr($"atom-card-flip {AxisClass}")"
+     style="@StyleAttr(RootStyle)">
+    <div class="atom-card-flip-inner">
+        <div class="atom-card-flip-face atom-card-flip-front">
+            @* background-image inline, not via a CSS custom property: a relative url() inside a
+               custom property resolves against the stylesheet consuming var() — this library's own
+               bundled .razor.css — not the caller's document, which 404s any relative path. *@
+            <div class="atom-card-flip-image" style="background-image:url('@BackgroundImageUrl')"></div>
+            <div class="atom-card-flip-front-content">
+                <h1 class="atom-card-flip-title">@Title</h1>
+                @if (Subtitle is not null)
+                {
+                    <p class="atom-card-flip-subtitle">@Subtitle</p>
+                }
+            </div>
+            @if (DotCount > 0)
+            {
+                <div class="atom-card-flip-dots">
+                    @for (var i = 0; i < DotCount; i++)
+                    {
+                        <div class="atom-card-flip-dot" style="@DotDelayStyle(i)"></div>
+                    }
+                </div>
+            }
+        </div>
+        <div class="atom-card-flip-face atom-card-flip-back">
+            @BodyContent
+        </div>
+    </div>
+</div>

@@ -81,6 +81,37 @@ public class AtomHoverEffectTests
     }
 
     [Fact]
+    public void Tilt_effect_emits_its_class_and_renders_no_sparkles()
+    {
+        using var ctx = new BunitContext();
+
+        var cut = ctx.Render<AtomHoverEffect>(p => p
+            .AddChildContent("<span>hi</span>")
+            .Add(x => x.Effect, HoverEffect.Tilt));
+
+        var root = cut.Find(".atom-hover-effect");
+        Assert.Contains("atom-hover-effect-tilt", root.ClassList);
+        // Tilt is a pure transform — sparkle SVGs belong to Sparkle only.
+        Assert.Empty(cut.FindAll(".atom-hover-effect-svg"));
+    }
+
+    [Fact]
+    public void TiltDegrees_and_TiltPerspective_flow_into_root_style()
+    {
+        using var ctx = new BunitContext();
+
+        var cut = ctx.Render<AtomHoverEffect>(p => p
+            .AddChildContent("<span>hi</span>")
+            .Add(x => x.Effect, HoverEffect.Tilt)
+            .Add(x => x.TiltDegrees, 20)
+            .Add(x => x.TiltPerspective, "800px"));
+
+        var style = cut.Find(".atom-hover-effect").GetAttribute("style");
+        Assert.Contains("--atom-hover-effect-tilt:20deg;", style);
+        Assert.Contains("--atom-hover-effect-perspective:800px;", style);
+    }
+
+    [Fact]
     public void CssClass_and_Style_append_to_root()
     {
         using var ctx = new BunitContext();

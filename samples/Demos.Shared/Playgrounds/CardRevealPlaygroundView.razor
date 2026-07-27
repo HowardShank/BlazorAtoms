@@ -1,0 +1,172 @@
+@page "/playground/cardreveal"
+@using BlazorAtoms.Cards
+
+<PageTitle>AtomCardReveal Playground</PageTitle>
+
+<div class="cardreveal-page">
+    <h1>AtomCardReveal playground</h1>
+    <p>
+        Hover-reveal info card. On mount, the overlay (title/subtitle/background image/dots)
+        plays a staggered pop/slide entrance. Hover the card — the overlay slides away, the
+        background image widens, and a scrollable body panel is revealed. Pure CSS, zero JS.
+    </p>
+    <p><a href="/">&larr; Back to home</a></p>
+
+    <div class="cardreveal-controls">
+        <div class="ctrl">
+            <label>Title</label>
+            <input type="text" @bind="Title" @bind:event="oninput" />
+        </div>
+        <div class="ctrl">
+            <label>Subtitle</label>
+            <input type="text" @bind="Subtitle" @bind:event="oninput" placeholder="Kingdom: Plantae" />
+        </div>
+        <div class="ctrl">
+            <label>Background image URL</label>
+            <input type="text" @bind="BackgroundImageUrl" @bind:event="oninput" />
+        </div>
+        <div class="ctrl">
+            <label>Accent color</label>
+            <div class="cardreveal-color-row">
+                <input type="color" @bind="AccentColor" @bind:event="oninput" />
+                <input type="text" @bind="AccentColor" @bind:event="oninput" />
+            </div>
+        </div>
+        <div class="ctrl">
+            <label>Width</label>
+            <input type="text" @bind="Width" @bind:event="oninput" placeholder="85vmin" />
+        </div>
+        <div class="ctrl">
+            <label>Height</label>
+            <input type="text" @bind="Height" @bind:event="oninput" placeholder="65vmin" />
+        </div>
+        <div class="ctrl">
+            <label>Direction (way overlay slides)</label>
+            <select @bind="Direction">
+                <option value="@CardRevealDirection.Left">Left</option>
+                <option value="@CardRevealDirection.Right">Right</option>
+                <option value="@CardRevealDirection.Up">Up</option>
+                <option value="@CardRevealDirection.Down">Down</option>
+            </select>
+        </div>
+        <div class="ctrl">
+            <label>Reveal size (body panel, along axis)</label>
+            <input type="text" @bind="RevealSize" @bind:event="oninput" placeholder="70%" />
+        </div>
+        <div class="ctrl">
+            <label>Border width ("0" = no frame)</label>
+            <input type="text" @bind="BorderWidth" @bind:event="oninput" placeholder="8px" />
+        </div>
+        <div class="ctrl">
+            <label>Border color (blank = accent)</label>
+            <input type="text" @bind="BorderColor" @bind:event="oninput" placeholder="e.g. #222" />
+        </div>
+        <div class="ctrl">
+            <label>Dot count</label>
+            <input type="number" min="0" max="8" @bind="DotCount" @bind:event="oninput" />
+        </div>
+        <div class="ctrl">
+            <label>Dot color</label>
+            <div class="cardreveal-color-row">
+                <input type="color" @bind="DotColor" @bind:event="oninput" />
+                <input type="text" @bind="DotColor" @bind:event="oninput" />
+            </div>
+        </div>
+        <div class="ctrl">
+            <label>Dot border color (blank = accent)</label>
+            <input type="text" @bind="DotBorderColor" @bind:event="oninput" placeholder="e.g. #4b0082" />
+        </div>
+        <div class="ctrl">
+            <label>Dot hover color</label>
+            <div class="cardreveal-color-row">
+                <input type="color" @bind="DotHoverColor" @bind:event="oninput" />
+                <input type="text" @bind="DotHoverColor" @bind:event="oninput" />
+            </div>
+        </div>
+    </div>
+
+    <CodeSnippetBox Code="@Snippet" FileName="AtomCardRevealExample.razor" />
+
+    <div class="cardreveal-demo-wrap">
+        <AtomCardReveal Title="@Title" BackgroundImageUrl="@BackgroundImageUrl" AccentColor="@AccentColor"
+                      Width="@Nz(Width, "85vmin")" Height="@Nz(Height, "65vmin")"
+                      RevealSize="@Nz(RevealSize, "70%")" Direction="Direction" BorderWidth="@Nz(BorderWidth, "8px")" BorderColor="@NzNull(BorderColor)" DotCount="DotCount"
+                      DotColor="@DotColor" DotBorderColor="@NzNull(DotBorderColor)" DotHoverColor="@DotHoverColor">
+            <Subtitle>
+                @((MarkupString)Subtitle)
+            </Subtitle>
+            <BodyContent>
+                <p>
+                    Beaches of the world bringing relaxation and rest to the world.
+                </p>
+                <p>Apart from fun in the sand and sun, the benefits of relaxation are awesome!.</p>
+            </BodyContent>
+        </AtomCardReveal>
+    </div>
+</div>
+
+<style>
+    .cardreveal-page { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 6rem; }
+    .cardreveal-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem 1.5rem;
+        background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem;
+        color:#cfd8e3; margin-bottom:1.5rem; }
+    .cardreveal-controls .ctrl { display:flex; flex-direction:column; gap:.4rem; }
+    .cardreveal-controls label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; }
+    .cardreveal-controls input[type=text], .cardreveal-controls input[type=number] {
+        padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330;
+        background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; }
+    .cardreveal-color-row { display:flex; gap:.5rem; align-items:center; }
+    .cardreveal-color-row input[type=color] { padding:0; width:2.75rem; height:2.2rem; flex:0 0 auto; }
+    .cardreveal-color-row input[type=text] { flex:1 1 auto; min-width:0; }
+    .cardreveal-demo-wrap { display:flex; justify-content:center; padding:2rem; }
+</style>
+
+@code {
+    private string Title = "Beaches";
+    private string Subtitle = "Vacation: <em>Relaxation</em>";
+    // No "wwwroot" segment: the Razor SDK strips the folder name when mapping an RCL's wwwroot
+    // to _content/<AssemblyName>/. Including it 404s (verified against the served manifest).
+    private string BackgroundImageUrl = "_content/Demos.Shared/beach-tree.jpg";
+    private string AccentColor = "#186218";
+    private string Width = "85vmin";
+    private string Height = "65vmin";
+    private string RevealSize = "70%";
+    private CardRevealDirection Direction = CardRevealDirection.Left;
+    private string BorderWidth = "8px";
+    private string BorderColor = "";
+    private int DotCount = 3;
+    private string DotColor = "#ffff00";
+    private string DotBorderColor = "";
+    private string DotHoverColor = "#ffffff";
+
+    private static string Nz(string s, string fallback) => string.IsNullOrEmpty(s) ? fallback : s;
+    private static string? NzNull(string s) => string.IsNullOrEmpty(s) ? null : s;
+
+    // Emits every value actually in effect rather than diffing against hardcoded defaults: the
+    // previous version duplicated each field initializer as a literal in the comparison, so
+    // editing a default (e.g. Title "Trees" -> "Beaches") silently desynced the two and the
+    // snippet stopped matching what's on screen. Only DotBorderColor is conditional, because
+    // omitting it is what "follow AccentColor" actually looks like in markup.
+    private string Snippet
+    {
+        get
+        {
+            var attrs =
+                $" Title=\"{Title}\"" +
+                $" BackgroundImageUrl=\"{BackgroundImageUrl}\"" +
+                $" AccentColor=\"{AccentColor}\"" +
+                $" Width=\"{Nz(Width, "85vmin")}\"" +
+                $" Height=\"{Nz(Height, "65vmin")}\"" +
+                $" RevealSize=\"{Nz(RevealSize, "70%")}\"" +
+                $" Direction=\"CardRevealDirection.{Direction}\"" +
+                $" BorderWidth=\"{Nz(BorderWidth, "8px")}\"" +
+                (string.IsNullOrEmpty(BorderColor) ? "" : $" BorderColor=\"{BorderColor}\"") +
+                $" DotCount=\"{DotCount}\"" +
+                $" DotColor=\"{DotColor}\"" +
+                (string.IsNullOrEmpty(DotBorderColor) ? "" : $" DotBorderColor=\"{DotBorderColor}\"") +
+                $" DotHoverColor=\"{DotHoverColor}\"";
+
+            return $"<AtomCardReveal{attrs}>\n    <Subtitle>{Subtitle}</Subtitle>\n    <BodyContent>\n        ...\n    </BodyContent>\n</AtomCardReveal>";
+        }
+    }
+}

@@ -37,9 +37,36 @@
     50% { transform: translate(-50%, -50%) scale(var(--atom-hover-effect-sparkle-scale, 1)); }
 }
 
+/* ---- Tilt: purely decorative 3D lift, nothing revealed. Perspective goes on the root and the
+   rotation on the inner content, not both on one element — applied to the rotating element itself,
+   perspective is recomputed as it turns and the foreshortening flattens out. ---- */
+
+.atom-hover-effect-tilt {
+    perspective: var(--atom-hover-effect-perspective);
+}
+
+.atom-hover-effect-tilt .atom-hover-effect-content {
+    transform-style: preserve-3d;
+    transition: transform .35s ease-out;
+}
+
+.atom-hover-effect-tilt:hover .atom-hover-effect-content,
+.atom-hover-effect-tilt:focus-visible .atom-hover-effect-content {
+    transform: rotateX(var(--atom-hover-effect-tilt))
+               rotateY(calc(var(--atom-hover-effect-tilt) / -2))
+               scale(var(--atom-hover-effect-scale));
+}
+
 @media (prefers-reduced-motion: reduce) {
     .atom-hover-effect-content, .atom-hover-effect-svg {
         animation: none !important;
         transition: none !important;
+    }
+
+    /* Tilt is a transform applied on :hover, not an animation — the rules above can't reach it, so
+       the transform itself has to be neutralized for users who ask for reduced motion. */
+    .atom-hover-effect-tilt:hover .atom-hover-effect-content,
+    .atom-hover-effect-tilt:focus-visible .atom-hover-effect-content {
+        transform: none !important;
     }
 }

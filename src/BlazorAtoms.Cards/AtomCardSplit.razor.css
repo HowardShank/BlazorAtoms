@@ -1,0 +1,274 @@
+/* Split-shutter card. Two half faces over one body panel; on hover each half swings open around the
+   seam's axis, hinged on its OUTER edge so it reads as a door rather than a pane spinning in place.
+
+   perspective goes on the root, not the halves: it has to be a single shared viewing frustum or the
+   two halves foreshorten independently and the seam visibly disagrees mid-swing.
+
+   No overflow:hidden on the root — the halves are supposed to swing outside the card's bounds. The
+   halves themselves DO clip, which is what crops each one's copy of the image.
+
+   Note the halves have no back face at all (backface-visibility: hidden, nothing behind them). They
+   simply stop being drawn once past 90deg, which is what lets the revealed body be a single element
+   underneath instead of content split across two backs. */
+
+.atom-card-split {
+    position: relative;
+    box-sizing: border-box;
+    width: var(--atom-card-width);
+    height: var(--atom-card-height);
+    /* A bare width on a flex child still shrinks (flex-shrink defaults to 1). */
+    flex: 0 0 auto;
+    border: var(--atom-card-border-width) solid var(--atom-card-border-color);
+    perspective: var(--atom-card-split-perspective);
+    font-family: inherit;
+    container-type: inline-size;
+
+    animation-name: atom-card-split-pop;
+    animation-duration: .7s;
+    animation-timing-function: cubic-bezier(.26, .53, .74, 1.48);
+    animation-fill-mode: backwards;
+}
+
+.atom-card-split *,
+.atom-card-split *::before,
+.atom-card-split *::after {
+    /* Scoped CSS gets no global `* { box-sizing: border-box }` reset, and padding on the body panel
+       would otherwise inflate it past the 100% this layout depends on. */
+    box-sizing: border-box;
+}
+
+.atom-card-split-body {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    align-content: center;
+    padding: 4cqw 5cqw;
+    background: var(--atom-card-split-body-color);
+    box-shadow: inset 1px 1px 15px 0 rgba(0, 0, 0, .35);
+    overflow-y: auto;
+    color: #222;
+    z-index: 0;
+}
+
+.atom-card-split-half {
+    position: absolute;
+    overflow: hidden;
+    background: var(--atom-card-accent);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    z-index: 2;
+    transition: transform var(--atom-card-split-duration) ease-in-out;
+}
+
+.atom-card-split-image {
+    position: absolute;
+    background-size: cover;
+    background-position: center;
+
+    animation-name: atom-card-split-fade;
+    animation-duration: .7s;
+    animation-delay: .6s;
+    animation-timing-function: ease-out;
+    animation-fill-mode: backwards;
+}
+
+.atom-card-split-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 1.25rem .75rem;
+    pointer-events: none;
+}
+
+.atom-card-split-circle {
+    position: absolute;
+    width: var(--atom-card-split-circle-size);
+    height: var(--atom-card-split-circle-size);
+    border-radius: 50%;
+    background: var(--atom-card-split-circle-color);
+    box-shadow: 0 19px 38px rgba(0, 0, 0, .2), 0 15px 12px rgba(0, 0, 0, .12);
+    pointer-events: none;
+}
+
+/* ---- Vertical seam: halves side by side, swinging around Y. ----
+   Half A is 1px wider than half B's edge would meet: at fractional card widths, two exact 50%
+   halves leave a hairline seam that shows the body panel through it. The overlap is invisible while
+   closed and irrelevant once open. */
+
+.atom-card-split-vertical .atom-card-split-half {
+    top: 0;
+    height: 100%;
+    width: calc(50% + 1px);
+}
+
+.atom-card-split-vertical .atom-card-split-half-a {
+    left: 0;
+    transform-origin: left center;
+}
+
+.atom-card-split-vertical .atom-card-split-half-b {
+    right: 0;
+    transform-origin: right center;
+}
+
+/* Each half holds the FULL image, pinned to its own outer edge, so the pair reads as one picture. */
+.atom-card-split-vertical .atom-card-split-image {
+    top: 0;
+    width: 200%;
+    height: 100%;
+}
+
+.atom-card-split-vertical .atom-card-split-half-a .atom-card-split-image { left: 0; }
+.atom-card-split-vertical .atom-card-split-half-b .atom-card-split-image { right: 0; }
+
+.atom-card-split-vertical .atom-card-split-circle {
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.atom-card-split-vertical .atom-card-split-half-a .atom-card-split-circle {
+    right: calc(-1 * var(--atom-card-split-circle-size) / 2);
+}
+
+.atom-card-split-vertical .atom-card-split-half-b .atom-card-split-circle {
+    left: calc(-1 * var(--atom-card-split-circle-size) / 2);
+}
+
+.atom-card-split-vertical:hover .atom-card-split-half-a { transform: rotateY(-180deg); }
+.atom-card-split-vertical:hover .atom-card-split-half-b { transform: rotateY(180deg); }
+
+/* ---- Horizontal seam: halves stacked, swinging around X. ---- */
+
+.atom-card-split-horizontal .atom-card-split-half {
+    left: 0;
+    width: 100%;
+    height: calc(50% + 1px);
+}
+
+.atom-card-split-horizontal .atom-card-split-half-a {
+    top: 0;
+    transform-origin: center top;
+}
+
+.atom-card-split-horizontal .atom-card-split-half-b {
+    bottom: 0;
+    transform-origin: center bottom;
+}
+
+.atom-card-split-horizontal .atom-card-split-image {
+    left: 0;
+    width: 100%;
+    height: 200%;
+}
+
+.atom-card-split-horizontal .atom-card-split-half-a .atom-card-split-image { top: 0; }
+.atom-card-split-horizontal .atom-card-split-half-b .atom-card-split-image { bottom: 0; }
+
+.atom-card-split-horizontal .atom-card-split-circle {
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.atom-card-split-horizontal .atom-card-split-half-a .atom-card-split-circle {
+    bottom: calc(-1 * var(--atom-card-split-circle-size) / 2);
+}
+
+.atom-card-split-horizontal .atom-card-split-half-b .atom-card-split-circle {
+    top: calc(-1 * var(--atom-card-split-circle-size) / 2);
+}
+
+.atom-card-split-horizontal:hover .atom-card-split-half-a { transform: rotateX(-180deg); }
+.atom-card-split-horizontal:hover .atom-card-split-half-b { transform: rotateX(180deg); }
+
+/* ---- Chrome ---- */
+
+.atom-card-split-title {
+    font-size: clamp(1rem, 4.5cqw, 2.5rem);
+    color: #fff;
+    margin: 0;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
+
+    animation-name: atom-card-split-slide-in, atom-card-split-pop;
+    animation-duration: .7s;
+    animation-delay: 1.2s;
+    animation-timing-function: cubic-bezier(.26, .53, .74, 1.48);
+    animation-fill-mode: backwards;
+}
+
+.atom-card-split-subtitle {
+    font-size: max(10pt, 1.75cqw);
+    color: #fff;
+    margin: 0;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
+
+    animation-name: atom-card-split-slide-in, atom-card-split-pop;
+    animation-duration: .7s;
+    animation-delay: 1.5s;
+    animation-timing-function: cubic-bezier(.26, .53, .74, 1.48);
+    animation-fill-mode: backwards;
+}
+
+.atom-card-split-dots {
+    position: absolute;
+    top: 1rem;
+    right: 1.25rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    width: 70px;
+    height: 1.5rem;
+}
+
+.atom-card-split-dot {
+    width: 1rem;
+    height: 1rem;
+    background: var(--atom-card-dot-color);
+    border: 1px solid var(--atom-card-dot-border-color);
+    border-radius: 50%;
+    transition: background .3s ease-in-out;
+
+    animation-name: atom-card-split-slide-up;
+    animation-duration: .7s;
+    animation-timing-function: cubic-bezier(.26, .53, .74, 1.48);
+    animation-fill-mode: backwards;
+}
+
+.atom-card-split:hover .atom-card-split-dot {
+    background: var(--atom-card-dot-hover-color);
+}
+
+@keyframes atom-card-split-pop {
+    0% { opacity: 0; transform: scale(.5, .5); }
+    100% { opacity: 1; transform: scale(1, 1); }
+}
+
+@keyframes atom-card-split-fade {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@keyframes atom-card-split-slide-in {
+    0% { opacity: 0; transform: translate(-40px, 0); }
+    100% { opacity: 1; transform: translate(0, 0); }
+}
+
+@keyframes atom-card-split-slide-up {
+    0% { opacity: 0; transform: translateY(3em); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    /* The open/close is a transform on :hover, so the transition can't just be zeroed — the halves
+       still need to get out of the way for the body to be readable. Cut straight to hidden. */
+    .atom-card-split-half {
+        transition: none;
+    }
+
+    .atom-card-split:hover .atom-card-split-half {
+        visibility: hidden;
+        transform: none;
+    }
+}

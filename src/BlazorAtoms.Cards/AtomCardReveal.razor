@@ -1,0 +1,48 @@
+@inherits AtomCardBase
+
+@*
+    AtomCardReveal.razor
+    --------------------
+    Zero-JS hover-reveal card: an overlay (background image + dot indicator) plays a staggered
+    pop/slide entrance once on mount, then on hover slides away by RevealSize along whichever axis
+    Direction selects, exposing the scrollable BodyContent panel on the opposite side and leaving a
+    (100% - RevealSize) sliver of the image behind. Pure CSS (:hover + animation-delay stagger),
+    no C# trigger state.
+
+    Structure note: overlay-content (title/subtitle) is a sibling of the overlay, NOT a child.
+    It must stay parked in the sliver while the overlay slides out from under it. Nesting it
+    inside the overlay would require a counter-translate, and a percentage translate resolves
+    against the element's OWN size — so it could never be expressed proportionally to the card.
+    Keeping it outside means it simply never moves.
+*@
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr($"atom-card-reveal {DirectionClass}")"
+     style="@StyleAttr(RootStyle)">
+    <div class="atom-card-reveal-text">
+        @BodyContent
+    </div>
+    <div class="atom-card-reveal-overlay">
+        @* background-image set inline here, not via CSS custom property: a relative url() inside
+           a custom property resolves against the STYLESHEET where var() is consumed (this
+           library's own bundled .razor.css), not the caller's document — breaks any relative
+           BackgroundImageUrl. Inline style="" url() resolves against the document instead. *@
+        <div class="atom-card-reveal-image" style="background-image:url('@BackgroundImageUrl')"></div>
+        @if (DotCount > 0)
+        {
+            <div class="atom-card-reveal-dots">
+                @for (var i = 0; i < DotCount; i++)
+                {
+                    <div class="atom-card-reveal-dot" style="@DotDelayStyle(i)"></div>
+                }
+            </div>
+        }
+    </div>
+    <div class="atom-card-reveal-overlay-content">
+        <h1 class="atom-card-reveal-title">@Title</h1>
+        @if (Subtitle is not null)
+        {
+            <p class="atom-card-reveal-subtitle">@Subtitle</p>
+        }
+    </div>
+</div>

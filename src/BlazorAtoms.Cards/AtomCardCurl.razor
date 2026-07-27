@@ -1,0 +1,45 @@
+@inherits AtomCardBase
+
+@*
+    AtomCardCurl.razor
+    ------------------
+    Zero-JS hover page-curl card: the front sheet's corner peels back on hover, uncovering the
+    BodyContent panel underneath, with a shaded triangular fold where the sheet lifts.
+
+    Honest scope note: this is a CSS corner FOLD, not a photorealistic curl. A true curl needs a
+    warped mesh (SVG displacement filters or WebGL) — CSS cannot bend a plane. What this does is
+    clip a growing triangle out of the front sheet and paint a gradient-shaded triangle over it, so
+    it reads as a lifted page corner. That is the honest ceiling for a zero-JS, zero-SVG-filter
+    implementation, and the trade was flagged before building.
+*@
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr($"atom-card-curl {CornerClass}")"
+     style="@StyleAttr(RootStyle)">
+    <div class="atom-card-curl-body">
+        @BodyContent
+    </div>
+    <div class="atom-card-curl-sheet">
+        @* background-image inline, not via a CSS custom property: a relative url() inside a custom
+           property resolves against the stylesheet consuming var() — this library's own bundled
+           .razor.css — not the caller's document, which 404s any relative path. *@
+        <div class="atom-card-curl-image" style="background-image:url('@BackgroundImageUrl')"></div>
+        <div class="atom-card-curl-content">
+            <h1 class="atom-card-curl-title">@Title</h1>
+            @if (Subtitle is not null)
+            {
+                <p class="atom-card-curl-subtitle">@Subtitle</p>
+            }
+        </div>
+        @if (DotCount > 0)
+        {
+            <div class="atom-card-curl-dots">
+                @for (var i = 0; i < DotCount; i++)
+                {
+                    <div class="atom-card-curl-dot" style="@DotDelayStyle(i)"></div>
+                }
+            </div>
+        }
+    </div>
+    <div class="atom-card-curl-fold" aria-hidden="true"></div>
+</div>

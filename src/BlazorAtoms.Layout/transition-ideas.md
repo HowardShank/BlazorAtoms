@@ -7544,9 +7544,9 @@ When a user hovers over the animated info card by Chris Smith, its green overlay
 		</div>
 	</div>
 	<div class="text">
-		<p><img class="inset" src="https://assets.codepen.io/4787486/oak_1.jpg" alt="" />Trees are woody perennial plants that are a member of the kingdom <em>Plantae</em>. All species of trees are grouped by their genus, family, and order. This helps make identifying and studying trees easier.</p>
-		<p>Apart from providing oxygen for the planet and beauty when they bloom or turn color, trees are very useful. Certain species of hardwood and softwood trees are excellent for timber, making furniture, and paper.</p>
-		<p>When managed properly, trees are a good source of renewable energy and construction material.</p>
+		<p><img class="inset" src="https://assets.codepen.io/4787486/oak_1.jpg" alt="" />Beaches are sandy shores by the ocean that provide relaxation and enjoyment. They are popular destinations for vacations and leisure activities.</p>
+		<p>Apart from fun in the sand and sun, the benefits of relaxation are awesome!.</p>
+		<p>When managed properly, beaches can be a good source of tourism and recreation.</p>
 		<img class="tree" src="https://assets.codepen.io/4787486/tree+clipart.jpeg" alt="" />
 	</div>
 </div>

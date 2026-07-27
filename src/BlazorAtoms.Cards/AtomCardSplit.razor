@@ -1,0 +1,67 @@
+@inherits AtomCardBase
+
+@*
+    AtomCardSplit.razor
+    -------------------
+    Zero-JS split-shutter card: the face is cut in two down (or across) the middle, and on hover the
+    halves swing open around SplitAxis to expose a single BodyContent panel underneath.
+
+    Two things worth knowing about the structure:
+
+    1. Each half carries the FULL background image, sized to the whole card and anchored to its own
+       outer edge (left half pins it left, right half pins it right). Because each half is only 50%
+       wide with overflow hidden, the two together show one unbroken picture while closed — the same
+       double-width anchoring trick the source design used on its back faces. Setting the image per
+       half instead (each getting "its" 50%) would need cropping math and would break on any
+       background-size other than cover.
+
+    2. The halves are front faces only, with backface-visibility:hidden — so they disappear as they
+       pass 90deg rather than presenting a back. That is what lets BodyContent be a SINGLE element
+       beneath them: text is never split mid-glyph at the seam, never duplicated in the DOM (so
+       screen readers read it once), and it can scroll normally.
+*@
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr($"atom-card-split {AxisClass}")"
+     style="@StyleAttr(RootStyle)">
+    <div class="atom-card-split-body">
+        @BodyContent
+    </div>
+
+    @* background-image inline, not via a CSS custom property: a relative url() inside a custom
+       property resolves against the stylesheet consuming var() — this library's own bundled
+       .razor.css — not the caller's document, which 404s any relative path. *@
+    <div class="atom-card-split-half atom-card-split-half-a">
+        <div class="atom-card-split-image" style="background-image:url('@BackgroundImageUrl')"></div>
+        <div class="atom-card-split-content">
+            <h1 class="atom-card-split-title">@Title</h1>
+        </div>
+        @if (ShowSeamCircle)
+        {
+            <div class="atom-card-split-circle" aria-hidden="true"></div>
+        }
+    </div>
+
+    <div class="atom-card-split-half atom-card-split-half-b">
+        <div class="atom-card-split-image" style="background-image:url('@BackgroundImageUrl')"></div>
+        <div class="atom-card-split-content">
+            @if (Subtitle is not null)
+            {
+                <p class="atom-card-split-subtitle">@Subtitle</p>
+            }
+        </div>
+        @if (ShowSeamCircle)
+        {
+            <div class="atom-card-split-circle" aria-hidden="true"></div>
+        }
+        @if (DotCount > 0)
+        {
+            <div class="atom-card-split-dots">
+                @for (var i = 0; i < DotCount; i++)
+                {
+                    <div class="atom-card-split-dot" style="@DotDelayStyle(i)"></div>
+                }
+            </div>
+        }
+    </div>
+</div>

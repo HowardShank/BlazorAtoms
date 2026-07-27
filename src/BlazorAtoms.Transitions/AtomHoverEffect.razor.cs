@@ -28,11 +28,21 @@ public partial class AtomHoverEffect
     /// <summary>How much the content scales up on hover (e.g. <c>1.05</c> = 5% larger).</summary>
     [Parameter] public double ScaleAmount { get; set; } = 1.05;
 
+    /// <summary>How far the content tilts on hover, in degrees. Only used by
+    /// <see cref="HoverEffect.Tilt"/>.</summary>
+    [Parameter] public double TiltDegrees { get; set; } = 12;
+
+    /// <summary>CSS <c>perspective</c> for the 3D tilt — smaller exaggerates the depth. Only used by
+    /// <see cref="HoverEffect.Tilt"/>. Any CSS length.</summary>
+    [Parameter] public string TiltPerspective { get; set; } = "600px";
+
     private string EffectClass => $"atom-hover-effect-{Effect.ToString().ToLowerInvariant()}";
 
     private string RootStyle =>
         $"--atom-hover-effect-glow:{GlowColor};" +
-        $"--atom-hover-effect-scale:{ScaleAmount.ToString(CultureInfo.InvariantCulture)};";
+        $"--atom-hover-effect-scale:{ScaleAmount.ToString(CultureInfo.InvariantCulture)};" +
+        $"--atom-hover-effect-tilt:{TiltDegrees.ToString(CultureInfo.InvariantCulture)}deg;" +
+        $"--atom-hover-effect-perspective:{TiltPerspective};";
 
     private readonly record struct SparklePosition(double X, double Y, double Scale, int DelayStep);
 

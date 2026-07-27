@@ -1,0 +1,261 @@
+/* All geometry is expressed relative to the CARD, never in viewport units.
+   --atom-card-reveal-body-size is the body panel's size along the active axis; the remaining
+   (100% - that) is the image sliver left visible on the side the overlay slid toward.
+
+   The original port hardcoded 60vmin for the overlay translate and the image/body sizes (copied
+   from a sample whose card was a hardcoded 85vmin, making 60vmin ~70% of it). Because Width is a
+   [Parameter], that relationship silently broke: verified live with a 306px-wide card, 60vmin
+   resolved to 432px, so the overlay translated clean past the card's edge — image fully hidden,
+   body panel filling everything. Percentages here resolve against the card because the overlay /
+   text / image are all absolutely positioned to it (and the overlay, being inset:0, is exactly
+   card-sized, so translateX(-70%) on it means -70% OF THE CARD).
+
+   Direction is four variants of one mechanic, not four effects — hence one component with a
+   Direction enum. Each variant swaps the axis: which edge the body panel pins to, which dimension
+   RevealSize drives, and which way the overlay translates. */
+
+.atom-card-reveal {
+    position: relative;
+    box-sizing: border-box;
+    width: var(--atom-card-width);
+    height: var(--atom-card-height);
+    /* Not a flex item's "suggestion": a bare width on a flex child still shrinks (flex-shrink
+       defaults to 1), which silently invalidated the geometry when the card sat in a flex row. */
+    flex: 0 0 auto;
+    border: var(--atom-card-border-width) solid var(--atom-card-border-color);
+    overflow: hidden;
+    font-family: inherit;
+    /* Makes the title/subtitle's cqw units resolve against the CARD, not the viewport — so text
+       scales with the component wherever it is dropped, instead of with the browser window. */
+    container-type: inline-size;
+
+    animation-name: atom-card-reveal-pop;
+    animation-duration: .7s;
+    animation-timing-function: cubic-bezier(.26, .53, .74, 1.48);
+    animation-fill-mode: backwards;
+}
+
+.atom-card-reveal *,
+.atom-card-reveal *::before,
+.atom-card-reveal *::after {
+    /* The source design relied on a global `* { box-sizing: border-box }` reset. Scoped CSS gets
+       no such reset, so padding on the overlay/body panels would otherwise inflate their sizes
+       past the percentages this layout depends on. */
+    box-sizing: border-box;
+}
+
+/* Body panel — sits underneath the overlay, revealed as the overlay slides off it. */
+.atom-card-reveal-text {
+    display: grid;
+    position: absolute;
+    padding: 3cqw 4cqw;
+    background: #fff;
+    box-shadow: inset 1px 1px 15px 0 rgba(0, 0, 0, .4);
+    overflow-y: auto;
+    color: #222;
+    z-index: 0;
+}
+
+.atom-card-reveal-overlay {
+    position: absolute;
+    inset: 0;
+    background: var(--atom-card-accent);
+    transition: transform .4s ease-in-out;
+    z-index: 1;
+
+    animation-name: atom-card-reveal-slide-in;
+    animation-duration: .7s;
+    animation-delay: .6s;
+    animation-timing-function: cubic-bezier(.26, .53, .74, 1.48);
+    animation-fill-mode: backwards;
+}
+
+.atom-card-reveal-image {
+    position: absolute;
+    background-size: cover;
+    background-position: center;
+    transition: width .3s ease-in-out, height .3s ease-in-out;
+
+    animation-name: atom-card-reveal-slide;
+    animation-duration: .7s;
+    animation-delay: 1.5s;
+    animation-timing-function: cubic-bezier(.26, .53, .74, 1.48);
+    animation-fill-mode: backwards;
+}
+
+/* Sibling of the overlay, not a child — parked in the sliver, never translated. */
+.atom-card-reveal-overlay-content {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1.5rem .75rem;
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* ---- Horizontal axis: Left / Right ---- */
+
+.atom-card-reveal-left .atom-card-reveal-text,
+.atom-card-reveal-right .atom-card-reveal-text,
+.atom-card-reveal-left .atom-card-reveal-image,
+.atom-card-reveal-right .atom-card-reveal-image {
+    top: 0;
+    height: 100%;
+    width: var(--atom-card-reveal-body-size);
+}
+
+.atom-card-reveal-left .atom-card-reveal-overlay-content,
+.atom-card-reveal-right .atom-card-reveal-overlay-content {
+    top: 0;
+    height: 100%;
+    width: calc(100% - var(--atom-card-reveal-body-size));
+}
+
+/* Overlay slides by exactly the body size, so (100% - that) of it stays on screen. The image
+   shrinks to the sliver size; being edge-aligned inside the translated overlay, its trailing edge
+   lands exactly at the sliver's edge, filling it precisely. */
+.atom-card-reveal-left .atom-card-reveal-text,
+.atom-card-reveal-left .atom-card-reveal-image { right: 0; }
+.atom-card-reveal-left .atom-card-reveal-overlay-content { left: 0; }
+
+.atom-card-reveal-left:hover .atom-card-reveal-overlay {
+    transform: translateX(calc(-1 * var(--atom-card-reveal-body-size)));
+}
+
+.atom-card-reveal-right .atom-card-reveal-text,
+.atom-card-reveal-right .atom-card-reveal-image { left: 0; }
+.atom-card-reveal-right .atom-card-reveal-overlay-content { right: 0; }
+
+.atom-card-reveal-right:hover .atom-card-reveal-overlay {
+    transform: translateX(var(--atom-card-reveal-body-size));
+}
+
+.atom-card-reveal-left:hover .atom-card-reveal-image,
+.atom-card-reveal-right:hover .atom-card-reveal-image {
+    width: calc(100% - var(--atom-card-reveal-body-size));
+}
+
+/* ---- Vertical axis: Up / Down. RevealSize drives HEIGHT here — which is exactly why the
+   parameter is named RevealSize and not RevealWidth. ---- */
+
+.atom-card-reveal-up .atom-card-reveal-text,
+.atom-card-reveal-down .atom-card-reveal-text,
+.atom-card-reveal-up .atom-card-reveal-image,
+.atom-card-reveal-down .atom-card-reveal-image {
+    left: 0;
+    width: 100%;
+    height: var(--atom-card-reveal-body-size);
+}
+
+.atom-card-reveal-up .atom-card-reveal-overlay-content,
+.atom-card-reveal-down .atom-card-reveal-overlay-content {
+    left: 0;
+    width: 100%;
+    height: calc(100% - var(--atom-card-reveal-body-size));
+}
+
+.atom-card-reveal-up .atom-card-reveal-text,
+.atom-card-reveal-up .atom-card-reveal-image { bottom: 0; }
+.atom-card-reveal-up .atom-card-reveal-overlay-content { top: 0; }
+
+.atom-card-reveal-up:hover .atom-card-reveal-overlay {
+    transform: translateY(calc(-1 * var(--atom-card-reveal-body-size)));
+}
+
+.atom-card-reveal-down .atom-card-reveal-text,
+.atom-card-reveal-down .atom-card-reveal-image { top: 0; }
+.atom-card-reveal-down .atom-card-reveal-overlay-content { bottom: 0; }
+
+.atom-card-reveal-down:hover .atom-card-reveal-overlay {
+    transform: translateY(var(--atom-card-reveal-body-size));
+}
+
+.atom-card-reveal-up:hover .atom-card-reveal-image,
+.atom-card-reveal-down:hover .atom-card-reveal-image {
+    height: calc(100% - var(--atom-card-reveal-body-size));
+}
+
+/* ---- Chrome ---- */
+
+.atom-card-reveal-title {
+    font-size: clamp(1rem, 4.5cqw, 2.5rem);
+    text-align: center;
+    color: #fff;
+    margin: 0;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
+
+    animation-name: atom-card-reveal-slide-in, atom-card-reveal-pop;
+    animation-duration: .7s;
+    animation-delay: 1.2s;
+    animation-timing-function: cubic-bezier(.26, .53, .74, 1.48);
+    animation-fill-mode: backwards;
+}
+
+.atom-card-reveal-subtitle {
+    font-size: max(10pt, 1.75cqw);
+    color: #fff;
+    margin: 0;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
+
+    animation-name: atom-card-reveal-slide-in, atom-card-reveal-pop;
+    animation-duration: .7s;
+    animation-delay: 1.5s;
+    animation-timing-function: cubic-bezier(.26, .53, .74, 1.48);
+    animation-fill-mode: backwards;
+}
+
+.atom-card-reveal-dots {
+    position: absolute;
+    bottom: 1rem;
+    right: 2rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    width: 70px;
+    height: 1.5rem;
+    transition: transform .3s ease-in-out .3s;
+}
+
+.atom-card-reveal-dot {
+    width: 1rem;
+    height: 1rem;
+    background: var(--atom-card-dot-color);
+    border: 1px solid var(--atom-card-dot-border-color);
+    border-radius: 50%;
+    transition: background .3s ease-in-out .3s;
+
+    animation-name: atom-card-reveal-slide-up;
+    animation-duration: .7s;
+    animation-timing-function: cubic-bezier(.26, .53, .74, 1.48);
+    animation-fill-mode: backwards;
+}
+
+.atom-card-reveal:hover .atom-card-reveal-dots {
+    transform: translateX(1rem);
+}
+
+.atom-card-reveal:hover .atom-card-reveal-dot {
+    background: var(--atom-card-dot-hover-color);
+}
+
+@keyframes atom-card-reveal-pop {
+    0% { opacity: 0; transform: scale(.5, .5); }
+    100% { opacity: 1; transform: scale(1, 1); }
+}
+
+@keyframes atom-card-reveal-slide {
+    0% { opacity: 0; transform: translate(4em, 0); }
+    100% { opacity: 1; transform: translate(0, 0); }
+}
+
+@keyframes atom-card-reveal-slide-in {
+    0% { opacity: 0; transform: translate(-40px, 0); }
+    100% { opacity: 1; transform: translate(0, 0); }
+}
+
+@keyframes atom-card-reveal-slide-up {
+    0% { opacity: 0; transform: translateY(3em); }
+    100% { opacity: 1; transform: translateY(0); }
+}

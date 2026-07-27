@@ -1,0 +1,41 @@
+@inherits AtomCardBase
+
+@*
+    AtomCardExpand.razor
+    --------------------
+    Zero-JS hover-expand card: sits at Height with the background image, title/subtitle and dots;
+    on hover it grows to ExpandedHeight and the BodyContent panel slides up from the bottom edge.
+    Pure CSS (:hover), no C# trigger state.
+
+    The card grows via height, not transform: scale() — scale would distort the image and text,
+    whereas a height transition reflows the body panel into real space. It does mean the card
+    pushes surrounding content, which is the intended "accordion card" behavior.
+*@
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-card-expand")"
+     style="@StyleAttr(RootStyle)">
+    @* background-image inline, not via a CSS custom property: a relative url() inside a custom
+       property resolves against the stylesheet consuming var() — this library's own bundled
+       .razor.css — not the caller's document, which 404s any relative path. *@
+    <div class="atom-card-expand-image" style="background-image:url('@BackgroundImageUrl')"></div>
+    <div class="atom-card-expand-content">
+        <h1 class="atom-card-expand-title">@Title</h1>
+        @if (Subtitle is not null)
+        {
+            <p class="atom-card-expand-subtitle">@Subtitle</p>
+        }
+    </div>
+    @if (DotCount > 0)
+    {
+        <div class="atom-card-expand-dots">
+            @for (var i = 0; i < DotCount; i++)
+            {
+                <div class="atom-card-expand-dot" style="@DotDelayStyle(i)"></div>
+            }
+        </div>
+    }
+    <div class="atom-card-expand-body">
+        @BodyContent
+    </div>
+</div>

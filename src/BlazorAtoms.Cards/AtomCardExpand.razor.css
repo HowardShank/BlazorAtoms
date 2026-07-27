@@ -1,0 +1,168 @@
+/* Hover expand. The card animates its own height from Height to ExpandedHeight, and the body panel
+   — parked fully below the bottom edge at rest via translateY(100%) — slides up into the space that
+   opens.
+
+   translateY(100%) is used to hide the body rather than height:0 or display:none: percentage
+   translate resolves against the element's own height, so the panel is exactly offscreen whatever
+   BodyHeight is set to, and transform animates on the compositor instead of triggering layout on
+   every frame. */
+
+.atom-card-expand {
+    position: relative;
+    box-sizing: border-box;
+    width: var(--atom-card-width);
+    height: var(--atom-card-height);
+    /* A bare width on a flex child still shrinks (flex-shrink defaults to 1). */
+    flex: 0 0 auto;
+    border: var(--atom-card-border-width) solid var(--atom-card-border-color);
+    background: var(--atom-card-accent);
+    overflow: hidden;
+    font-family: inherit;
+    container-type: inline-size;
+    transition: height .4s ease-in-out;
+
+    animation-name: atom-card-expand-pop;
+    animation-duration: .7s;
+    animation-timing-function: cubic-bezier(.26, .53, .74, 1.48);
+    animation-fill-mode: backwards;
+}
+
+.atom-card-expand *,
+.atom-card-expand *::before,
+.atom-card-expand *::after {
+    /* Scoped CSS gets no global `* { box-sizing: border-box }` reset, and padding on the body panel
+       would otherwise inflate it past the height this layout depends on. */
+    box-sizing: border-box;
+}
+
+.atom-card-expand:hover {
+    height: var(--atom-card-expand-expanded-height);
+}
+
+.atom-card-expand-image {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+
+    animation-name: atom-card-expand-fade;
+    animation-duration: .7s;
+    animation-delay: .6s;
+    animation-timing-function: ease-out;
+    animation-fill-mode: backwards;
+}
+
+.atom-card-expand-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    padding: 1.5rem .75rem;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.atom-card-expand-body {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: var(--atom-card-expand-body-height);
+    display: grid;
+    padding: 3cqw 4cqw;
+    background: var(--atom-card-expand-body-color);
+    box-shadow: inset 1px 1px 15px 0 rgba(0, 0, 0, .4);
+    overflow-y: auto;
+    color: #222;
+    z-index: 3;
+    transform: translateY(100%);
+    transition: transform .4s ease-in-out .1s;
+}
+
+.atom-card-expand:hover .atom-card-expand-body {
+    transform: translateY(0);
+}
+
+/* ---- Chrome ---- */
+
+.atom-card-expand-title {
+    font-size: clamp(1rem, 4.5cqw, 2.5rem);
+    text-align: center;
+    color: #fff;
+    margin: 0;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
+
+    animation-name: atom-card-expand-slide-in, atom-card-expand-pop;
+    animation-duration: .7s;
+    animation-delay: 1.2s;
+    animation-timing-function: cubic-bezier(.26, .53, .74, 1.48);
+    animation-fill-mode: backwards;
+}
+
+.atom-card-expand-subtitle {
+    font-size: max(10pt, 1.75cqw);
+    text-align: center;
+    color: #fff;
+    margin: 0;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .6);
+
+    animation-name: atom-card-expand-slide-in, atom-card-expand-pop;
+    animation-duration: .7s;
+    animation-delay: 1.5s;
+    animation-timing-function: cubic-bezier(.26, .53, .74, 1.48);
+    animation-fill-mode: backwards;
+}
+
+.atom-card-expand-dots {
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    width: 70px;
+    height: 1.5rem;
+    z-index: 2;
+}
+
+.atom-card-expand-dot {
+    width: 1rem;
+    height: 1rem;
+    background: var(--atom-card-dot-color);
+    border: 1px solid var(--atom-card-dot-border-color);
+    border-radius: 50%;
+    transition: background .3s ease-in-out;
+
+    animation-name: atom-card-expand-slide-up;
+    animation-duration: .7s;
+    animation-timing-function: cubic-bezier(.26, .53, .74, 1.48);
+    animation-fill-mode: backwards;
+}
+
+.atom-card-expand:hover .atom-card-expand-dot {
+    background: var(--atom-card-dot-hover-color);
+}
+
+@keyframes atom-card-expand-pop {
+    0% { opacity: 0; transform: scale(.5, .5); }
+    100% { opacity: 1; transform: scale(1, 1); }
+}
+
+@keyframes atom-card-expand-fade {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@keyframes atom-card-expand-slide-in {
+    0% { opacity: 0; transform: translate(-40px, 0); }
+    100% { opacity: 1; transform: translate(0, 0); }
+}
+
+@keyframes atom-card-expand-slide-up {
+    0% { opacity: 0; transform: translateY(3em); }
+    100% { opacity: 1; transform: translateY(0); }
+}
