@@ -1,0 +1,206 @@
+/* AtomMeter — scalar gauge with quality bands.
+
+   Theming priority, lowest to highest:
+     1. the defaults block below
+     2. this file's [data-variant] / [data-size] / [data-level] / [data-effect] rules
+     3. a consumer stylesheet targeting .atom-meter
+     4. the component's parameters (Thickness, FillColor, ...) — inline, always wins
+
+   [data-level] beats [data-variant] on purpose: once a caller states an Optimum, the value's own
+   quality is more informative than a decorative color scheme. An explicit FillColor still wins over
+   both, being inline. */
+
+.atom-meter {
+    /* ---- hooks ---- */
+    --progress-accent: #64748b;
+    --progress-thickness: .75rem;
+    --progress-radius: 999px;
+    --progress-track-color: color-mix(in srgb, currentColor 12%, transparent);
+    --progress-fill-color: var(--progress-accent);
+    --progress-text-color: currentColor;
+    --progress-font-size: .8125rem;
+    --progress-duration: .35s;
+    --progress-gap: .5rem;
+    --progress-tick-color: color-mix(in srgb, currentColor 45%, transparent);
+    --progress-tick-width: 2px;
+
+    /* Quality-band colors, overridable independently of the variant accents. */
+    --progress-level-optimum: #16a34a;
+    --progress-level-suboptimum: #d97706;
+    --progress-level-sub-suboptimum: #dc2626;
+
+    display: block;
+    color: var(--progress-text-color);
+    font-size: var(--progress-font-size);
+}
+
+.atom-meter-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--progress-gap);
+    margin-bottom: .25rem;
+}
+
+.atom-meter-label {
+    font-weight: 500;
+}
+
+.atom-meter-value {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.atom-meter-row {
+    display: flex;
+    align-items: center;
+    gap: var(--progress-gap);
+}
+
+.atom-meter-track {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+    height: var(--progress-thickness);
+    border-radius: var(--progress-radius);
+    background: var(--progress-track-color);
+    overflow: hidden;
+}
+
+.atom-meter-fill {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    border-radius: inherit;
+    background: var(--progress-fill-color);
+    transition: width var(--progress-duration) ease,
+                background-color var(--progress-duration) ease;
+}
+
+.atom-meter-ticks {
+    position: absolute;
+    inset: 0;
+    /* background-image comes from the component (one repeating gradient, N segments, one node). */
+    pointer-events: none;
+}
+
+.atom-meter-scale {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    margin-top: .2rem;
+    font-size: .85em;
+    font-variant-numeric: tabular-nums;
+    opacity: .75;
+}
+
+/* Low/High marks are positioned at their real place on the span, so they sit out of the flex flow. */
+.atom-meter-scale-mark {
+    position: absolute;
+    transform: translateX(-50%);
+}
+
+/* ---- no value ------------------------------------------------------------------------------ */
+
+/* A meter has nothing to sweep, so this deliberately does NOT animate the way the bar and the ring
+   do — the track just reads as "no reading taken". Hatching rather than a plain empty track, so an
+   unmeasured meter is distinguishable at a glance from a genuine zero. */
+.atom-meter[data-indeterminate] .atom-meter-track {
+    background-image: repeating-linear-gradient(45deg,
+        color-mix(in srgb, currentColor 10%, transparent) 0 .3rem,
+        transparent .3rem .6rem);
+}
+
+/* ---- levels (win over variants) ------------------------------------------------------------ */
+
+.atom-meter[data-level="optimum"]        { --progress-fill-color: var(--progress-level-optimum); }
+.atom-meter[data-level="suboptimum"]     { --progress-fill-color: var(--progress-level-suboptimum); }
+.atom-meter[data-level="sub-suboptimum"] { --progress-fill-color: var(--progress-level-sub-suboptimum); }
+
+/* ---- variants ------------------------------------------------------------------------------ */
+
+.atom-meter[data-variant="primary"] { --progress-accent: #2563eb; }
+.atom-meter[data-variant="info"]    { --progress-accent: #0ea5e9; }
+.atom-meter[data-variant="success"] { --progress-accent: #16a34a; }
+.atom-meter[data-variant="warning"] { --progress-accent: #d97706; }
+.atom-meter[data-variant="danger"]  { --progress-accent: #dc2626; }
+
+/* ---- sizes --------------------------------------------------------------------------------- */
+
+.atom-meter[data-size="small"] {
+    --progress-thickness: .4375rem;
+    --progress-font-size: .75rem;
+    --progress-tick-width: 1px;
+}
+
+.atom-meter[data-size="large"] {
+    --progress-thickness: 1.25rem;
+    --progress-font-size: .9375rem;
+    --progress-tick-width: 3px;
+}
+
+/* ---- effects ------------------------------------------------------------------------------- */
+
+.atom-meter[data-effect="stripes"] .atom-meter-fill,
+.atom-meter[data-effect="stripes-animated"] .atom-meter-fill {
+    background-image: linear-gradient(45deg,
+        rgb(255 255 255 / .22) 25%, transparent 25%,
+        transparent 50%, rgb(255 255 255 / .22) 50%,
+        rgb(255 255 255 / .22) 75%, transparent 75%, transparent);
+    background-size: calc(var(--progress-thickness) * 2) calc(var(--progress-thickness) * 2);
+}
+
+.atom-meter[data-effect="stripes-animated"] .atom-meter-fill {
+    animation: atom-meter-stripes calc(var(--progress-duration) * 3) linear infinite;
+}
+
+@keyframes atom-meter-stripes {
+    from { background-position: 0 0; }
+    to   { background-position: calc(var(--progress-thickness) * 2) 0; }
+}
+
+.atom-meter[data-effect="shimmer"] .atom-meter-fill::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgb(255 255 255 / .45), transparent);
+    animation: atom-meter-shimmer calc(var(--progress-duration) * 5) linear infinite;
+}
+
+@keyframes atom-meter-shimmer {
+    from { transform: translateX(-100%); }
+    to   { transform: translateX(100%); }
+}
+
+.atom-meter[data-effect="glow"] .atom-meter-track {
+    overflow: visible;
+}
+
+.atom-meter[data-effect="glow"] .atom-meter-fill {
+    box-shadow: 0 0 .5rem color-mix(in srgb, var(--progress-fill-color) 70%, transparent);
+}
+
+.atom-meter[data-effect="pulse"] .atom-meter-fill {
+    animation: atom-meter-pulse calc(var(--progress-duration) * 4) ease-in-out infinite alternate;
+}
+
+@keyframes atom-meter-pulse {
+    from { opacity: 1; }
+    to   { opacity: .55; }
+}
+
+.atom-meter[data-effect="gradient"] .atom-meter-fill {
+    background: linear-gradient(90deg,
+        color-mix(in srgb, var(--progress-fill-color) 45%, white),
+        var(--progress-fill-color));
+}
+
+/* ---- reduced motion ------------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-meter-fill,
+    .atom-meter-fill::after {
+        transition: none;
+        animation: none;
+    }
+}

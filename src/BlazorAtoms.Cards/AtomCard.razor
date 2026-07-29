@@ -1,0 +1,87 @@
+@inherits AtomComponentBase
+
+@* One body template rendered into whichever root element is correct, rather than duplicating the
+   slot markup per branch. Same shape as AtomButton's <a>/<button> split. *@
+@{
+    RenderFragment body =
+        @<text>
+            @if (Media is not null && (MediaPosition == CardMediaPosition.Top || MediaPosition == CardMediaPosition.Start))
+            {
+                <div class="atom-card-media">@Media</div>
+            }
+            <div class="atom-card-sections">
+                @if (Header is not null)
+                {
+                    <AtomCardHeader>@Header</AtomCardHeader>
+                }
+                @if (Body is not null)
+                {
+                    <AtomCardBody>@Body</AtomCardBody>
+                }
+                @* ChildContent is rendered between the Body and Footer slots so nesting
+                   <AtomCardHeader>/<AtomCardBody> directly reads in source order, and mixing a
+                   slot with nested sections still lands in a sane place. *@
+                @ChildContent
+                @if (Footer is not null)
+                {
+                    <AtomCardFooter>@Footer</AtomCardFooter>
+                }
+            </div>
+            @if (Media is not null && (MediaPosition == CardMediaPosition.Bottom || MediaPosition == CardMediaPosition.End))
+            {
+                <div class="atom-card-media">@Media</div>
+            }
+        </text>;
+}
+
+<CascadingValue Value="Context" IsFixed="false">
+    @if (!string.IsNullOrEmpty(Href))
+    {
+        @* A real anchor when there's a destination — it navigates, so it must not claim
+           role="button", and it gets keyboard activation and context-menu behavior for free. *@
+        <a @attributes="AdditionalAttributes"
+           class="@ClassAttr(RootClass)"
+           style="@StyleAttr(RootStyle)"
+           href="@Href"
+           target="@Target"
+           aria-label="@AriaLabel"
+           data-variant="@VariantAttr"
+           data-elevation="@ElevationAttr"
+           data-effect="@EffectAttr"
+           data-media="@MediaAttr"
+           data-interactive="true">
+            @body
+        </a>
+    }
+    else if (OnClick.HasDelegate)
+    {
+        @* No Href but a handler: a button, so Enter/Space activate it and it is focusable. A div with
+           an @onclick would be neither. *@
+        <button @attributes="AdditionalAttributes"
+                type="button"
+                class="@ClassAttr(RootClass)"
+                style="@StyleAttr(RootStyle)"
+                aria-label="@AriaLabel"
+                data-variant="@VariantAttr"
+                data-elevation="@ElevationAttr"
+                data-effect="@EffectAttr"
+                data-media="@MediaAttr"
+                data-interactive="true"
+                @onclick="OnClick">
+            @body
+        </button>
+    }
+    else
+    {
+        <div @attributes="AdditionalAttributes"
+             class="@ClassAttr(RootClass)"
+             style="@StyleAttr(RootStyle)"
+             aria-label="@AriaLabel"
+             data-variant="@VariantAttr"
+             data-elevation="@ElevationAttr"
+             data-effect="@EffectAttr"
+             data-media="@MediaAttr">
+            @body
+        </div>
+    }
+</CascadingValue>

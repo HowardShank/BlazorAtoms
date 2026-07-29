@@ -1,0 +1,172 @@
+/* AtomCard — structural card surface.
+
+   Theming priority, lowest to highest:
+     1. the defaults block below
+     2. this file's [data-variant] / [data-elevation] / [data-effect] rules
+     3. a consumer stylesheet targeting .atom-card
+     4. the component's parameters (Radius, BackgroundColor, ...) — inline, always wins
+
+   The `--card-*` tokens are declared here and inherit into the section components, which is why the
+   sections need no ::deep plumbing for color/spacing — only genuine layout rules that reach across
+   component scopes use ::deep. */
+
+.atom-card {
+    /* ---- hooks ---- */
+    --card-accent: #2563eb;
+    --card-bg: Canvas;
+    --card-text-color: CanvasText;
+    --card-border-color: color-mix(in srgb, currentColor 15%, transparent);
+    --card-border-width: 1px;
+    --card-divider-color: color-mix(in srgb, currentColor 12%, transparent);
+    --card-radius: 12px;
+    --card-duration: .2s;
+    --card-shadow: 0 1px 3px rgb(0 0 0 / .12), 0 1px 2px rgb(0 0 0 / .08);
+
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    /* No border by default: only [data-variant="outlined"] and the HoverBorder effect draw one, and a
+       transparent border here would still take up layout space. */
+    border: 0 solid var(--card-border-color);
+    border-radius: var(--card-radius);
+    background: var(--card-bg);
+    color: var(--card-text-color);
+    overflow: hidden;
+    transition: box-shadow var(--card-duration) ease,
+                transform var(--card-duration) ease,
+                border-color var(--card-duration) ease;
+}
+
+/* An <a> or <button> root must shed the UA chrome and inherit the page's type, so all three roots
+   look identical. */
+a.atom-card,
+button.atom-card {
+    padding: 0;
+    font: inherit;
+    text-align: inherit;
+    text-decoration: none;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.atom-card[data-interactive] {
+    cursor: pointer;
+}
+
+.atom-card[data-interactive]:focus-visible {
+    outline: 2px solid var(--card-accent);
+    outline-offset: 2px;
+}
+
+.atom-card-sections {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    /* min-height:0 so a scrollable body can actually shrink inside a fixed-height card. */
+    min-height: 0;
+}
+
+.atom-card-media {
+    /* Never padded — media bleeds to the card's edges, and the card's own overflow:hidden plus
+       border-radius clips it to the corners. */
+    flex: 0 0 auto;
+    line-height: 0;
+}
+
+.atom-card-media > :is(img, svg, video, picture, canvas) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* ---- media placement ----------------------------------------------------------------------- */
+
+/* Start/End turn the card into a horizontal media object: the row direction does the placement, and
+   the media element order in the DOM already matches (the component renders it before or after the
+   sections), so no `order` is needed. */
+.atom-card[data-media="start"],
+.atom-card[data-media="end"] {
+    flex-direction: row;
+}
+
+.atom-card[data-media="start"] > .atom-card-media,
+.atom-card[data-media="end"] > .atom-card-media {
+    /* A fixed basis with no shrink, so the media keeps its column against long body text. */
+    flex: 0 0 auto;
+    width: var(--card-media-size, 33%);
+}
+
+/* ---- variants ------------------------------------------------------------------------------ */
+
+.atom-card[data-variant="elevated"] {
+    box-shadow: var(--card-shadow);
+}
+
+.atom-card[data-variant="outlined"] {
+    border-width: var(--card-border-width);
+    box-shadow: none;
+}
+
+.atom-card[data-variant="filled"] {
+    background: color-mix(in srgb, currentColor 6%, var(--card-bg));
+    box-shadow: none;
+}
+
+.atom-card[data-variant="flat"] {
+    background: transparent;
+    box-shadow: none;
+}
+
+/* ---- elevation (elevated only — the other variants draw no shadow) -------------------------- */
+
+.atom-card[data-variant="elevated"][data-elevation="none"]  { --card-shadow: none; }
+.atom-card[data-variant="elevated"][data-elevation="small"]  { --card-shadow: 0 1px 2px rgb(0 0 0 / .1); }
+.atom-card[data-variant="elevated"][data-elevation="large"]  { --card-shadow: 0 10px 24px rgb(0 0 0 / .16), 0 3px 8px rgb(0 0 0 / .1); }
+
+/* ---- effects ------------------------------------------------------------------------------- */
+
+.atom-card[data-effect="hover-lift"]:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgb(0 0 0 / .18), 0 4px 10px rgb(0 0 0 / .12);
+}
+
+.atom-card[data-effect="hover-glow"]:hover {
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--card-accent) 45%, transparent),
+                0 0 1.5rem color-mix(in srgb, var(--card-accent) 35%, transparent);
+}
+
+/* Reserve the border's width up front so hovering doesn't reflow the card's contents — the effect
+   only changes its color. */
+.atom-card[data-effect="hover-border"] {
+    border-width: var(--card-border-width);
+}
+
+.atom-card[data-effect="hover-border"]:hover {
+    border-color: var(--card-accent);
+}
+
+.atom-card[data-effect="press-sink"]:active {
+    transform: translateY(2px) scale(.995);
+    box-shadow: 0 1px 2px rgb(0 0 0 / .1);
+}
+
+/* Keyboard activation should look like a press, or a card is only "pressable" with a mouse. */
+.atom-card[data-effect="press-sink"][data-interactive]:focus-visible:active {
+    transform: translateY(2px) scale(.995);
+}
+
+/* ---- reduced motion ------------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-card {
+        transition: none;
+    }
+
+    /* Drop the movement, keep the shadow/border change — the hover still reads, without the shift. */
+    .atom-card[data-effect="hover-lift"]:hover,
+    .atom-card[data-effect="press-sink"]:active {
+        transform: none;
+    }
+}

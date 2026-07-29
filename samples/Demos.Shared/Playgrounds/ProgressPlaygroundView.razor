@@ -1,0 +1,595 @@
+@using System.Globalization
+@using BlazorAtoms.Progress
+
+<PageTitle>Progress Playground</PageTitle>
+
+<h1>Progress playground</h1>
+<p>The four determinate indicators in <code>BlazorAtoms.Progress</code>. All four share
+   <code>AtomProgressBase</code> — the label/readout surface, the <code>Variant</code>/<code>Size</code>/
+   <code>Effect</code> axes emitted as <code>data-*</code>, and one <code>--progress-*</code> token
+   prefix. Bar, ring and meter add a scalar value via <code>AtomProgressValueBase</code>;
+   <code>AtomProgressSteps</code> deliberately does not inherit it, because it has no continuous value
+   to scale. Zero JS.</p>
+<p><strong>Null <code>Value</code> means indeterminate</strong> — clear the checkbox below and the bar
+   sweeps while the ring spins. One parameter rather than a value plus a flag, so
+   "<code>Value=40</code> but ignore it" is not expressible.</p>
+<p><a href="playground/buttons">&larr; Buttons playground</a> &middot;
+   <a href="playground/cardlayout">Card layout playground &rarr;</a></p>
+
+<div class="prg-controls">
+    <div class="ctrl">
+        <label>Variant</label>
+        <select @bind="VariantSel">
+            @foreach (var v in Variants) { <option value="@v">@v</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Size</label>
+        <select @bind="SizeSel">
+            @foreach (var s in Sizes) { <option value="@s">@s</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Effect</label>
+        <select @bind="EffectSel">
+            @foreach (var e in Effects) { <option value="@e">@e</option> }
+        </select>
+        <span class="note">CSS only — no C# state</span>
+    </div>
+    <div class="ctrl">
+        <label>Value <span class="val">@(HasValue ? ValueV.ToString(Inv) : "null")</span></label>
+        <input type="range" min="0" max="100" step="1" @bind="ValueV" @bind:event="oninput" @bind:culture="Inv" disabled="@(!HasValue)" />
+        <div class="row"><input type="checkbox" id="prgHasVal" @bind="HasValue" /><label for="prgHasVal" class="inline">Determinate</label></div>
+    </div>
+    <div class="ctrl">
+        <label>Min <span class="val">@MinV.ToString(Inv)</span></label>
+        <input type="range" min="-50" max="50" step="5" @bind="MinV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Max <span class="val">@MaxV.ToString(Inv)</span></label>
+        <input type="range" min="10" max="500" step="10" @bind="MaxV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Label</label>
+        <input type="text" @bind="LabelV" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>AriaLabel</label>
+        <input type="text" @bind="AriaLabelV" @bind:event="oninput" placeholder="(falls back to Label)" />
+    </div>
+    <div class="ctrl">
+        <label>Readout</label>
+        <div class="row"><input type="checkbox" id="prgShowVal" @bind="ShowValueV" /><label for="prgShowVal" class="inline">ShowValue</label></div>
+        <div class="row"><input type="checkbox" id="prgFmt" @bind="UseFormatter" /><label for="prgFmt" class="inline">Formatter ("x of y")</label></div>
+        <div class="row"><input type="checkbox" id="prgVis" @bind="VisibleV" /><label for="prgVis" class="inline">Visible</label></div>
+    </div>
+    <div class="ctrl">
+        <label>Thickness (px, 0=Size) <span class="val">@ThicknessV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="32" step="1" @bind="ThicknessV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Radius (px, -1=default) <span class="val">@RadiusV.ToString(Inv)</span></label>
+        <input type="range" min="-1" max="24" step="1" @bind="RadiusV" @bind:event="oninput" @bind:culture="Inv" />
+        <span class="note">bar + meter only &mdash; the ring and the step markers have no rectangular
+            track, so it isn't a parameter there</span>
+    </div>
+    <div class="ctrl">
+        <label>FontSize (px, 0=Size) <span class="val">@FontSizeV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="28" step="1" @bind="FontSizeV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Duration (s, 0=default) <span class="val">@DurationV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="3" step="0.05" @bind="DurationV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>FillColor</label>
+        <div class="row color">
+            <input type="color" @bind="FillPick" @bind:event="oninput" />
+            <input type="text" @bind="FillColorV" @bind:event="oninput" placeholder="(Variant accent)" />
+            <button type="button" class="clr-btn" @onclick="@(() => FillColorV = "")">clear</button>
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>TrackColor</label>
+        <div class="row color">
+            <input type="color" @bind="TrackPick" @bind:event="oninput" />
+            <input type="text" @bind="TrackColorV" @bind:event="oninput" placeholder="(default tint)" />
+            <button type="button" class="clr-btn" @onclick="@(() => TrackColorV = "")">clear</button>
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>TextColor</label>
+        <div class="row color">
+            <input type="color" @bind="TextPick" @bind:event="oninput" />
+            <input type="text" @bind="TextColorV" @bind:event="oninput" placeholder="(inherits)" />
+            <button type="button" class="clr-btn" @onclick="@(() => TextColorV = "")">clear</button>
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>CssClass</label>
+        <input type="text" @bind="CssClassV" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Style</label>
+        <input type="text" @bind="StyleV" @bind:event="oninput" placeholder="e.g. opacity:.8" />
+    </div>
+</div>
+
+<div class="prg-stage">
+    @* ---- AtomProgressBar ------------------------------------------------------------------- *@
+    <section class="prg-case">
+        <h2>AtomProgressBar</h2>
+        <AtomProgressBar Value="@OptValue" Min="@MinV" Max="@MaxV"
+                         Label="@Nz(LabelV)" ShowValue="@ShowValueV" AriaLabel="@Nz(AriaLabelV)"
+                         Formatter="@ActiveFormatter"
+                         ValuePosition="@BarValuePosition"
+                         Buffer="@(UseBuffer ? BufferV : null)"
+                         Width="@Nz(BarWidthV)"
+                         Variant="@VariantSel" Size="@SizeSel" Effect="@EffectSel"
+                         Visible="@VisibleV"
+                         Thickness="@Opt(ThicknessV)" Radius="@Signed(RadiusV)" FontSize="@Opt(FontSizeV)"
+                         Duration="@Opt(DurationV)"
+                         FillColor="@Nz(FillColorV)" TrackColor="@Nz(TrackColorV)" TextColor="@Nz(TextColorV)"
+                         CssClass="@Nz(CssClassV)" Style="@Nz(StyleV)" />
+        <div class="prg-opts">
+            <div class="ctrl">
+                <label>ValuePosition</label>
+                <select @bind="BarValuePosition">
+                    @foreach (var p in ValuePositions) { <option value="@p">@p</option> }
+                </select>
+            </div>
+            <div class="ctrl">
+                <label>Buffer <span class="val">@BufferV.ToString(Inv)</span></label>
+                <input type="range" min="0" max="100" step="1" @bind="BufferV" @bind:event="oninput" @bind:culture="Inv" disabled="@(!UseBuffer)" />
+                <div class="row"><input type="checkbox" id="prgBuf" @bind="UseBuffer" /><label for="prgBuf" class="inline">Buffer set</label></div>
+            </div>
+            <div class="ctrl">
+                <label>Width (CSS length)</label>
+                <input type="text" @bind="BarWidthV" @bind:event="oninput" placeholder="(fills parent)" />
+            </div>
+        </div>
+    </section>
+
+    @* ---- AtomProgressRing ------------------------------------------------------------------ *@
+    <section class="prg-case">
+        <h2>AtomProgressRing</h2>
+        <div class="prg-row">
+            <AtomProgressRing Value="@OptValue" Min="@MinV" Max="@MaxV"
+                              Label="@Nz(LabelV)" ShowValue="@ShowValueV" AriaLabel="@Nz(AriaLabelV)"
+                              Formatter="@ActiveFormatter"
+                              Diameter="@DiameterV" Cap="@RingCap" StartAngle="@StartAngleV"
+                              CenterContent="@(RingCustomCenter ? RingCenter : null)"
+                              Variant="@VariantSel" Size="@SizeSel" Effect="@EffectSel"
+                              Visible="@VisibleV"
+                              Thickness="@Opt(ThicknessV)" FontSize="@Opt(FontSizeV)" Duration="@Opt(DurationV)"
+                              FillColor="@Nz(FillColorV)" TrackColor="@Nz(TrackColorV)" TextColor="@Nz(TextColorV)"
+                              CssClass="@Nz(CssClassV)" Style="@Nz(StyleV)" />
+            <span class="note">Arc drawn with <code>pathLength="100"</code> — the dash math has no
+                &pi; in it and is radius-independent.</span>
+        </div>
+        <div class="prg-opts">
+            <div class="ctrl">
+                <label>Diameter (px) <span class="val">@DiameterV.ToString(Inv)</span></label>
+                <input type="range" min="32" max="260" step="4" @bind="DiameterV" @bind:event="oninput" @bind:culture="Inv" />
+            </div>
+            <div class="ctrl">
+                <label>Cap</label>
+                <select @bind="RingCap">
+                    @foreach (var c in RingCaps) { <option value="@c">@c</option> }
+                </select>
+            </div>
+            <div class="ctrl">
+                <label>StartAngle (deg) <span class="val">@StartAngleV.ToString(Inv)</span></label>
+                <input type="range" min="-180" max="180" step="15" @bind="StartAngleV" @bind:event="oninput" @bind:culture="Inv" />
+                <span class="note">ignored while indeterminate — the spin owns the transform</span>
+            </div>
+            <div class="ctrl">
+                <label>Center</label>
+                <div class="row"><input type="checkbox" id="prgCenter" @bind="RingCustomCenter" /><label for="prgCenter" class="inline">CenterContent (beats ShowValue)</label></div>
+            </div>
+        </div>
+    </section>
+
+    @* ---- AtomProgressSteps ----------------------------------------------------------------- *@
+    <section class="prg-case">
+        <h2>AtomProgressSteps</h2>
+        <div class="prg-row @(StepsOrientation == ProgressStepsOrientation.Vertical ? "narrow" : "")">
+            <AtomProgressSteps Steps="@StepCaptions" Current="@CurrentStep"
+                               Orientation="@StepsOrientation" Marker="@StepMarker"
+                               StatusFor="@(FailSecond ? FailSecondStatus : null)"
+                               StepTemplate="@(UseStepTemplate ? StepCaption : null)"
+                               OnStepClick="@(StepsClickable ? EventCallback.Factory.Create<int>(this, GoToStep) : default)"
+                               Label="@Nz(LabelV)" ShowValue="@ShowValueV" AriaLabel="@Nz(AriaLabelV)"
+                               Variant="@VariantSel" Size="@SizeSel" Effect="@EffectSel"
+                               Visible="@VisibleV"
+                               Thickness="@Opt(ThicknessV)" FontSize="@Opt(FontSizeV)" Duration="@Opt(DurationV)"
+                               FillColor="@Nz(FillColorV)" TrackColor="@Nz(TrackColorV)" TextColor="@Nz(TextColorV)"
+                               CssClass="@Nz(CssClassV)" Style="@Nz(StyleV)" />
+        </div>
+        <div class="prg-opts">
+            <div class="ctrl">
+                <label>Steps (comma-separated)</label>
+                <input type="text" @bind="StepsCsv" @bind:event="oninput" placeholder="(empty list)" />
+                <span class="note">@StepCaptions.Count step(s)</span>
+            </div>
+            <div class="ctrl">
+                <label>Current <span class="val">@CurrentStep</span></label>
+                <input type="range" min="-1" max="@StepSliderMax" step="1" @bind="CurrentStep" @bind:event="oninput" />
+                <span class="note">-1 = all pending, @StepCaptions.Count = all complete</span>
+            </div>
+            <div class="ctrl">
+                <label>Orientation</label>
+                <select @bind="StepsOrientation">
+                    @foreach (var o in StepOrientations) { <option value="@o">@o</option> }
+                </select>
+            </div>
+            <div class="ctrl">
+                <label>Marker</label>
+                <select @bind="StepMarker">
+                    @foreach (var m in StepMarkers) { <option value="@m">@m</option> }
+                </select>
+            </div>
+            <div class="ctrl">
+                <label>Behavior</label>
+                <div class="row"><input type="checkbox" id="prgClick" @bind="StepsClickable" /><label for="prgClick" class="inline">OnStepClick (markers become buttons)</label></div>
+                <div class="row"><input type="checkbox" id="prgFail" @bind="FailSecond" /><label for="prgFail" class="inline">StatusFor: step 2 failed</label></div>
+                <div class="row"><input type="checkbox" id="prgTpl" @bind="UseStepTemplate" /><label for="prgTpl" class="inline">StepTemplate (custom caption markup)</label></div>
+            </div>
+        </div>
+    </section>
+
+    @* ---- AtomMeter ------------------------------------------------------------------------- *@
+    <section class="prg-case">
+        <h2>AtomMeter</h2>
+        <p class="note">A measurement, not a task — <code>role="meter"</code>. With an
+           <code>Optimum</code> set, <code>data-level</code> recolors the fill; the classification is
+           the HTML <code>&lt;meter&gt;</code> spec's own three-way rule.</p>
+        <AtomMeter Value="@OptValue" Min="@MinV" Max="@MaxV"
+                   Low="@(UseBands ? LowV : null)" High="@(UseBands ? HighV : null)"
+                   Optimum="@(UseOptimum ? OptimumV : null)"
+                   Segments="@(MeterSegments > 1 ? MeterSegments : null)"
+                   ShowScale="@MeterShowScale"
+                   Width="@Nz(MeterWidthV)"
+                   Label="@Nz(LabelV)" ShowValue="@ShowValueV" AriaLabel="@Nz(AriaLabelV)"
+                   Formatter="@ActiveFormatter"
+                   Variant="@VariantSel" Size="@SizeSel" Effect="@EffectSel"
+                   Visible="@VisibleV"
+                   Thickness="@Opt(ThicknessV)" Radius="@Signed(RadiusV)" FontSize="@Opt(FontSizeV)"
+                   Duration="@Opt(DurationV)"
+                   FillColor="@Nz(FillColorV)" TrackColor="@Nz(TrackColorV)" TextColor="@Nz(TextColorV)"
+                   CssClass="@Nz(CssClassV)" Style="@Nz(StyleV)" />
+        <div class="prg-opts">
+            <div class="ctrl">
+                <label>Low <span class="val">@LowV.ToString(Inv)</span></label>
+                <input type="range" min="0" max="100" step="1" @bind="LowV" @bind:event="oninput" @bind:culture="Inv" disabled="@(!UseBands)" />
+                <div class="row"><input type="checkbox" id="prgBands" @bind="UseBands" /><label for="prgBands" class="inline">Low/High set</label></div>
+            </div>
+            <div class="ctrl">
+                <label>High <span class="val">@HighV.ToString(Inv)</span></label>
+                <input type="range" min="0" max="100" step="1" @bind="HighV" @bind:event="oninput" @bind:culture="Inv" disabled="@(!UseBands)" />
+            </div>
+            <div class="ctrl">
+                <label>Optimum <span class="val">@OptimumV.ToString(Inv)</span></label>
+                <input type="range" min="0" max="100" step="1" @bind="OptimumV" @bind:event="oninput" @bind:culture="Inv" disabled="@(!UseOptimum)" />
+                <div class="row"><input type="checkbox" id="prgOpt" @bind="UseOptimum" /><label for="prgOpt" class="inline">Optimum set (enables levels)</label></div>
+            </div>
+            <div class="ctrl">
+                <label>Segments (1=none) <span class="val">@MeterSegments</span></label>
+                <input type="range" min="1" max="20" step="1" @bind="MeterSegments" @bind:event="oninput" />
+            </div>
+            <div class="ctrl">
+                <label>Width (CSS length)</label>
+                <input type="text" @bind="MeterWidthV" @bind:event="oninput" placeholder="(fills parent)" />
+            </div>
+            <div class="ctrl">
+                <label>Ruler</label>
+                <div class="row"><input type="checkbox" id="prgScale" @bind="MeterShowScale" /><label for="prgScale" class="inline">ShowScale</label></div>
+            </div>
+        </div>
+    </section>
+
+    @* ---- every variant at a glance --------------------------------------------------------- *@
+    <section class="prg-case">
+        <h2>Variant &times; component</h2>
+        <p class="note">Current Size / Effect / Value apply throughout.</p>
+        @foreach (var variant in Variants)
+        {
+            <div class="prg-matrix">
+                <code class="prg-matrix-name">@variant</code>
+                <AtomProgressBar Value="@OptValue" Min="@MinV" Max="@MaxV" Variant="@variant"
+                                 Size="@SizeSel" Effect="@EffectSel" Width="14rem" />
+                <AtomProgressRing Value="@OptValue" Min="@MinV" Max="@MaxV" Variant="@variant"
+                                  Size="@SizeSel" Effect="@EffectSel" Diameter="44" />
+                <AtomMeter Value="@OptValue" Min="@MinV" Max="@MaxV" Variant="@variant"
+                           Size="@SizeSel" Effect="@EffectSel" Width="10rem" />
+            </div>
+        }
+    </section>
+</div>
+
+<p class="prg-log">Step clicks: <code>@StepClickLog</code></p>
+
+<CodeSnippetBox Code="@Snippet" FileName="ProgressExample.razor" />
+
+<style>
+    .prg-controls, .prg-opts { display:grid; grid-template-columns:repeat(auto-fit,minmax(215px,1fr)); gap:1rem 1.5rem; }
+    .prg-controls { background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; margin-bottom:1.5rem; }
+    .prg-controls .ctrl, .prg-opts .ctrl { display:flex; flex-direction:column; gap:.4rem; }
+    .prg-controls label, .prg-opts label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; gap:.5rem; }
+    .prg-controls label .val, .prg-opts label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
+    .prg-controls input[type=range], .prg-opts input[type=range] { width:100%; accent-color:#2563eb; }
+    .prg-controls input[type=text], .prg-controls select, .prg-opts input[type=text], .prg-opts select
+        { padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; min-width:0; }
+    .prg-controls .row, .prg-opts .row { display:flex; align-items:center; gap:.5rem; }
+    .prg-controls .row input[type=checkbox], .prg-opts .row input[type=checkbox] { accent-color:#2563eb; width:16px; height:16px; flex:none; }
+    .prg-controls .row.color input[type=color] { flex:none; width:38px; height:32px; padding:2px; background:#070b10; border:1px solid #1b2330; border-radius:6px; cursor:pointer; }
+    .prg-controls .row.color input[type=text] { flex:1 1 auto; min-width:0; }
+    .prg-controls .row label.inline, .prg-opts .row label.inline { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; justify-content:flex-start; }
+    .prg-controls .clr-btn, .prg-opts .clr-btn { flex:none; padding:.35rem .55rem; border:1px solid #1b2330; background:#161d29; color:#cfd8e3; border-radius:6px; cursor:pointer; font-size:.75rem; }
+    .prg-controls .clr-btn:hover { background:#1e2836; }
+    .note { font-size:.75rem; color:#5fb7c9; font-family:ui-monospace,monospace; }
+
+    .prg-stage { display:flex; flex-direction:column; gap:1.25rem; }
+    .prg-case { border:1px solid #e2e8f0; border-radius:12px; padding:1.25rem 1.5rem; }
+    .prg-case h2 { margin:0 0 .75rem; font-size:1rem; font-family:ui-monospace,Consolas,monospace; color:#334155; }
+    .prg-case > .note { display:block; margin-bottom:.75rem; color:#64748b; }
+    .prg-case > .atom-progress-bar, .prg-case > .atom-meter { margin-bottom:1rem; }
+    .prg-row { display:flex; flex-wrap:wrap; align-items:center; gap:1rem; margin-bottom:1rem; }
+    .prg-row.narrow { max-width:22rem; }
+    .prg-row .note { color:#64748b; max-width:28rem; }
+    .prg-case .prg-opts { background:#0d1118; border:1px solid #1b2330; border-radius:10px; padding:1rem 1.25rem; color:#cfd8e3; }
+
+    .prg-matrix { display:flex; flex-wrap:wrap; align-items:center; gap:1.25rem; padding:.5rem 0; border-bottom:1px dashed #eef2f7; }
+    .prg-matrix:last-child { border-bottom:0; }
+    .prg-matrix-name { flex:0 0 5.5rem; font-size:.8rem; color:#64748b; }
+
+    .prg-log { font-family:ui-monospace,monospace; font-size:.8rem; color:#64748b; }
+</style>
+
+@code {
+    private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
+
+    private static readonly ProgressVariant[] Variants = Enum.GetValues<ProgressVariant>();
+    private static readonly ProgressSize[] Sizes = Enum.GetValues<ProgressSize>();
+    private static readonly ProgressEffect[] Effects = Enum.GetValues<ProgressEffect>();
+    private static readonly ProgressValuePosition[] ValuePositions = Enum.GetValues<ProgressValuePosition>();
+    private static readonly ProgressRingCap[] RingCaps = Enum.GetValues<ProgressRingCap>();
+    private static readonly ProgressStepsOrientation[] StepOrientations = Enum.GetValues<ProgressStepsOrientation>();
+    private static readonly ProgressStepMarker[] StepMarkers = Enum.GetValues<ProgressStepMarker>();
+
+    // ---- shared surface ----------------------------------------------------------------------
+
+    private ProgressVariant VariantSel = ProgressVariant.Primary;
+    private ProgressSize SizeSel = ProgressSize.Medium;
+    private ProgressEffect EffectSel = ProgressEffect.None;
+
+    private bool HasValue = true;
+    private double ValueV = 62;
+    private double MinV;
+    private double MaxV = 100;
+    private string LabelV = "Uploading";
+    private string AriaLabelV = "";
+    private bool ShowValueV = true;
+    private bool UseFormatter;
+    private bool VisibleV = true;
+    private double ThicknessV;
+    private double RadiusV = -1;
+    private double FontSizeV;
+    private double DurationV;
+    private string FillColorV = "";
+    private string TrackColorV = "";
+    private string TextColorV = "";
+    private string CssClassV = "";
+    private string StyleV = "";
+
+    /// <summary>Null when the Determinate box is clear — that IS the indeterminate state.</summary>
+    private double? OptValue => HasValue ? ValueV : null;
+
+    private Func<double, string>? ActiveFormatter =>
+        UseFormatter ? v => $"{v.ToString("0.#", Inv)} of {MaxV.ToString("0.#", Inv)}" : null;
+
+    // The color pickers can only ever produce a hex value, so they write through to the text boxes
+    // (which also accept named colors, gradients, color-mix(), ...).
+    private string FillPick { get => Hex(FillColorV, "#2563eb"); set => FillColorV = value; }
+    private string TrackPick { get => Hex(TrackColorV, "#e2e8f0"); set => TrackColorV = value; }
+    private string TextPick { get => Hex(TextColorV, "#334155"); set => TextColorV = value; }
+
+    // ---- per-component state -----------------------------------------------------------------
+
+    private ProgressValuePosition BarValuePosition = ProgressValuePosition.Inside;
+    private bool UseBuffer;
+    private double BufferV = 80;
+    private string BarWidthV = "";
+
+    private double DiameterV = 96;
+    private ProgressRingCap RingCap = ProgressRingCap.Round;
+    private double StartAngleV = -90;
+    private bool RingCustomCenter;
+
+    /// <summary>Backing text for the Steps control. Parsed rather than bound to a list directly, since
+    /// there is no native input that edits a collection.</summary>
+    private string StepsCsv = "Cart, Address, Payment, Review";
+
+    private IReadOnlyList<string> StepCaptions =>
+        StepsCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    /// <summary>One past the last index, which is the "everything complete" position.</summary>
+    private int StepSliderMax => StepCaptions.Count;
+
+    private int CurrentStep = 1;
+    private ProgressStepsOrientation StepsOrientation = ProgressStepsOrientation.Horizontal;
+    private ProgressStepMarker StepMarker = ProgressStepMarker.Check;
+    private bool StepsClickable = true;
+    private bool FailSecond;
+    private bool UseStepTemplate;
+
+    /// <summary>Custom caption markup, to show <c>StepTemplate</c> replacing the plain string.</summary>
+    private RenderFragment<int> StepCaption => index => builder =>
+    {
+        var caption = index < StepCaptions.Count ? StepCaptions[index] : $"Step {index + 1}";
+        builder.AddMarkupContent(0, $"<strong>{index + 1}.</strong> <em>{caption}</em>");
+    };
+
+    private bool UseBands = true;
+    private double LowV = 25;
+    private double HighV = 75;
+    private bool UseOptimum = true;
+    private double OptimumV = 10;
+    private int MeterSegments = 1;
+    private bool MeterShowScale;
+    private string MeterWidthV = "";
+
+    private int _stepClicks;
+    private int _lastStep = -1;
+
+    private string StepClickLog => _stepClicks == 0 ? "none yet" : $"{_stepClicks} × — last index {_lastStep}";
+
+    private void GoToStep(int index)
+    {
+        _stepClicks++;
+        _lastStep = index;
+        CurrentStep = index;
+    }
+
+    /// <summary>Only <c>StatusFor</c> can produce <c>Error</c> — it is never inferred from
+    /// <c>Current</c>, because "the user is on step 3" says nothing about step 2 failing.</summary>
+    private ProgressStepStatus FailSecondStatus(int index) =>
+        index == 1 ? ProgressStepStatus.Error
+        : index < CurrentStep ? ProgressStepStatus.Complete
+        : index == CurrentStep ? ProgressStepStatus.Active
+        : ProgressStepStatus.Pending;
+
+    private static readonly RenderFragment RingCenter = b => b.AddMarkupContent(0,
+        "<strong style=\"font-size:1.1rem\">4.2</strong><span style=\"font-size:.7rem;opacity:.7\">GB free</span>");
+
+    // ---- helpers -----------------------------------------------------------------------------
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
+
+    /// <summary>0 means "leave the parameter unset" for sliders whose zero has no useful meaning.</summary>
+    private static double? Opt(double v) => v > 0 ? v : null;
+
+    /// <summary>For sliders where 0 IS meaningful (Radius), -1 is the unset sentinel.</summary>
+    private static double? Signed(double v) => v >= 0 ? v : null;
+
+    /// <summary>A color input can only hold <c>#rrggbb</c>; anything else in the text box (a name, a
+    /// gradient) shows the fallback swatch rather than breaking the picker.</summary>
+    private static string Hex(string v, string fallback) =>
+        v.StartsWith('#') && (v.Length == 7 || v.Length == 4) ? v : fallback;
+
+    // ---- generated snippet -------------------------------------------------------------------
+
+    /// <summary>Attributes shared by every indicator, written once per component so the snippet
+    /// mirrors the previews. Only non-default values appear. <paramref name="valued"/> is false for
+    /// AtomProgressSteps (no continuous value); <paramref name="rounded"/> is false for it and the ring
+    /// (no rectangular track, so no <c>Radius</c> parameter).</summary>
+    private string SharedAttrs(string indent, bool valued = true, bool rounded = true)
+    {
+        var sb = new System.Text.StringBuilder();
+        void Add(string a) => sb.Append('\n').Append(indent).Append(a);
+
+        if (valued)
+        {
+            // Null Value is the indeterminate case; omitting the parameter says the same thing.
+            if (HasValue) Add($"Value=\"{ValueV.ToString(Inv)}\"");
+            if (MinV != 0) Add($"Min=\"{MinV.ToString(Inv)}\"");
+            if (MaxV != 100) Add($"Max=\"{MaxV.ToString(Inv)}\"");
+            if (UseFormatter) Add("Formatter=\"v => $\"{v} of 100\"\"");
+        }
+        if (!string.IsNullOrEmpty(LabelV)) Add($"Label=\"{LabelV}\"");
+        if (ShowValueV) Add("ShowValue=\"true\"");
+        if (!string.IsNullOrEmpty(AriaLabelV)) Add($"AriaLabel=\"{AriaLabelV}\"");
+        if (VariantSel != ProgressVariant.Primary) Add($"Variant=\"ProgressVariant.{VariantSel}\"");
+        if (SizeSel != ProgressSize.Medium) Add($"Size=\"ProgressSize.{SizeSel}\"");
+        if (EffectSel != ProgressEffect.None) Add($"Effect=\"ProgressEffect.{EffectSel}\"");
+        if (!VisibleV) Add("Visible=\"false\"");
+        if (ThicknessV > 0) Add($"Thickness=\"{ThicknessV.ToString(Inv)}\"");
+        if (rounded && RadiusV >= 0) Add($"Radius=\"{RadiusV.ToString(Inv)}\"");
+        if (FontSizeV > 0) Add($"FontSize=\"{FontSizeV.ToString(Inv)}\"");
+        if (DurationV > 0) Add($"Duration=\"{DurationV.ToString(Inv)}\"");
+        if (!string.IsNullOrEmpty(FillColorV)) Add($"FillColor=\"{FillColorV}\"");
+        if (!string.IsNullOrEmpty(TrackColorV)) Add($"TrackColor=\"{TrackColorV}\"");
+        if (!string.IsNullOrEmpty(TextColorV)) Add($"TextColor=\"{TextColorV}\"");
+        if (!string.IsNullOrEmpty(CssClassV)) Add($"CssClass=\"{CssClassV}\"");
+        if (!string.IsNullOrEmpty(StyleV)) Add($"Style=\"{StyleV}\"");
+        return sb.ToString();
+    }
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder();
+
+            // AtomProgressBar
+            sb.Append("<AtomProgressBar");
+            var i = "                 ";
+            if (BarValuePosition != ProgressValuePosition.Inside)
+                sb.Append($" ValuePosition=\"ProgressValuePosition.{BarValuePosition}\"");
+            if (UseBuffer) sb.Append($"\n{i}Buffer=\"{BufferV.ToString(Inv)}\"");
+            if (!string.IsNullOrEmpty(BarWidthV)) sb.Append($"\n{i}Width=\"{BarWidthV}\"");
+            sb.Append(SharedAttrs(i));
+            sb.Append(" />\n\n");
+
+            // AtomProgressRing
+            sb.Append("<AtomProgressRing");
+            i = "                  ";
+            if (DiameterV != 96) sb.Append($" Diameter=\"{DiameterV.ToString(Inv)}\"");
+            if (RingCap != ProgressRingCap.Butt) sb.Append($"\n{i}Cap=\"ProgressRingCap.{RingCap}\"");
+            if (StartAngleV != -90) sb.Append($"\n{i}StartAngle=\"{StartAngleV.ToString(Inv)}\"");
+            sb.Append(SharedAttrs(i, rounded: false));
+            if (RingCustomCenter)
+            {
+                sb.Append(">\n    <CenterContent><strong>4.2</strong> GB free</CenterContent>\n</AtomProgressRing>\n\n");
+            }
+            else
+            {
+                sb.Append(" />\n\n");
+            }
+
+            // AtomProgressSteps — no Value/Min/Max (no continuous value), and no Radius (no
+            // rectangular track). The Steps array is emitted literally so the snippet pastes and
+            // compiles without a field the reader has to go and write.
+            var steps = string.Join(", ", StepCaptions.Select(s => $"\"{s}\""));
+            sb.Append($"<AtomProgressSteps Steps=\"@(new[] {{ {steps} }})\"");
+            i = "                   ";
+            sb.Append($"\n{i}Current=\"{CurrentStep}\"");
+            if (StepsOrientation != ProgressStepsOrientation.Horizontal)
+                sb.Append($"\n{i}Orientation=\"ProgressStepsOrientation.{StepsOrientation}\"");
+            if (StepMarker != ProgressStepMarker.Number)
+                sb.Append($"\n{i}Marker=\"ProgressStepMarker.{StepMarker}\"");
+            if (FailSecond) sb.Append($"\n{i}StatusFor=\"StatusOf\"");
+            if (StepsClickable) sb.Append($"\n{i}OnStepClick=\"GoToStep\"");
+            sb.Append(SharedAttrs(i, valued: false, rounded: false));
+            if (UseStepTemplate)
+            {
+                // Index-derived only, so the snippet stays self-contained — reaching back into the
+                // Steps list here would need a field the reader doesn't have.
+                sb.Append(">\n    <StepTemplate Context=\"index\">\n");
+                sb.Append("        <strong>Step @(index + 1)</strong>\n");
+                sb.Append("    </StepTemplate>\n</AtomProgressSteps>\n\n");
+            }
+            else
+            {
+                sb.Append(" />\n\n");
+            }
+
+            // AtomMeter
+            sb.Append("<AtomMeter");
+            i = "           ";
+            if (UseBands)
+            {
+                sb.Append($" Low=\"{LowV.ToString(Inv)}\"");
+                sb.Append($"\n{i}High=\"{HighV.ToString(Inv)}\"");
+            }
+            if (UseOptimum) sb.Append($"\n{i}Optimum=\"{OptimumV.ToString(Inv)}\"");
+            if (MeterSegments > 1) sb.Append($"\n{i}Segments=\"{MeterSegments}\"");
+            if (MeterShowScale) sb.Append($"\n{i}ShowScale=\"true\"");
+            if (!string.IsNullOrEmpty(MeterWidthV)) sb.Append($"\n{i}Width=\"{MeterWidthV}\"");
+            sb.Append(SharedAttrs(i));
+            sb.Append(" />");
+
+            return sb.ToString();
+        }
+    }
+}

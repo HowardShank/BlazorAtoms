@@ -1,0 +1,20 @@
+/* AtomCardFooter — trailing section of an AtomCard. */
+
+.atom-card-footer {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: .5rem;
+    padding: var(--card-section-padding, 1rem);
+    background: var(--card-section-bg, transparent);
+}
+
+.atom-card-footer[data-divider] {
+    border-top: 1px solid var(--card-divider-color, color-mix(in srgb, currentColor 12%, transparent));
+}
+
+/* ---- alignment ----------------------------------------------------------------------------- */
+
+.atom-card-footer[data-align="center"]  { justify-content: center; }
+.atom-card-footer[data-align="end"]     { justify-content: flex-end; }
+.atom-card-footer[data-align="between"] { justify-content: space-between; }

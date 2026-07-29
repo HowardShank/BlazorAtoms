@@ -6,8 +6,8 @@
   <PropertyGroup>
     <PackageId>BlazorAtoms.Cards</PackageId>
     <Title>Blazor Cards</Title>
-    <Description>Card components for Blazor. Ships AtomCardReveal — a hover-reveal info card: an overlay (title/subtitle/background image/dots) plays a staggered pop/slide entrance on mount, then slides away on hover to reveal a scrollable body panel. Zero JS.</Description>
-    <PackageTags>Blazor;Cards;InfoCard;CSS;WebAssembly;Server</PackageTags>
+    <Description>Card components for Blazor, in two families. AtomCard plus AtomCardHeader/AtomCardBody/AtomCardFooter is a plain structural surface: media slot, elevation, clickable as a real anchor or button, and sections that inherit padding and dividers from the card. AtomCardReveal, AtomCardFlip, AtomCardExpand, AtomCardCurl and AtomCardSplit are hover-reveal info cards, each uncovering a body panel a different way. Zero JS.</Description>
+    <PackageTags>Blazor;Cards;Card;InfoCard;HoverReveal;CSS;WebAssembly;Server</PackageTags>
     <Version>0.1.0</Version>
   </PropertyGroup>
 

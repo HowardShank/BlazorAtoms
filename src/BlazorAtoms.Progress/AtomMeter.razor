@@ -1,0 +1,68 @@
+@inherits AtomProgressValueBase
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-meter")"
+     style="@StyleAttr(RootStyle)"
+     data-variant="@VariantAttr"
+     data-size="@SizeAttr"
+     data-effect="@EffectAttr"
+     data-level="@LevelAttr"
+     data-indeterminate="@IndeterminateAttr">
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <div class="atom-meter-head">
+            <span class="atom-meter-label">@Label</span>
+            @if (ShowValue && DisplayValue is not null)
+            {
+                <span class="atom-meter-value">@DisplayValue</span>
+            }
+        </div>
+    }
+    <div class="atom-meter-row">
+        @* role="meter", not "progressbar": this is a static measurement (disk used, score, fuel), not
+           a task advancing to completion.
+
+           ARIA requires aria-valuenow on role="meter" — there is no indeterminate meter in the spec,
+           unlike progressbar where omitting valuenow IS how indeterminate is spelled. So with no
+           Value the role and every aria-value* attribute are dropped rather than emitted incomplete:
+           an empty track that announces nothing beats a meter that is invalid, and beats inventing a
+           valuenow of Min (a 0% reading indistinguishable from real data). Visual is unchanged. *@
+        <div class="atom-meter-track"
+             role="@(IsIndeterminate ? null : "meter")"
+             aria-label="@(IsIndeterminate ? null : EffectiveAriaLabel)"
+             aria-valuenow="@AriaValueNow"
+             aria-valuemin="@(IsIndeterminate ? null : AriaValueMin)"
+             aria-valuemax="@(IsIndeterminate ? null : AriaValueMax)"
+             aria-valuetext="@DisplayValue">
+            @if (!IsIndeterminate)
+            {
+                <div class="atom-meter-fill" style="@($"width:{PercentCss};")"></div>
+            }
+            @if (Segments is > 1)
+            {
+                @* Tick overlay: one repeating-linear-gradient rather than N elements, so a 50-segment
+                   meter still costs a single node. *@
+                <div class="atom-meter-ticks" style="@TicksStyle" aria-hidden="true"></div>
+            }
+        </div>
+        @if (ShowValue && string.IsNullOrEmpty(Label) && DisplayValue is not null)
+        {
+            <span class="atom-meter-value">@DisplayValue</span>
+        }
+    </div>
+    @if (ShowScale)
+    {
+        <div class="atom-meter-scale" aria-hidden="true">
+            <span>@ScaleText(Min)</span>
+            @if (Low is not null)
+            {
+                <span class="atom-meter-scale-mark" style="@MarkStyle(Low.Value)">@ScaleText(Low.Value)</span>
+            }
+            @if (High is not null)
+            {
+                <span class="atom-meter-scale-mark" style="@MarkStyle(High.Value)">@ScaleText(High.Value)</span>
+            }
+            <span>@ScaleText(Max)</span>
+        </div>
+    }
+</div>

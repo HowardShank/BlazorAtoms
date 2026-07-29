@@ -1,0 +1,49 @@
+@inherits AtomProgressValueBase
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-progress-bar")"
+     style="@StyleAttr(RootStyle)"
+     data-variant="@VariantAttr"
+     data-size="@SizeAttr"
+     data-effect="@EffectAttr"
+     data-value-position="@ValuePositionAttr"
+     data-indeterminate="@IndeterminateAttr">
+    @if (!string.IsNullOrEmpty(Label) || ShowValue && ValuePosition == ProgressValuePosition.Above)
+    {
+        <div class="atom-progress-bar-head">
+            <span class="atom-progress-bar-label">@Label</span>
+            @if (ShowValue && ValuePosition == ProgressValuePosition.Above && DisplayValue is not null)
+            {
+                <span class="atom-progress-bar-value">@DisplayValue</span>
+            }
+        </div>
+    }
+    <div class="atom-progress-bar-row">
+        @* role/aria live on the track, not the root: the root also carries the label and readout,
+           and a progressbar role must not contain extra text content of its own. *@
+        <div class="atom-progress-bar-track"
+             role="progressbar"
+             aria-label="@EffectiveAriaLabel"
+             aria-valuenow="@AriaValueNow"
+             aria-valuemin="@AriaValueMin"
+             aria-valuemax="@AriaValueMax"
+             aria-valuetext="@DisplayValue">
+            @if (BufferCss is not null)
+            {
+                @* Secondary fill (e.g. a video's downloaded-but-unplayed span). Drawn under the
+                   real fill, so the two overlap rather than stacking. *@
+                <div class="atom-progress-bar-buffer" style="@($"width:{BufferCss};")" aria-hidden="true"></div>
+            }
+            <div class="atom-progress-bar-fill" style="@FillStyle">
+                @if (ShowValue && ValuePosition == ProgressValuePosition.Inside && DisplayValue is not null)
+                {
+                    <span class="atom-progress-bar-value">@DisplayValue</span>
+                }
+            </div>
+        </div>
+        @if (ShowValue && ValuePosition == ProgressValuePosition.Outside && DisplayValue is not null)
+        {
+            <span class="atom-progress-bar-value">@DisplayValue</span>
+        }
+    </div>
+</div>

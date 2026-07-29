@@ -1,0 +1,53 @@
+/* AtomCardHeader — leading section of an AtomCard.
+
+   Reads the `--card-*` tokens declared by AtomCard, which inherit down through the DOM — so there is
+   no ::deep plumbing here, and the section also works standalone (the fallbacks below apply). */
+
+.atom-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: .75rem;
+    padding: var(--card-section-padding, 1rem);
+    background: var(--card-section-bg, transparent);
+}
+
+.atom-card-header[data-divider] {
+    border-bottom: 1px solid var(--card-divider-color, color-mix(in srgb, currentColor 12%, transparent));
+}
+
+.atom-card-header-avatar {
+    flex: 0 0 auto;
+    line-height: 0;
+}
+
+.atom-card-header-text {
+    /* min-width:0 so a long unbroken title wraps instead of pushing the actions slot out. */
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.atom-card-header-title {
+    /* The heading element varies (h1-h6), so reset the UA's per-level margin and size and let the
+       card decide — otherwise HeadingLevel would change the visual weight, which it must not. */
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+
+.atom-card-header-subtitle {
+    margin-top: .15rem;
+    font-size: .8125rem;
+    opacity: .75;
+    overflow-wrap: anywhere;
+}
+
+.atom-card-header-actions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: .25rem;
+    /* Pulled up level with the title's cap height rather than its line box. */
+    margin-top: -.15rem;
+}

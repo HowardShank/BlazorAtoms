@@ -1,0 +1,34 @@
+@inherits AtomCardSectionBase
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-card-header")"
+     style="@StyleAttr(BuildSectionStyle())"
+     data-divider="@DividerAttr(Divider)">
+    @if (Avatar is not null)
+    {
+        <div class="atom-card-header-avatar">@Avatar</div>
+    }
+    <div class="atom-card-header-text">
+        @if (ChildContent is not null)
+        {
+            @* Explicit content replaces Title/Subtitle entirely rather than adding to them — a
+               caller supplying markup wants control of the whole text block. *@
+            @ChildContent
+        }
+        else
+        {
+            @if (!string.IsNullOrEmpty(Title))
+            {
+                @HeadingElement
+            }
+            @if (Subtitle is not null)
+            {
+                <div class="atom-card-header-subtitle">@Subtitle</div>
+            }
+        }
+    </div>
+    @if (Actions is not null)
+    {
+        <div class="atom-card-header-actions">@Actions</div>
+    }
+</div>

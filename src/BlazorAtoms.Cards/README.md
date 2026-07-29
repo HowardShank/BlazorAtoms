@@ -1,8 +1,21 @@
 # BlazorAtoms.Cards
 
-Hover-reveal card components for Blazor. Each shows a themed face (title/subtitle/background
-image/dot indicator) with a staggered entrance on mount, then uncovers a body panel on hover — the
-difference is *how* it uncovers.
+Card components for Blazor, in **two families** that share only the package.
+
+**1. The structural card** — `AtomCard` plus `AtomCardHeader` / `AtomCardBody` / `AtomCardFooter`. A
+plain themed surface you put content in: media slot, elevation, optional whole-card link or click,
+sections that inherit padding and dividers from the card. This is the one you reach for by default.
+See [AtomCard](#atomcard).
+
+**2. The hover-reveal cards** — `AtomCardReveal` and its four siblings. Each shows a themed face
+(title/subtitle/background image/dot indicator) with a staggered entrance on mount, then uncovers a
+body panel on hover; the difference is *how* it uncovers. See the table below.
+
+The two families deliberately share no base. `AtomCardBase`'s `BackgroundImageUrl`, `AccentColor` and
+`DotCount` all exist to serve a reveal animation that `AtomCard` doesn't have, and `AtomCard`'s
+sections have no place on a card whose content is a fixed two-panel face.
+
+## The hover-reveal family
 
 | Component | Hover behavior | Own params |
 |---|---|---|
@@ -39,6 +52,111 @@ to any content. Compose it around a card:
 ```razor
 @using BlazorAtoms.Cards
 ```
+
+## AtomCard
+
+```razor
+<AtomCard Variant="CardVariant.Elevated" Effect="CardEffect.HoverLift" Width="22rem">
+    <Media>
+        <img src="report.png" alt="" />
+    </Media>
+    <AtomCardHeader Title="Quarterly report">
+        <Subtitle>Updated <em>2 hours ago</em></Subtitle>
+        <Actions><AtomIconButton AriaLabel="More" /></Actions>
+    </AtomCardHeader>
+    <AtomCardBody>
+        <p>Revenue is up 12% on the quarter.</p>
+    </AtomCardBody>
+    <AtomCardFooter Align="CardSectionAlign.End">
+        <button type="button" @onclick="Cancel">Cancel</button>
+        <button type="button" @onclick="SaveAsync">Save</button>
+    </AtomCardFooter>
+</AtomCard>
+```
+
+Sections can also be passed as slots, which is handier for short content or a card inside a loop —
+same output:
+
+```razor
+<AtomCard Header="@_head" Body="@_body" Footer="@_foot" />
+```
+
+Slots render in `Header` → `Body` → `ChildContent` → `Footer` order, so mixing a slot with nested
+sections still lands somewhere sane.
+
+### The root element follows the semantics
+
+| You set | Root renders as | Why |
+|---|---|---|
+| neither `Href` nor `OnClick` | `<div>` | Nothing to activate. |
+| `Href` | `<a href>` | It navigates. No `role="button"` — that would be a lie — and you get keyboard activation and the context menu for free. |
+| `OnClick` only | `<button type="button">` | Focusable and Enter/Space-activatable. A `<div @onclick>` is neither. |
+
+`Href` wins if both are set. Interactive roots get `data-interactive="true"` and a focus ring; set
+`AriaLabel` when the card's own text doesn't describe the destination.
+
+### AtomCard parameters
+
+| Parameter | Type | Default | Notes |
+|---|---|---|---|
+| `ChildContent` | `RenderFragment?` | `null` | Nest sections here, or arbitrary markup. |
+| `Header` / `Body` / `Footer` | `RenderFragment?` | `null` | Shorthand for the matching nested section. |
+| `Media` | `RenderFragment?` | `null` | Edge-to-edge, never padded — it can bleed to the corners. |
+| `MediaPosition` | `CardMediaPosition` | `Top` | `Top`/`Bottom`/`Start`/`End`. The inline values make it a horizontal media object. |
+| `MediaSize` | `string?` | `null` (`33%`) | Width of the media column → `--card-media-size`. Only applies to `Start`/`End`. |
+| `Href` / `Target` | `string?` | `null` | Whole-card link. |
+| `OnClick` | `EventCallback<MouseEventArgs>` | — | Whole-card activation. |
+| `AriaLabel` | `string?` | `null` | Accessible name for a clickable/linked card. |
+| `Variant` | `CardVariant` | `Elevated` | `Elevated`/`Outlined`/`Filled`/`Flat` → `data-variant`. |
+| `Elevation` | `CardElevation` | `Medium` | `None`/`Small`/`Medium`/`Large`. Only `Elevated` draws a shadow at all. |
+| `Effect` | `CardEffect` | `None` | `HoverLift`/`HoverGlow`/`HoverBorder`/`PressSink` → `data-effect`. |
+| `Padding` | `double?` | `null` | px, **cascaded to every section**. |
+| `Divider` | `bool` | `true` | Default for every section's rule, cascaded. |
+| `Radius`, `BorderWidth` | `double?` | `null` | px → `--card-radius`, `--card-border-width`. |
+| `Width`, `Height` | `string?` | `null` | Any CSS length. Height defaults to growing with content. |
+| `BackgroundColor`, `BorderColor`, `TextColor`, `AccentColor`, `DividerColor` | `string?` | `null` | → the matching `--card-*` property. `AccentColor` drives the hover effects and focus ring. |
+| `Duration` | `double?` | `null` | seconds → `--card-duration`. |
+| `Visible` | `bool` | `true` | `false` hides via `display:none`, staying in the DOM. |
+
+Plus `CssClass`, `Style`, and arbitrary splatted attributes on the root.
+
+### Section parameters
+
+All three sections share `ChildContent`, `Padding` and `BackgroundColor`. **Every inherited one is
+nullable**: null means "not set", so the card's cascade applies; a value wins outright. The sections
+also work standalone — outside a card there is no cascade and the CSS defaults apply.
+
+| Component | Own params |
+|---|---|
+| **`AtomCardHeader`** | `Title`, `Subtitle`, `HeadingLevel` (1–6, default 3), `Avatar`, `Actions`, `Divider`. `ChildContent` replaces `Title`+`Subtitle` entirely. |
+| **`AtomCardBody`** | `Scrollable`, `MaxHeight`. **No `Divider`** — it is what the other two separate, so the parameter isn't declared here rather than declared and ignored. |
+| **`AtomCardFooter`** | `Align` (`Start`/`Center`/`End`/`Between`), `Divider`. |
+
+`Title` renders as a real `<h1>`…`<h6>` at `HeadingLevel`, not a styled `div` with `role="heading"`:
+cards sit at different depths on different pages, so the level has to be the caller's choice for the
+document outline to stay correct. The CSS resets the UA's per-level size and margin, so changing the
+level changes the semantics only, never the look.
+
+`Scrollable` also makes the body focusable (`tabindex="0"`) — a scroll container that can't be focused
+is unreachable without a mouse. Pair it with `MaxHeight` or a fixed card `Height`; with neither there
+is nothing to overflow.
+
+### Theming
+
+One `--card-*` prefix for the card, `--card-section-*` for the sections. The card's tokens inherit into
+the sections through the DOM, so section CSS reads them with no `::deep` plumbing. Priority, lowest to
+highest: the CSS defaults block → `[data-variant]`/`[data-elevation]`/`[data-effect]` rules → a
+consumer stylesheet → the parameters above (inline) → your `Style`.
+
+One token has no parameter behind it: **`--card-shadow`** (default
+`0 1px 3px rgb(0 0 0 / .12), 0 1px 2px rgb(0 0 0 / .08)`), which is what `Elevation` sets. Override it
+through `Style` for a shadow the four presets don't cover. Everything else in the surface has a
+parameter.
+
+`CardEffect` is pure CSS `:hover`/`:active`/`:focus-visible` — no C# state, identical in every render
+mode, and `prefers-reduced-motion` guarded (the movement drops, the shadow/border change stays, so the
+hover still reads). Anything that *reveals* content on hover is the other family; a 3D tilt is
+`HoverEffect.Tilt` on `BlazorAtoms.Transitions`.
 
 ## AtomCardReveal
 

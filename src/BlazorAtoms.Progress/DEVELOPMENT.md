@@ -2,6 +2,133 @@
 
 Internal architecture notes for maintainers. See `README.md` for consumer-facing usage.
 
+## Two bases, not one
+
+`AtomProgressBase` holds what all four determinate indicators share: label/readout, the
+`Variant`/`Size`/`Effect` axes emitted as `data-*`, the `--progress-*` token surface, and `Kebab`.
+`AtomProgressValueBase` adds `Value`/`Min`/`Max`/`Formatter` and the clamped `Fraction`.
+
+The split exists for `AtomProgressSteps`, which has no continuous value — inheriting the value base
+would give it `Min`/`Max` parameters that mean nothing and can't be honored. Same rule that keeps the
+hover-reveal cards as five components instead of one effect enum: don't put a parameter on a type
+where it is silently invalid. The alternative (one base, and steps documents that `Value` means
+"completed count") trades a compile-time guarantee for a doc comment.
+
+`AtomScrollProgressBar` shares neither base. It has no `Value` at all — its position comes from the
+scroll container — and it predates them.
+
+## Null `Value` = indeterminate
+
+`Value` is `double?` and null *is* the indeterminate state, rather than a non-nullable `Value` plus an
+`Indeterminate` bool. Two params would admit `Value="40" Indeterminate="true"`, where the value is
+silently ignored and the component has to pick a winner. One nullable param makes that
+unrepresentable. Precedent in the repo: `AtomRating.Value` is `double?` so null is a real "unrated",
+distinct from 0.
+
+Consequences the components implement uniformly:
+
+- `aria-valuenow` is **omitted** when null. Not an oversight — a progressbar with no `valuenow` is
+  precisely how ARIA spells indeterminate. **`AtomMeter` is the exception**: see below.
+- No readout renders even with `ShowValue`, so the element is absent rather than empty.
+- `data-indeterminate="true"` on the root, so the state is styleable without a second class.
+- The clamped value is what gets announced, so the visual and the announcement can't disagree.
+- `Max <= Min` returns `Fraction` 0 rather than dividing by zero.
+
+## Indeterminate vs. `Effect`: two animations, one `animation` property
+
+`ProgressEffect` decorates a known amount; the indeterminate animation says the amount is unknown.
+They are deliberately independent parameters — but CSS gives an element one `animation` property, so
+where a looping effect and the indeterminate keyframe would land on the same element, an explicit
+`[data-indeterminate][data-effect="…"]` rule re-asserts the indeterminate animation. It wins because
+"unknown" is the more load-bearing of the two messages.
+
+Under `prefers-reduced-motion: reduce` the indeterminate animation can't simply be dropped: a frozen
+35%-wide bar (or a frozen quarter-arc ring) reads as *stalled progress*, which is worse than no
+indicator. Both fall back to a dimmed full track and let the accessible busy state carry the meaning.
+
+## AtomProgressRing — `pathLength` instead of 2πr
+
+`pathLength="100"` re-bases the circle's own length onto a 0–100 scale, so `stroke-dasharray="100"`
+plus `stroke-dashoffset: 100 - percent` draws that percentage at any radius, with no π and nothing to
+recompute when `Diameter` changes. A test asserts the offset is identical at 32 px and 400 px — the
+property that would break if anyone "optimized" this into circumference math.
+
+The `viewBox` is `0 0 {Diameter} {Diameter}` so 1 user unit == 1 px, which is what lets `stroke-width`
+be a plain px number.
+
+**Why the stroke width resolves in C# here but not on the bar.** The radius depends on it — measured
+to the stroke's centerline, `r = Diameter/2 - Thickness/2`, so the outer edge lands on the box rather
+than half outside it. CSS *can* set `r` (SVG2 geometry properties) but not portably, so `Thickness`
+falls back to a per-`Size` constant in C# instead of in a `[data-size]` block, and is clamped to
+`Diameter/2` so it can't swallow the hole. `--progress-thickness` is still emitted for the effect
+rules.
+
+The indeterminate spin uses `transform-box: fill-box` + a 50% origin so one keyframe works at every
+diameter. It overrides the inline `transform` attribute, which is why `StartAngle` has no effect while
+indeterminate — documented rather than worked around, since a rotating arc has no meaningful start.
+
+`Stripes`/`Gradient` can't be a `background-image` on a stroke without a per-instance `<pattern>` or
+`<linearGradient>`, and those need ids — which would differ between the prerender and interactive
+passes and cause a hydration mismatch. They degrade to stroke-only equivalents (a dash pattern, a
+lighter stroke) instead of minting ids.
+
+## AtomProgressSteps — connectors as `::before`, and the button/span switch
+
+The connector line is each item's own `::before`, not a rendered element: one less node per step, and
+`:first-child` suppresses the leading one. It belongs to the step it leads *into*, so a
+complete-or-active step fills the line behind it and the filled run always ends at the current marker.
+
+Vertical spacing is one token (`--progress-step-gap`) driving both the item's `padding-bottom` and the
+connector's own length, so the two can't drift apart. An earlier draft sized the connector from
+`--progress-marker-size` and left a gap under any non-default marker size.
+
+`OnStepClick` changes the *markup*: supplied, markers are real `<button>`s (focusable,
+Enter/Space-activatable, with an `aria-label`, because the visible caption is a sibling the button
+doesn't contain and it would otherwise announce a bare number); not supplied, they are `aria-hidden`
+`<span>`s so a non-navigable tracker adds nothing to the tab order. A `<div @onclick>` would have been
+neither.
+
+The marker's inner content is one `RenderFragment` local declared at the top of the `.razor`, rendered
+into either branch — Razor resolves locals in source order, so it has to precede its use.
+
+## AtomMeter — reimplementing `<meter>`'s semantics, not its chrome
+
+Native `<meter>` draws its bar through vendor pseudo-elements that differ per browser
+(`::-webkit-meter-optimum-value` vs Firefox's own set), can't be themed consistently, and can carry
+neither the `--progress-*` surface nor the effect keyframes. So the element is not used; the
+*semantics* are — `role="meter"` plus the spec's own three-way `low`/`high`/`optimum` classification,
+reimplemented in `Level` with one test case per branch.
+
+The third band only exists when `Optimum` lies outside `Low`..`High`; with an optimum between them the
+spec defines no sub-suboptimum, and a test pins that. No `Optimum` at all → no `data-level`, because
+with no stated ideal there is nothing to judge against.
+
+`data-level` beats `[data-variant]` in the CSS: once a caller has said what good looks like, the
+value's quality is more informative than a decorative scheme. An inline `FillColor` still beats both.
+
+`Segments` renders as one `repeating-linear-gradient` rather than N tick elements, so segment count has
+no DOM cost.
+
+### A null `Value` is the one place the meter breaks the family's indeterminate contract
+
+The bar and the ring treat "no value" as a first-class state: they animate, and they omit
+`aria-valuenow`, which is exactly how ARIA defines an indeterminate `progressbar`. Neither move
+transfers to a meter:
+
+- **No animation.** There is nothing to sweep *toward* — a moving meter would imply a measurement in
+  progress, which is not what a meter models. `data-indeterminate` instead hatches the empty track, so
+  "no reading taken" is visually distinct from a real zero. That attribute exists on all three
+  components but is the *only* thing it drives here.
+- **`role="meter"` is dropped, along with every `aria-value*` attribute.** ARIA lists `aria-valuenow`
+  as **required** for `role="meter"` — there is no indeterminate meter in the spec. Emitting the role
+  without the value ships invalid markup; emitting `aria-valuenow="{Min}"` ships a fabricated 0%
+  reading that assistive tech cannot distinguish from real data. Dropping the role means an
+  unmeasured meter announces nothing, which is the honest option and costs only that.
+
+This was shipped wrong first: the original markup kept the role and merely left `aria-valuenow` empty,
+with a code comment that *stated* the requirement it was violating. Tests now pin both directions —
+role absent with no value, full semantics restored with one.
+
 ## AtomScrollProgressBar — the first component that isn't zero-JS everywhere
 
 Sourced from a "CSS-only reading progress bar" demo using `animation-timeline: scroll(y)` — a

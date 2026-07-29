@@ -1,0 +1,603 @@
+@using System.Globalization
+@using BlazorAtoms.Cards
+
+<PageTitle>Card Layout Playground</PageTitle>
+
+<h1>Card layout playground</h1>
+<p><code>AtomCard</code> plus its three sections — <code>AtomCardHeader</code>,
+   <code>AtomCardBody</code>, <code>AtomCardFooter</code>. A plain structural surface, separate from the
+   hover-reveal family in the same package: <code>AtomCardReveal</code> and its siblings share
+   <code>AtomCardBase</code>, whose background image, accent and dot indicator all exist to serve a
+   reveal animation this card doesn't have. Zero JS.</p>
+<p>The root element follows the semantics: a <code>&lt;div&gt;</code> normally, a real
+   <code>&lt;a&gt;</code> when <code>Href</code> is set, a <code>&lt;button&gt;</code> when only
+   <code>OnClick</code> is. Section padding and dividers cascade from the card, and a section's own
+   value still wins.</p>
+<p><a href="playground/progress">&larr; Progress playground</a> &middot;
+   <a href="playground/cardvariants">Hover-reveal card variants &rarr;</a></p>
+
+<div class="cdl-controls">
+    <div class="ctrl">
+        <label>Variant</label>
+        <select @bind="VariantSel">
+            @foreach (var v in Variants) { <option value="@v">@v</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Elevation</label>
+        <select @bind="ElevationSel">
+            @foreach (var e in Elevations) { <option value="@e">@e</option> }
+        </select>
+        <span class="note">only Elevated draws a shadow</span>
+    </div>
+    <div class="ctrl">
+        <label>Effect</label>
+        <select @bind="EffectSel">
+            @foreach (var e in Effects) { <option value="@e">@e</option> }
+        </select>
+        <span class="note">hover / press the card</span>
+    </div>
+    <div class="ctrl">
+        <label>MediaPosition</label>
+        <select @bind="MediaPositionSel">
+            @foreach (var m in MediaPositions) { <option value="@m">@m</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>MediaSize (Start/End only)</label>
+        <input type="text" @bind="MediaSizeV" @bind:event="oninput" placeholder="(33%)" />
+        <span class="note">ignored for Top/Bottom, where media spans the full width</span>
+    </div>
+    <div class="ctrl">
+        <label>Interaction</label>
+        <div class="row"><input type="checkbox" id="cdlMedia" @bind="ShowMedia" /><label for="cdlMedia" class="inline">Media slot</label></div>
+        <div class="row"><input type="checkbox" id="cdlClick" @bind="Clickable" /><label for="cdlClick" class="inline">OnClick (&rarr; button)</label></div>
+        <div class="row"><input type="checkbox" id="cdlVis" @bind="VisibleV" /><label for="cdlVis" class="inline">Visible</label></div>
+    </div>
+    <div class="ctrl">
+        <label>Href (link mode)</label>
+        <input type="text" @bind="HrefV" @bind:event="oninput" placeholder="(renders a div/button)" />
+    </div>
+    <div class="ctrl">
+        <label>Target</label>
+        <input type="text" @bind="TargetV" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>AriaLabel</label>
+        <input type="text" @bind="AriaLabelV" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Padding (px, -1=default) <span class="val">@PaddingV.ToString(Inv)</span></label>
+        <input type="range" min="-1" max="48" step="1" @bind="PaddingV" @bind:event="oninput" @bind:culture="Inv" />
+        <span class="note">cascades to every section</span>
+    </div>
+    <div class="ctrl">
+        <label>Radius (px, -1=default) <span class="val">@RadiusV.ToString(Inv)</span></label>
+        <input type="range" min="-1" max="40" step="1" @bind="RadiusV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>BorderWidth (px, -1=default) <span class="val">@BorderWidthV.ToString(Inv)</span></label>
+        <input type="range" min="-1" max="8" step="1" @bind="BorderWidthV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Duration (s, 0=default) <span class="val">@DurationV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="2" step="0.05" @bind="DurationV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Width (CSS length)</label>
+        <input type="text" @bind="WidthV" @bind:event="oninput" placeholder="(fills parent)" />
+    </div>
+    <div class="ctrl">
+        <label>Height (CSS length)</label>
+        <input type="text" @bind="HeightV" @bind:event="oninput" placeholder="(grows with content)" />
+    </div>
+    <div class="ctrl">
+        <label>BackgroundColor</label>
+        <div class="row color">
+            <input type="color" @bind="BgPick" @bind:event="oninput" />
+            <input type="text" @bind="BackgroundColorV" @bind:event="oninput" placeholder="(Canvas)" />
+            <button type="button" class="clr-btn" @onclick="@(() => BackgroundColorV = "")">clear</button>
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>AccentColor</label>
+        <div class="row color">
+            <input type="color" @bind="AccentPick" @bind:event="oninput" />
+            <input type="text" @bind="AccentColorV" @bind:event="oninput" placeholder="(#2563eb)" />
+            <button type="button" class="clr-btn" @onclick="@(() => AccentColorV = "")">clear</button>
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>BorderColor</label>
+        <div class="row color">
+            <input type="color" @bind="BorderPick" @bind:event="oninput" />
+            <input type="text" @bind="BorderColorV" @bind:event="oninput" placeholder="(currentColor tint)" />
+            <button type="button" class="clr-btn" @onclick="@(() => BorderColorV = "")">clear</button>
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>DividerColor</label>
+        <div class="row color">
+            <input type="color" @bind="DividerPick" @bind:event="oninput" />
+            <input type="text" @bind="DividerColorV" @bind:event="oninput" placeholder="(currentColor tint)" />
+            <button type="button" class="clr-btn" @onclick="@(() => DividerColorV = "")">clear</button>
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>TextColor</label>
+        <div class="row color">
+            <input type="color" @bind="TextPick" @bind:event="oninput" />
+            <input type="text" @bind="TextColorV" @bind:event="oninput" placeholder="(CanvasText)" />
+            <button type="button" class="clr-btn" @onclick="@(() => TextColorV = "")">clear</button>
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>CssClass</label>
+        <input type="text" @bind="CssClassV" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Style</label>
+        <input type="text" @bind="StyleV" @bind:event="oninput" placeholder="e.g. opacity:.9" />
+    </div>
+</div>
+
+<div class="cdl-stage">
+    @* ---- nested sections (the usual shape) ------------------------------------------------- *@
+    <section class="cdl-case">
+        <h2>AtomCard with nested sections</h2>
+        <div class="cdl-row">
+            <AtomCard Variant="@VariantSel" Elevation="@ElevationSel" Effect="@EffectSel"
+                      MediaPosition="@MediaPositionSel"
+                      Media="@(ShowMedia ? MediaFragment : null)"
+                      MediaSize="@Nz(MediaSizeV)"
+                      Href="@Nz(HrefV)" Target="@Nz(TargetV)" AriaLabel="@Nz(AriaLabelV)"
+                      OnClick="@(Clickable ? EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, () => Log("card")) : default)"
+                      Padding="@Signed(PaddingV)" Divider="@CardDivider"
+                      Radius="@Signed(RadiusV)" BorderWidth="@Signed(BorderWidthV)"
+                      Duration="@Opt(DurationV)"
+                      Width="@Nz(WidthV)" Height="@Nz(HeightV)"
+                      BackgroundColor="@Nz(BackgroundColorV)" AccentColor="@Nz(AccentColorV)"
+                      BorderColor="@Nz(BorderColorV)" DividerColor="@Nz(DividerColorV)"
+                      TextColor="@Nz(TextColorV)"
+                      Visible="@VisibleV"
+                      CssClass="@Nz(CssClassV)" Style="@Nz(StyleV)">
+                <AtomCardHeader Title="@Nz(TitleV)"
+                                HeadingLevel="@HeadingLevelV"
+                                Subtitle="@(ShowSubtitle ? SubtitleFragment : null)"
+                                Avatar="@(ShowAvatar ? AvatarFragment : null)"
+                                Actions="@(ShowActions ? ActionsFragment : null)"
+                                ChildContent="@(HeaderCustomContent ? HeaderContentFragment : null)"
+                                Divider="@HeaderDivider"
+                                Padding="@Signed(HeaderPaddingV)"
+                                BackgroundColor="@Nz(HeaderBgV)" />
+                <AtomCardBody Scrollable="@BodyScrollable"
+                              MaxHeight="@Nz(BodyMaxHeightV)"
+                              Padding="@Signed(BodyPaddingV)"
+                              BackgroundColor="@Nz(BodyBgV)">
+                    <p>@BodyTextV</p>
+                    @if (LongBody)
+                    {
+                        <p>Set <code>Scrollable</code> with a <code>MaxHeight</code> and this second
+                           paragraph scrolls inside the body instead of stretching the card. The
+                           scroll box is focusable, so it is reachable without a mouse.</p>
+                        <p>A third paragraph, to make sure there is genuinely something to scroll.</p>
+                    }
+                </AtomCardBody>
+                <AtomCardFooter Align="@FooterAlign" Divider="@FooterDivider"
+                                Padding="@Signed(FooterPaddingV)"
+                                BackgroundColor="@Nz(FooterBgV)">
+                    <button type="button" class="cdl-btn" @onclick="@(() => Log("footer: Cancel"))">Cancel</button>
+                    <button type="button" class="cdl-btn primary" @onclick="@(() => Log("footer: Save"))">Save</button>
+                </AtomCardFooter>
+            </AtomCard>
+        </div>
+        <div class="cdl-opts">
+            <div class="ctrl">
+                <label>Header Title</label>
+                <input type="text" @bind="TitleV" @bind:event="oninput" placeholder="(none)" />
+            </div>
+            <div class="ctrl">
+                <label>HeadingLevel (h1-h6) <span class="val">@HeadingLevelV</span></label>
+                <input type="range" min="1" max="6" step="1" @bind="HeadingLevelV" @bind:event="oninput" />
+                <span class="note">a real heading element, so the outline stays correct</span>
+            </div>
+            <div class="ctrl">
+                <label>Header slots</label>
+                <div class="row"><input type="checkbox" id="cdlSub" @bind="ShowSubtitle" /><label for="cdlSub" class="inline">Subtitle</label></div>
+                <div class="row"><input type="checkbox" id="cdlAv" @bind="ShowAvatar" /><label for="cdlAv" class="inline">Avatar</label></div>
+                <div class="row"><input type="checkbox" id="cdlAct" @bind="ShowActions" /><label for="cdlAct" class="inline">Actions</label></div>
+                <div class="row"><input type="checkbox" id="cdlHdrCC" @bind="HeaderCustomContent" /><label for="cdlHdrCC" class="inline">ChildContent</label></div>
+                <span class="note">ChildContent replaces Title + Subtitle entirely</span>
+            </div>
+            <div class="ctrl">
+                <label>Header Padding (px, -1=inherit) <span class="val">@HeaderPaddingV.ToString(Inv)</span></label>
+                <input type="range" min="-1" max="48" step="1" @bind="HeaderPaddingV" @bind:event="oninput" @bind:culture="Inv" />
+            </div>
+            <div class="ctrl">
+                <label>Header BackgroundColor</label>
+                <div class="row color">
+                    <input type="color" @bind="HeaderBgPick" @bind:event="oninput" />
+                    <input type="text" @bind="HeaderBgV" @bind:event="oninput" placeholder="(transparent)" />
+                    <button type="button" class="clr-btn" @onclick="@(() => HeaderBgV = "")">clear</button>
+                </div>
+            </div>
+            <div class="ctrl">
+                <label>Body text</label>
+                <input type="text" @bind="BodyTextV" @bind:event="oninput" />
+            </div>
+            <div class="ctrl">
+                <label>Body</label>
+                <div class="row"><input type="checkbox" id="cdlLong" @bind="LongBody" /><label for="cdlLong" class="inline">Long content</label></div>
+                <div class="row"><input type="checkbox" id="cdlScroll" @bind="BodyScrollable" /><label for="cdlScroll" class="inline">Scrollable</label></div>
+            </div>
+            <div class="ctrl">
+                <label>Body MaxHeight</label>
+                <input type="text" @bind="BodyMaxHeightV" @bind:event="oninput" placeholder="(none)" />
+            </div>
+            <div class="ctrl">
+                <label>Body Padding (px, -1=inherit) <span class="val">@BodyPaddingV.ToString(Inv)</span></label>
+                <input type="range" min="-1" max="48" step="1" @bind="BodyPaddingV" @bind:event="oninput" @bind:culture="Inv" />
+                <span class="note">a section's own value beats the cascade</span>
+            </div>
+            <div class="ctrl">
+                <label>Body BackgroundColor</label>
+                <div class="row color">
+                    <input type="color" @bind="BodyBgPick" @bind:event="oninput" />
+                    <input type="text" @bind="BodyBgV" @bind:event="oninput" placeholder="(transparent)" />
+                    <button type="button" class="clr-btn" @onclick="@(() => BodyBgV = "")">clear</button>
+                </div>
+            </div>
+            <div class="ctrl">
+                <label>Footer Align</label>
+                <select @bind="FooterAlign">
+                    @foreach (var a in Aligns) { <option value="@a">@a</option> }
+                </select>
+            </div>
+            <div class="ctrl">
+                <label>Footer Padding (px, -1=inherit) <span class="val">@FooterPaddingV.ToString(Inv)</span></label>
+                <input type="range" min="-1" max="48" step="1" @bind="FooterPaddingV" @bind:event="oninput" @bind:culture="Inv" />
+            </div>
+            <div class="ctrl">
+                <label>Footer BackgroundColor</label>
+                <div class="row color">
+                    <input type="color" @bind="FooterBgPick" @bind:event="oninput" />
+                    <input type="text" @bind="FooterBgV" @bind:event="oninput" placeholder="(transparent)" />
+                    <button type="button" class="clr-btn" @onclick="@(() => FooterBgV = "")">clear</button>
+                </div>
+            </div>
+            <div class="ctrl">
+                <label>Dividers</label>
+                <div class="row"><input type="checkbox" id="cdlCardDiv" @bind="CardDivider" /><label for="cdlCardDiv" class="inline">Card default</label></div>
+                <div class="row"><input type="checkbox" id="cdlHdrDiv" @bind="HeaderDividerSet" /><label for="cdlHdrDiv" class="inline">Header override</label></div>
+                <div class="row"><input type="checkbox" id="cdlFtrDiv" @bind="FooterDividerSet" /><label for="cdlFtrDiv" class="inline">Footer override</label></div>
+                <span class="note">overrides force the rule ON regardless of the card</span>
+            </div>
+        </div>
+    </section>
+
+    @* ---- the same card via slots ----------------------------------------------------------- *@
+    <section class="cdl-case">
+        <h2>The same card via <code>Header</code>/<code>Body</code>/<code>Footer</code> slots</h2>
+        <p class="note">Identical output — the slots render the section components for you. Useful when
+           the content is short, or when the card is placed by a loop.</p>
+        <div class="cdl-row">
+            <AtomCard Variant="@VariantSel" Elevation="@ElevationSel" Effect="@EffectSel"
+                      MediaPosition="@MediaPositionSel"
+                      Media="@(ShowMedia ? MediaFragment : null)"
+                      Padding="@Signed(PaddingV)" Divider="@CardDivider"
+                      Radius="@Signed(RadiusV)" BorderWidth="@Signed(BorderWidthV)"
+                      Width="@Nz(WidthV)"
+                      BackgroundColor="@Nz(BackgroundColorV)" AccentColor="@Nz(AccentColorV)"
+                      Header="@SlotHeader" Body="@SlotBody" Footer="@SlotFooter" />
+        </div>
+    </section>
+
+    @* ---- every variant at a glance --------------------------------------------------------- *@
+    <section class="cdl-case">
+        <h2>Variant &times; Elevation</h2>
+        <p class="note">Each row is one <code>Variant</code>; the current <code>Effect</code> applies.
+           Only <code>Elevated</code> responds to <code>Elevation</code>.</p>
+        @foreach (var variant in Variants)
+        {
+            <div class="cdl-matrix">
+                <code class="cdl-matrix-name">@variant</code>
+                @foreach (var elevation in Elevations)
+                {
+                    <AtomCard Variant="@variant" Elevation="@elevation" Effect="@EffectSel"
+                              Radius="@Signed(RadiusV)" Width="8.5rem"
+                              AccentColor="@Nz(AccentColorV)">
+                        <AtomCardBody Padding="10">
+                            <small>@elevation</small>
+                        </AtomCardBody>
+                    </AtomCard>
+                }
+            </div>
+        }
+    </section>
+
+    @* ---- sections standalone --------------------------------------------------------------- *@
+    <section class="cdl-case">
+        <h2>Sections outside a card</h2>
+        <p class="note">No cascaded <code>CardContext</code> — each section falls back to its own CSS
+           defaults, so they compose into any container.</p>
+        <div class="cdl-loose">
+            <AtomCardHeader Title="Standalone header" />
+            <AtomCardBody>Standalone body.</AtomCardBody>
+            <AtomCardFooter Align="CardSectionAlign.End">
+                <button type="button" class="cdl-btn" @onclick="@(() => Log("loose footer"))">OK</button>
+            </AtomCardFooter>
+        </div>
+    </section>
+</div>
+
+<p class="cdl-log">Clicks: <code>@ClickLog</code></p>
+
+<CodeSnippetBox Code="@Snippet" FileName="CardLayoutExample.razor" />
+
+<style>
+    .cdl-controls, .cdl-opts { display:grid; grid-template-columns:repeat(auto-fit,minmax(215px,1fr)); gap:1rem 1.5rem; }
+    .cdl-controls { background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; margin-bottom:1.5rem; }
+    .cdl-controls .ctrl, .cdl-opts .ctrl { display:flex; flex-direction:column; gap:.4rem; }
+    .cdl-controls label, .cdl-opts label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; gap:.5rem; }
+    .cdl-controls label .val, .cdl-opts label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
+    .cdl-controls input[type=range], .cdl-opts input[type=range] { width:100%; accent-color:#2563eb; }
+    .cdl-controls input[type=text], .cdl-controls select, .cdl-opts input[type=text], .cdl-opts select
+        { padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; min-width:0; }
+    .cdl-controls .row, .cdl-opts .row { display:flex; align-items:center; gap:.5rem; }
+    .cdl-controls .row input[type=checkbox], .cdl-opts .row input[type=checkbox] { accent-color:#2563eb; width:16px; height:16px; flex:none; }
+    .cdl-controls .row.color input[type=color] { flex:none; width:38px; height:32px; padding:2px; background:#070b10; border:1px solid #1b2330; border-radius:6px; cursor:pointer; }
+    .cdl-controls .row.color input[type=text] { flex:1 1 auto; min-width:0; }
+    .cdl-controls .row label.inline, .cdl-opts .row label.inline { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; justify-content:flex-start; }
+    .cdl-controls .clr-btn, .cdl-opts .clr-btn { flex:none; padding:.35rem .55rem; border:1px solid #1b2330; background:#161d29; color:#cfd8e3; border-radius:6px; cursor:pointer; font-size:.75rem; }
+    .cdl-controls .clr-btn:hover { background:#1e2836; }
+    .note { font-size:.75rem; color:#5fb7c9; font-family:ui-monospace,monospace; }
+
+    .cdl-stage { display:flex; flex-direction:column; gap:1.25rem; }
+    .cdl-case { border:1px solid #e2e8f0; border-radius:12px; padding:1.25rem 1.5rem; }
+    .cdl-case h2 { margin:0 0 .75rem; font-size:1rem; font-family:ui-monospace,Consolas,monospace; color:#334155; }
+    .cdl-case > .note { display:block; margin-bottom:.75rem; color:#64748b; }
+    .cdl-row { display:flex; flex-wrap:wrap; align-items:flex-start; gap:1rem; margin-bottom:1rem; max-width:34rem; }
+    .cdl-case .cdl-opts { background:#0d1118; border:1px solid #1b2330; border-radius:10px; padding:1rem 1.25rem; color:#cfd8e3; }
+
+    .cdl-matrix { display:flex; flex-wrap:wrap; align-items:stretch; gap:1rem; padding:.75rem 0; border-bottom:1px dashed #eef2f7; }
+    .cdl-matrix:last-child { border-bottom:0; }
+    .cdl-matrix-name { flex:0 0 5.5rem; align-self:center; font-size:.8rem; color:#64748b; }
+
+    .cdl-loose { max-width:26rem; border:1px dashed #cbd5e1; border-radius:8px; }
+
+    /* Footer/header controls are the consumer's markup — the sections only place them. */
+    .cdl-btn { padding:.35rem .75rem; border:1px solid #cbd5e1; border-radius:6px; background:#fff; color:#334155; font:inherit; font-size:.85rem; cursor:pointer; }
+    .cdl-btn.primary { border-color:#2563eb; background:#2563eb; color:#fff; }
+    .cdl-btn:hover { filter:brightness(.96); }
+
+    .cdl-log { font-family:ui-monospace,monospace; font-size:.8rem; color:#64748b; }
+</style>
+
+@code {
+    private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
+
+    private static readonly CardVariant[] Variants = Enum.GetValues<CardVariant>();
+    private static readonly CardElevation[] Elevations = Enum.GetValues<CardElevation>();
+    private static readonly CardEffect[] Effects = Enum.GetValues<CardEffect>();
+    private static readonly CardMediaPosition[] MediaPositions = Enum.GetValues<CardMediaPosition>();
+    private static readonly CardSectionAlign[] Aligns = Enum.GetValues<CardSectionAlign>();
+
+    // ---- card surface ------------------------------------------------------------------------
+
+    private CardVariant VariantSel = CardVariant.Elevated;
+    private CardElevation ElevationSel = CardElevation.Medium;
+    private CardEffect EffectSel = CardEffect.HoverLift;
+    private CardMediaPosition MediaPositionSel = CardMediaPosition.Top;
+
+    private bool ShowMedia = true;
+    private string MediaSizeV = "";
+    private bool Clickable;
+    private bool VisibleV = true;
+    private string HrefV = "";
+    private string TargetV = "";
+    private string AriaLabelV = "";
+    private double PaddingV = -1;
+    private double RadiusV = -1;
+    private double BorderWidthV = -1;
+    private double DurationV;
+    private string WidthV = "22rem";
+    private string HeightV = "";
+    private string BackgroundColorV = "";
+    private string AccentColorV = "";
+    private string BorderColorV = "";
+    private string DividerColorV = "";
+    private string TextColorV = "";
+    private string CssClassV = "";
+    private string StyleV = "";
+
+    private string BgPick { get => Hex(BackgroundColorV, "#ffffff"); set => BackgroundColorV = value; }
+    private string AccentPick { get => Hex(AccentColorV, "#2563eb"); set => AccentColorV = value; }
+    private string BorderPick { get => Hex(BorderColorV, "#cbd5e1"); set => BorderColorV = value; }
+    private string DividerPick { get => Hex(DividerColorV, "#e2e8f0"); set => DividerColorV = value; }
+    private string TextPick { get => Hex(TextColorV, "#0f172a"); set => TextColorV = value; }
+
+    // ---- section state -----------------------------------------------------------------------
+
+    private string TitleV = "Quarterly report";
+    private int HeadingLevelV = 3;
+    private bool ShowSubtitle = true;
+    private bool ShowAvatar;
+    private bool ShowActions = true;
+    private bool HeaderCustomContent;
+    private double HeaderPaddingV = -1;
+    private string HeaderBgV = "";
+    private string BodyTextV = "Revenue is up 12% on the quarter, driven mostly by renewals.";
+    private bool LongBody;
+    private bool BodyScrollable;
+    private string BodyMaxHeightV = "";
+    private double BodyPaddingV = -1;
+    private string BodyBgV = "";
+    private CardSectionAlign FooterAlign = CardSectionAlign.End;
+    private double FooterPaddingV = -1;
+    private string FooterBgV = "";
+
+    private string HeaderBgPick { get => Hex(HeaderBgV, "#f1f5f9"); set => HeaderBgV = value; }
+    private string BodyBgPick { get => Hex(BodyBgV, "#ffffff"); set => BodyBgV = value; }
+    private string FooterBgPick { get => Hex(FooterBgV, "#f8fafc"); set => FooterBgV = value; }
+
+    private bool CardDivider = true;
+    private bool HeaderDividerSet;
+    private bool FooterDividerSet;
+
+    /// <summary>Null leaves the card's cascade in charge; true forces the rule on. There is no
+    /// "force off" control here because that is what clearing the card default already does.</summary>
+    private bool? HeaderDivider => HeaderDividerSet ? true : null;
+
+    private bool? FooterDivider => FooterDividerSet ? true : null;
+
+    // ---- click log ---------------------------------------------------------------------------
+
+    private int _clicks;
+    private string _last = "";
+
+    private string ClickLog => _clicks == 0 ? "none yet" : $"{_clicks} × — last: {_last}";
+
+    private void Log(string what)
+    {
+        _clicks++;
+        _last = what;
+    }
+
+    // ---- fragments ---------------------------------------------------------------------------
+
+    /// <summary>An inline SVG rather than a raster file, per the library's graphics policy — and it
+    /// needs no asset in the demo hosts.</summary>
+    private static readonly RenderFragment MediaFragment = b => b.AddMarkupContent(0,
+        "<svg viewBox=\"0 0 320 120\" role=\"img\" aria-label=\"Decorative chart\" " +
+        "style=\"display:block;width:100%;height:auto\">" +
+        "<defs><linearGradient id=\"cdlGrad\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">" +
+        "<stop offset=\"0\" stop-color=\"#2563eb\"/><stop offset=\"1\" stop-color=\"#0ea5e9\"/>" +
+        "</linearGradient></defs>" +
+        "<rect width=\"320\" height=\"120\" fill=\"url(#cdlGrad)\"/>" +
+        "<path d=\"M0 96 L60 74 L120 84 L180 44 L240 58 L320 20\" fill=\"none\" stroke=\"#fff\" " +
+        "stroke-width=\"3\" stroke-linejoin=\"round\" opacity=\".9\"/></svg>");
+
+    private static readonly RenderFragment SubtitleFragment = b => b.AddMarkupContent(0,
+        "Updated <em>2 hours ago</em>");
+
+    private static readonly RenderFragment AvatarFragment = b => b.AddMarkupContent(0,
+        "<span style=\"display:inline-flex;width:36px;height:36px;border-radius:999px;" +
+        "background:#2563eb;color:#fff;align-items:center;justify-content:center;font-size:.8rem\">HS</span>");
+
+    private static readonly RenderFragment ActionsFragment = b => b.AddMarkupContent(0,
+        "<button type=\"button\" class=\"cdl-btn\">&hellip;</button>");
+
+    /// <summary>Shows <c>ChildContent</c> taking over the header's whole text block — Title and
+    /// Subtitle stop rendering entirely while this is supplied.</summary>
+    private static readonly RenderFragment HeaderContentFragment = b => b.AddMarkupContent(0,
+        "<div style=\"display:flex;align-items:baseline;gap:.4rem\">" +
+        "<strong>Custom header markup</strong><small style=\"opacity:.7\">(Title/Subtitle ignored)</small></div>");
+
+    private RenderFragment SlotHeader => b => b.AddMarkupContent(0,
+        $"<strong>{TitleV}</strong>");
+
+    private RenderFragment SlotBody => b => b.AddMarkupContent(0, $"<p>{BodyTextV}</p>");
+
+    private static readonly RenderFragment SlotFooter = b => b.AddMarkupContent(0,
+        "<small>Supplied through the Footer slot.</small>");
+
+    // ---- helpers -----------------------------------------------------------------------------
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
+
+    private static double? Opt(double v) => v > 0 ? v : null;
+
+    /// <summary>0 is meaningful for Padding/Radius/BorderWidth, so -1 is the unset sentinel.</summary>
+    private static double? Signed(double v) => v >= 0 ? v : null;
+
+    private static string Hex(string v, string fallback) =>
+        v.StartsWith('#') && (v.Length == 7 || v.Length == 4) ? v : fallback;
+
+    // ---- generated snippet -------------------------------------------------------------------
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder();
+            const string i = "          ";
+
+            sb.Append("<AtomCard");
+            if (VariantSel != CardVariant.Elevated) sb.Append($" Variant=\"CardVariant.{VariantSel}\"");
+            if (ElevationSel != CardElevation.Medium) sb.Append($"\n{i}Elevation=\"CardElevation.{ElevationSel}\"");
+            if (EffectSel != CardEffect.None) sb.Append($"\n{i}Effect=\"CardEffect.{EffectSel}\"");
+            if (ShowMedia && MediaPositionSel != CardMediaPosition.Top)
+                sb.Append($"\n{i}MediaPosition=\"CardMediaPosition.{MediaPositionSel}\"");
+            if (ShowMedia && !string.IsNullOrEmpty(MediaSizeV)) sb.Append($"\n{i}MediaSize=\"{MediaSizeV}\"");
+            if (!string.IsNullOrEmpty(HrefV)) sb.Append($"\n{i}Href=\"{HrefV}\"");
+            if (!string.IsNullOrEmpty(TargetV)) sb.Append($"\n{i}Target=\"{TargetV}\"");
+            if (Clickable && string.IsNullOrEmpty(HrefV)) sb.Append($"\n{i}OnClick=\"OpenReport\"");
+            if (!string.IsNullOrEmpty(AriaLabelV)) sb.Append($"\n{i}AriaLabel=\"{AriaLabelV}\"");
+            if (PaddingV >= 0) sb.Append($"\n{i}Padding=\"{PaddingV.ToString(Inv)}\"");
+            if (!CardDivider) sb.Append($"\n{i}Divider=\"false\"");
+            if (RadiusV >= 0) sb.Append($"\n{i}Radius=\"{RadiusV.ToString(Inv)}\"");
+            if (BorderWidthV >= 0) sb.Append($"\n{i}BorderWidth=\"{BorderWidthV.ToString(Inv)}\"");
+            if (DurationV > 0) sb.Append($"\n{i}Duration=\"{DurationV.ToString(Inv)}\"");
+            if (!string.IsNullOrEmpty(WidthV)) sb.Append($"\n{i}Width=\"{WidthV}\"");
+            if (!string.IsNullOrEmpty(HeightV)) sb.Append($"\n{i}Height=\"{HeightV}\"");
+            if (!string.IsNullOrEmpty(BackgroundColorV)) sb.Append($"\n{i}BackgroundColor=\"{BackgroundColorV}\"");
+            if (!string.IsNullOrEmpty(AccentColorV)) sb.Append($"\n{i}AccentColor=\"{AccentColorV}\"");
+            if (!string.IsNullOrEmpty(BorderColorV)) sb.Append($"\n{i}BorderColor=\"{BorderColorV}\"");
+            if (!string.IsNullOrEmpty(DividerColorV)) sb.Append($"\n{i}DividerColor=\"{DividerColorV}\"");
+            if (!string.IsNullOrEmpty(TextColorV)) sb.Append($"\n{i}TextColor=\"{TextColorV}\"");
+            if (!VisibleV) sb.Append($"\n{i}Visible=\"false\"");
+            if (!string.IsNullOrEmpty(CssClassV)) sb.Append($"\n{i}CssClass=\"{CssClassV}\"");
+            if (!string.IsNullOrEmpty(StyleV)) sb.Append($"\n{i}Style=\"{StyleV}\"");
+            sb.Append(">\n");
+
+            if (ShowMedia)
+            {
+                sb.Append("    <Media>\n        <img src=\"report.png\" alt=\"\" />\n    </Media>\n");
+            }
+
+            sb.Append("    <AtomCardHeader");
+            // ChildContent replaces Title/Subtitle, so emitting both would misrepresent the preview.
+            if (!HeaderCustomContent && !string.IsNullOrEmpty(TitleV)) sb.Append($" Title=\"{TitleV}\"");
+            if (!HeaderCustomContent && HeadingLevelV != 3) sb.Append($" HeadingLevel=\"{HeadingLevelV}\"");
+            if (HeaderDividerSet) sb.Append(" Divider=\"true\"");
+            if (HeaderPaddingV >= 0) sb.Append($" Padding=\"{HeaderPaddingV.ToString(Inv)}\"");
+            if (!string.IsNullOrEmpty(HeaderBgV)) sb.Append($" BackgroundColor=\"{HeaderBgV}\"");
+            if (HeaderCustomContent)
+            {
+                sb.Append(">\n        <strong>Custom header markup</strong>\n    </AtomCardHeader>\n");
+            }
+            else if (ShowSubtitle || ShowAvatar || ShowActions)
+            {
+                sb.Append(">\n");
+                if (ShowAvatar) sb.Append("        <Avatar><AtomInitialsAvatar Name=\"Howard S\" /></Avatar>\n");
+                if (ShowSubtitle) sb.Append("        <Subtitle>Updated <em>2 hours ago</em></Subtitle>\n");
+                if (ShowActions) sb.Append("        <Actions><AtomIconButton AriaLabel=\"More\" /></Actions>\n");
+                sb.Append("    </AtomCardHeader>\n");
+            }
+            else
+            {
+                sb.Append(" />\n");
+            }
+
+            sb.Append("    <AtomCardBody");
+            if (BodyScrollable) sb.Append(" Scrollable=\"true\"");
+            if (!string.IsNullOrEmpty(BodyMaxHeightV)) sb.Append($" MaxHeight=\"{BodyMaxHeightV}\"");
+            if (BodyPaddingV >= 0) sb.Append($" Padding=\"{BodyPaddingV.ToString(Inv)}\"");
+            if (!string.IsNullOrEmpty(BodyBgV)) sb.Append($" BackgroundColor=\"{BodyBgV}\"");
+            sb.Append($">\n        <p>{BodyTextV}</p>\n    </AtomCardBody>\n");
+
+            sb.Append("    <AtomCardFooter");
+            if (FooterAlign != CardSectionAlign.Start) sb.Append($" Align=\"CardSectionAlign.{FooterAlign}\"");
+            if (FooterDividerSet) sb.Append(" Divider=\"true\"");
+            if (FooterPaddingV >= 0) sb.Append($" Padding=\"{FooterPaddingV.ToString(Inv)}\"");
+            if (!string.IsNullOrEmpty(FooterBgV)) sb.Append($" BackgroundColor=\"{FooterBgV}\"");
+            sb.Append(">\n");
+            sb.Append("        <button type=\"button\" @onclick=\"Cancel\">Cancel</button>\n");
+            sb.Append("        <button type=\"button\" @onclick=\"SaveAsync\">Save</button>\n");
+            sb.Append("    </AtomCardFooter>\n");
+            sb.Append("</AtomCard>");
+
+            return sb.ToString();
+        }
+    }
+}

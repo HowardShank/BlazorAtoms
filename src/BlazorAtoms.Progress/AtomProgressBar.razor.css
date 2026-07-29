@@ -1,0 +1,215 @@
+/* AtomProgressBar — horizontal determinate/indeterminate bar.
+
+   Theming priority, lowest to highest:
+     1. the defaults block below
+     2. this file's [data-variant] / [data-size] / [data-effect] rules
+     3. a consumer stylesheet targeting .atom-progress-bar
+     4. the component's parameters (Thickness, FillColor, Duration, ...) — inline, always wins
+
+   The whole library shares one `--progress-*` prefix, so `--progress-accent` set once on an
+   ancestor moves every indicator on the page. */
+
+.atom-progress-bar {
+    /* ---- hooks ---- */
+    --progress-accent: #64748b;
+    --progress-thickness: .625rem;
+    --progress-radius: 999px;
+    --progress-track-color: color-mix(in srgb, currentColor 12%, transparent);
+    --progress-fill-color: var(--progress-accent);
+    --progress-text-color: currentColor;
+    --progress-font-size: .8125rem;
+    --progress-duration: .35s;
+    --progress-gap: .5rem;
+
+    display: block;
+    color: var(--progress-text-color);
+    font-size: var(--progress-font-size);
+}
+
+.atom-progress-bar-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--progress-gap);
+    margin-bottom: .25rem;
+}
+
+.atom-progress-bar-label {
+    font-weight: 500;
+}
+
+.atom-progress-bar-row {
+    display: flex;
+    align-items: center;
+    gap: var(--progress-gap);
+}
+
+.atom-progress-bar-track {
+    position: relative;
+    flex: 1 1 auto;
+    /* min-width:0 so a long readout beside the track can't push the track past its parent. */
+    min-width: 0;
+    height: var(--progress-thickness);
+    border-radius: var(--progress-radius);
+    background: var(--progress-track-color);
+    overflow: hidden;
+}
+
+.atom-progress-bar-buffer,
+.atom-progress-bar-fill {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    border-radius: inherit;
+}
+
+.atom-progress-bar-buffer {
+    background: color-mix(in srgb, var(--progress-fill-color) 35%, transparent);
+}
+
+.atom-progress-bar-fill {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    background: var(--progress-fill-color);
+    transition: width var(--progress-duration) ease;
+}
+
+.atom-progress-bar-value {
+    color: var(--progress-text-color);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* Inside the fill the readout sits on the accent, so it needs contrasting ink and a floor on the
+   track height — otherwise a Small bar clips the text. */
+.atom-progress-bar[data-value-position="inside"] .atom-progress-bar-track {
+    height: max(var(--progress-thickness), 1.25rem);
+    /* A pill fill with text hugging its right edge needs breathing room inside the cap. */
+    --progress-radius: 999px;
+}
+
+.atom-progress-bar[data-value-position="inside"] .atom-progress-bar-fill > .atom-progress-bar-value {
+    padding-inline: .5rem;
+    color: #fff;
+    font-size: .75em;
+    line-height: 1;
+}
+
+/* ---- variants ------------------------------------------------------------------------------ */
+
+.atom-progress-bar[data-variant="primary"] { --progress-accent: #2563eb; }
+.atom-progress-bar[data-variant="info"]    { --progress-accent: #0ea5e9; }
+.atom-progress-bar[data-variant="success"] { --progress-accent: #16a34a; }
+.atom-progress-bar[data-variant="warning"] { --progress-accent: #d97706; }
+.atom-progress-bar[data-variant="danger"]  { --progress-accent: #dc2626; }
+
+/* ---- sizes --------------------------------------------------------------------------------- */
+
+.atom-progress-bar[data-size="small"] {
+    --progress-thickness: .375rem;
+    --progress-font-size: .75rem;
+}
+
+.atom-progress-bar[data-size="large"] {
+    --progress-thickness: 1rem;
+    --progress-font-size: .9375rem;
+}
+
+/* ---- indeterminate ------------------------------------------------------------------------- */
+
+/* Independent of [data-effect]: "amount unknown" is a different concern from "decorate the amount",
+   so the two compose rather than one replacing the other. */
+.atom-progress-bar[data-indeterminate] .atom-progress-bar-fill {
+    width: 35%;
+    transition: none;
+    animation: atom-progress-bar-sweep calc(var(--progress-duration) * 4) ease-in-out infinite;
+}
+
+@keyframes atom-progress-bar-sweep {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(calc(100% / .35)); }
+}
+
+/* ---- effects ------------------------------------------------------------------------------- */
+
+.atom-progress-bar[data-effect="stripes"] .atom-progress-bar-fill,
+.atom-progress-bar[data-effect="stripes-animated"] .atom-progress-bar-fill {
+    background-image: linear-gradient(45deg,
+        rgb(255 255 255 / .22) 25%, transparent 25%,
+        transparent 50%, rgb(255 255 255 / .22) 50%,
+        rgb(255 255 255 / .22) 75%, transparent 75%, transparent);
+    background-size: calc(var(--progress-thickness) * 2) calc(var(--progress-thickness) * 2);
+}
+
+.atom-progress-bar[data-effect="stripes-animated"] .atom-progress-bar-fill {
+    animation: atom-progress-bar-stripes calc(var(--progress-duration) * 3) linear infinite;
+}
+
+@keyframes atom-progress-bar-stripes {
+    /* One full tile per cycle, so the loop is seamless. */
+    from { background-position: 0 0; }
+    to   { background-position: calc(var(--progress-thickness) * 2) 0; }
+}
+
+.atom-progress-bar[data-effect="shimmer"] .atom-progress-bar-fill::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgb(255 255 255 / .45), transparent);
+    animation: atom-progress-bar-shimmer calc(var(--progress-duration) * 5) linear infinite;
+}
+
+@keyframes atom-progress-bar-shimmer {
+    from { transform: translateX(-100%); }
+    to   { transform: translateX(100%); }
+}
+
+.atom-progress-bar[data-effect="glow"] .atom-progress-bar-track {
+    /* The track must stop clipping, or the halo is cut off at the fill's edge. */
+    overflow: visible;
+}
+
+.atom-progress-bar[data-effect="glow"] .atom-progress-bar-fill {
+    box-shadow: 0 0 .5rem color-mix(in srgb, var(--progress-fill-color) 70%, transparent),
+                0 0 1.25rem color-mix(in srgb, var(--progress-fill-color) 40%, transparent);
+}
+
+.atom-progress-bar[data-effect="pulse"] .atom-progress-bar-fill {
+    animation: atom-progress-bar-pulse calc(var(--progress-duration) * 4) ease-in-out infinite alternate;
+}
+
+@keyframes atom-progress-bar-pulse {
+    from { opacity: 1; }
+    to   { opacity: .55; }
+}
+
+.atom-progress-bar[data-effect="gradient"] .atom-progress-bar-fill {
+    background: linear-gradient(90deg,
+        color-mix(in srgb, var(--progress-fill-color) 45%, white),
+        var(--progress-fill-color));
+}
+
+/* An indeterminate bar already animates its own sweep; stacking a looping effect keyframe on the
+   same element would replace it (one animation property per element), so the sweep wins. */
+.atom-progress-bar[data-indeterminate][data-effect="stripes-animated"] .atom-progress-bar-fill,
+.atom-progress-bar[data-indeterminate][data-effect="pulse"] .atom-progress-bar-fill {
+    animation: atom-progress-bar-sweep calc(var(--progress-duration) * 4) ease-in-out infinite;
+}
+
+/* ---- reduced motion ------------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-progress-bar-fill,
+    .atom-progress-bar-fill::after {
+        transition: none;
+        animation: none;
+    }
+
+    /* An indeterminate bar with no animation would read as a stalled 35% bar, so fill the track
+       instead and let the accessible busy state carry the meaning. */
+    .atom-progress-bar[data-indeterminate] .atom-progress-bar-fill {
+        width: 100%;
+        opacity: .5;
+    }
+}

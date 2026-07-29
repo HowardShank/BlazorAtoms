@@ -1,0 +1,21 @@
+/* AtomCardBody — main content section of an AtomCard. */
+
+.atom-card-body {
+    flex: 1 1 auto;
+    /* min-height:0 is what lets the scrollable case actually shrink inside a fixed-height card;
+       without it a flex item refuses to go below its content height and the card overflows instead. */
+    min-height: 0;
+    padding: var(--card-section-padding, 1rem);
+    background: var(--card-section-bg, transparent);
+}
+
+.atom-card-body[data-scrollable] {
+    overflow-y: auto;
+    /* Keep a scroll gesture inside the card rather than chaining to the page once it bottoms out. */
+    overscroll-behavior: contain;
+}
+
+.atom-card-body[data-scrollable]:focus-visible {
+    outline: 2px solid var(--card-accent, #2563eb);
+    outline-offset: -2px;
+}

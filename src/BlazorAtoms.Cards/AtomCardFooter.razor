@@ -1,0 +1,9 @@
+@inherits AtomCardSectionBase
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-card-footer")"
+     style="@StyleAttr(BuildSectionStyle())"
+     data-divider="@DividerAttr(Divider)"
+     data-align="@AlignAttr">
+    @ChildContent
+</div>

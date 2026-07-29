@@ -1,0 +1,282 @@
+/* AtomProgressSteps — discrete step tracker.
+
+   Theming priority, lowest to highest:
+     1. the defaults block below
+     2. this file's [data-variant] / [data-size] / [data-status] / [data-effect] rules
+     3. a consumer stylesheet targeting .atom-progress-steps
+     4. the component's parameters (Thickness, FillColor, ...) — inline, always wins
+
+   Every part of a step's look is one [data-status] block, so adding a status is a CSS change only.
+   The connector is each item's own ::before rather than a rendered element — one less node per step,
+   and :first-child suppresses the leading one. */
+
+.atom-progress-steps {
+    /* ---- hooks ---- */
+    --progress-accent: #64748b;
+    --progress-thickness: 2px;
+    --progress-track-color: color-mix(in srgb, currentColor 20%, transparent);
+    --progress-fill-color: var(--progress-accent);
+    --progress-text-color: currentColor;
+    --progress-font-size: .8125rem;
+    --progress-duration: .35s;
+    --progress-marker-size: 2rem;
+    --progress-gap: .5rem;
+    /* Vertical only: the run of connector between two markers. */
+    --progress-step-gap: 1.25rem;
+
+    display: block;
+    color: var(--progress-text-color);
+    font-size: var(--progress-font-size);
+}
+
+.atom-progress-steps-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--progress-gap);
+    margin-bottom: .5rem;
+}
+
+.atom-progress-steps-label {
+    font-weight: 500;
+}
+
+.atom-progress-steps-count {
+    font-variant-numeric: tabular-nums;
+}
+
+.atom-progress-steps-list {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.atom-progress-steps-item {
+    position: relative;
+    display: flex;
+    flex: 1 1 0;
+    align-items: center;
+    min-width: 0;
+}
+
+.atom-progress-steps-marker {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: var(--progress-marker-size);
+    height: var(--progress-marker-size);
+    border: var(--progress-thickness) solid var(--progress-track-color);
+    border-radius: 999px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    transition: background-color var(--progress-duration) ease,
+                border-color var(--progress-duration) ease,
+                color var(--progress-duration) ease;
+}
+
+/* The marker is a <button> when OnStepClick is supplied — reset the UA chrome and make it read as
+   interactive. As a <span> these are inert and cost nothing. */
+button.atom-progress-steps-marker {
+    padding: 0;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+button.atom-progress-steps-marker:focus-visible {
+    outline: 2px solid var(--progress-fill-color);
+    outline-offset: 2px;
+}
+
+.atom-progress-steps-icon {
+    width: 60%;
+    height: 60%;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.atom-progress-steps-dot {
+    width: 40%;
+    height: 40%;
+    border-radius: 999px;
+    background: currentColor;
+}
+
+.atom-progress-steps-text {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+/* ---- orientation: horizontal (default) ----------------------------------------------------- */
+
+.atom-progress-steps[data-orientation="horizontal"] .atom-progress-steps-list {
+    align-items: flex-start;
+}
+
+.atom-progress-steps[data-orientation="horizontal"] .atom-progress-steps-item {
+    flex-direction: column;
+    gap: .35rem;
+    text-align: center;
+}
+
+/* Connector spans the gap between this marker's left edge and the previous one's right edge: start
+   at -50% of the item width, run to +50% minus the marker, centered on the marker's own row. */
+.atom-progress-steps[data-orientation="horizontal"] .atom-progress-steps-item::before {
+    content: "";
+    position: absolute;
+    top: calc(var(--progress-marker-size) / 2);
+    inset-inline: -50% calc(50% + var(--progress-marker-size) / 2);
+    height: var(--progress-thickness);
+    background: var(--progress-track-color);
+    transform: translateY(-50%);
+    transition: background-color var(--progress-duration) ease;
+}
+
+.atom-progress-steps[data-orientation="horizontal"] .atom-progress-steps-item:first-child::before {
+    content: none;
+}
+
+/* ---- orientation: vertical ----------------------------------------------------------------- */
+
+.atom-progress-steps[data-orientation="vertical"] .atom-progress-steps-list {
+    flex-direction: column;
+}
+
+.atom-progress-steps[data-orientation="vertical"] .atom-progress-steps-item {
+    flex: 0 0 auto;
+    align-items: flex-start;
+    gap: var(--progress-gap);
+    /* Room for the connector to run down to the next marker. One token drives both this and the
+       connector's own length below, so they can't drift apart. */
+    padding-bottom: var(--progress-step-gap);
+}
+
+.atom-progress-steps[data-orientation="vertical"] .atom-progress-steps-item:last-child {
+    padding-bottom: 0;
+}
+
+.atom-progress-steps[data-orientation="vertical"] .atom-progress-steps-text {
+    /* Center the caption against the marker rather than the padded item box. */
+    padding-top: calc((var(--progress-marker-size) - 1.2em) / 2);
+}
+
+.atom-progress-steps[data-orientation="vertical"] .atom-progress-steps-item::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: calc(var(--progress-marker-size) / 2);
+    /* The gap sits directly above this item's box (it is the previous item's padding-bottom), so the
+       connector starts one gap up and is exactly that long. */
+    top: calc(var(--progress-step-gap) * -1);
+    height: var(--progress-step-gap);
+    width: var(--progress-thickness);
+    background: var(--progress-track-color);
+    transform: translateX(-50%);
+    transition: background-color var(--progress-duration) ease;
+}
+
+.atom-progress-steps[data-orientation="vertical"] .atom-progress-steps-item:first-child::before {
+    content: none;
+}
+
+/* ---- statuses ------------------------------------------------------------------------------ */
+
+.atom-progress-steps-item[data-status="pending"] .atom-progress-steps-text {
+    opacity: .65;
+}
+
+.atom-progress-steps-item[data-status="active"] .atom-progress-steps-marker {
+    border-color: var(--progress-fill-color);
+    color: var(--progress-fill-color);
+    font-weight: 600;
+}
+
+.atom-progress-steps-item[data-status="active"] .atom-progress-steps-text {
+    font-weight: 600;
+}
+
+.atom-progress-steps-item[data-status="complete"] .atom-progress-steps-marker {
+    border-color: var(--progress-fill-color);
+    background: var(--progress-fill-color);
+    color: #fff;
+}
+
+/* The connector belongs to the step it leads into, so a complete/active step fills the line behind
+   it — the filled run always ends at the current marker. */
+.atom-progress-steps-item[data-status="complete"]::before,
+.atom-progress-steps-item[data-status="active"]::before {
+    background: var(--progress-fill-color);
+}
+
+.atom-progress-steps-item[data-status="error"] .atom-progress-steps-marker {
+    border-color: #dc2626;
+    background: #dc2626;
+    color: #fff;
+}
+
+.atom-progress-steps-item[data-status="error"] .atom-progress-steps-text {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.atom-progress-steps-item[data-status="error"]::before {
+    background: #dc2626;
+}
+
+/* ---- variants ------------------------------------------------------------------------------ */
+
+.atom-progress-steps[data-variant="primary"] { --progress-accent: #2563eb; }
+.atom-progress-steps[data-variant="info"]    { --progress-accent: #0ea5e9; }
+.atom-progress-steps[data-variant="success"] { --progress-accent: #16a34a; }
+.atom-progress-steps[data-variant="warning"] { --progress-accent: #d97706; }
+.atom-progress-steps[data-variant="danger"]  { --progress-accent: #dc2626; }
+
+/* ---- sizes --------------------------------------------------------------------------------- */
+
+.atom-progress-steps[data-size="small"] {
+    --progress-marker-size: 1.5rem;
+    --progress-font-size: .75rem;
+}
+
+.atom-progress-steps[data-size="large"] {
+    --progress-marker-size: 2.75rem;
+    --progress-font-size: .9375rem;
+    --progress-thickness: 3px;
+}
+
+/* ---- effects ------------------------------------------------------------------------------- */
+
+/* Only the effects that mean something for a marker are wired; the fill-texture members
+   (stripes, gradient) have no filled bar to texture here and are deliberately inert. */
+
+.atom-progress-steps[data-effect="glow"] .atom-progress-steps-item[data-status="active"] .atom-progress-steps-marker {
+    box-shadow: 0 0 0 .25rem color-mix(in srgb, var(--progress-fill-color) 25%, transparent);
+}
+
+.atom-progress-steps[data-effect="pulse"] .atom-progress-steps-item[data-status="active"] .atom-progress-steps-marker,
+.atom-progress-steps[data-effect="shimmer"] .atom-progress-steps-item[data-status="active"] .atom-progress-steps-marker {
+    animation: atom-progress-steps-pulse calc(var(--progress-duration) * 4) ease-in-out infinite alternate;
+}
+
+@keyframes atom-progress-steps-pulse {
+    from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--progress-fill-color) 45%, transparent); }
+    to   { box-shadow: 0 0 0 .45rem color-mix(in srgb, var(--progress-fill-color) 0%, transparent); }
+}
+
+/* ---- reduced motion ------------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-progress-steps-marker,
+    .atom-progress-steps-item::before {
+        transition: none;
+        animation: none;
+    }
+}

@@ -1,0 +1,57 @@
+@inherits AtomProgressValueBase
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-progress-ring")"
+     style="@StyleAttr(RootStyle)"
+     data-variant="@VariantAttr"
+     data-size="@SizeAttr"
+     data-effect="@EffectAttr"
+     data-indeterminate="@IndeterminateAttr">
+    <div class="atom-progress-ring-figure"
+         role="progressbar"
+         aria-label="@EffectiveAriaLabel"
+         aria-valuenow="@AriaValueNow"
+         aria-valuemin="@AriaValueMin"
+         aria-valuemax="@AriaValueMax"
+         aria-valuetext="@DisplayValue">
+        @* viewBox matches Diameter 1:1, so 1 user unit == 1 px and stroke-width/r need no scaling.
+           pathLength="100" re-bases stroke-dasharray onto a 0-100 scale, which is what keeps the
+           arc math free of pi and of the radius entirely. *@
+        <svg class="atom-progress-ring-svg"
+             viewBox="@ViewBox"
+             width="@Invariant(Diameter)"
+             height="@Invariant(Diameter)"
+             focusable="false"
+             aria-hidden="true">
+            <circle class="atom-progress-ring-track"
+                    cx="@Center" cy="@Center" r="@RadiusValue"
+                    fill="none" stroke-width="@StrokeWidth" />
+            <circle class="atom-progress-ring-fill"
+                    cx="@Center" cy="@Center" r="@RadiusValue"
+                    fill="none"
+                    stroke-width="@StrokeWidth"
+                    stroke-linecap="@CapAttr"
+                    pathLength="100"
+                    stroke-dasharray="100"
+                    stroke-dashoffset="@DashOffset"
+                    transform="@ArcTransform" />
+        </svg>
+        @if (CenterContent is not null || ShowValue && DisplayValue is not null)
+        {
+            <div class="atom-progress-ring-center">
+                @if (CenterContent is not null)
+                {
+                    @CenterContent
+                }
+                else
+                {
+                    <span class="atom-progress-ring-value">@DisplayValue</span>
+                }
+            </div>
+        }
+    </div>
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <div class="atom-progress-ring-label">@Label</div>
+    }
+</div>

@@ -1,0 +1,88 @@
+@inherits AtomProgressBase
+
+@* One template for the marker's inner content, declared up front: it is identical whether the
+   marker renders as a button (OnStepClick supplied) or as a plain span, and Razor resolves locals in
+   source order, so it has to precede the markup that uses it. *@
+@{
+    RenderFragment MarkerContent(int index, ProgressStepStatus status) =>
+        @<text>
+            @if (status == ProgressStepStatus.Error)
+            {
+                <svg class="atom-progress-steps-icon" viewBox="0 0 24 24" focusable="false">
+                    <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+            }
+            else if (Marker == ProgressStepMarker.Check && status == ProgressStepStatus.Complete)
+            {
+                <svg class="atom-progress-steps-icon" viewBox="0 0 24 24" focusable="false">
+                    <path d="M5 12.5l4.5 4.5L19 7.5" />
+                </svg>
+            }
+            else if (Marker == ProgressStepMarker.Dot)
+            {
+                <span class="atom-progress-steps-dot"></span>
+            }
+            else if (Marker != ProgressStepMarker.None)
+            {
+                <span class="atom-progress-steps-number">@(index + 1)</span>
+            }
+        </text>;
+}
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-progress-steps")"
+     style="@StyleAttr(RootStyle)"
+     data-variant="@VariantAttr"
+     data-size="@SizeAttr"
+     data-effect="@EffectAttr"
+     data-orientation="@OrientationAttr">
+    @if (!string.IsNullOrEmpty(Label) || ShowValue)
+    {
+        <div class="atom-progress-steps-head">
+            <span class="atom-progress-steps-label">@Label</span>
+            @if (ShowValue)
+            {
+                <span class="atom-progress-steps-count">@CountText</span>
+            }
+        </div>
+    }
+    <ol class="atom-progress-steps-list" aria-label="@EffectiveAriaLabel">
+        @for (var i = 0; i < StepList.Count; i++)
+        {
+            var index = i;
+            var status = StatusOf(index);
+
+            <li class="atom-progress-steps-item"
+                data-status="@Kebab(status.ToString())"
+                aria-current="@(status == ProgressStepStatus.Active ? "step" : null)">
+                @* The connector line is the item's own ::before in CSS — no extra element, and
+                   :first-child suppresses it on the leading step. *@
+                @if (OnStepClick.HasDelegate)
+                {
+                    <button type="button"
+                            class="atom-progress-steps-marker"
+                            aria-label="@StepAriaLabel(index, status)"
+                            @onclick="() => OnStepClick.InvokeAsync(index)">
+                        @MarkerContent(index, status)
+                    </button>
+                }
+                else
+                {
+                    <span class="atom-progress-steps-marker" aria-hidden="true">
+                        @MarkerContent(index, status)
+                    </span>
+                }
+                <span class="atom-progress-steps-text">
+                    @if (StepTemplate is not null)
+                    {
+                        @StepTemplate(index)
+                    }
+                    else
+                    {
+                        @StepList[index]
+                    }
+                </span>
+            </li>
+        }
+    </ol>
+</div>

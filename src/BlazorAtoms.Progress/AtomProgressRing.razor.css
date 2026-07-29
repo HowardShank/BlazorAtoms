@@ -1,0 +1,173 @@
+/* AtomProgressRing — circular arc indicator.
+
+   Theming priority, lowest to highest:
+     1. the defaults block below
+     2. this file's [data-variant] / [data-size] / [data-effect] rules
+     3. a consumer stylesheet targeting .atom-progress-ring
+     4. the component's parameters (Diameter, Thickness, FillColor, ...) — inline, always wins
+
+   `--progress-thickness` here is informational for the effect rules: the stroke width and radius are
+   resolved in C# (see AtomProgressRing.razor.cs) because `r` depends on the stroke width and CSS
+   geometry properties aren't portable yet. */
+
+.atom-progress-ring {
+    /* ---- hooks ---- */
+    --progress-accent: #64748b;
+    --progress-track-color: color-mix(in srgb, currentColor 12%, transparent);
+    --progress-fill-color: var(--progress-accent);
+    --progress-text-color: currentColor;
+    --progress-font-size: .875rem;
+    --progress-duration: .35s;
+
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .4rem;
+    color: var(--progress-text-color);
+    font-size: var(--progress-font-size);
+}
+
+.atom-progress-ring-figure {
+    position: relative;
+    display: inline-flex;
+    line-height: 0;
+}
+
+.atom-progress-ring-track {
+    stroke: var(--progress-track-color);
+}
+
+.atom-progress-ring-fill {
+    stroke: var(--progress-fill-color);
+    transition: stroke-dashoffset var(--progress-duration) ease;
+}
+
+.atom-progress-ring-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    /* The readout must never intercept a click meant for whatever the ring sits on. */
+    pointer-events: none;
+    line-height: 1.15;
+    text-align: center;
+}
+
+.atom-progress-ring-value {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.atom-progress-ring-label {
+    text-align: center;
+}
+
+/* ---- variants ------------------------------------------------------------------------------ */
+
+.atom-progress-ring[data-variant="primary"] { --progress-accent: #2563eb; }
+.atom-progress-ring[data-variant="info"]    { --progress-accent: #0ea5e9; }
+.atom-progress-ring[data-variant="success"] { --progress-accent: #16a34a; }
+.atom-progress-ring[data-variant="warning"] { --progress-accent: #d97706; }
+.atom-progress-ring[data-variant="danger"]  { --progress-accent: #dc2626; }
+
+/* ---- sizes --------------------------------------------------------------------------------- */
+
+/* Size drives only type here — the ring's geometry comes from Diameter/Thickness, which are real
+   numbers the C# needs, not CSS lengths. */
+.atom-progress-ring[data-size="small"] { --progress-font-size: .75rem; }
+.atom-progress-ring[data-size="large"] { --progress-font-size: 1.125rem; }
+
+/* ---- indeterminate ------------------------------------------------------------------------- */
+
+/* A fixed quarter-arc spun around the center. `transform-box: fill-box` + a 50% origin makes the
+   rotation independent of Diameter, so this works at any size without per-size keyframes. Overrides
+   the inline `transform` attribute, which is why StartAngle has no effect while indeterminate. */
+.atom-progress-ring[data-indeterminate] .atom-progress-ring-fill {
+    stroke-dasharray: 25 75;
+    stroke-dashoffset: 0;
+    transition: none;
+    transform-box: fill-box;
+    transform-origin: 50% 50%;
+    animation: atom-progress-ring-spin calc(var(--progress-duration) * 3) linear infinite;
+}
+
+@keyframes atom-progress-ring-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* ---- effects ------------------------------------------------------------------------------- */
+
+/* Stripes/gradient are background-image treatments — an SVG stroke can't take one without a
+   <pattern>/<linearGradient> def per instance, which would mean minting ids that differ between the
+   prerender and interactive passes. They degrade to the closest stroke-only equivalent instead. */
+
+.atom-progress-ring[data-effect="stripes"] .atom-progress-ring-fill,
+.atom-progress-ring[data-effect="stripes-animated"] .atom-progress-ring-fill {
+    stroke-dasharray: 2 2;
+}
+
+.atom-progress-ring[data-effect="stripes-animated"] .atom-progress-ring-fill {
+    animation: atom-progress-ring-march calc(var(--progress-duration) * 3) linear infinite;
+}
+
+@keyframes atom-progress-ring-march {
+    /* One dash+gap pair per cycle, so the march is seamless. */
+    from { stroke-dashoffset: 0; }
+    to   { stroke-dashoffset: 4; }
+}
+
+.atom-progress-ring[data-effect="glow"] .atom-progress-ring-fill,
+.atom-progress-ring[data-effect="shimmer"] .atom-progress-ring-fill {
+    /* drop-shadow, not box-shadow: an SVG stroke has no box to shadow. */
+    filter: drop-shadow(0 0 .35rem color-mix(in srgb, var(--progress-fill-color) 75%, transparent));
+}
+
+.atom-progress-ring[data-effect="shimmer"] .atom-progress-ring-fill {
+    animation: atom-progress-ring-shimmer calc(var(--progress-duration) * 5) ease-in-out infinite alternate;
+}
+
+@keyframes atom-progress-ring-shimmer {
+    from { filter: drop-shadow(0 0 .15rem color-mix(in srgb, var(--progress-fill-color) 40%, transparent)); }
+    to   { filter: drop-shadow(0 0 .7rem color-mix(in srgb, var(--progress-fill-color) 90%, transparent)); }
+}
+
+.atom-progress-ring[data-effect="pulse"] .atom-progress-ring-fill {
+    animation: atom-progress-ring-pulse calc(var(--progress-duration) * 4) ease-in-out infinite alternate;
+}
+
+@keyframes atom-progress-ring-pulse {
+    from { opacity: 1; }
+    to   { opacity: .5; }
+}
+
+.atom-progress-ring[data-effect="gradient"] .atom-progress-ring-fill {
+    stroke: color-mix(in srgb, var(--progress-fill-color) 80%, white);
+}
+
+/* The indeterminate spin owns the fill's animation property; a looping effect keyframe on the same
+   element would replace it, so the spin wins. */
+.atom-progress-ring[data-indeterminate][data-effect="stripes-animated"] .atom-progress-ring-fill,
+.atom-progress-ring[data-indeterminate][data-effect="shimmer"] .atom-progress-ring-fill,
+.atom-progress-ring[data-indeterminate][data-effect="pulse"] .atom-progress-ring-fill {
+    animation: atom-progress-ring-spin calc(var(--progress-duration) * 3) linear infinite;
+}
+
+/* ---- reduced motion ------------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-progress-ring-fill {
+        transition: none;
+        animation: none;
+    }
+
+    /* A frozen quarter-arc reads as a stalled 25%, so show a dimmed full ring instead and let the
+       accessible busy state carry the meaning. */
+    .atom-progress-ring[data-indeterminate] .atom-progress-ring-fill {
+        stroke-dasharray: 100;
+        stroke-dashoffset: 0;
+        opacity: .5;
+    }
+}

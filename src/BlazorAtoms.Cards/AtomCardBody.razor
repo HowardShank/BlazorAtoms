@@ -1,0 +1,9 @@
+@inherits AtomCardSectionBase
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-card-body")"
+     style="@StyleAttr(BuildSectionStyle(BodyStyle))"
+     data-scrollable="@ScrollableAttr"
+     tabindex="@ScrollTabIndex">
+    @ChildContent
+</div>
