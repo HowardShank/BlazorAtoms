@@ -120,7 +120,7 @@
     <div class="tt-ctrl">
         <label>Placement</label>
         <select @bind="Placement">
-            @foreach (var p in Enum.GetValues<Placement>())
+            @foreach (var p in Enum.GetValues<TooltipPlacement>())
             {
                 <option value="@p">@p</option>
             }
@@ -206,7 +206,7 @@
 @code {
     // AtomTooltip playground state — defaults match AtomTooltip.razor.cs / AtomTooltip.razor.css.
     private string Text = "I'm a tooltip";
-    private Placement Placement = Placement.Top;
+    private TooltipPlacement Placement = TooltipPlacement.Top;
     private TooltipShape Shape = TooltipShape.Rectangle;
     private bool ShowArrow = true;
     private bool Disabled;
@@ -235,7 +235,7 @@
         {
             var sb = new System.Text.StringBuilder("<AtomTooltip");
             sb.Append($" Text=\"{Text}\"");
-            if (Placement != Placement.Top) sb.Append($" Placement=\"Placement.{Placement}\"");
+            if (Placement != TooltipPlacement.Top) sb.Append($" Placement=\"TooltipPlacement.{Placement}\"");
             if (Shape != TooltipShape.Rectangle) sb.Append($" Shape=\"TooltipShape.{Shape}\"");
             if (!ShowArrow) sb.Append(" ShowArrow=\"false\"");
             if (Disabled) sb.Append(" Disabled=\"true\"");

@@ -22,7 +22,7 @@ public class AtomAvatarTests : BunitContext
     [Fact]
     public void Shape_maps_to_data_attribute()
     {
-        var cut = Render<AtomAvatar>(p => p.Add(c => c.Shape, Shape.Hexagon));
+        var cut = Render<AtomAvatar>(p => p.Add(c => c.Shape, AvatarShape.Hexagon));
         Assert.Equal("hexagon", cut.Find(".atom-avatar").GetAttribute("data-shape"));
     }
 
@@ -56,7 +56,7 @@ public class AtomAvatarTests : BunitContext
     public void Size_and_radius_tokens_emitted()
     {
         var cut = Render<AtomAvatar>(p => p
-            .Add(c => c.Shape, Shape.Rounded)
+            .Add(c => c.Shape, AvatarShape.Rounded)
             .Add(c => c.Size, 64)
             .Add(c => c.Radius, 16));
         var style = cut.Find(".atom-avatar").GetAttribute("style") ?? "";

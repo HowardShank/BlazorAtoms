@@ -40,7 +40,7 @@
 <div class="tt-controls">
     <div class="tt-ctrl"><label>Image URL (blank = silhouette)</label><input type="text" @bind="Src" @bind:event="oninput" placeholder="/users/ada.jpg" /></div>
     <div class="tt-ctrl"><label>Alt / label</label><input type="text" @bind="Alt" @bind:event="oninput" /></div>
-    <div class="tt-ctrl"><label>Shape</label><select @bind="Shape">@foreach (var s in Enum.GetValues<Shape>()){<option value="@s">@s</option>}</select></div>
+    <div class="tt-ctrl"><label>Shape</label><select @bind="Shape">@foreach (var s in Enum.GetValues<AvatarShape>()){<option value="@s">@s</option>}</select></div>
     <div class="tt-ctrl"><label>Size (px) <span class="val">@Size</span></label><input type="number" min="24" max="160" @bind="Size" @bind:event="oninput" /></div>
     <div class="tt-ctrl"><label>Radius px (Rounded) <span class="val">@Radius</span></label><input type="number" min="0" max="60" @bind="Radius" @bind:event="oninput" /></div>
 
@@ -105,7 +105,7 @@
 @code {
     private string Src = "";
     private string Alt = "";
-    private Shape Shape = Shape.Circle;
+    private AvatarShape Shape = AvatarShape.Circle;
     private double Size = 96;
     private double Radius = 16;
 
@@ -151,7 +151,7 @@
             var sb = new System.Text.StringBuilder("<AtomInitialsAvatar");
             sb.Append($" Name=\"{InitName}\"");
             if (InitMax != 2) sb.Append($" MaxInitials=\"{InitMax}\"");
-            if (Shape != Shape.Circle) sb.Append($" Shape=\"Shape.{Shape}\"");
+            if (Shape != AvatarShape.Circle) sb.Append($" Shape=\"AvatarShape.{Shape}\"");
             sb.Append($" Size=\"{Size}\"");
             if (!InitAutoColor) sb.Append($" Background=\"{InitBg}\"");
             sb.Append(" />");
@@ -168,7 +168,7 @@
             sb.Append(quoted);
             sb.Append(" })\"");
             if (GroupMax > 0) sb.Append($" Max=\"{GroupMax}\"");
-            if (Shape != Shape.Circle) sb.Append($" Shape=\"Shape.{Shape}\"");
+            if (Shape != AvatarShape.Circle) sb.Append($" Shape=\"AvatarShape.{Shape}\"");
             sb.Append($" Size=\"{Size}\"");
             if (GroupOverlap != 12) sb.Append($" Overlap=\"{GroupOverlap}\"");
             sb.Append(" />");
@@ -183,9 +183,9 @@
             var sb = new System.Text.StringBuilder("<AtomAvatar");
             if (!string.IsNullOrWhiteSpace(Src)) sb.Append($" Src=\"{Src}\"");
             if (!string.IsNullOrWhiteSpace(Alt)) sb.Append($" Alt=\"{Alt}\"");
-            if (Shape != Shape.Circle) sb.Append($" Shape=\"Shape.{Shape}\"");
+            if (Shape != AvatarShape.Circle) sb.Append($" Shape=\"AvatarShape.{Shape}\"");
             sb.Append($" Size=\"{Size}\"");
-            if (Shape == Shape.Rounded) sb.Append($" Radius=\"{Radius}\"");
+            if (Shape == AvatarShape.Rounded) sb.Append($" Radius=\"{Radius}\"");
             if (UseBgGradient)
                 sb.Append($" BackgroundGradientFrom=\"{BgFrom}\" BackgroundGradientTo=\"{BgTo}\" BackgroundGradientAngle=\"{BgAngle}\"");
             else

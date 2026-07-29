@@ -1,7 +1,14 @@
 namespace BlazorAtoms.Tooltips;
 
 /// <summary>Where the tooltip bubble is placed relative to its trigger (or the pointer).</summary>
-public enum Placement
+/// <remarks>
+/// Prefixed <c>Tooltip*</c> per the repo convention that a cross-package enum name carries its
+/// package's noun — this and <c>BadgePlacement</c> would otherwise both be a bare <c>Placement</c>,
+/// leaving no unambiguous name for a page that <c>@using</c>s both. It also matches this package's
+/// other enums (<c>TooltipShape</c>, <c>TooltipTextAlign</c>, <c>TooltipVerticalAlign</c>). The
+/// parameter on each component is still called <c>Placement</c>.
+/// </remarks>
+public enum TooltipPlacement
 {
     Top,
     TopStart,

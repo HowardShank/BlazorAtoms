@@ -32,14 +32,14 @@ public class AtomTooltipTests : BunitContext
     }
 
     [Theory]
-    [InlineData(Placement.Top, "top")]
-    [InlineData(Placement.BottomStart, "bottom-start")]
-    [InlineData(Placement.RightEnd, "right-end")]
-    [InlineData(Placement.TopLeft, "top-left")]
-    [InlineData(Placement.TopRight, "top-right")]
-    [InlineData(Placement.BottomLeft, "bottom-left")]
-    [InlineData(Placement.BottomRight, "bottom-right")]
-    public void Placement_sets_data_placement_attribute(Placement placement, string expected)
+    [InlineData(TooltipPlacement.Top, "top")]
+    [InlineData(TooltipPlacement.BottomStart, "bottom-start")]
+    [InlineData(TooltipPlacement.RightEnd, "right-end")]
+    [InlineData(TooltipPlacement.TopLeft, "top-left")]
+    [InlineData(TooltipPlacement.TopRight, "top-right")]
+    [InlineData(TooltipPlacement.BottomLeft, "bottom-left")]
+    [InlineData(TooltipPlacement.BottomRight, "bottom-right")]
+    public void Placement_sets_data_placement_attribute(TooltipPlacement placement, string expected)
     {
         var cut = Render<AtomTooltip>(p => p
             .Add(c => c.Placement, placement)
@@ -98,7 +98,7 @@ public class AtomTooltipTests : BunitContext
         JSInterop.Mode = JSRuntimeMode.Loose;
 
         var cut = Render<AtomTooltip>(p => p
-            .Add(c => c.Placement, Placement.Cursor)
+            .Add(c => c.Placement, TooltipPlacement.Cursor)
             .Add(c => c.Text, "Follows cursor")
             .AddChildContent("<button>Trigger</button>"));
 

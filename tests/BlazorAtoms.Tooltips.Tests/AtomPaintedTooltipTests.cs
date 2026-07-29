@@ -129,7 +129,7 @@ public class AtomPaintedTooltipTests : BunitContext
         JSInterop.Mode = JSRuntimeMode.Loose;
 
         var cut = Render<AtomPaintedTooltip>(p => p
-            .Add(c => c.Placement, Placement.Cursor)
+            .Add(c => c.Placement, TooltipPlacement.Cursor)
             .Add(c => c.Text, "Follows cursor")
             .AddChildContent("<button>Trigger</button>"));
 

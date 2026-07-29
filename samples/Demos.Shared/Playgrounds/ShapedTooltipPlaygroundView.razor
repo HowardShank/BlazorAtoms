@@ -36,7 +36,7 @@
 
 <div class="tt-controls">
     <div class="tt-ctrl"><label>Text</label><input type="text" @bind="Text" @bind:event="oninput" /></div>
-    <div class="tt-ctrl"><label>Placement</label><select @bind="Placement">@foreach (var p in Enum.GetValues<Placement>()){<option value="@p">@p</option>}</select></div>
+    <div class="tt-ctrl"><label>Placement</label><select @bind="Placement">@foreach (var p in Enum.GetValues<TooltipPlacement>()){<option value="@p">@p</option>}</select></div>
     <div class="tt-ctrl"><label>Shape</label><select @bind="Shape">@foreach (var s in Enum.GetValues<ShapedTooltipShape>()){<option value="@s">@s</option>}</select></div>
     <div class="tt-ctrl"><label>Background</label><div class="row"><input type="checkbox" @bind="OverrideBg" /><input type="color" @bind="Bg" @bind:event="oninput" disabled="@(!OverrideBg)" /></div></div>
     <div class="tt-ctrl"><label>Border color</label><div class="row"><input type="checkbox" @bind="OverrideBorder" /><input type="color" @bind="Border" @bind:event="oninput" disabled="@(!OverrideBorder)" /></div></div>
@@ -61,7 +61,7 @@
 
 @code {
     private string Text = "I'm a shaped tooltip";
-    private Placement Placement = Placement.Top;
+    private TooltipPlacement Placement = TooltipPlacement.Top;
     private ShapedTooltipShape Shape = ShapedTooltipShape.Rectangle;
     private bool ShowArrow = true;
     private bool Disabled;
@@ -89,7 +89,7 @@
         {
             var sb = new System.Text.StringBuilder("<AtomShapedTooltip");
             sb.Append($" Text=\"{Text}\"");
-            if (Placement != Placement.Top) sb.Append($" Placement=\"Placement.{Placement}\"");
+            if (Placement != TooltipPlacement.Top) sb.Append($" Placement=\"TooltipPlacement.{Placement}\"");
             if (Shape != ShapedTooltipShape.Rectangle) sb.Append($" Shape=\"ShapedTooltipShape.{Shape}\"");
             if (!ShowArrow) sb.Append(" ShowArrow=\"false\"");
             if (Disabled) sb.Append(" Disabled=\"true\"");

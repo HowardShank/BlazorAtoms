@@ -27,7 +27,7 @@ public partial class AtomAvatarGroup : AtomComponentBase
     [Parameter] public double? Size { get; set; }
 
     /// <summary>Crop shape for generated avatars.</summary>
-    [Parameter] public Shape Shape { get; set; } = Shape.Circle;
+    [Parameter] public AvatarShape Shape { get; set; } = AvatarShape.Circle;
 
     /// <summary>How far each avatar overlaps the previous one, in px. Sets <c>--avg-overlap</c>.</summary>
     [Parameter] public double Overlap { get; set; } = 12;

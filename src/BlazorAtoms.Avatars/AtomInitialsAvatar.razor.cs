@@ -25,9 +25,9 @@ public partial class AtomInitialsAvatar : AtomComponentBase
     [Parameter] public int MaxInitials { get; set; } = 2;
 
     /// <summary>Crop shape.</summary>
-    [Parameter] public Shape Shape { get; set; } = Shape.Circle;
+    [Parameter] public AvatarShape Shape { get; set; } = AvatarShape.Circle;
 
-    /// <summary>Corner radius in px for <see cref="Shape.Rounded"/>.</summary>
+    /// <summary>Corner radius in px for <see cref="AvatarShape.Rounded"/>.</summary>
     [Parameter] public double? Radius { get; set; }
 
     /// <summary>Avatar size (width = height) in px.</summary>

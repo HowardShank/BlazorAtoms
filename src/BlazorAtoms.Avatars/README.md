@@ -22,7 +22,7 @@ Link `{App}.styles.css` (scoped-CSS bundle), as with any RCL.
 <AtomAvatar Size="48" />
 
 @* Image, cropped to a hexagon *@
-<AtomAvatar Src="/users/ada.jpg" Alt="Ada Lovelace" Shape="Shape.Hexagon" Size="64" />
+<AtomAvatar Src="/users/ada.jpg" Alt="Ada Lovelace" Shape="AvatarShape.Hexagon" Size="64" />
 
 @* Gradient background + gradient silhouette *@
 <AtomAvatar Size="80"
@@ -30,7 +30,7 @@ Link `{App}.styles.css` (scoped-CSS bundle), as with any RCL.
             FigureGradientFrom="#ffffff" FigureGradientTo="#e0e7ff" />
 
 @* Rounded with a ring *@
-<AtomAvatar Src="/users/ada.jpg" Shape="Shape.Rounded" Radius="16"
+<AtomAvatar Src="/users/ada.jpg" Shape="AvatarShape.Rounded" Radius="16"
             BorderColor="#22d3ee" BorderWidth="3" Size="72" />
 ```
 
@@ -40,8 +40,8 @@ Link `{App}.styles.css` (scoped-CSS bundle), as with any RCL.
 |-----------|------|---------|-------|
 | `Src` | `string?` | `null` | Image URL. Null → silhouette. |
 | `Alt` | `string?` | `null` | Image alt / accessible label. |
-| `Shape` | `Shape` | `Circle` | `Circle`/`Square`/`Rounded`/`Squircle`/`Hexagon`. |
-| `Radius` | `double?` | `null` | px, for `Shape.Rounded`. |
+| `Shape` | `AvatarShape` | `Circle` | `Circle`/`Square`/`Rounded`/`Squircle`/`Hexagon`. |
+| `Radius` | `double?` | `null` | px, for `AvatarShape.Rounded`. |
 | `Size` | `double?` | `null` | px; width = height (default 3rem). |
 | `Background` | `string?` | `null` | Solid background (default `#e5e7eb`). |
 | `BackgroundGradientFrom`/`To` | `string?` | `null` | Both set → gradient background. |
@@ -60,7 +60,7 @@ unless you set `Background` / a gradient. Shape/size/border/gradient pass throug
 
 ```razor
 <AtomInitialsAvatar Name="Ada Lovelace" Size="48" />               @* "AL", auto color *@
-<AtomInitialsAvatar Name="Grace Hopper" Shape="Shape.Rounded" Radius="12" />
+<AtomInitialsAvatar Name="Grace Hopper" Shape="AvatarShape.Rounded" Radius="12" />
 <AtomInitialsAvatar Initials="+7" Background="#6b7280" />           @* explicit, not truncated *@
 ```
 

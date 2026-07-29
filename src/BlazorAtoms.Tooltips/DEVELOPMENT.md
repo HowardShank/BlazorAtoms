@@ -36,7 +36,7 @@ BlazorAtoms.Tooltips/
   AtomTooltip.razor / .razor.cs / .razor.css          <- pure-CSS tooltip
   AtomShapedTooltip.razor / .razor.cs / .razor.css     <- SVG-outline (border on every shape)
   AtomPaintedTooltip.razor / .razor.cs / .razor.css    <- SVG paints fill/stroke/shadow
-  Placement.cs                                          <- shared Placement enum
+  TooltipPlacement.cs                                          <- shared Placement enum
   TooltipShape.cs / ShapedTooltipShape.cs / PaintedTooltipShape.cs  <- per-component shape enums
   wwwroot/atom-tooltip.js / atom-shaped-tooltip.js / atom-painted-tooltip.js  <- cursor-follow modules
 ```
@@ -69,7 +69,7 @@ is broad enough to not regress the "works everywhere" guarantee.
 
 ## Cursor mode JS interop internals
 
-`Placement.Cursor` is the one mode that needs JavaScript, since CSS has no way to read the
+`TooltipPlacement.Cursor` is the one mode that needs JavaScript, since CSS has no way to read the
 live cursor position. The implementation is intentionally self-contained so consumers never
 need to wire anything up:
 

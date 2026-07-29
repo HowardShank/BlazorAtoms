@@ -29,10 +29,10 @@ public class AtomShapedTooltipTests : BunitContext
     }
 
     [Theory]
-    [InlineData(Placement.Top, "top")]
-    [InlineData(Placement.BottomEnd, "bottom-end")]
-    [InlineData(Placement.TopLeft, "top-left")]
-    public void Placement_sets_data_placement(Placement placement, string expected)
+    [InlineData(TooltipPlacement.Top, "top")]
+    [InlineData(TooltipPlacement.BottomEnd, "bottom-end")]
+    [InlineData(TooltipPlacement.TopLeft, "top-left")]
+    public void Placement_sets_data_placement(TooltipPlacement placement, string expected)
     {
         var cut = Render<AtomShapedTooltip>(p => p
             .Add(c => c.Placement, placement)
@@ -132,7 +132,7 @@ public class AtomShapedTooltipTests : BunitContext
         JSInterop.Mode = JSRuntimeMode.Loose;
 
         var cut = Render<AtomShapedTooltip>(p => p
-            .Add(c => c.Placement, Placement.Cursor)
+            .Add(c => c.Placement, TooltipPlacement.Cursor)
             .Add(c => c.Text, "Follows cursor")
             .AddChildContent("<button>Trigger</button>"));
 

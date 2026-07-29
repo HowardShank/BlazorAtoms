@@ -51,7 +51,7 @@ public class AtomInitialsAvatarTests : BunitContext
     {
         var cut = Render<AtomInitialsAvatar>(p => p
             .Add(c => c.Name, "Ada Lovelace")
-            .Add(c => c.Shape, Shape.Hexagon));
+            .Add(c => c.Shape, AvatarShape.Hexagon));
         Assert.Equal("hexagon", cut.Find(".atom-avatar").GetAttribute("data-shape"));
     }
 }

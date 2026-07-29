@@ -62,12 +62,12 @@ includes `Thought`; `ShapedTooltipShape` / `PaintedTooltipShape` include `Cloud`
     <button>Save</button>
 </AtomTooltip>
 
-<AtomTooltip Text="Top-start placement" Placement="Placement.TopStart">
+<AtomTooltip Text="Top-start placement" Placement="TooltipPlacement.TopStart">
     <span tabindex="0">Hover or Tab to me</span>
 </AtomTooltip>
 
 @* Rich content instead of plain text *@
-<AtomTooltip Placement="Placement.Right">
+<AtomTooltip Placement="TooltipPlacement.Right">
     <a href="/docs">Docs</a>
     <TooltipContent>
         See the <strong>full reference</strong> for details.
@@ -88,7 +88,7 @@ a `tabindex="0"`** so keyboard users can reach them — buttons/links already ar
 | `ChildContent` | `RenderFragment` | — | **Required.** The trigger content. |
 | `Text` | `string?` | `null` | Simple bubble content. Ignored if `TooltipContent` is set. |
 | `TooltipContent` | `RenderFragment?` | `null` | Rich bubble content; takes priority over `Text`. |
-| `Placement` | `Placement` | `Top` | Side (`Top`/`Bottom`/`Left`/`Right`, each with `…Start`/`…End`), diagonal corner (`TopLeft`/`TopRight`/`BottomLeft`/`BottomRight`), or `Cursor` (follows the pointer — see below). |
+| `Placement` | `TooltipPlacement` | `Top` | Side (`Top`/`Bottom`/`Left`/`Right`, each with `…Start`/`…End`), diagonal corner (`TopLeft`/`TopRight`/`BottomLeft`/`BottomRight`), or `Cursor` (follows the pointer — see below). |
 | `Shape` | `TooltipShape` | `Rectangle` | Bubble outline: `Rectangle` (rounded rect, uses `Radius`), `Pill`, `Ellipse`, `Thought`, `Burst`, `FoldedCorner`. See [Shapes](#shapes). |
 | `ShowArrow` | `bool` | `true` | Draw the attachment arrow pointing at the trigger. Ignored in `Cursor` mode and on `Burst`/`FoldedCorner` shapes. |
 | `Disabled` | `bool` | `false` | Suppresses the bubble entirely; trigger still renders. |
@@ -120,7 +120,7 @@ Set `Shape` to change the bubble outline:
 
 ```razor
 <AtomTooltip Text="Nice!" Shape="TooltipShape.Pill"><button>Pill</button></AtomTooltip>
-<AtomTooltip Text="Hmm…" Shape="TooltipShape.Thought" Placement="Placement.Top"><span tabindex="0">Think</span></AtomTooltip>
+<AtomTooltip Text="Hmm…" Shape="TooltipShape.Thought" Placement="TooltipPlacement.Top"><span tabindex="0">Think</span></AtomTooltip>
 <AtomTooltip Text="POW!" Shape="TooltipShape.Burst"><button>Burst</button></AtomTooltip>
 ```
 
@@ -192,14 +192,14 @@ What to expect:
 corner of the trigger (e.g. `TopRight` = above-and-right). Same pure-CSS mechanism as the
 side placements.
 
-### Cursor mode (`Placement.Cursor`)
+### Cursor mode (`TooltipPlacement.Cursor`)
 
 The bubble follows the mouse pointer while hovering the trigger. This one mode uses a small
 JS module under the hood, but it's **invisible to you** — no `<script>` tag, no DI
 registration, nothing to wire up.
 
 ```razor
-<AtomTooltip Text="I follow your cursor" Placement="Placement.Cursor">
+<AtomTooltip Text="I follow your cursor" Placement="TooltipPlacement.Cursor">
     <span tabindex="0">Hover over me</span>
 </AtomTooltip>
 ```

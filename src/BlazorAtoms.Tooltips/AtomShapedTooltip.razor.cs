@@ -11,7 +11,7 @@ namespace BlazorAtoms.Tooltips;
 /// cloud, burst, folded corner). Because the outline is an SVG shape, <em>border and fill apply
 /// to every shape</em> — the <c>clip-path</c> limitation of the CSS-only tooltip is gone. Color
 /// still comes from CSS tokens (<c>--tip-bg</c>/<c>--tip-border</c>). Positioning and show/hide
-/// are the same pure-CSS mechanism; only <see cref="Placement.Cursor"/> uses a tiny JS module.
+/// are the same pure-CSS mechanism; only <see cref="TooltipPlacement.Cursor"/> uses a tiny JS module.
 /// </summary>
 public partial class AtomShapedTooltip : AtomComponentBase, IAsyncDisposable
 {
@@ -27,7 +27,7 @@ public partial class AtomShapedTooltip : AtomComponentBase, IAsyncDisposable
     [Parameter] public RenderFragment? TooltipContent { get; set; }
 
     /// <summary>Side, corner, or cursor mode the bubble is placed by.</summary>
-    [Parameter] public Placement Placement { get; set; } = Placement.Top;
+    [Parameter] public TooltipPlacement Placement { get; set; } = TooltipPlacement.Top;
 
     /// <summary>Bubble outline shape (drawn as SVG).</summary>
     [Parameter] public ShapedTooltipShape Shape { get; set; } = ShapedTooltipShape.Rectangle;
@@ -87,29 +87,29 @@ public partial class AtomShapedTooltip : AtomComponentBase, IAsyncDisposable
     // Burst/FoldedCorner integrate no separate arrow; Cursor has no fixed edge. Cloud keeps the
     // arrow element and restyles it into the circle trail (see CSS).
     private bool ShowsArrow => ShowArrow
-        && Placement != Placement.Cursor
+        && Placement != TooltipPlacement.Cursor
         && Shape != ShapedTooltipShape.Burst
         && Shape != ShapedTooltipShape.FoldedCorner;
 
     private string PlacementValue => Placement switch
     {
-        Placement.Top => "top",
-        Placement.TopStart => "top-start",
-        Placement.TopEnd => "top-end",
-        Placement.Bottom => "bottom",
-        Placement.BottomStart => "bottom-start",
-        Placement.BottomEnd => "bottom-end",
-        Placement.Left => "left",
-        Placement.LeftStart => "left-start",
-        Placement.LeftEnd => "left-end",
-        Placement.Right => "right",
-        Placement.RightStart => "right-start",
-        Placement.RightEnd => "right-end",
-        Placement.TopLeft => "top-left",
-        Placement.TopRight => "top-right",
-        Placement.BottomLeft => "bottom-left",
-        Placement.BottomRight => "bottom-right",
-        Placement.Cursor => "cursor",
+        TooltipPlacement.Top => "top",
+        TooltipPlacement.TopStart => "top-start",
+        TooltipPlacement.TopEnd => "top-end",
+        TooltipPlacement.Bottom => "bottom",
+        TooltipPlacement.BottomStart => "bottom-start",
+        TooltipPlacement.BottomEnd => "bottom-end",
+        TooltipPlacement.Left => "left",
+        TooltipPlacement.LeftStart => "left-start",
+        TooltipPlacement.LeftEnd => "left-end",
+        TooltipPlacement.Right => "right",
+        TooltipPlacement.RightStart => "right-start",
+        TooltipPlacement.RightEnd => "right-end",
+        TooltipPlacement.TopLeft => "top-left",
+        TooltipPlacement.TopRight => "top-right",
+        TooltipPlacement.BottomLeft => "bottom-left",
+        TooltipPlacement.BottomRight => "bottom-right",
+        TooltipPlacement.Cursor => "cursor",
         _ => "top",
     };
 
@@ -199,7 +199,7 @@ public partial class AtomShapedTooltip : AtomComponentBase, IAsyncDisposable
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        var wantCursor = Placement == Placement.Cursor && !Disabled;
+        var wantCursor = Placement == TooltipPlacement.Cursor && !Disabled;
         if (wantCursor && !_cursorActive)
         {
             _module ??= await JS.InvokeAsync<IJSObjectReference>(

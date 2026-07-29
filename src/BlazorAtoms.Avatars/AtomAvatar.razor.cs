@@ -27,9 +27,9 @@ public partial class AtomAvatar : AtomComponentBase
     [Parameter] public string? TextColor { get; set; }
 
     /// <summary>Crop shape.</summary>
-    [Parameter] public Shape Shape { get; set; } = Shape.Circle;
+    [Parameter] public AvatarShape Shape { get; set; } = AvatarShape.Circle;
 
-    /// <summary>Corner radius in px for <see cref="Shape.Rounded"/>. Sets <c>--av-radius</c>.</summary>
+    /// <summary>Corner radius in px for <see cref="AvatarShape.Rounded"/>. Sets <c>--av-radius</c>.</summary>
     [Parameter] public double? Radius { get; set; }
 
     /// <summary>Avatar size (width = height) in px. Sets <c>--av-size</c>.</summary>
@@ -80,11 +80,11 @@ public partial class AtomAvatar : AtomComponentBase
 
     private string ShapeValue => Shape switch
     {
-        Shape.Circle => "circle",
-        Shape.Square => "square",
-        Shape.Rounded => "rounded",
-        Shape.Squircle => "squircle",
-        Shape.Hexagon => "hexagon",
+        AvatarShape.Circle => "circle",
+        AvatarShape.Square => "square",
+        AvatarShape.Rounded => "rounded",
+        AvatarShape.Squircle => "squircle",
+        AvatarShape.Hexagon => "hexagon",
         _ => "circle",
     };
 

@@ -8,7 +8,7 @@ namespace BlazorAtoms.Tooltips;
 /// <summary>
 /// A hover/keyboard-focus tooltip bubble anchored to arbitrary trigger content. Positioning and
 /// show/hide are pure CSS (<c>position:absolute</c> + <c>:hover</c>/<c>:focus-within</c>) for
-/// every placement <em>except</em> <see cref="Placement.Cursor"/>, which follows the pointer via
+/// every placement <em>except</em> <see cref="TooltipPlacement.Cursor"/>, which follows the pointer via
 /// a tiny JS module the component loads itself. No JS is loaded unless Cursor placement is used.
 /// </summary>
 public partial class AtomTooltip : AtomComponentBase, IAsyncDisposable
@@ -25,7 +25,7 @@ public partial class AtomTooltip : AtomComponentBase, IAsyncDisposable
     [Parameter] public RenderFragment? TooltipContent { get; set; }
 
     /// <summary>Side, corner, or cursor mode the bubble is placed by, relative to the trigger.</summary>
-    [Parameter] public Placement Placement { get; set; } = Placement.Top;
+    [Parameter] public TooltipPlacement Placement { get; set; } = TooltipPlacement.Top;
 
     /// <summary>Outline shape of the bubble. <see cref="TooltipShape.Burst"/> and
     /// <see cref="TooltipShape.FoldedCorner"/> are fill-only (clip-path removes border + arrow).</summary>
@@ -55,7 +55,7 @@ public partial class AtomTooltip : AtomComponentBase, IAsyncDisposable
     /// <summary>Gap between the trigger and the bubble in px. Sets <c>--tip-offset</c>.</summary>
     [Parameter] public double? Offset { get; set; }
 
-    /// <summary>Draw the attachment arrow. Ignored in <see cref="Placement.Cursor"/> mode (no fixed edge to point from).</summary>
+    /// <summary>Draw the attachment arrow. Ignored in <see cref="TooltipPlacement.Cursor"/> mode (no fixed edge to point from).</summary>
     [Parameter] public bool ShowArrow { get; set; } = true;
 
     /// <summary>When true, the bubble never renders (trigger content still renders normally).</summary>
@@ -85,7 +85,7 @@ public partial class AtomTooltip : AtomComponentBase, IAsyncDisposable
     // Clip-path shapes clip the arrow away; Cursor has no fixed edge. Thought keeps the arrow
     // element but restyles it into the circle trail (see the CSS).
     private bool ShowsArrow => ShowArrow
-        && Placement != Placement.Cursor
+        && Placement != TooltipPlacement.Cursor
         && Shape != TooltipShape.Burst
         && Shape != TooltipShape.FoldedCorner;
 
@@ -102,23 +102,23 @@ public partial class AtomTooltip : AtomComponentBase, IAsyncDisposable
 
     private string PlacementValue => Placement switch
     {
-        Placement.Top => "top",
-        Placement.TopStart => "top-start",
-        Placement.TopEnd => "top-end",
-        Placement.Bottom => "bottom",
-        Placement.BottomStart => "bottom-start",
-        Placement.BottomEnd => "bottom-end",
-        Placement.Left => "left",
-        Placement.LeftStart => "left-start",
-        Placement.LeftEnd => "left-end",
-        Placement.Right => "right",
-        Placement.RightStart => "right-start",
-        Placement.RightEnd => "right-end",
-        Placement.TopLeft => "top-left",
-        Placement.TopRight => "top-right",
-        Placement.BottomLeft => "bottom-left",
-        Placement.BottomRight => "bottom-right",
-        Placement.Cursor => "cursor",
+        TooltipPlacement.Top => "top",
+        TooltipPlacement.TopStart => "top-start",
+        TooltipPlacement.TopEnd => "top-end",
+        TooltipPlacement.Bottom => "bottom",
+        TooltipPlacement.BottomStart => "bottom-start",
+        TooltipPlacement.BottomEnd => "bottom-end",
+        TooltipPlacement.Left => "left",
+        TooltipPlacement.LeftStart => "left-start",
+        TooltipPlacement.LeftEnd => "left-end",
+        TooltipPlacement.Right => "right",
+        TooltipPlacement.RightStart => "right-start",
+        TooltipPlacement.RightEnd => "right-end",
+        TooltipPlacement.TopLeft => "top-left",
+        TooltipPlacement.TopRight => "top-right",
+        TooltipPlacement.BottomLeft => "bottom-left",
+        TooltipPlacement.BottomRight => "bottom-right",
+        TooltipPlacement.Cursor => "cursor",
         _ => "top",
     };
 
@@ -144,7 +144,7 @@ public partial class AtomTooltip : AtomComponentBase, IAsyncDisposable
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         // Only Cursor placement needs JS. Everything else is pure CSS — no interop here at all.
-        var wantCursor = Placement == Placement.Cursor && !Disabled;
+        var wantCursor = Placement == TooltipPlacement.Cursor && !Disabled;
 
         if (wantCursor && !_cursorActive)
         {
