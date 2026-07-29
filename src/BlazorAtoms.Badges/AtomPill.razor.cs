@@ -6,7 +6,7 @@ namespace BlazorAtoms.Badges;
 /// <summary>
 /// A status pill: a fully-rounded, soft-tinted label with a leading status dot (e.g. "Active",
 /// "Pending", "Failed"). The simplest, display-only member of the chip/tag/pill family — the dot and
-/// text share the color <see cref="Variant"/>. Supply an <see cref="Icon"/> to replace the dot, or
+/// text share the color <see cref="BadgeVariant"/>. Supply an <see cref="Icon"/> to replace the dot, or
 /// set <see cref="Dot"/> to false for a plain pill. Pure CSS. Common styling knobs (colors, size,
 /// height, font) come from <see cref="ChipFamilyBase"/>.
 /// </summary>
@@ -27,10 +27,10 @@ public partial class AtomPill : ChipFamilyBase
     [Parameter] public bool Dot { get; set; } = true;
 
     /// <summary>Color scheme (overridden by explicit color params).</summary>
-    [Parameter] public Variant Variant { get; set; } = Variant.Default;
+    [Parameter] public BadgeVariant Variant { get; set; } = BadgeVariant.Default;
 
     /// <summary>Fill treatment: Soft (default) / Solid / Outline.</summary>
-    [Parameter] public Appearance Appearance { get; set; } = Appearance.Soft;
+    [Parameter] public BadgeAppearance Appearance { get; set; } = BadgeAppearance.Soft;
 
     /// <summary>Status-dot color override. Sets <c>--pill-dot</c>. Null = accent (text color on solid).</summary>
     [Parameter] public string? DotColor { get; set; }
@@ -41,17 +41,17 @@ public partial class AtomPill : ChipFamilyBase
 
     private string VariantValue => Variant switch
     {
-        Variant.Info => "info",
-        Variant.Success => "success",
-        Variant.Warning => "warning",
-        Variant.Danger => "danger",
+        BadgeVariant.Info => "info",
+        BadgeVariant.Success => "success",
+        BadgeVariant.Warning => "warning",
+        BadgeVariant.Danger => "danger",
         _ => "default",
     };
 
     private string AppearanceValue => Appearance switch
     {
-        Appearance.Solid => "solid",
-        Appearance.Outline => "outline",
+        BadgeAppearance.Solid => "solid",
+        BadgeAppearance.Outline => "outline",
         _ => "soft",
     };
 }

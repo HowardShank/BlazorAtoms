@@ -39,8 +39,8 @@ public class AtomTagTests : BunitContext
     {
         var cut = Render<AtomTag>(p => p
             .Add(c => c.Text, "t")
-            .Add(c => c.Variant, Variant.Danger)
-            .Add(c => c.Appearance, Appearance.Soft));
+            .Add(c => c.Variant, BadgeVariant.Danger)
+            .Add(c => c.Appearance, BadgeAppearance.Soft));
         var tag = cut.Find(".atom-tag");
         Assert.Equal("danger", tag.GetAttribute("data-variant"));
         Assert.Equal("soft", tag.GetAttribute("data-appearance"));

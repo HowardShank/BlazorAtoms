@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <Import Project="$(RepoRoot)build\Packable.props" />
+  <Import Project="$(RepoRoot)build\Shared.props" />
+
+  <PropertyGroup>
+    <PackageId>BlazorAtoms.Buttons</PackageId>
+    <Title>Blazor Buttons</Title>
+    <Description>Button components for Blazor. AtomButton renders a native &lt;button&gt; (or an &lt;a&gt; when Href is set) with color Variant, Solid/Soft/Outline/Ghost/Link Appearance, Size, Shape, icon slots, a Loading state, and opt-in CSS effects (3D press, bevel, gradient border, rainbow, fizzy, storm, click ripple). AtomIconButton is the icon-only form, AtomToggleButton a pressed-state toggle, AtomButtonGroup a seamed row/column that cascades the shared axes, and AtomSplitButton a primary action plus a native &lt;details&gt; menu. Server or WebAssembly, no JS.</Description>
+    <PackageTags>Blazor;Button;IconButton;ToggleButton;ButtonGroup;SplitButton;Ripple;Effects;WebAssembly;Server</PackageTags>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BlazorAtoms.Buttons.Tests" />
+  </ItemGroup>
+
+</Project>

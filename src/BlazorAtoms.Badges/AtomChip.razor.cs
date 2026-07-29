@@ -9,7 +9,7 @@ namespace BlazorAtoms.Badges;
 /// optional trailing remove button. When <see cref="OnClick"/> has a handler the chip becomes a
 /// keyboard-operable button (Enter/Space, <c>role="button"</c>, <c>aria-pressed</c>) — for filter,
 /// choice and selectable chips. Set <see cref="Removable"/> for a dismiss (×) affordance. Painted by
-/// a color <see cref="Variant"/> in a Solid / Soft / Outline <see cref="Appearance"/>. Pure CSS + SVG.
+/// a color <see cref="BadgeVariant"/> in a Solid / Soft / Outline <see cref="BadgeAppearance"/>. Pure CSS + SVG.
 /// Common styling knobs (colors, size, height, font) come from <see cref="ChipFamilyBase"/>.
 /// </summary>
 public partial class AtomChip : ChipFamilyBase
@@ -26,10 +26,10 @@ public partial class AtomChip : ChipFamilyBase
     [Parameter] public RenderFragment? Icon { get; set; }
 
     /// <summary>Color scheme (overridden by explicit color params).</summary>
-    [Parameter] public Variant Variant { get; set; } = Variant.Default;
+    [Parameter] public BadgeVariant Variant { get; set; } = BadgeVariant.Default;
 
     /// <summary>Fill treatment: Solid / Soft (default) / Outline.</summary>
-    [Parameter] public Appearance Appearance { get; set; } = Appearance.Soft;
+    [Parameter] public BadgeAppearance Appearance { get; set; } = BadgeAppearance.Soft;
 
     /// <summary>Selected/active state. Renders the accent emphasis and sets <c>aria-pressed</c>.</summary>
     [Parameter] public bool Selected { get; set; }
@@ -80,17 +80,17 @@ public partial class AtomChip : ChipFamilyBase
 
     private string VariantValue => Variant switch
     {
-        Variant.Info => "info",
-        Variant.Success => "success",
-        Variant.Warning => "warning",
-        Variant.Danger => "danger",
+        BadgeVariant.Info => "info",
+        BadgeVariant.Success => "success",
+        BadgeVariant.Warning => "warning",
+        BadgeVariant.Danger => "danger",
         _ => "default",
     };
 
     private string AppearanceValue => Appearance switch
     {
-        Appearance.Solid => "solid",
-        Appearance.Outline => "outline",
+        BadgeAppearance.Solid => "solid",
+        BadgeAppearance.Outline => "outline",
         _ => "soft",
     };
 }

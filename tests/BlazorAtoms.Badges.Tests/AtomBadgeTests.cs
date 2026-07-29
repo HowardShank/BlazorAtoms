@@ -86,7 +86,7 @@ public class AtomBadgeTests : BunitContext
     {
         var cut = Render<AtomBadge>(p => p
             .Add(c => c.Value, 3)
-            .Add(c => c.Placement, Placement.BottomStart)
+            .Add(c => c.Placement, BadgePlacement.BottomStart)
             .AddChildContent("<button>bell</button>"));
 
         Assert.NotNull(cut.Find(".atom-badge-host"));
@@ -159,20 +159,20 @@ public class AtomBadgeTests : BunitContext
     {
         var cut = Render<AtomBadge>(p => p
             .Add(c => c.Value, 5)
-            .Add(c => c.Shape, Shape.Pill));
+            .Add(c => c.Shape, BadgeShape.Pill));
 
         Assert.Null(cut.Find(".atom-badge").GetAttribute("data-svg"));
         Assert.Empty(cut.FindAll(".badge-path"));
     }
 
     [Theory]
-    [InlineData(Shape.Star, "star")]
-    [InlineData(Shape.Hexagon, "hexagon")]
-    [InlineData(Shape.Diamond, "diamond")]
-    [InlineData(Shape.Shield, "shield")]
-    [InlineData(Shape.Burst, "burst")]
-    [InlineData(Shape.Ribbon, "ribbon")]
-    public void Svg_shape_draws_path_and_flags_data_svg(Shape shape, string expected)
+    [InlineData(BadgeShape.Star, "star")]
+    [InlineData(BadgeShape.Hexagon, "hexagon")]
+    [InlineData(BadgeShape.Diamond, "diamond")]
+    [InlineData(BadgeShape.Shield, "shield")]
+    [InlineData(BadgeShape.Burst, "burst")]
+    [InlineData(BadgeShape.Ribbon, "ribbon")]
+    public void Svg_shape_draws_path_and_flags_data_svg(BadgeShape shape, string expected)
     {
         var cut = Render<AtomBadge>(p => p
             .Add(c => c.Value, 5)

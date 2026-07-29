@@ -35,22 +35,22 @@ Link `{App}.styles.css` (scoped-CSS bundle), as with any RCL.
 
 ```razor
 @* Count overlaying an icon, capped at 99 (no motion — the default) *@
-<AtomBadge Value="Count" Max="99" Variant="Variant.Danger">
+<AtomBadge Value="Count" Max="99" Variant="BadgeVariant.Danger">
     <span class="bell">🔔</span>
 </AtomBadge>
 
 @* SVG shapes — star, ribbon *@
-<AtomBadge Value="5" Shape="Shape.Star" Variant="Variant.Warning" Size="40" />
-<AtomBadge Value="NEW" Shape="Shape.Ribbon" Background="#7c3aed" />
+<AtomBadge Value="5" Shape="BadgeShape.Star" Variant="BadgeVariant.Warning" Size="40" />
+<AtomBadge Value="NEW" Shape="BadgeShape.Ribbon" Background="#7c3aed" />
 
 @* Pops in on the corner of a bell, re-bounces when the count changes *@
-<AtomBadge Value="Count" Max="99" Variant="Variant.Danger"
+<AtomBadge Value="Count" Max="99" Variant="BadgeVariant.Danger"
            Animation="BadgeAnimation.Bounce" Trigger="AnimationTrigger.OnChange">
     <span>🔔</span>
 </AtomBadge>
 
 @* Ping-ring presence dot *@
-<AtomBadge Value="true" Dot="true" Variant="Variant.Success"
+<AtomBadge Value="true" Dot="true" Variant="BadgeVariant.Success"
            Animation="BadgeAnimation.Ping" Trigger="AnimationTrigger.Loop">
     <Avatar />
 </AtomBadge>
@@ -74,19 +74,19 @@ and the shape pulses instead.
 
 ```razor
 @* Interactive filter chip — toggles Selected, keyboard-operable, removable *@
-<AtomChip Text="Blazor" Variant="Variant.Info" Selected="@on" OnClick="() => on = !on"
+<AtomChip Text="Blazor" Variant="BadgeVariant.Info" Selected="@on" OnClick="() => on = !on"
           Removable="true" OnRemove="Remove">
     <Icon><span>★</span></Icon>
 </AtomChip>
 
 @* Categorization tags (GitHub-style labels) *@
-<AtomTag Text="bug" Variant="Variant.Danger" />
-<AtomTag Text="wontfix" Appearance="Appearance.Outline" Removable="true" OnRemove="Remove" />
+<AtomTag Text="bug" Variant="BadgeVariant.Danger" />
+<AtomTag Text="wontfix" Appearance="BadgeAppearance.Outline" Removable="true" OnRemove="Remove" />
 
 @* Status pills — soft tint + leading dot *@
-<AtomPill Text="Active"  Variant="Variant.Success" />
-<AtomPill Text="Pending" Variant="Variant.Warning" />
-<AtomPill Text="Failed"  Variant="Variant.Danger" Appearance="Appearance.Solid" />
+<AtomPill Text="Active"  Variant="BadgeVariant.Success" />
+<AtomPill Text="Pending" Variant="BadgeVariant.Warning" />
+<AtomPill Text="Failed"  Variant="BadgeVariant.Danger" Appearance="BadgeAppearance.Solid" />
 ```
 
 | | `AtomChip` | `AtomTag` | `AtomPill` |
@@ -120,11 +120,11 @@ CSS token; null keeps the component default.
 | `Max` | `int?` | Numeric overflow → `"{Max}+"`. |
 | `ShowZero` | `bool` | Show a numeric `0` (hidden by default). |
 | `Dot` | `bool` | Textless presence dot. |
-| `Variant` | `Variant` | `Default`/`Info`/`Success`/`Warning`/`Danger` color preset (overridable). |
+| `Variant` | `BadgeVariant` | `Default`/`Info`/`Success`/`Warning`/`Danger` color preset (overridable). |
 | `Background`/`TextColor`/`BorderColor`/`BorderWidth` | `string?`/`double?` | Explicit color overrides. |
-| `Shape` | `Shape` | Outline shape (see per-component notes). |
+| `Shape` | `BadgeShape` | Outline shape (see per-component notes). |
 | `Size` | `double?` | px; drives font/min-size. |
-| `Placement` | `Placement` | Corner when overlaying: `TopEnd` (default) / `TopStart` / `BottomEnd` / `BottomStart` / `TopCenter` / `BottomCenter`. |
+| `Placement` | `BadgePlacement` | Corner when overlaying: `TopEnd` (default) / `TopStart` / `BottomEnd` / `BottomStart` / `TopCenter` / `BottomCenter`. |
 | `AriaLabel` | `string?` | Accessible label (falls back to the display string). `role="status"`. |
 
 ## Notes

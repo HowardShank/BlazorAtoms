@@ -54,7 +54,7 @@ public class AtomPillTests : BunitContext
     {
         var cut = Render<AtomPill>(p => p
             .Add(c => c.Text, "Active")
-            .Add(c => c.Variant, Variant.Success));
+            .Add(c => c.Variant, BadgeVariant.Success));
         Assert.Equal("success", cut.Find(".atom-pill").GetAttribute("data-variant"));
     }
 

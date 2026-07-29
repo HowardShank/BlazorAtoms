@@ -31,7 +31,8 @@ project as-is.
 - Emit **only non-default** attributes (guard each against its default) so the snippet stays minimal
   yet reproduces exactly what the controls show.
 - The snippet must compile against the component's real public API — same param names, same value
-  syntax (`Variant="Variant.Info"`, `Size="40"`, quoted strings, etc.).
+  syntax (`Variant="BadgeVariant.Info"`, `Size="40"`, quoted strings, etc. — note enum types are
+  package-prefixed: `BadgeVariant`, `ButtonVariant`, `InputVariant`).
 - `CodeSnippetBox` gives Copy-to-clipboard + Save-as-`.razor`.
 
 ## Adding / changing a component

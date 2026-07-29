@@ -1,0 +1,85 @@
+@inherits ButtonFamilyBase
+
+@{
+    @* One body template, rendered into either host element — the <a> and <button> branches differ only
+       in their attributes, and duplicating the content markup would let them drift. *@
+    RenderFragment body =
+        @<text>
+            @if (Effect == ButtonEffect.ClickRipple && RippleKey > 0)
+            {
+                @* Keyed on the click counter so Blazor replaces the element per click — that restart is
+                   what re-runs the keyframe. Position comes from MouseEventArgs, no JS. *@
+                <span class="atom-button-ripple" @key="RippleKey" style="@RippleStyle" aria-hidden="true"></span>
+            }
+            <span class="atom-button-content">
+                @if (StartIcon is not null)
+                {
+                    <span class="atom-button-icon atom-button-icon-start">@StartIcon</span>
+                }
+                @if (ChildContent is not null)
+                {
+                    @ChildContent
+                }
+                else if (!string.IsNullOrEmpty(Text))
+                {
+                    <span class="atom-button-label">@Text</span>
+                }
+                @if (EndIcon is not null)
+                {
+                    <span class="atom-button-icon atom-button-icon-end">@EndIcon</span>
+                }
+            </span>
+            @if (Loading)
+            {
+                <span class="atom-button-spinner" aria-hidden="true"></span>
+            }
+        </text>;
+}
+
+@if (IsLink)
+{
+    @* A real anchor, so middle-click / open-in-new-tab / copy-link all work. No role="button" — it
+       navigates, and claiming otherwise would misreport it. The platform has no disabled state for a
+       link, so blocking means dropping href and taking it out of the tab order. *@
+    <a @attributes="AdditionalAttributes"
+       class="@ClassAttr(RootClass)"
+       style="@StyleAttr(RootStyle)"
+       href="@(IsBlocked ? null : Href)"
+       target="@Target"
+       tabindex="@(IsBlocked ? "-1" : null)"
+       data-variant="@VariantAttr"
+       data-appearance="@AppearanceAttr"
+       data-size="@SizeAttr"
+       data-shape="@ShapeAttr"
+       data-effect="@EffectAttr"
+       data-state="@State"
+       data-icon-only="@IconOnlyAttr"
+       data-pressed="@PressedAttr"
+       data-full-width="@FullWidthAttr"
+       aria-disabled="@(IsBlocked ? "true" : null)"
+       aria-busy="@(Loading ? "true" : null)"
+       aria-pressed="@PressedAttr"
+       aria-label="@AriaLabel"
+       @onclick="HandleClickAsync">@body</a>
+}
+else
+{
+    <button @attributes="AdditionalAttributes"
+            class="@ClassAttr(RootClass)"
+            style="@StyleAttr(RootStyle)"
+            type="@TypeAttr"
+            disabled="@IsBlocked"
+            data-variant="@VariantAttr"
+            data-appearance="@AppearanceAttr"
+            data-size="@SizeAttr"
+            data-shape="@ShapeAttr"
+            data-effect="@EffectAttr"
+            data-state="@State"
+            data-icon-only="@IconOnlyAttr"
+            data-pressed="@PressedAttr"
+            data-full-width="@FullWidthAttr"
+            aria-busy="@(Loading ? "true" : null)"
+            aria-pressed="@PressedAttr"
+            aria-label="@AriaLabel"
+            @onclick="HandleClickAsync">@body</button>
+}

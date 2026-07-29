@@ -40,13 +40,13 @@ public partial class AtomBadge : AtomComponentBase
     [Parameter] public bool Dot { get; set; }
 
     /// <summary>Corner the badge sits at when overlaying a host. Ignored inline.</summary>
-    [Parameter] public Placement Placement { get; set; } = Placement.TopEnd;
+    [Parameter] public BadgePlacement Placement { get; set; } = BadgePlacement.TopEnd;
 
     /// <summary>Badge outline shape.</summary>
-    [Parameter] public Shape Shape { get; set; } = Shape.Pill;
+    [Parameter] public BadgeShape Shape { get; set; } = BadgeShape.Pill;
 
     /// <summary>Preset color scheme (overridden by explicit color params).</summary>
-    [Parameter] public Variant Variant { get; set; } = Variant.Default;
+    [Parameter] public BadgeVariant Variant { get; set; } = BadgeVariant.Default;
 
     /// <summary>Motion applied to the badge. Default <see cref="BadgeAnimation.None"/> (no motion).</summary>
     [Parameter] public BadgeAnimation Animation { get; set; } = BadgeAnimation.None;
@@ -75,7 +75,7 @@ public partial class AtomBadge : AtomComponentBase
     /// <summary>Explicit height (any CSS length). Overrides the size-driven height. Sets <c>--badge-height</c>.</summary>
     [Parameter] public string? Height { get; set; }
 
-    /// <summary>Corner radius in px for <see cref="Shape.Rounded"/>. Sets <c>--badge-radius</c>.</summary>
+    /// <summary>Corner radius in px for <see cref="BadgeShape.Rounded"/>. Sets <c>--badge-radius</c>.</summary>
     [Parameter] public double? Radius { get; set; }
 
     /// <summary>Animation duration in seconds. Overrides the per-animation default. Sets <c>--badge-anim-duration</c>.</summary>
@@ -173,40 +173,40 @@ public partial class AtomBadge : AtomComponentBase
 
     private string PlacementValue => Placement switch
     {
-        Placement.TopEnd => "top-end",
-        Placement.TopStart => "top-start",
-        Placement.BottomEnd => "bottom-end",
-        Placement.BottomStart => "bottom-start",
-        Placement.TopCenter => "top-center",
-        Placement.BottomCenter => "bottom-center",
+        BadgePlacement.TopEnd => "top-end",
+        BadgePlacement.TopStart => "top-start",
+        BadgePlacement.BottomEnd => "bottom-end",
+        BadgePlacement.BottomStart => "bottom-start",
+        BadgePlacement.TopCenter => "top-center",
+        BadgePlacement.BottomCenter => "bottom-center",
         _ => "top-end",
     };
 
     // Star/Hexagon/Diamond/Shield/Burst/Ribbon are drawn as an SVG path; the rest are CSS boxes.
-    private bool IsSvgShape => Shape is Shape.Star or Shape.Hexagon or Shape.Diamond
-        or Shape.Shield or Shape.Burst or Shape.Ribbon;
+    private bool IsSvgShape => Shape is BadgeShape.Star or BadgeShape.Hexagon or BadgeShape.Diamond
+        or BadgeShape.Shield or BadgeShape.Burst or BadgeShape.Ribbon;
 
     private string ShapeValue => Shape switch
     {
-        Shape.Pill => "pill",
-        Shape.Circle => "circle",
-        Shape.Square => "square",
-        Shape.Rounded => "rounded",
-        Shape.Star => "star",
-        Shape.Hexagon => "hexagon",
-        Shape.Diamond => "diamond",
-        Shape.Shield => "shield",
-        Shape.Burst => "burst",
-        Shape.Ribbon => "ribbon",
+        BadgeShape.Pill => "pill",
+        BadgeShape.Circle => "circle",
+        BadgeShape.Square => "square",
+        BadgeShape.Rounded => "rounded",
+        BadgeShape.Star => "star",
+        BadgeShape.Hexagon => "hexagon",
+        BadgeShape.Diamond => "diamond",
+        BadgeShape.Shield => "shield",
+        BadgeShape.Burst => "burst",
+        BadgeShape.Ribbon => "ribbon",
         _ => "pill",
     };
 
     private string VariantValue => Variant switch
     {
-        Variant.Info => "info",
-        Variant.Success => "success",
-        Variant.Warning => "warning",
-        Variant.Danger => "danger",
+        BadgeVariant.Info => "info",
+        BadgeVariant.Success => "success",
+        BadgeVariant.Warning => "warning",
+        BadgeVariant.Danger => "danger",
         _ => "default",
     };
 
@@ -239,12 +239,12 @@ public partial class AtomBadge : AtomComponentBase
 
     private string CurrentPath => Shape switch
     {
-        Shape.Star => StarPath,
-        Shape.Hexagon => HexagonPath,
-        Shape.Diamond => DiamondPath,
-        Shape.Shield => ShieldPath,
-        Shape.Ribbon => RibbonPath,
-        Shape.Burst => BurstPath,
+        BadgeShape.Star => StarPath,
+        BadgeShape.Hexagon => HexagonPath,
+        BadgeShape.Diamond => DiamondPath,
+        BadgeShape.Shield => ShieldPath,
+        BadgeShape.Ribbon => RibbonPath,
+        BadgeShape.Burst => BurstPath,
         _ => "",
     };
 

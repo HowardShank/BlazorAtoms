@@ -1,0 +1,428 @@
+/* ---- customization hooks -------------------------------------------------------------------
+   Every visual value is a --btn-* custom property declared here with its default. Four ways to
+   retarget one, in ascending priority:
+
+     1. this file's [data-variant] / [data-appearance] / [data-size] / [data-shape] rules
+     2. an enclosing AtomButtonGroup (which cascades the axes, not the properties)
+     3. a consumer stylesheet targeting .atom-button
+     4. the component's parameters (Background, Radius, Height, ...) — inline style, always wins
+
+   The whole family shares this `btn` prefix (unlike the chip family's per-component prefixes), so
+   `--btn-accent` set once moves every button on the page.
+
+   Every component in this package renders through AtomButton, so this stylesheet is the single
+   definition of the family's look — AtomIconButton and AtomToggleButton add `atom-button` to their
+   own root class to pick it up.
+   ------------------------------------------------------------------------------------------- */
+.atom-button {
+    --btn-accent: #475569;
+    --btn-on-accent: #ffffff;
+    --btn-color: var(--btn-on-accent);
+    --btn-border-color: var(--btn-accent);
+    --btn-border-width: 1px;
+    --btn-radius: 6px;
+    --btn-pad-y: .45rem;
+    --btn-pad-x: .9rem;
+    --btn-gap: .45rem;
+    --btn-font-size: 1em;
+    --btn-font-weight: 600;
+    --btn-min-width: 0;
+    --btn-transition: 150ms ease;
+    /* Depth of the Press3d ledge, and how far the face travels into it. */
+    --btn-press-depth: 4px;
+
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--btn-gap);
+    box-sizing: border-box;
+    min-width: var(--btn-min-width);
+    height: var(--btn-height);
+    padding: var(--btn-pad-y) var(--btn-pad-x);
+    border: var(--btn-border-width) solid var(--btn-border-color);
+    border-radius: var(--btn-radius);
+    background: var(--btn-accent);
+    color: var(--btn-color);
+    font-family: var(--btn-font-family, inherit);
+    font-size: var(--btn-font-size);
+    font-weight: var(--btn-font-weight);
+    letter-spacing: var(--btn-letter-spacing, normal);
+    text-transform: var(--btn-text-transform, none);
+    line-height: 1.25;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    user-select: none;
+    /* Clips the ripple and the fizz/storm layers to the button's shape. Does not clip the element's
+       own box-shadow (Press3d's ledge) or its focus outline — both draw outside the border box. */
+    overflow: hidden;
+    transition: background-color var(--btn-transition), border-color var(--btn-transition),
+                color var(--btn-transition), box-shadow var(--btn-transition),
+                transform var(--btn-transition);
+}
+
+.atom-button[data-full-width="true"] {
+    width: 100%;
+}
+
+.atom-button-content {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--btn-gap);
+}
+
+.atom-button-icon {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+}
+
+.atom-button-icon svg {
+    width: 1em;
+    height: 1em;
+    display: block;
+}
+
+.atom-button:focus-visible {
+    outline: 2px solid var(--btn-accent);
+    outline-offset: 2px;
+}
+
+/* ---- appearances ---------------------------------------------------------------------------
+   Only these rules touch background/border/text, so they compose with every size and shape.
+   Hover/active darken by mixing the accent toward black rather than hard-coding a second color,
+   which keeps a caller-supplied Background working without a second parameter.
+   ------------------------------------------------------------------------------------------- */
+
+.atom-button[data-appearance="solid"] {
+    background: var(--btn-accent);
+    border-color: transparent;
+    color: var(--btn-color);
+}
+
+.atom-button[data-appearance="solid"]:hover {
+    background: color-mix(in srgb, var(--btn-accent) 88%, #000000);
+}
+
+.atom-button[data-appearance="solid"]:active {
+    background: color-mix(in srgb, var(--btn-accent) 80%, #000000);
+}
+
+.atom-button[data-appearance="soft"] {
+    background: color-mix(in srgb, var(--btn-accent) 15%, transparent);
+    border-color: transparent;
+    color: var(--btn-accent);
+}
+
+.atom-button[data-appearance="soft"]:hover {
+    background: color-mix(in srgb, var(--btn-accent) 25%, transparent);
+}
+
+.atom-button[data-appearance="outline"] {
+    background: transparent;
+    border-color: var(--btn-border-color);
+    color: var(--btn-accent);
+}
+
+.atom-button[data-appearance="outline"]:hover {
+    background: color-mix(in srgb, var(--btn-accent) 12%, transparent);
+}
+
+.atom-button[data-appearance="ghost"] {
+    background: transparent;
+    border-color: transparent;
+    color: var(--btn-accent);
+}
+
+.atom-button[data-appearance="ghost"]:hover {
+    background: color-mix(in srgb, var(--btn-accent) 12%, transparent);
+}
+
+/* Looks like a link, still a button element (or a real anchor when Href is set). Padding drops so it
+   sits on the text baseline in a sentence. */
+.atom-button[data-appearance="link"] {
+    background: transparent;
+    border-color: transparent;
+    color: var(--btn-accent);
+    padding-inline: 0;
+    height: auto;
+    font-weight: inherit;
+}
+
+.atom-button[data-appearance="link"]:hover {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+/* ---- variants ------------------------------------------------------------------------------
+   One accent per member. Default is declared at the top; the rest only re-point --btn-accent, so
+   they inherit every appearance rule above unchanged.
+   ------------------------------------------------------------------------------------------- */
+
+.atom-button[data-variant="primary"] { --btn-accent: #2563eb; }
+.atom-button[data-variant="info"]    { --btn-accent: #0ea5e9; }
+.atom-button[data-variant="success"] { --btn-accent: #16a34a; }
+.atom-button[data-variant="warning"] { --btn-accent: #d97706; }
+.atom-button[data-variant="danger"]  { --btn-accent: #dc2626; }
+
+/* ---- sizes --------------------------------------------------------------------------------- */
+
+.atom-button[data-size="small"] {
+    --btn-pad-y: .25rem;
+    --btn-pad-x: .6rem;
+    --btn-font-size: .875em;
+    --btn-gap: .3rem;
+    --btn-radius: 4px;
+}
+
+/* Medium is the default declared at the top — no rule needed. */
+
+.atom-button[data-size="large"] {
+    --btn-pad-y: .65rem;
+    --btn-pad-x: 1.25rem;
+    --btn-font-size: 1.125em;
+    --btn-gap: .55rem;
+    --btn-radius: 8px;
+}
+
+/* ---- shapes -------------------------------------------------------------------------------- */
+
+.atom-button[data-shape="square"] { --btn-radius: 0; }
+.atom-button[data-shape="pill"]   { --btn-radius: 999px; }
+.atom-button[data-shape="circle"] { --btn-radius: 50%; }
+
+/* A circle needs a 1:1 box, which only makes sense once the label is gone — hence the pairing with
+   icon-only. A circular button with text keeps its natural width instead of clipping. */
+.atom-button[data-shape="circle"][data-icon-only="true"] {
+    aspect-ratio: 1;
+    padding: var(--btn-pad-y);
+}
+
+/* Icon-only: square padding so the glyph is centered, and no min-width stretching it. */
+.atom-button[data-icon-only="true"] {
+    padding-inline: var(--btn-pad-y);
+    --btn-min-width: 0;
+}
+
+/* ---- states -------------------------------------------------------------------------------- */
+
+.atom-button[data-state="disabled"] {
+    opacity: .55;
+    cursor: not-allowed;
+    /* Kills hover/active repaint on the blocked link, where there is no native disabled state. */
+    pointer-events: none;
+}
+
+.atom-button[data-state="loading"] {
+    cursor: progress;
+}
+
+/* The content keeps its box (visibility, not display) so the button doesn't resize when the spinner
+   appears — a row of buttons would otherwise reflow on every action. */
+.atom-button[data-state="loading"] .atom-button-content {
+    visibility: hidden;
+}
+
+.atom-button-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 1em;
+    height: 1em;
+    margin: -.5em 0 0 -.5em;
+    border: 2px solid color-mix(in srgb, currentColor 30%, transparent);
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: atom-button-spin 600ms linear infinite;
+}
+
+@keyframes atom-button-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ---- toggle state -------------------------------------------------------------------------
+   Only present when Pressed is non-null (AtomToggleButton), so a plain button is unaffected.
+   ------------------------------------------------------------------------------------------- */
+
+.atom-button[data-pressed="true"] {
+    background: color-mix(in srgb, var(--btn-accent) 82%, #000000);
+    border-color: color-mix(in srgb, var(--btn-accent) 82%, #000000);
+    color: var(--btn-on-accent);
+    box-shadow: inset 0 2px 4px color-mix(in srgb, #000000 25%, transparent);
+}
+
+/* Pressed has to read as "on" for the appearances whose resting state is transparent, so it takes
+   the accent fill and the contrasting text those otherwise never use. */
+.atom-button[data-appearance="soft"][data-pressed="true"],
+.atom-button[data-appearance="outline"][data-pressed="true"],
+.atom-button[data-appearance="ghost"][data-pressed="true"] {
+    background: var(--btn-accent);
+    color: var(--btn-on-accent);
+}
+
+/* ---- effects ------------------------------------------------------------------------------
+   Each effect is one self-contained block keyed off data-effect. All are triggered by CSS
+   pseudo-classes (no C# state) except click-ripple, whose span the component renders per click.
+   ::before is the sweep/overlay layer, ::after the texture layer — kept consistent so two effects
+   are never fighting for the same pseudo-element.
+   ------------------------------------------------------------------------------------------- */
+
+/* press-3d: rests on a darker ledge and travels down into it. The ledge is a box-shadow rather than
+   a border so it doesn't change the button's layout box. */
+.atom-button[data-effect="press-3d"] {
+    box-shadow: 0 var(--btn-press-depth) 0 color-mix(in srgb, var(--btn-accent) 60%, #000000);
+    /* Reserve the ledge so neighbours don't sit on top of it. */
+    margin-bottom: var(--btn-press-depth);
+}
+
+.atom-button[data-effect="press-3d"]:active {
+    transform: translateY(var(--btn-press-depth));
+    box-shadow: 0 0 0 color-mix(in srgb, var(--btn-accent) 60%, #000000);
+}
+
+/* bevel: chiselled edges via inset shadows, inverted while pressed. */
+.atom-button[data-effect="bevel"] {
+    box-shadow: inset 2px 2px 0 color-mix(in srgb, #ffffff 35%, transparent),
+                inset -2px -2px 0 color-mix(in srgb, #000000 25%, transparent);
+}
+
+.atom-button[data-effect="bevel"]:active {
+    box-shadow: inset -2px -2px 0 color-mix(in srgb, #ffffff 30%, transparent),
+                inset 2px 2px 0 color-mix(in srgb, #000000 30%, transparent);
+}
+
+/* gradient-border: two backgrounds — a flat fill clipped to the padding box, a rotating conic
+   gradient clipped to the border box — so only the border is painted by the gradient.
+   The rotation animates a registered custom property; @property is honored by Chromium/Safari and
+   Firefox 128+. Where it isn't, the gradient simply renders static, which still looks intentional. */
+@property --btn-angle {
+    syntax: '<angle>';
+    inherits: false;
+    initial-value: 0deg;
+}
+
+.atom-button[data-effect="gradient-border"] {
+    --btn-border-width: 2px;
+    border-color: transparent;
+    background:
+        linear-gradient(var(--btn-gradient-fill, #0f172a), var(--btn-gradient-fill, #0f172a)) padding-box,
+        conic-gradient(from var(--btn-angle),
+            var(--btn-accent),
+            color-mix(in srgb, var(--btn-accent) 40%, #ffffff),
+            var(--btn-accent)) border-box;
+    animation: atom-button-angle 3s linear infinite;
+}
+
+@keyframes atom-button-angle {
+    to { --btn-angle: 360deg; }
+}
+
+/* rainbow: hue-rotates the whole surface. Cheap, and it composes with any variant since it filters
+   whatever the accent already painted. */
+.atom-button[data-effect="rainbow"] {
+    animation: atom-button-rainbow 4s linear infinite;
+}
+
+@keyframes atom-button-rainbow {
+    to { filter: hue-rotate(360deg); }
+}
+
+/* fizzy: bubbles drawn as repeating radial gradients on the texture layer, rising on hover.
+   The layer is always present (so the transition has something to animate) but transparent. */
+.atom-button[data-effect="fizzy"]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    background-image:
+        radial-gradient(circle at 20% 90%, color-mix(in srgb, #ffffff 70%, transparent) 0 2px, transparent 3px),
+        radial-gradient(circle at 45% 95%, color-mix(in srgb, #ffffff 60%, transparent) 0 3px, transparent 4px),
+        radial-gradient(circle at 70% 88%, color-mix(in srgb, #ffffff 70%, transparent) 0 2px, transparent 3px),
+        radial-gradient(circle at 88% 96%, color-mix(in srgb, #ffffff 55%, transparent) 0 2.5px, transparent 3.5px);
+    transition: opacity var(--btn-transition);
+}
+
+.atom-button[data-effect="fizzy"]:hover::after {
+    opacity: 1;
+    animation: atom-button-fizz 1.4s linear infinite;
+}
+
+@keyframes atom-button-fizz {
+    from { transform: translateY(0); opacity: 1; }
+    to { transform: translateY(-100%); opacity: 0; }
+}
+
+/* storm: a hard highlight sweeps across on hover, with a brightness flicker behind it. */
+.atom-button[data-effect="storm"]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(105deg,
+        transparent 35%,
+        color-mix(in srgb, #ffffff 65%, transparent) 50%,
+        transparent 65%);
+    transform: translateX(-120%);
+}
+
+.atom-button[data-effect="storm"]:hover::before {
+    animation: atom-button-sweep 900ms ease-in-out infinite;
+}
+
+.atom-button[data-effect="storm"]:hover {
+    animation: atom-button-flicker 2.4s steps(1, end) infinite;
+}
+
+@keyframes atom-button-sweep {
+    to { transform: translateX(120%); }
+}
+
+@keyframes atom-button-flicker {
+    0%, 42%, 46%, 100% { filter: none; }
+    44% { filter: brightness(1.5); }
+    48% { filter: brightness(1.25); }
+}
+
+/* click-ripple: the component renders a keyed span per click, positioned from MouseEventArgs. The
+   element is new every time, so the one-shot keyframe restarts without any C# reset. */
+.atom-button-ripple {
+    position: absolute;
+    left: var(--btn-ripple-x, 50%);
+    top: var(--btn-ripple-y, 50%);
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: color-mix(in srgb, currentColor 35%, transparent);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    animation: atom-button-ripple 550ms ease-out forwards;
+}
+
+@keyframes atom-button-ripple {
+    from { width: 0; height: 0; opacity: .6; }
+    to { width: 250%; height: 250%; opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-button {
+        transition-duration: 0ms;
+    }
+
+    .atom-button[data-effect="rainbow"],
+    .atom-button[data-effect="gradient-border"],
+    .atom-button[data-effect="storm"],
+    .atom-button[data-effect="storm"]:hover,
+    .atom-button[data-effect="storm"]:hover::before,
+    .atom-button[data-effect="fizzy"]:hover::after,
+    .atom-button-ripple,
+    .atom-button-spinner {
+        animation: none;
+    }
+
+    .atom-button[data-effect="press-3d"]:active {
+        transform: none;
+    }
+}

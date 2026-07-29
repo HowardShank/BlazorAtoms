@@ -1,0 +1,73 @@
+@inherits ButtonFamilyBase
+
+<div class="@ClassAttr("atom-split-button")"
+     style="@StyleAttr(RootStyle)"
+     data-variant="@VariantAttr"
+     data-appearance="@AppearanceAttr"
+     data-size="@SizeAttr"
+     data-shape="@ShapeAttr"
+     data-state="@State"
+     data-menu-align="@MenuAlignAttr">
+    @* Primary half: a real AtomButton, so it carries the family's whole look and every effect. The
+       attribute splat goes here rather than on the wrapper — a caller's title/data-* belongs on the
+       thing being clicked. *@
+    <AtomButton CssClass="atom-split-button-action"
+                AdditionalAttributes="@AdditionalAttributes"
+                Variant="@EffectiveVariant"
+                Appearance="@EffectiveAppearance"
+                Size="@EffectiveSize"
+                Shape="@EffectiveShape"
+                Effect="@Effect"
+                Disabled="@Disabled"
+                Loading="@Loading"
+                FullWidth="@FullWidth"
+                Type="@Type"
+                Href="@Href"
+                Target="@Target"
+                OnClick="@OnClick"
+                AriaLabel="@AriaLabel"
+                Background="@Background"
+                TextColor="@TextColor"
+                BorderColor="@BorderColor"
+                BorderWidth="@BorderWidth"
+                Radius="@Radius"
+                Height="@Height"
+                MinWidth="@MinWidth"
+                FontSize="@FontSize"
+                FontFamily="@FontFamily"
+                FontWeight="@FontWeight"
+                LetterSpacing="@LetterSpacing"
+                TextTransform="@TextTransform">
+        @if (Icon is not null)
+        {
+            <span class="atom-button-icon">@Icon</span>
+        }
+        @if (ChildContent is not null)
+        {
+            @ChildContent
+        }
+        else if (!string.IsNullOrEmpty(Text))
+        {
+            <span class="atom-button-label">@Text</span>
+        }
+    </AtomButton>
+
+    @* Menu half: a native <details>, which supplies open/close state, keyboard activation, and the
+       expanded/collapsed announcement with no JS and no C# state. The <summary> can't be an
+       AtomButton (it has to be the summary element), so this component's own CSS matches it to the
+       family look off the inherited --btn-* tokens. *@
+    <details class="atom-split-button-menu">
+        <summary class="atom-split-button-toggle"
+                 role="button"
+                 aria-label="@ToggleAriaLabel"
+                 aria-disabled="@(IsBlocked ? "true" : null)"
+                 tabindex="@(IsBlocked ? "-1" : null)">
+            <svg class="atom-split-button-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M6 9l6 6 6-6" />
+            </svg>
+        </summary>
+        <div class="atom-split-button-panel" role="menu">
+            @MenuContent
+        </div>
+    </details>
+</div>

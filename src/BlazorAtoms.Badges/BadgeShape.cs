@@ -2,7 +2,12 @@ namespace BlazorAtoms.Badges;
 
 /// <summary>Badge outline shape. The first four are pure-CSS boxes; the rest are drawn as inline
 /// SVG paths so fill <em>and</em> border apply to every shape (no <c>clip-path</c> limitation).</summary>
-public enum Shape
+/// <remarks>
+/// Prefixed <c>Badge*</c> because <c>BlazorAtoms.Avatars</c> declares its own <c>Shape</c>: a page
+/// that <c>@using</c>s both packages would otherwise have no unambiguous <c>Shape</c>. The parameter
+/// on <see cref="AtomBadge"/> is still called <c>Shape</c>.
+/// </remarks>
+public enum BadgeShape
 {
     /// <summary>Stadium / pill — fully rounded ends (default).</summary>
     Pill,

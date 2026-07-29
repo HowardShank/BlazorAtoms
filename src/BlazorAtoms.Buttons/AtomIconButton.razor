@@ -1,0 +1,41 @@
+@inherits ButtonFamilyBase
+
+@* Renders through AtomButton rather than repeating its markup, so every variant/size/shape/effect
+   rule in AtomButton.razor.css applies here for free. The axes are forwarded already-resolved
+   (EffectiveVariant, not Variant), which is what settles any AtomButtonGroup inheritance before the
+   inner button sees them. *@
+<AtomButton IconOnly="true"
+            CssClass="@InnerCssClass"
+            Style="@Style"
+            AdditionalAttributes="@AdditionalAttributes"
+            Variant="@EffectiveVariant"
+            Appearance="@EffectiveAppearance"
+            Size="@EffectiveSize"
+            Shape="@EffectiveShape"
+            Effect="@Effect"
+            Disabled="@Disabled"
+            Loading="@Loading"
+            Visible="@Visible"
+            FullWidth="@FullWidth"
+            Type="@Type"
+            Href="@Href"
+            Target="@Target"
+            OnClick="@OnClick"
+            AriaLabel="@AriaLabel"
+            Background="@Background"
+            TextColor="@TextColor"
+            BorderColor="@BorderColor"
+            BorderWidth="@BorderWidth"
+            Radius="@Radius"
+            Height="@Height"
+            MinWidth="@MinWidth"
+            FontSize="@FontSize"
+            FontFamily="@FontFamily"
+            FontWeight="@FontWeight"
+            LetterSpacing="@LetterSpacing"
+            TextTransform="@TextTransform">
+    @if (Icon is not null)
+    {
+        <span class="atom-button-icon">@Icon</span>
+    }
+</AtomButton>

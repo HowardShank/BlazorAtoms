@@ -1,0 +1,176 @@
+/* ---- customization hooks -------------------------------------------------------------------
+   The action half is an AtomButton and keeps the whole --btn-* surface (see AtomButton.razor.css).
+   The <summary> arrow half cannot be an AtomButton, so this file matches it to the family look by
+   reading the same tokens — which is why the accent defaults and the variant accents are declared
+   again here: custom properties inherit down to the summary, but .atom-button's own declarations
+   only reach the button element itself.
+
+   Own tokens:
+     --btn-menu-width   panel width           (default: content width, min = the button's)
+     --btn-menu-bg      panel background      (default #ffffff)
+   ------------------------------------------------------------------------------------------- */
+.atom-split-button {
+    --btn-accent: #475569;
+    --btn-on-accent: #ffffff;
+    --btn-border-width: 1px;
+    --btn-radius: 6px;
+    --btn-pad-y: .45rem;
+    --btn-pad-x: .9rem;
+    --btn-menu-bg: #ffffff;
+    --btn-transition: 150ms ease;
+
+    display: inline-flex;
+    align-items: stretch;
+    position: relative;
+}
+
+/* Same accents as AtomButton's variants, re-declared so the summary inherits them. */
+.atom-split-button[data-variant="primary"] { --btn-accent: #2563eb; }
+.atom-split-button[data-variant="info"]    { --btn-accent: #0ea5e9; }
+.atom-split-button[data-variant="success"] { --btn-accent: #16a34a; }
+.atom-split-button[data-variant="warning"] { --btn-accent: #d97706; }
+.atom-split-button[data-variant="danger"]  { --btn-accent: #dc2626; }
+
+.atom-split-button[data-size="small"] { --btn-pad-y: .25rem; --btn-pad-x: .6rem; --btn-radius: 4px; }
+.atom-split-button[data-size="large"] { --btn-pad-y: .65rem; --btn-pad-x: 1.25rem; --btn-radius: 8px; }
+
+.atom-split-button[data-shape="square"] { --btn-radius: 0; }
+.atom-split-button[data-shape="pill"]   { --btn-radius: 999px; }
+
+/* ---- the seam ------------------------------------------------------------------------------ */
+
+.atom-split-button ::deep .atom-split-button-action {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.atom-split-button-menu {
+    display: flex;
+}
+
+.atom-split-button-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: var(--btn-pad-y) calc(var(--btn-pad-y) + .1rem);
+    border: var(--btn-border-width) solid transparent;
+    border-top-right-radius: var(--btn-radius);
+    border-bottom-right-radius: var(--btn-radius);
+    /* Pull the two adjacent borders into one seam. */
+    margin-left: calc(-1 * var(--btn-border-width));
+    background: var(--btn-accent);
+    color: var(--btn-on-accent);
+    cursor: pointer;
+    user-select: none;
+    transition: background-color var(--btn-transition), color var(--btn-transition);
+    /* Both are needed to drop the native disclosure triangle. */
+    list-style: none;
+}
+
+.atom-split-button-toggle::-webkit-details-marker {
+    display: none;
+}
+
+.atom-split-button-toggle:hover {
+    background: color-mix(in srgb, var(--btn-accent) 88%, #000000);
+}
+
+.atom-split-button-toggle:focus-visible {
+    outline: 2px solid var(--btn-accent);
+    outline-offset: 2px;
+    /* Above the action half, so the seam doesn't clip the ring. */
+    position: relative;
+    z-index: 1;
+}
+
+.atom-split-button-arrow {
+    width: 1em;
+    height: 1em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform var(--btn-transition);
+}
+
+/* Arrow points up while the panel is open — the only visual state <details> gives us for free. */
+.atom-split-button-menu[open] .atom-split-button-arrow {
+    transform: rotate(180deg);
+}
+
+/* ---- appearances for the arrow half --------------------------------------------------------
+   Mirrors AtomButton's treatments so the two halves read as one control.
+   ------------------------------------------------------------------------------------------- */
+
+.atom-split-button[data-appearance="soft"] .atom-split-button-toggle {
+    background: color-mix(in srgb, var(--btn-accent) 15%, transparent);
+    color: var(--btn-accent);
+}
+
+.atom-split-button[data-appearance="soft"] .atom-split-button-toggle:hover {
+    background: color-mix(in srgb, var(--btn-accent) 25%, transparent);
+}
+
+.atom-split-button[data-appearance="outline"] .atom-split-button-toggle {
+    background: transparent;
+    border-color: var(--btn-accent);
+    color: var(--btn-accent);
+}
+
+.atom-split-button[data-appearance="outline"] .atom-split-button-toggle:hover,
+.atom-split-button[data-appearance="ghost"] .atom-split-button-toggle:hover,
+.atom-split-button[data-appearance="link"] .atom-split-button-toggle:hover {
+    background: color-mix(in srgb, var(--btn-accent) 12%, transparent);
+}
+
+.atom-split-button[data-appearance="ghost"] .atom-split-button-toggle,
+.atom-split-button[data-appearance="link"] .atom-split-button-toggle {
+    background: transparent;
+    color: var(--btn-accent);
+}
+
+/* ---- states -------------------------------------------------------------------------------- */
+
+/* <details> has no disabled state, so the arrow half is blocked the same way a disabled link is:
+   greyed, out of the tab order (set in markup), and inert to pointer events. */
+.atom-split-button[data-state="disabled"] .atom-split-button-toggle,
+.atom-split-button[data-state="loading"] .atom-split-button-toggle {
+    opacity: .55;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* ---- the panel ----------------------------------------------------------------------------- */
+
+.atom-split-button-panel {
+    position: absolute;
+    top: calc(100% + .25rem);
+    left: 0;
+    z-index: 20;
+    min-width: 100%;
+    width: var(--btn-menu-width, max-content);
+    box-sizing: border-box;
+    padding: .35rem;
+    border: 1px solid color-mix(in srgb, var(--btn-accent) 25%, transparent);
+    border-radius: var(--btn-radius);
+    background: var(--btn-menu-bg);
+    box-shadow: 0 .5rem 1.5rem color-mix(in srgb, #000000 18%, transparent);
+    /* Panel text is the page's, not the button's — a solid-variant button's white would be invisible
+       on the white panel. */
+    color: inherit;
+    text-align: start;
+}
+
+.atom-split-button[data-menu-align="end"] .atom-split-button-panel {
+    left: auto;
+    right: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-split-button-toggle,
+    .atom-split-button-arrow {
+        transition-duration: 0ms;
+    }
+}

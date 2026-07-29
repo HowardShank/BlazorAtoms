@@ -34,8 +34,8 @@ public class AtomChipTests : BunitContext
     {
         var cut = Render<AtomChip>(p => p
             .Add(c => c.Text, "x")
-            .Add(c => c.Variant, Variant.Success)
-            .Add(c => c.Appearance, Appearance.Outline));
+            .Add(c => c.Variant, BadgeVariant.Success)
+            .Add(c => c.Appearance, BadgeAppearance.Outline));
         var chip = cut.Find(".atom-chip");
         Assert.Equal("success", chip.GetAttribute("data-variant"));
         Assert.Equal("outline", chip.GetAttribute("data-appearance"));

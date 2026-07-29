@@ -1,0 +1,15 @@
+@inherits AtomComponentBase
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-button-group")"
+     style="@StyleAttr(RootStyle)"
+     role="group"
+     aria-label="@AriaLabel"
+     data-orientation="@OrientationAttr"
+     data-attached="@AttachedAttr"
+     data-full-width="@FullWidthAttr">
+    @* Children read the axes off this context; anything they set themselves still wins. *@
+    <CascadingValue Value="@Context" IsFixed="false">
+        @ChildContent
+    </CascadingValue>
+</div>

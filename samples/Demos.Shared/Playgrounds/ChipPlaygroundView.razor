@@ -70,8 +70,8 @@
 
 <div class="tt-controls">
     <div class="tt-ctrl"><label>Text</label><input type="text" @bind="Text" @bind:event="oninput" /></div>
-    <div class="tt-ctrl"><label>Variant</label><select @bind="Variant">@foreach (var v in Enum.GetValues<Variant>()){<option value="@v">@v</option>}</select></div>
-    <div class="tt-ctrl"><label>Appearance</label><select @bind="Appearance">@foreach (var a in Enum.GetValues<Appearance>()){<option value="@a">@a</option>}</select></div>
+    <div class="tt-ctrl"><label>Variant</label><select @bind="Variant">@foreach (var v in Enum.GetValues<BadgeVariant>()){<option value="@v">@v</option>}</select></div>
+    <div class="tt-ctrl"><label>Appearance</label><select @bind="Appearance">@foreach (var a in Enum.GetValues<BadgeAppearance>()){<option value="@a">@a</option>}</select></div>
     <div class="tt-ctrl"><label>Size px <span class="val">@Size</span></label><input type="number" min="16" max="56" @bind="Size" @bind:event="oninput" /></div>
     <div class="tt-ctrl"><label>Height px (vertical) <span class="val">@(Height?.ToString() ?? "auto")</span></label><input type="number" min="16" max="80" placeholder="(follows Size)" @bind="Height" @bind:event="oninput" /></div>
     <div class="tt-ctrl"><label>Radius px (Chip/Tag) <span class="val">@Radius</span></label><input type="number" min="0" max="30" @bind="Radius" @bind:event="oninput" /></div>
@@ -105,8 +105,8 @@
 
 @code {
     private string Text = "Label";
-    private Variant Variant = Variant.Info;
-    private Appearance Appearance = Appearance.Soft;
+    private BadgeVariant Variant = BadgeVariant.Info;
+    private BadgeAppearance Appearance = BadgeAppearance.Soft;
     private double Size = 32;
     private double? Height;
     private double Radius = 999;
@@ -146,7 +146,7 @@
 
     // Chip default appearance is Soft; Tag default is Solid; Pill Soft. Emit Appearance only when it
     // differs from each component's own default so the snippet stays minimal.
-    private string V => Variant != Variant.Default ? $" Variant=\"Variant.{Variant}\"" : "";
+    private string V => Variant != BadgeVariant.Default ? $" Variant=\"BadgeVariant.{Variant}\"" : "";
     private string SizeAttr => Size != 32 ? $" Size=\"{Size}\"" : "";
     private string HeightAttr => Height is not null ? $" Height=\"{Height}\"" : "";
     private string FontStyling =>
@@ -168,7 +168,7 @@
         get
         {
             var chip = $"<AtomChip Text=\"{Text}\"{V}"
-                + (Appearance != Appearance.Soft ? $" Appearance=\"Appearance.{Appearance}\"" : "")
+                + (Appearance != BadgeAppearance.Soft ? $" Appearance=\"BadgeAppearance.{Appearance}\"" : "")
                 + (Clickable ? " OnClick=\"Toggle\"" : "")
                 + (Selected ? " Selected=\"true\"" : "")
                 + (Disabled ? " Disabled=\"true\"" : "")
@@ -176,12 +176,12 @@
                 + Colors + FontStyling + SizeAttr + HeightAttr + Hatch + Close("AtomChip");
 
             var tag = $"<AtomTag Text=\"{Text}\"{V}"
-                + (Appearance != Appearance.Solid ? $" Appearance=\"Appearance.{Appearance}\"" : "")
+                + (Appearance != BadgeAppearance.Solid ? $" Appearance=\"BadgeAppearance.{Appearance}\"" : "")
                 + (Removable ? " Removable=\"true\" OnRemove=\"Remove\"" : "")
                 + Colors + FontStyling + SizeAttr + HeightAttr + Hatch + Close("AtomTag");
 
             var pill = $"<AtomPill Text=\"{Text}\"{V}"
-                + (Appearance != Appearance.Soft ? $" Appearance=\"Appearance.{Appearance}\"" : "")
+                + (Appearance != BadgeAppearance.Soft ? $" Appearance=\"BadgeAppearance.{Appearance}\"" : "")
                 + ((ShowIcon || !ShowDot) ? " Dot=\"false\"" : "")
                 + (!ShowIcon && ShowDot && Blank(DotCol) is not null ? $" DotColor=\"{DotCol}\"" : "")
                 + Colors + FontStyling + SizeAttr + HeightAttr + Hatch + Close("AtomPill");

@@ -1,0 +1,85 @@
+/* ---- customization hooks -------------------------------------------------------------------
+   The group owns only its own layout; the buttons inside keep the whole --btn-* surface (see
+   AtomButton.razor.css). One token of its own:
+
+     --btn-group-gap   space between buttons when Attached="false"   (default .5rem)
+
+   Child rules use ::deep, since the buttons are rendered by AtomButton (a different scope) rather
+   than by this component's own markup.
+   ------------------------------------------------------------------------------------------- */
+.atom-button-group {
+    --btn-group-gap: .5rem;
+
+    display: inline-flex;
+    align-items: stretch;
+}
+
+.atom-button-group[data-orientation="vertical"] {
+    flex-direction: column;
+}
+
+.atom-button-group[data-attached="false"] {
+    gap: var(--btn-group-gap);
+}
+
+.atom-button-group[data-full-width="true"] {
+    display: flex;
+    width: 100%;
+}
+
+/* Equal shares of the row/column. flex-basis:0 (not auto) so a longer label doesn't win more width. */
+.atom-button-group[data-full-width="true"] ::deep .atom-button {
+    flex: 1 1 0;
+}
+
+/* Lifts the hovered/focused button's borders above its neighbours', so the seam doesn't clip the
+   focus ring or a hover border color. */
+.atom-button-group ::deep .atom-button {
+    position: relative;
+}
+
+.atom-button-group ::deep .atom-button:hover,
+.atom-button-group ::deep .atom-button:focus-visible {
+    z-index: 1;
+}
+
+/* ---- attached seams ------------------------------------------------------------------------
+   Flatten the inner corners and pull each neighbour back by one border width, so two adjacent 1px
+   borders read as a single seam instead of a 2px line. The outer ends keep whatever radius the
+   group's Shape gave them.
+   ------------------------------------------------------------------------------------------- */
+
+.atom-button-group[data-attached="true"][data-orientation="horizontal"] ::deep .atom-button:not(:first-child) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    margin-left: calc(-1 * var(--btn-border-width, 1px));
+}
+
+.atom-button-group[data-attached="true"][data-orientation="horizontal"] ::deep .atom-button:not(:last-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.atom-button-group[data-attached="true"][data-orientation="vertical"] ::deep .atom-button:not(:first-child) {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    margin-top: calc(-1 * var(--btn-border-width, 1px));
+}
+
+.atom-button-group[data-attached="true"][data-orientation="vertical"] ::deep .atom-button:not(:last-child) {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+/* A pill group keeps round outer ends but needs its inner ends square, which the :not() rules above
+   already do — nothing shape-specific is needed here. Circle is deliberately not special-cased: an
+   attached row of circles is a contradiction, and Shape="Circle" on a group simply reads as pill-ish
+   ends on the two outer buttons. */
+
+/* Press3d reserves bottom margin for its ledge; inside a vertical attached group that margin would
+   break the seam, so the ledge is dropped there. The effect still reads on the last button, which has
+   nothing below it. */
+.atom-button-group[data-attached="true"][data-orientation="vertical"] ::deep .atom-button[data-effect="press-3d"]:not(:last-child) {
+    margin-bottom: 0;
+    box-shadow: none;
+}

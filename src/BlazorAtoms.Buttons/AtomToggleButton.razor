@@ -1,0 +1,46 @@
+@inherits ButtonFamilyBase
+
+@* Renders through AtomButton (see AtomIconButton for why), adding only the pressed state: Pressed
+   non-null is what makes the inner button emit aria-pressed / data-pressed. *@
+<AtomButton Pressed="@Value"
+            IconOnly="@IconOnly"
+            CssClass="@InnerCssClass"
+            Style="@Style"
+            AdditionalAttributes="@AdditionalAttributes"
+            Variant="@EffectiveVariant"
+            Appearance="@EffectiveAppearance"
+            Size="@EffectiveSize"
+            Shape="@EffectiveShape"
+            Effect="@Effect"
+            Disabled="@Disabled"
+            Loading="@Loading"
+            Visible="@Visible"
+            FullWidth="@FullWidth"
+            Type="@Type"
+            OnClick="@ToggleAsync"
+            AriaLabel="@AriaLabel"
+            Background="@Background"
+            TextColor="@TextColor"
+            BorderColor="@BorderColor"
+            BorderWidth="@BorderWidth"
+            Radius="@Radius"
+            Height="@Height"
+            MinWidth="@MinWidth"
+            FontSize="@FontSize"
+            FontFamily="@FontFamily"
+            FontWeight="@FontWeight"
+            LetterSpacing="@LetterSpacing"
+            TextTransform="@TextTransform">
+    @if (Icon is not null)
+    {
+        <span class="atom-button-icon">@Icon</span>
+    }
+    @if (ActiveContent is not null)
+    {
+        @ActiveContent
+    }
+    else if (!string.IsNullOrEmpty(ActiveText))
+    {
+        <span class="atom-button-label">@ActiveText</span>
+    }
+</AtomButton>

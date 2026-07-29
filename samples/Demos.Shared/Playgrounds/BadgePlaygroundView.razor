@@ -63,9 +63,9 @@
         <input type="text" @bind="RawValue" @bind:event="oninput" placeholder="text or number" />
     </div>
     <div class="tt-ctrl"><label>Max (0=none) <span class="val">@Max</span></label><input type="number" min="0" @bind="Max" @bind:event="oninput" /></div>
-    <div class="tt-ctrl"><label>Placement</label><select @bind="Placement" disabled="@(!Overlay)">@foreach (var p in Enum.GetValues<Placement>()){<option value="@p">@p</option>}</select></div>
-    <div class="tt-ctrl"><label>Shape</label><select @bind="Shape">@foreach (var s in Enum.GetValues<Shape>()){<option value="@s">@s</option>}</select></div>
-    <div class="tt-ctrl"><label>Variant</label><select @bind="Variant">@foreach (var v in Enum.GetValues<Variant>()){<option value="@v">@v</option>}</select></div>
+    <div class="tt-ctrl"><label>Placement</label><select @bind="Placement" disabled="@(!Overlay)">@foreach (var p in Enum.GetValues<BadgePlacement>()){<option value="@p">@p</option>}</select></div>
+    <div class="tt-ctrl"><label>Shape</label><select @bind="Shape">@foreach (var s in Enum.GetValues<BadgeShape>()){<option value="@s">@s</option>}</select></div>
+    <div class="tt-ctrl"><label>Variant</label><select @bind="Variant">@foreach (var v in Enum.GetValues<BadgeVariant>()){<option value="@v">@v</option>}</select></div>
     <div class="tt-ctrl"><label>Animation</label><select @bind="Animation">@foreach (var a in Enum.GetValues<BadgeAnimation>()){<option value="@a">@a</option>}</select></div>
     <div class="tt-ctrl"><label>Trigger</label><select @bind="Trigger">@foreach (var t in Enum.GetValues<AnimationTrigger>()){<option value="@t">@t</option>}</select></div>
     <div class="tt-ctrl"><label>Size (px) <span class="val">@Size</span></label><input type="number" min="10" max="72" @bind="Size" @bind:event="oninput" /></div>
@@ -101,9 +101,9 @@
     private bool ShowZero;
     private bool Dot;
     private bool Overlay = true;
-    private Placement Placement = Placement.TopEnd;
-    private Shape Shape = Shape.Pill;
-    private Variant Variant = Variant.Danger;
+    private BadgePlacement Placement = BadgePlacement.TopEnd;
+    private BadgeShape Shape = BadgeShape.Pill;
+    private BadgeVariant Variant = BadgeVariant.Danger;
     // Default the control to Pop so the demo moves; the component's own default is None.
     private BadgeAnimation Animation = BadgeAnimation.Pop;
     private AnimationTrigger Trigger = AnimationTrigger.OnChange;
@@ -146,9 +146,9 @@
             if (Max > 0) sb.Append($" Max=\"{Max}\"");
             if (ShowZero) sb.Append(" ShowZero=\"true\"");
             if (Dot) sb.Append(" Dot=\"true\"");
-            if (Overlay && Placement != Placement.TopEnd) sb.Append($" Placement=\"Placement.{Placement}\"");
-            if (Shape != Shape.Pill) sb.Append($" Shape=\"Shape.{Shape}\"");
-            if (Variant != Variant.Default) sb.Append($" Variant=\"Variant.{Variant}\"");
+            if (Overlay && Placement != BadgePlacement.TopEnd) sb.Append($" Placement=\"BadgePlacement.{Placement}\"");
+            if (Shape != BadgeShape.Pill) sb.Append($" Shape=\"BadgeShape.{Shape}\"");
+            if (Variant != BadgeVariant.Default) sb.Append($" Variant=\"BadgeVariant.{Variant}\"");
             if (Animation != BadgeAnimation.None) sb.Append($" Animation=\"BadgeAnimation.{Animation}\"");
             if (Animation != BadgeAnimation.None && Trigger != AnimationTrigger.Appear) sb.Append($" Trigger=\"AnimationTrigger.{Trigger}\"");
             if (OverrideBg && Blank(Bg) is not null) sb.Append($" Background=\"{Bg}\"");
@@ -158,7 +158,7 @@
             if (Size != 20) sb.Append($" Size=\"{Size}\"");
             if (!string.IsNullOrWhiteSpace(Width)) sb.Append($" Width=\"{Width}\"");
             if (!string.IsNullOrWhiteSpace(Height)) sb.Append($" Height=\"{Height}\"");
-            if (Shape == Shape.Rounded) sb.Append($" Radius=\"{Radius}\"");
+            if (Shape == BadgeShape.Rounded) sb.Append($" Radius=\"{Radius}\"");
             if (!string.IsNullOrWhiteSpace(MaxWidth)) sb.Append($" MaxWidth=\"{MaxWidth}\"");
             if (Animation != BadgeAnimation.None && Duration != 0.5) sb.Append($" Duration=\"{Duration}\"");
             if (Animation != BadgeAnimation.None && Delay != 0) sb.Append($" Delay=\"{Delay}\"");

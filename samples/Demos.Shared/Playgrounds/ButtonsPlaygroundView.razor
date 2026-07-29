@@ -1,0 +1,636 @@
+@using System.Globalization
+@using BlazorAtoms.Buttons
+
+<PageTitle>Buttons Playground</PageTitle>
+
+<h1>Buttons playground</h1>
+<p>The five <code>BlazorAtoms.Buttons</code> components on one shared base. Everything below renders
+   through <code>AtomButton</code> — <code>AtomIconButton</code> and <code>AtomToggleButton</code> wrap
+   one, <code>AtomSplitButton</code> hosts one — so the whole family shares a single stylesheet, the
+   <code>--btn-*</code> token surface, and all seven <code>ButtonEffect</code>s. Zero JS: even the click
+   ripple takes its origin from <code>MouseEventArgs</code>.</p>
+<p><a href="playground/formfields">&larr; Standard Inputs playground</a></p>
+
+<div class="btn-controls">
+    <div class="ctrl">
+        <label>Variant</label>
+        <select @bind="VariantSel">
+            @foreach (var v in Variants) { <option value="@v">@v</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Appearance</label>
+        <select @bind="AppearanceSel">
+            @foreach (var a in Appearances) { <option value="@a">@a</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Size</label>
+        <select @bind="SizeSel">
+            @foreach (var s in Sizes) { <option value="@s">@s</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Shape</label>
+        <select @bind="ShapeSel">
+            @foreach (var s in Shapes) { <option value="@s">@s</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Effect</label>
+        <select @bind="EffectSel">
+            @foreach (var e in Effects) { <option value="@e">@e</option> }
+        </select>
+        <span class="note">hover / click the buttons to see it</span>
+    </div>
+    <div class="ctrl">
+        <label>Type</label>
+        <select @bind="TypeSel">
+            @foreach (var t in Types) { <option value="@t">@t</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>State</label>
+        <div class="row"><input type="checkbox" id="btnDis" @bind="DisabledAll" /><label for="btnDis" class="inline">Disabled</label></div>
+        <div class="row"><input type="checkbox" id="btnLoad" @bind="LoadingAll" /><label for="btnLoad" class="inline">Loading</label></div>
+        <div class="row"><input type="checkbox" id="btnVis" @bind="VisibleAll" /><label for="btnVis" class="inline">Visible</label></div>
+        <div class="row"><input type="checkbox" id="btnFull" @bind="FullWidthAll" /><label for="btnFull" class="inline">FullWidth</label></div>
+    </div>
+    <div class="ctrl">
+        <label>Href (link mode)</label>
+        <input type="text" @bind="HrefV" @bind:event="oninput" placeholder="(renders a button)" />
+    </div>
+    <div class="ctrl">
+        <label>Target</label>
+        <input type="text" @bind="TargetV" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>AriaLabel</label>
+        <input type="text" @bind="AriaLabelV" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Height (px, 0=auto) <span class="val">@HeightV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="72" step="2" @bind="HeightV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>MinWidth (px, 0=none) <span class="val">@MinWidthV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="280" step="10" @bind="MinWidthV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Radius (px, -1=Shape) <span class="val">@RadiusV.ToString(Inv)</span></label>
+        <input type="range" min="-1" max="32" step="1" @bind="RadiusV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>BorderWidth (px, -1=default) <span class="val">@BorderWidthV.ToString(Inv)</span></label>
+        <input type="range" min="-1" max="6" step="1" @bind="BorderWidthV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>FontSize (px, 0=Size) <span class="val">@FontSizeV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="28" step="1" @bind="FontSizeV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>FontWeight</label>
+        <input type="text" @bind="FontWeightV" @bind:event="oninput" placeholder="(600)" />
+    </div>
+    <div class="ctrl">
+        <label>FontFamily</label>
+        <input type="text" @bind="FontFamilyV" @bind:event="oninput" placeholder="(inherit)" />
+    </div>
+    <div class="ctrl">
+        <label>LetterSpacing</label>
+        <input type="text" @bind="LetterSpacingV" @bind:event="oninput" placeholder="(normal)" />
+    </div>
+    <div class="ctrl">
+        <label>TextTransform</label>
+        <input type="text" @bind="TextTransformV" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Background (accent)</label>
+        <div class="row color">
+            <input type="color" @bind="BackgroundV" @bind:event="oninput" aria-label="Accent color picker" />
+            <input type="text" @bind="BackgroundV" @bind:event="oninput" placeholder="(Variant default)" />
+            <button type="button" class="clr-btn" @onclick="() => BackgroundV = string.Empty">Clear</button>
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>TextColor</label>
+        <div class="row color">
+            <input type="color" @bind="TextColorV" @bind:event="oninput" aria-label="Text color picker" />
+            <input type="text" @bind="TextColorV" @bind:event="oninput" placeholder="(default)" />
+            <button type="button" class="clr-btn" @onclick="() => TextColorV = string.Empty">Clear</button>
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>BorderColor</label>
+        <div class="row color">
+            <input type="color" @bind="BorderColorV" @bind:event="oninput" aria-label="Border color picker" />
+            <input type="text" @bind="BorderColorV" @bind:event="oninput" placeholder="(accent)" />
+            <button type="button" class="clr-btn" @onclick="() => BorderColorV = string.Empty">Clear</button>
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>CssClass</label>
+        <input type="text" @bind="CssClassV" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Style</label>
+        <input type="text" @bind="StyleV" @bind:event="oninput" placeholder="e.g. margin-top:4px" />
+    </div>
+    <div class="ctrl">
+        <label>Click log</label>
+        <div class="row">
+            <span class="note">@ClickLog</span>
+            <button type="button" class="clr-btn" @onclick="() => { _clicks = 0; _last = string.Empty; }">Reset</button>
+        </div>
+    </div>
+</div>
+
+<div class="btn-stage">
+    @* ---- AtomButton ------------------------------------------------------------------------ *@
+    <section class="btn-case">
+        <h2>AtomButton</h2>
+        <div class="btn-row">
+            <AtomButton Text="@Nz(TextV)"
+                        StartIcon="@(ShowStartIcon ? DiskIcon : null)"
+                        EndIcon="@(ShowEndIcon ? ChevronIcon : null)"
+                        IconOnly="@IconOnlyV"
+                        Pressed="@(PressedV ? true : null)"
+                        Variant="@VariantSel" Appearance="@AppearanceSel" Size="@SizeSel" Shape="@ShapeSel"
+                        Effect="@EffectSel" Type="@TypeSel"
+                        Disabled="@DisabledAll" Loading="@LoadingAll" Visible="@VisibleAll" FullWidth="@FullWidthAll"
+                        Href="@Nz(HrefV)" Target="@Nz(TargetV)" AriaLabel="@Nz(AriaLabelV)"
+                        Height="@Opt(HeightV)" MinWidth="@Opt(MinWidthV)" Radius="@Signed(RadiusV)"
+                        BorderWidth="@Signed(BorderWidthV)" FontSize="@Opt(FontSizeV)"
+                        FontFamily="@Nz(FontFamilyV)" FontWeight="@Nz(FontWeightV)"
+                        LetterSpacing="@Nz(LetterSpacingV)" TextTransform="@Nz(TextTransformV)"
+                        Background="@Nz(BackgroundV)" TextColor="@Nz(TextColorV)" BorderColor="@Nz(BorderColorV)"
+                        CssClass="@Nz(CssClassV)" Style="@Nz(StyleV)"
+                        OnClick="@(() => Log("AtomButton"))" />
+        </div>
+        <div class="btn-opts">
+            <div class="ctrl">
+                <label>Text</label>
+                <input type="text" @bind="TextV" @bind:event="oninput" placeholder="(none)" />
+            </div>
+            <div class="ctrl">
+                <label>Slots &amp; flags</label>
+                <div class="row"><input type="checkbox" id="btnStart" @bind="ShowStartIcon" /><label for="btnStart" class="inline">StartIcon</label></div>
+                <div class="row"><input type="checkbox" id="btnEnd" @bind="ShowEndIcon" /><label for="btnEnd" class="inline">EndIcon</label></div>
+                <div class="row"><input type="checkbox" id="btnIconOnly" @bind="IconOnlyV" /><label for="btnIconOnly" class="inline">IconOnly</label></div>
+                <div class="row"><input type="checkbox" id="btnPressed" @bind="PressedV" /><label for="btnPressed" class="inline">Pressed</label></div>
+            </div>
+        </div>
+    </section>
+
+    @* ---- every variant / appearance at a glance -------------------------------------------- *@
+    <section class="btn-case">
+        <h2>Variant &times; Appearance</h2>
+        <p class="note">Each row is one <code>Appearance</code>; the current Size / Shape / Effect apply.</p>
+        @foreach (var appearance in Appearances)
+        {
+            <div class="btn-row">
+                @foreach (var variant in Variants)
+                {
+                    <AtomButton Text="@variant.ToString()"
+                                Variant="@variant" Appearance="@appearance"
+                                Size="@SizeSel" Shape="@ShapeSel" Effect="@EffectSel"
+                                OnClick="@(() => Log($"{variant}/{appearance}"))" />
+                }
+            </div>
+        }
+    </section>
+
+    @* ---- AtomIconButton -------------------------------------------------------------------- *@
+    <section class="btn-case">
+        <h2>AtomIconButton</h2>
+        <div class="btn-row">
+            <AtomIconButton Icon="@GearIcon"
+                            AriaLabel="@(string.IsNullOrEmpty(AriaLabelV) ? "Settings" : AriaLabelV)"
+                            Variant="@VariantSel" Appearance="@AppearanceSel" Size="@SizeSel" Shape="@ShapeSel"
+                            Effect="@EffectSel" Type="@TypeSel"
+                            Disabled="@DisabledAll" Loading="@LoadingAll" Visible="@VisibleAll"
+                            Href="@Nz(HrefV)" Target="@Nz(TargetV)"
+                            Height="@Opt(HeightV)" MinWidth="@Opt(MinWidthV)" Radius="@Signed(RadiusV)"
+                            BorderWidth="@Signed(BorderWidthV)" FontSize="@Opt(FontSizeV)"
+                            Background="@Nz(BackgroundV)" TextColor="@Nz(TextColorV)" BorderColor="@Nz(BorderColorV)"
+                            CssClass="@Nz(CssClassV)" Style="@Nz(StyleV)"
+                            OnClick="@(() => Log("AtomIconButton"))" />
+            <span class="note">Shape defaults to Circle here; AriaLabel carries the whole name.</span>
+        </div>
+    </section>
+
+    @* ---- AtomToggleButton ------------------------------------------------------------------ *@
+    <section class="btn-case">
+        <h2>AtomToggleButton</h2>
+        <div class="btn-row">
+            <AtomToggleButton @bind-Value="ToggleValue"
+                              Text="@Nz(ToggleText)"
+                              PressedText="@Nz(TogglePressedText)"
+                              Icon="@(ToggleIcon ? BoldIcon : null)"
+                              IconOnly="@ToggleIconOnly"
+                              AriaLabel="@Nz(AriaLabelV)"
+                              Variant="@VariantSel" Appearance="@AppearanceSel" Size="@SizeSel" Shape="@ShapeSel"
+                              Effect="@EffectSel" Type="@TypeSel"
+                              Disabled="@DisabledAll" Loading="@LoadingAll" Visible="@VisibleAll" FullWidth="@FullWidthAll"
+                              Height="@Opt(HeightV)" MinWidth="@Opt(MinWidthV)" Radius="@Signed(RadiusV)"
+                              BorderWidth="@Signed(BorderWidthV)" FontSize="@Opt(FontSizeV)"
+                              Background="@Nz(BackgroundV)" TextColor="@Nz(TextColorV)" BorderColor="@Nz(BorderColorV)"
+                              CssClass="@Nz(CssClassV)" Style="@Nz(StyleV)"
+                              OnClick="@(() => Log("AtomToggleButton"))" />
+            <span class="note">Value = <code>@ToggleValue</code> (reported as <code>aria-pressed</code>)</span>
+        </div>
+        <div class="btn-opts">
+            <div class="ctrl">
+                <label>Text (off)</label>
+                <input type="text" @bind="ToggleText" @bind:event="oninput" placeholder="(none)" />
+            </div>
+            <div class="ctrl">
+                <label>PressedText (on)</label>
+                <input type="text" @bind="TogglePressedText" @bind:event="oninput" placeholder="(keeps Text)" />
+            </div>
+            <div class="ctrl">
+                <label>Content</label>
+                <div class="row"><input type="checkbox" id="tglIcon" @bind="ToggleIcon" /><label for="tglIcon" class="inline">Icon</label></div>
+                <div class="row"><input type="checkbox" id="tglIconOnly" @bind="ToggleIconOnly" /><label for="tglIconOnly" class="inline">IconOnly</label></div>
+            </div>
+        </div>
+    </section>
+
+    @* ---- AtomButtonGroup ------------------------------------------------------------------- *@
+    <section class="btn-case">
+        <h2>AtomButtonGroup</h2>
+        <div class="btn-row">
+            <AtomButtonGroup Variant="@VariantSel" Appearance="@AppearanceSel" Size="@SizeSel" Shape="@ShapeSel"
+                             Orientation="@GroupOrientation"
+                             Attached="@GroupAttached"
+                             Gap="@Opt(GroupGap)"
+                             FullWidth="@GroupFullWidth"
+                             Visible="@VisibleAll"
+                             AriaLabel="@Nz(GroupAriaLabel)"
+                             CssClass="@Nz(CssClassV)" Style="@Nz(StyleV)">
+                <AtomButton Text="Left" Effect="@EffectSel" Disabled="@DisabledAll" OnClick="@(() => Log("group: Left"))" />
+                <AtomButton Text="Center" Effect="@EffectSel" Disabled="@DisabledAll" OnClick="@(() => Log("group: Center"))" />
+                @if (GroupOverrideThird)
+                {
+                    <AtomButton Text="Danger" Variant="ButtonVariant.Danger" Effect="@EffectSel"
+                                Disabled="@DisabledAll" OnClick="@(() => Log("group: Danger"))" />
+                }
+                else
+                {
+                    <AtomButton Text="Right" Effect="@EffectSel" Disabled="@DisabledAll" OnClick="@(() => Log("group: Right"))" />
+                }
+            </AtomButtonGroup>
+        </div>
+        <div class="btn-opts">
+            <div class="ctrl">
+                <label>Orientation</label>
+                <select @bind="GroupOrientation">
+                    @foreach (var o in GroupOrientations) { <option value="@o">@o</option> }
+                </select>
+            </div>
+            <div class="ctrl">
+                <label>Gap (px, 0=default) <span class="val">@GroupGap.ToString(Inv)</span></label>
+                <input type="range" min="0" max="24" step="1" @bind="GroupGap" @bind:event="oninput" @bind:culture="Inv" disabled="@GroupAttached" />
+            </div>
+            <div class="ctrl">
+                <label>AriaLabel</label>
+                <input type="text" @bind="GroupAriaLabel" @bind:event="oninput" placeholder="(none)" />
+            </div>
+            <div class="ctrl">
+                <label>Layout</label>
+                <div class="row"><input type="checkbox" id="grpAtt" @bind="GroupAttached" /><label for="grpAtt" class="inline">Attached</label></div>
+                <div class="row"><input type="checkbox" id="grpFull" @bind="GroupFullWidth" /><label for="grpFull" class="inline">FullWidth</label></div>
+                <div class="row"><input type="checkbox" id="grpOver" @bind="GroupOverrideThird" /><label for="grpOver" class="inline">3rd overrides Variant</label></div>
+            </div>
+        </div>
+    </section>
+
+    @* ---- AtomSplitButton ------------------------------------------------------------------- *@
+    <section class="btn-case">
+        <h2>AtomSplitButton</h2>
+        <div class="btn-row">
+            <AtomSplitButton Text="@Nz(SplitText)"
+                             Icon="@(SplitIcon ? DiskIcon : null)"
+                             MenuAlign="@SplitAlign"
+                             MenuWidth="@Opt(SplitMenuWidth)"
+                             ToggleAriaLabel="@SplitToggleLabel"
+                             Variant="@VariantSel" Appearance="@AppearanceSel" Size="@SizeSel" Shape="@ShapeSel"
+                             Effect="@EffectSel" Type="@TypeSel"
+                             Disabled="@DisabledAll" Loading="@LoadingAll" Visible="@VisibleAll"
+                             Href="@Nz(HrefV)" Target="@Nz(TargetV)" AriaLabel="@Nz(AriaLabelV)"
+                             Height="@Opt(HeightV)" MinWidth="@Opt(MinWidthV)" Radius="@Signed(RadiusV)"
+                             BorderWidth="@Signed(BorderWidthV)" FontSize="@Opt(FontSizeV)"
+                             Background="@Nz(BackgroundV)" TextColor="@Nz(TextColorV)" BorderColor="@Nz(BorderColorV)"
+                             CssClass="@Nz(CssClassV)" Style="@Nz(StyleV)"
+                             OnClick="@(() => Log("AtomSplitButton: primary"))">
+                <MenuContent>
+                    <button type="button" class="btn-menu-item" role="menuitem" @onclick="@(() => Log("menu: Save as…"))">Save as…</button>
+                    <button type="button" class="btn-menu-item" role="menuitem" @onclick="@(() => Log("menu: Save a copy"))">Save a copy</button>
+                    <button type="button" class="btn-menu-item" role="menuitem" @onclick="@(() => Log("menu: Export"))">Export…</button>
+                </MenuContent>
+            </AtomSplitButton>
+            <span class="note">Native <code>&lt;details&gt;</code>: keyboard + open state are the platform's. No collision flip, no click-outside close.</span>
+        </div>
+        <div class="btn-opts">
+            <div class="ctrl">
+                <label>MenuAlign</label>
+                <select @bind="SplitAlign">
+                    @foreach (var a in MenuAligns) { <option value="@a">@a</option> }
+                </select>
+            </div>
+            <div class="ctrl">
+                <label>Text</label>
+                <input type="text" @bind="SplitText" @bind:event="oninput" placeholder="(none)" />
+            </div>
+            <div class="ctrl">
+                <label>ToggleAriaLabel</label>
+                <input type="text" @bind="SplitToggleLabel" @bind:event="oninput" />
+            </div>
+            <div class="ctrl">
+                <label>MenuWidth (px, 0=auto) <span class="val">@SplitMenuWidth.ToString(Inv)</span></label>
+                <input type="range" min="0" max="360" step="10" @bind="SplitMenuWidth" @bind:event="oninput" @bind:culture="Inv" />
+            </div>
+            <div class="ctrl">
+                <label>Content</label>
+                <div class="row"><input type="checkbox" id="splIcon" @bind="SplitIcon" /><label for="splIcon" class="inline">Icon</label></div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<CodeSnippetBox Code="@Snippet" FileName="ButtonsExample.razor" />
+
+<style>
+    .btn-controls, .btn-opts { display:grid; grid-template-columns:repeat(auto-fit,minmax(215px,1fr)); gap:1rem 1.5rem; }
+    .btn-controls { background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; margin-bottom:1.5rem; }
+    .btn-controls .ctrl, .btn-opts .ctrl { display:flex; flex-direction:column; gap:.4rem; }
+    .btn-controls label, .btn-opts label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; gap:.5rem; }
+    .btn-controls label .val, .btn-opts label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
+    .btn-controls input[type=range], .btn-opts input[type=range] { width:100%; accent-color:#2563eb; }
+    .btn-controls input[type=text], .btn-controls select, .btn-opts input[type=text], .btn-opts select
+        { padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; min-width:0; }
+    .btn-controls .row, .btn-opts .row { display:flex; align-items:center; gap:.5rem; }
+    .btn-controls .row input[type=checkbox], .btn-opts .row input[type=checkbox] { accent-color:#2563eb; width:16px; height:16px; flex:none; }
+    .btn-controls .row.color input[type=color] { flex:none; width:38px; height:32px; padding:2px; background:#070b10; border:1px solid #1b2330; border-radius:6px; cursor:pointer; }
+    .btn-controls .row.color input[type=text] { flex:1 1 auto; min-width:0; }
+    .btn-controls .row label.inline, .btn-opts .row label.inline { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; justify-content:flex-start; }
+    .btn-controls .clr-btn, .btn-opts .clr-btn { flex:none; padding:.35rem .55rem; border:1px solid #1b2330; background:#161d29; color:#cfd8e3; border-radius:6px; cursor:pointer; font-size:.75rem; }
+    .btn-controls .clr-btn:hover { background:#1e2836; }
+    .note { font-size:.75rem; color:#5fb7c9; font-family:ui-monospace,monospace; }
+
+    .btn-stage { display:flex; flex-direction:column; gap:1.25rem; }
+    .btn-case { border:1px solid #e2e8f0; border-radius:12px; padding:1.25rem 1.5rem; }
+    .btn-case h2 { margin:0 0 .75rem; font-size:1rem; font-family:ui-monospace,Consolas,monospace; color:#334155; }
+    .btn-case > .note { display:block; margin-bottom:.75rem; color:#64748b; }
+    .btn-row { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem; margin-bottom:1rem; }
+    .btn-row .note { color:#64748b; }
+    .btn-case .btn-opts { background:#0d1118; border:1px solid #1b2330; border-radius:10px; padding:1rem 1.25rem; color:#cfd8e3; }
+
+    /* Menu items are the consumer's markup, not the component's — the panel only positions them. */
+    .btn-menu-item { display:block; width:100%; padding:.4rem .6rem; border:0; border-radius:4px;
+        background:transparent; color:inherit; font:inherit; text-align:start; cursor:pointer; }
+    .btn-menu-item:hover { background:#eef2f7; }
+</style>
+
+@code {
+    private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
+
+    private static readonly ButtonVariant[] Variants = Enum.GetValues<ButtonVariant>();
+    private static readonly ButtonAppearance[] Appearances = Enum.GetValues<ButtonAppearance>();
+    private static readonly ButtonSize[] Sizes = Enum.GetValues<ButtonSize>();
+    private static readonly ButtonShape[] Shapes = Enum.GetValues<ButtonShape>();
+    private static readonly ButtonEffect[] Effects = Enum.GetValues<ButtonEffect>();
+    private static readonly ButtonType[] Types = Enum.GetValues<ButtonType>();
+    private static readonly ButtonGroupOrientation[] GroupOrientations = Enum.GetValues<ButtonGroupOrientation>();
+    private static readonly SplitMenuAlign[] MenuAligns = Enum.GetValues<SplitMenuAlign>();
+
+    // ---- shared axes -------------------------------------------------------------------------
+
+    private ButtonVariant VariantSel = ButtonVariant.Primary;
+    private ButtonAppearance AppearanceSel = ButtonAppearance.Solid;
+    private ButtonSize SizeSel = ButtonSize.Medium;
+    private ButtonShape ShapeSel = ButtonShape.Rounded;
+    private ButtonEffect EffectSel = ButtonEffect.None;
+    private ButtonType TypeSel = ButtonType.Button;
+    private bool DisabledAll;
+    private bool LoadingAll;
+    private bool VisibleAll = true;
+    private bool FullWidthAll;
+    private string HrefV = "";
+    private string TargetV = "";
+    private string AriaLabelV = "";
+    private double HeightV;
+    private double MinWidthV;
+    private double RadiusV = -1;
+    private double BorderWidthV = -1;
+    private double FontSizeV;
+    private string FontFamilyV = "";
+    private string FontWeightV = "";
+    private string LetterSpacingV = "";
+    private string TextTransformV = "";
+    private string BackgroundV = "";
+    private string TextColorV = "";
+    private string BorderColorV = "";
+    private string CssClassV = "";
+    private string StyleV = "";
+
+    // ---- per-component state -----------------------------------------------------------------
+
+    private string TextV = "Save changes";
+    private bool ShowStartIcon = true;
+    private bool ShowEndIcon;
+    private bool IconOnlyV;
+    private bool PressedV;
+
+    private bool ToggleValue;
+    private string ToggleText = "Follow";
+    private string TogglePressedText = "Following";
+    private bool ToggleIcon;
+    private bool ToggleIconOnly;
+
+    private ButtonGroupOrientation GroupOrientation = ButtonGroupOrientation.Horizontal;
+    private bool GroupAttached = true;
+    private double GroupGap;
+    private bool GroupFullWidth;
+    private bool GroupOverrideThird;
+    private string GroupAriaLabel = "Alignment";
+
+    private string SplitText = "Save";
+    private bool SplitIcon;
+    private SplitMenuAlign SplitAlign = SplitMenuAlign.Start;
+    private double SplitMenuWidth;
+    private string SplitToggleLabel = "More save options";
+
+    // ---- click log ---------------------------------------------------------------------------
+
+    private int _clicks;
+    private string _last = "";
+
+    private string ClickLog => _clicks == 0 ? "no clicks yet" : $"{_clicks} × — last: {_last}";
+
+    private void Log(string what)
+    {
+        _clicks++;
+        _last = what;
+    }
+
+    // ---- icons -------------------------------------------------------------------------------
+
+    private static readonly RenderFragment DiskIcon = b => b.AddMarkupContent(0,
+        "<svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\">" +
+        "<path d=\"M5 3h11l3 3v15H5z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/>" +
+        "<path d=\"M8 3h7v5H8zM8 13h8v8H8z\"/></svg>");
+
+    private static readonly RenderFragment ChevronIcon = b => b.AddMarkupContent(0,
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" " +
+        "stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M9 6l6 6-6 6\"/></svg>");
+
+    private static readonly RenderFragment GearIcon = b => b.AddMarkupContent(0,
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\">" +
+        "<circle cx=\"12\" cy=\"12\" r=\"3.5\"/>" +
+        "<path d=\"M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1\" stroke-linecap=\"round\"/></svg>");
+
+    private static readonly RenderFragment BoldIcon = b => b.AddMarkupContent(0,
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" " +
+        "stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M7 5h6a3.5 3.5 0 0 1 0 7H7zM7 12h7a3.5 3.5 0 0 1 0 7H7z\"/></svg>");
+
+    // ---- helpers -----------------------------------------------------------------------------
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
+
+    /// <summary>0 means "leave the parameter unset" for sliders whose zero has no useful meaning.</summary>
+    private static double? Opt(double v) => v > 0 ? v : null;
+
+    /// <summary>For sliders where 0 IS meaningful (Radius, BorderWidth), -1 is the unset sentinel.</summary>
+    private static double? Signed(double v) => v >= 0 ? v : null;
+
+    // ---- generated snippet -------------------------------------------------------------------
+
+    /// <summary>Shared attributes, written once per component so the snippet mirrors the previews.
+    /// Only non-default values appear, so it stays as short as the current configuration allows.</summary>
+    private string SharedAttrs(string indent, bool link = true)
+    {
+        var sb = new System.Text.StringBuilder();
+        void Add(string a) => sb.Append('\n').Append(indent).Append(a);
+
+        if (VariantSel != ButtonVariant.Default) Add($"Variant=\"ButtonVariant.{VariantSel}\"");
+        if (AppearanceSel != ButtonAppearance.Solid) Add($"Appearance=\"ButtonAppearance.{AppearanceSel}\"");
+        if (SizeSel != ButtonSize.Medium) Add($"Size=\"ButtonSize.{SizeSel}\"");
+        if (ShapeSel != ButtonShape.Rounded) Add($"Shape=\"ButtonShape.{ShapeSel}\"");
+        if (EffectSel != ButtonEffect.None) Add($"Effect=\"ButtonEffect.{EffectSel}\"");
+        if (TypeSel != ButtonType.Button) Add($"Type=\"ButtonType.{TypeSel}\"");
+        if (DisabledAll) Add("Disabled=\"true\"");
+        if (LoadingAll) Add("Loading=\"true\"");
+        if (!VisibleAll) Add("Visible=\"false\"");
+        if (FullWidthAll) Add("FullWidth=\"true\"");
+        if (link && !string.IsNullOrEmpty(HrefV)) Add($"Href=\"{HrefV}\"");
+        if (link && !string.IsNullOrEmpty(TargetV)) Add($"Target=\"{TargetV}\"");
+        if (!string.IsNullOrEmpty(AriaLabelV)) Add($"AriaLabel=\"{AriaLabelV}\"");
+        if (HeightV > 0) Add($"Height=\"{HeightV.ToString(Inv)}\"");
+        if (MinWidthV > 0) Add($"MinWidth=\"{MinWidthV.ToString(Inv)}\"");
+        if (RadiusV >= 0) Add($"Radius=\"{RadiusV.ToString(Inv)}\"");
+        if (BorderWidthV >= 0) Add($"BorderWidth=\"{BorderWidthV.ToString(Inv)}\"");
+        if (FontSizeV > 0) Add($"FontSize=\"{FontSizeV.ToString(Inv)}\"");
+        if (!string.IsNullOrEmpty(FontFamilyV)) Add($"FontFamily=\"{FontFamilyV}\"");
+        if (!string.IsNullOrEmpty(FontWeightV)) Add($"FontWeight=\"{FontWeightV}\"");
+        if (!string.IsNullOrEmpty(LetterSpacingV)) Add($"LetterSpacing=\"{LetterSpacingV}\"");
+        if (!string.IsNullOrEmpty(TextTransformV)) Add($"TextTransform=\"{TextTransformV}\"");
+        if (!string.IsNullOrEmpty(BackgroundV)) Add($"Background=\"{BackgroundV}\"");
+        if (!string.IsNullOrEmpty(TextColorV)) Add($"TextColor=\"{TextColorV}\"");
+        if (!string.IsNullOrEmpty(BorderColorV)) Add($"BorderColor=\"{BorderColorV}\"");
+        if (!string.IsNullOrEmpty(CssClassV)) Add($"CssClass=\"{CssClassV}\"");
+        if (!string.IsNullOrEmpty(StyleV)) Add($"Style=\"{StyleV}\"");
+        return sb.ToString();
+    }
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder();
+
+            // AtomButton
+            sb.Append("<AtomButton");
+            var i = "            ";
+            if (!string.IsNullOrEmpty(TextV)) sb.Append($" Text=\"{TextV}\"");
+            if (IconOnlyV) sb.Append($"\n{i}IconOnly=\"true\"");
+            if (PressedV) sb.Append($"\n{i}Pressed=\"true\"");
+            sb.Append(SharedAttrs(i));
+            sb.Append($"\n{i}OnClick=\"SaveAsync\"");
+            if (ShowStartIcon || ShowEndIcon)
+            {
+                sb.Append(">\n");
+                if (ShowStartIcon) sb.Append("    <StartIcon><svg …/></StartIcon>\n");
+                if (ShowEndIcon) sb.Append("    <EndIcon><svg …/></EndIcon>\n");
+                sb.Append("</AtomButton>\n\n");
+            }
+            else
+            {
+                sb.Append(" />\n\n");
+            }
+
+            // AtomIconButton
+            sb.Append("<AtomIconButton AriaLabel=\"Settings\"");
+            i = "                ";
+            sb.Append(SharedAttrs(i));
+            sb.Append($"\n{i}OnClick=\"OpenSettings\">\n");
+            sb.Append("    <Icon><svg …/></Icon>\n");
+            sb.Append("</AtomIconButton>\n\n");
+
+            // AtomToggleButton
+            sb.Append("<AtomToggleButton @bind-Value=\"_following\"");
+            i = "                  ";
+            if (!string.IsNullOrEmpty(ToggleText)) sb.Append($"\n{i}Text=\"{ToggleText}\"");
+            if (!string.IsNullOrEmpty(TogglePressedText)) sb.Append($"\n{i}PressedText=\"{TogglePressedText}\"");
+            if (ToggleIconOnly) sb.Append($"\n{i}IconOnly=\"true\"");
+            sb.Append(SharedAttrs(i, link: false));
+            if (ToggleIcon)
+            {
+                sb.Append(">\n    <Icon><svg …/></Icon>\n</AtomToggleButton>\n\n");
+            }
+            else
+            {
+                sb.Append(" />\n\n");
+            }
+
+            // AtomButtonGroup
+            sb.Append("<AtomButtonGroup");
+            i = "                 ";
+            if (VariantSel != ButtonVariant.Default) sb.Append($" Variant=\"ButtonVariant.{VariantSel}\"");
+            if (AppearanceSel != ButtonAppearance.Solid) sb.Append($"\n{i}Appearance=\"ButtonAppearance.{AppearanceSel}\"");
+            if (SizeSel != ButtonSize.Medium) sb.Append($"\n{i}Size=\"ButtonSize.{SizeSel}\"");
+            if (ShapeSel != ButtonShape.Rounded) sb.Append($"\n{i}Shape=\"ButtonShape.{ShapeSel}\"");
+            if (GroupOrientation != ButtonGroupOrientation.Horizontal)
+                sb.Append($"\n{i}Orientation=\"ButtonGroupOrientation.{GroupOrientation}\"");
+            if (!GroupAttached) sb.Append($"\n{i}Attached=\"false\"");
+            if (!GroupAttached && GroupGap > 0) sb.Append($"\n{i}Gap=\"{GroupGap.ToString(Inv)}\"");
+            if (GroupFullWidth) sb.Append($"\n{i}FullWidth=\"true\"");
+            if (!string.IsNullOrEmpty(GroupAriaLabel)) sb.Append($"\n{i}AriaLabel=\"{GroupAriaLabel}\"");
+            sb.Append(">\n");
+            sb.Append("    <AtomButton Text=\"Left\" OnClick=\"AlignLeft\" />\n");
+            sb.Append("    <AtomButton Text=\"Center\" OnClick=\"AlignCenter\" />\n");
+            sb.Append(GroupOverrideThird
+                ? "    @* An explicit value beats the group's cascade *@\n    <AtomButton Text=\"Danger\" Variant=\"ButtonVariant.Danger\" OnClick=\"Remove\" />\n"
+                : "    <AtomButton Text=\"Right\" OnClick=\"AlignRight\" />\n");
+            sb.Append("</AtomButtonGroup>\n\n");
+
+            // AtomSplitButton
+            sb.Append("<AtomSplitButton");
+            i = "                 ";
+            if (!string.IsNullOrEmpty(SplitText)) sb.Append($" Text=\"{SplitText}\"");
+            if (SplitAlign != SplitMenuAlign.Start) sb.Append($"\n{i}MenuAlign=\"SplitMenuAlign.{SplitAlign}\"");
+            if (SplitMenuWidth > 0) sb.Append($"\n{i}MenuWidth=\"{SplitMenuWidth.ToString(Inv)}\"");
+            if (SplitToggleLabel != "More actions") sb.Append($"\n{i}ToggleAriaLabel=\"{SplitToggleLabel}\"");
+            sb.Append(SharedAttrs(i));
+            sb.Append($"\n{i}OnClick=\"SaveAsync\">\n");
+            if (SplitIcon) sb.Append("    <Icon><svg …/></Icon>\n");
+            sb.Append("    <MenuContent>\n");
+            sb.Append("        <button type=\"button\" role=\"menuitem\" @onclick=\"SaveAsAsync\">Save as…</button>\n");
+            sb.Append("        <button type=\"button\" role=\"menuitem\" @onclick=\"ExportAsync\">Export…</button>\n");
+            sb.Append("    </MenuContent>\n");
+            sb.Append("</AtomSplitButton>");
+
+            return sb.ToString();
+        }
+    }
+}
