@@ -1,0 +1,55 @@
+@inherits AtomInputBase<bool>
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr(RootClass)"
+     style="@StyleAttr(RootStyle)"
+     data-state="@State"
+     data-variant="@VariantAttr"
+     data-size="@SizeAttr"
+     data-effect="@EffectAttr"
+     data-shape="@ShapeAttr"
+     data-indeterminate="@IndeterminateAttr">
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <label class="atom-checkbox-label @LabelCol">
+            @Label
+            @if (Required)
+            {
+                <span class="atom-checkbox-required" aria-hidden="true">*</span>
+            }
+        </label>
+    }
+    <div class="atom-checkbox-control @ControlCol">
+        @* The native input lives inside this label, so the caption is associated implicitly — no
+           generated id, which would differ between the prerender and interactive passes. *@
+        <label class="atom-checkbox-wrap" data-placement="@PlacementAttr">
+            <input class="atom-checkbox-input"
+                   type="checkbox"
+                   checked="@Value"
+                   disabled="@IsDisabled"
+                   required="@Required"
+                   aria-disabled="@(IsDisabled ? "true" : null)"
+                   aria-invalid="@(HasError ? "true" : null)"
+                   aria-checked="@AriaCheckedAttr"
+                   aria-label="@EffectiveAriaLabel"
+                   @onchange="OnChangeEvent" />
+            @* Painted box: the native control is visually hidden but still focused/tabbed/submitted,
+               and this span mirrors its state through CSS sibling selectors — which is also how the
+               indeterminate dash is drawn, since the native `indeterminate` flag is JS-only. *@
+            <span class="atom-checkbox-box" aria-hidden="true">
+                <svg class="atom-checkbox-check" viewBox="0 0 24 24" focusable="false">
+                    <path d="M5 12.5l4.5 4.5L19 7.5" />
+                </svg>
+                <span class="atom-checkbox-dash"></span>
+            </span>
+            @if (!string.IsNullOrEmpty(Text))
+            {
+                <span class="atom-checkbox-text">@Text</span>
+            }
+        </label>
+        @if (!string.IsNullOrEmpty(DisplayText))
+        {
+            <span class="atom-checkbox-subtext" data-state="@State">@DisplayText</span>
+        }
+    </div>
+</div>

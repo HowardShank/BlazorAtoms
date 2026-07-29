@@ -1,0 +1,53 @@
+@inherits AtomInputBase<bool>
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr(RootClass)"
+     style="@StyleAttr(RootStyle)"
+     data-state="@State"
+     data-variant="@VariantAttr"
+     data-size="@SizeAttr"
+     data-effect="@EffectAttr">
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <label class="atom-switch-label @LabelCol">
+            @Label
+            @if (Required)
+            {
+                <span class="atom-switch-required" aria-hidden="true">*</span>
+            }
+        </label>
+    }
+    <div class="atom-switch-control @ControlCol">
+        @* Native input inside the label — implicit association, no generated id. *@
+        <label class="atom-switch-wrap" data-placement="@PlacementAttr">
+            <input class="atom-switch-input"
+                   type="checkbox"
+                   role="switch"
+                   checked="@Value"
+                   disabled="@IsDisabled"
+                   required="@Required"
+                   aria-disabled="@(IsDisabled ? "true" : null)"
+                   aria-invalid="@(HasError ? "true" : null)"
+                   aria-label="@EffectiveAriaLabel"
+                   @onchange="OnChangeEvent" />
+            @* Painted track + thumb; the native checkbox is transparent above it and drives every
+               visual through :checked sibling selectors. *@
+            <span class="atom-switch-track" aria-hidden="true">
+                @if (!string.IsNullOrEmpty(OnText) || !string.IsNullOrEmpty(OffText))
+                {
+                    <span class="atom-switch-state atom-switch-state-on">@OnText</span>
+                    <span class="atom-switch-state atom-switch-state-off">@OffText</span>
+                }
+                <span class="atom-switch-thumb">@ThumbContent</span>
+            </span>
+            @if (!string.IsNullOrEmpty(Text))
+            {
+                <span class="atom-switch-text">@Text</span>
+            }
+        </label>
+        @if (!string.IsNullOrEmpty(DisplayText))
+        {
+            <span class="atom-switch-subtext" data-state="@State">@DisplayText</span>
+        }
+    </div>
+</div>

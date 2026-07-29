@@ -1,0 +1,225 @@
+/* ---- customization hooks -------------------------------------------------------------------
+   Same --field-* contract as AtomTextField (see that file's header for the priority order).
+   ------------------------------------------------------------------------------------------- */
+.atom-number-field {
+    --field-width: 100%;
+    --field-font-size: inherit;
+    --field-radius: 6px;
+    --field-border-width: 1px;
+    --field-border-color: #cbd5e1;
+    --field-bg: #ffffff;
+    --field-text-color: inherit;
+    --field-accent: #2563eb;
+    --field-focus-color: var(--field-accent);
+    --field-error-color: #dc2626;
+    --field-muted-color: #64748b;
+    --field-pad-y: .45rem;
+    --field-pad-x: .6rem;
+    --field-gap: .4rem;
+    --field-transition: 150ms ease;
+
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: .5rem 1rem;
+    font: inherit;
+}
+
+.atom-number-field-label {
+    font-weight: 600;
+    padding-top: .35rem;
+}
+
+.atom-number-field-required {
+    color: var(--field-error-color);
+    margin-inline-start: .15rem;
+}
+
+.atom-number-field-control {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.atom-number-field-box {
+    display: flex;
+    align-items: center;
+    gap: var(--field-gap);
+    box-sizing: border-box;
+    width: var(--field-width);
+    max-width: 100%;
+    padding: var(--field-pad-y) var(--field-pad-x);
+    border: var(--field-border-width) solid var(--field-border-color);
+    border-radius: var(--field-radius);
+    background: var(--field-bg);
+    color: var(--field-text-color);
+    transition: border-color var(--field-transition), box-shadow var(--field-transition),
+                background-color var(--field-transition), transform var(--field-transition);
+}
+
+.atom-number-field-box:focus-within {
+    border-color: var(--field-focus-color);
+}
+
+.atom-number-field-field {
+    flex: 1 1 auto;
+    min-width: 0;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: var(--field-font-size);
+    font-variant-numeric: tabular-nums;
+    outline: none;
+}
+
+.atom-number-field-field::placeholder {
+    color: var(--field-muted-color);
+    opacity: 1;
+}
+
+/* ShowSpinners="false". Two rules because the mechanism differs per engine: Firefox honors the
+   standard `appearance`, WebKit/Blink needs its spin-button pseudo-element removed. Arrow-key
+   stepping keeps working either way — this only hides the mouse affordance. */
+.atom-number-field-field[data-spinners="hidden"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+.atom-number-field-field[data-spinners="hidden"]::-webkit-outer-spin-button,
+.atom-number-field-field[data-spinners="hidden"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+}
+
+.atom-number-field-prefix,
+.atom-number-field-suffix {
+    flex: 0 0 auto;
+    color: var(--field-muted-color);
+    white-space: nowrap;
+}
+
+.atom-number-field-subtext {
+    font-size: .8125em;
+    color: var(--field-muted-color);
+}
+
+/* ---- states -------------------------------------------------------------------------------- */
+
+.atom-number-field[data-state="error"] .atom-number-field-box {
+    border-color: var(--field-error-color);
+}
+
+.atom-number-field[data-state="error"] .atom-number-field-subtext {
+    color: var(--field-error-color);
+}
+
+.atom-number-field[data-state="disabled"] {
+    opacity: .55;
+}
+
+.atom-number-field[data-state="disabled"] .atom-number-field-field {
+    cursor: not-allowed;
+}
+
+.atom-number-field[data-state="readonly"] .atom-number-field-box {
+    background: color-mix(in srgb, var(--field-border-color) 18%, var(--field-bg));
+}
+
+/* ---- variants ------------------------------------------------------------------------------ */
+
+.atom-number-field[data-variant="filled"] {
+    --field-bg: color-mix(in srgb, var(--field-border-color) 22%, #ffffff);
+}
+
+.atom-number-field[data-variant="filled"] .atom-number-field-box {
+    border-color: transparent;
+    border-bottom-color: var(--field-border-color);
+    border-radius: var(--field-radius) var(--field-radius) 0 0;
+}
+
+.atom-number-field[data-variant="filled"] .atom-number-field-box:focus-within {
+    border-bottom-color: var(--field-focus-color);
+}
+
+.atom-number-field[data-variant="underline"] .atom-number-field-box {
+    border-width: 0 0 var(--field-border-width) 0;
+    border-radius: 0;
+    background: transparent;
+    padding-inline: 0;
+}
+
+/* ---- sizes --------------------------------------------------------------------------------- */
+
+.atom-number-field[data-size="small"] {
+    --field-pad-y: .25rem;
+    --field-pad-x: .45rem;
+    --field-font-size: .875em;
+    --field-radius: 4px;
+}
+
+.atom-number-field[data-size="large"] {
+    --field-pad-y: .65rem;
+    --field-pad-x: .8rem;
+    --field-font-size: 1.125em;
+    --field-radius: 8px;
+}
+
+/* ---- effects ------------------------------------------------------------------------------- */
+
+.atom-number-field[data-effect="focus-glow"] .atom-number-field-box:focus-within {
+    box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--field-focus-color) 30%, transparent);
+}
+
+.atom-number-field[data-effect="focus-raise"] .atom-number-field-box:focus-within {
+    transform: translateY(-1px);
+    box-shadow: 0 .25rem .6rem color-mix(in srgb, #000000 18%, transparent);
+}
+
+.atom-number-field[data-effect="focus-underline"] .atom-number-field-box {
+    position: relative;
+}
+
+.atom-number-field[data-effect="focus-underline"] .atom-number-field-box::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: calc(-1 * var(--field-border-width));
+    height: 2px;
+    background: var(--field-focus-color);
+    transform: scaleX(0);
+    transition: transform var(--field-transition);
+}
+
+.atom-number-field[data-effect="focus-underline"] .atom-number-field-box:focus-within::after {
+    transform: scaleX(1);
+}
+
+/* Literal @keyframes name, component-prefixed — see AtomTextField.razor.css for why. */
+.atom-number-field[data-effect="shake-on-error"][data-state="error"] .atom-number-field-box {
+    animation: atom-number-field-shake 320ms ease;
+}
+
+@keyframes atom-number-field-shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-4px); }
+    40% { transform: translateX(4px); }
+    60% { transform: translateX(-2px); }
+    80% { transform: translateX(2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-number-field-box,
+    .atom-number-field[data-effect="focus-underline"] .atom-number-field-box::after {
+        transition-duration: 0ms;
+    }
+
+    .atom-number-field[data-effect="shake-on-error"][data-state="error"] .atom-number-field-box {
+        animation: none;
+    }
+}

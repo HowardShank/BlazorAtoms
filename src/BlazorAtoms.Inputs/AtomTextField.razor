@@ -1,0 +1,64 @@
+@inherits AtomInputBase<string?>
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr(RootClass)"
+     style="@StyleAttr(RootStyle)"
+     data-state="@State"
+     data-variant="@VariantAttr"
+     data-size="@SizeAttr"
+     data-effect="@EffectAttr">
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <label class="atom-text-field-label @LabelCol">
+            @Label
+            @if (Required)
+            {
+                <span class="atom-text-field-required" aria-hidden="true">*</span>
+            }
+        </label>
+    }
+    <div class="atom-text-field-control @ControlCol">
+        <div class="atom-text-field-box">
+            @if (PrefixContent is not null)
+            {
+                <span class="atom-text-field-prefix">@PrefixContent</span>
+            }
+            <input class="atom-text-field-field"
+                   type="@TypeAttr"
+                   value="@Value"
+                   placeholder="@Placeholder"
+                   maxlength="@MaxLength"
+                   autocomplete="@Autocomplete"
+                   inputmode="@InputMode"
+                   spellcheck="@SpellcheckAttr"
+                   disabled="@IsDisabled"
+                   readonly="@IsReadOnly"
+                   required="@Required"
+                   aria-disabled="@(IsDisabled ? "true" : null)"
+                   aria-invalid="@(HasError ? "true" : null)"
+                   aria-label="@EffectiveAriaLabel"
+                   @oninput="OnInputEvent"
+                   @onchange="OnChangeEvent" />
+            @if (ShowClearButton)
+            {
+                <button type="button"
+                        class="atom-text-field-clear"
+                        tabindex="-1"
+                        aria-label="Clear"
+                        @onclick="ClearAsync">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M7 7l10 10M17 7L7 17" />
+                    </svg>
+                </button>
+            }
+            @if (SuffixContent is not null)
+            {
+                <span class="atom-text-field-suffix">@SuffixContent</span>
+            }
+        </div>
+        @if (!string.IsNullOrEmpty(DisplayText))
+        {
+            <span class="atom-text-field-subtext" data-state="@State">@DisplayText</span>
+        }
+    </div>
+</div>

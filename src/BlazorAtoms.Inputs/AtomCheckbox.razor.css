@@ -1,0 +1,266 @@
+/* ---- customization hooks -------------------------------------------------------------------
+   Same --field-* contract as AtomTextField (see that file's header for the priority order), plus
+   --field-control-size for the box edge length. Sizes set that instead of padding, since a checkbox
+   has a fixed square control rather than a text box.
+   ------------------------------------------------------------------------------------------- */
+.atom-checkbox {
+    --field-font-size: inherit;
+    --field-radius: 4px;
+    --field-border-width: 1px;
+    --field-border-color: #94a3b8;
+    --field-bg: #ffffff;
+    --field-text-color: inherit;
+    --field-accent: #2563eb;
+    --field-focus-color: var(--field-accent);
+    --field-error-color: #dc2626;
+    --field-muted-color: #64748b;
+    --field-control-size: 18px;
+    --field-gap: .5rem;
+    --field-transition: 150ms ease;
+
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: .5rem 1rem;
+    font: inherit;
+}
+
+.atom-checkbox-label {
+    font-weight: 600;
+}
+
+.atom-checkbox-required {
+    color: var(--field-error-color);
+    margin-inline-start: .15rem;
+}
+
+.atom-checkbox-control {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.atom-checkbox-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--field-gap);
+    width: fit-content;
+    font-size: var(--field-font-size);
+    cursor: pointer;
+}
+
+/* Caption before the box. row-reverse (not reordering the markup) keeps the native input first in
+   DOM order, which is what the implicit label association and tab order want. */
+.atom-checkbox-wrap[data-placement="start"] {
+    flex-direction: row-reverse;
+}
+
+/* The native control does all the real work (focus, tab order, form submission, a11y role) but is
+   not painted — it's transparent and collapsed on top of the box below. Never display:none or
+   visibility:hidden: either would make it unfocusable and drop it from the form. */
+.atom-checkbox-input {
+    position: absolute;
+    inset-inline-start: 0;
+    width: var(--field-control-size);
+    height: var(--field-control-size);
+    margin: 0;
+    opacity: 0;
+    cursor: inherit;
+}
+
+.atom-checkbox-box {
+    position: relative;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: var(--field-control-size);
+    height: var(--field-control-size);
+    border: var(--field-border-width) solid var(--field-border-color);
+    border-radius: var(--field-radius);
+    background: var(--field-bg);
+    transition: background-color var(--field-transition), border-color var(--field-transition),
+                box-shadow var(--field-transition), transform var(--field-transition);
+}
+
+.atom-checkbox-text {
+    color: var(--field-text-color);
+}
+
+/* ---- checked / indeterminate ---------------------------------------------------------------
+   Driven entirely by the sibling selector off the native input's own :checked state — no C# state
+   and no JS, so it stays correct through prerender.
+   ------------------------------------------------------------------------------------------- */
+
+.atom-checkbox-check {
+    width: 80%;
+    height: 80%;
+    fill: none;
+    stroke: #ffffff;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transform: scale(0);
+    transition: transform var(--field-transition);
+}
+
+.atom-checkbox-input:checked + .atom-checkbox-box {
+    background: var(--field-accent);
+    border-color: var(--field-accent);
+}
+
+.atom-checkbox-input:checked + .atom-checkbox-box .atom-checkbox-check {
+    transform: scale(1);
+}
+
+/* Indeterminate is a root data-attribute rather than the native `indeterminate` property, which is
+   settable only from JS. The dash wins over the check whatever the checked state is. */
+.atom-checkbox-dash {
+    position: absolute;
+    width: 55%;
+    height: 2px;
+    border-radius: 1px;
+    background: #ffffff;
+    transform: scaleX(0);
+    transition: transform var(--field-transition);
+}
+
+.atom-checkbox[data-indeterminate="true"] .atom-checkbox-box {
+    background: var(--field-accent);
+    border-color: var(--field-accent);
+}
+
+.atom-checkbox[data-indeterminate="true"] .atom-checkbox-dash {
+    transform: scaleX(1);
+}
+
+.atom-checkbox[data-indeterminate="true"] .atom-checkbox-check {
+    transform: scale(0);
+}
+
+.atom-checkbox-input:focus-visible + .atom-checkbox-box {
+    outline: 2px solid var(--field-focus-color);
+    outline-offset: 2px;
+}
+
+.atom-checkbox-subtext {
+    font-size: .8125em;
+    color: var(--field-muted-color);
+}
+
+/* ---- shapes -------------------------------------------------------------------------------- */
+
+.atom-checkbox[data-shape="square"] { --field-radius: 0; }
+/* rounded is the default declared at the top */
+.atom-checkbox[data-shape="circle"] { --field-radius: 50%; }
+
+/* ---- states -------------------------------------------------------------------------------- */
+
+.atom-checkbox[data-state="error"] .atom-checkbox-box {
+    border-color: var(--field-error-color);
+}
+
+.atom-checkbox[data-state="error"] .atom-checkbox-subtext {
+    color: var(--field-error-color);
+}
+
+/* Disabled and read-only look the same here: the platform ignores `readonly` on a checkbox, so both
+   render the native `disabled` attribute. */
+.atom-checkbox[data-state="disabled"],
+.atom-checkbox[data-state="readonly"] {
+    opacity: .55;
+}
+
+.atom-checkbox[data-state="disabled"] .atom-checkbox-wrap,
+.atom-checkbox[data-state="readonly"] .atom-checkbox-wrap {
+    cursor: not-allowed;
+}
+
+/* ---- variants ------------------------------------------------------------------------------ */
+
+/* Outline is the default look defined above. Filled tints the unchecked box; underline drops the
+   frame to a bottom rule (a deliberately minimal reading of "underline" for a square control). */
+.atom-checkbox[data-variant="filled"] {
+    --field-bg: color-mix(in srgb, var(--field-border-color) 25%, #ffffff);
+}
+
+.atom-checkbox[data-variant="underline"] .atom-checkbox-box {
+    border-width: 0 0 2px 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.atom-checkbox[data-variant="underline"] .atom-checkbox-input:checked + .atom-checkbox-box {
+    background: transparent;
+}
+
+.atom-checkbox[data-variant="underline"] .atom-checkbox-check {
+    stroke: var(--field-accent);
+}
+
+.atom-checkbox[data-variant="underline"] .atom-checkbox-dash {
+    background: var(--field-accent);
+}
+
+/* ---- sizes --------------------------------------------------------------------------------- */
+
+.atom-checkbox[data-size="small"] {
+    --field-control-size: 14px;
+    --field-font-size: .875em;
+}
+
+.atom-checkbox[data-size="large"] {
+    --field-control-size: 22px;
+    --field-font-size: 1.125em;
+}
+
+/* ---- effects ------------------------------------------------------------------------------
+   The two focus effects act on the box; focus-underline has no frame to wipe on a square control,
+   so it underlines the caption instead. Same enum, same trigger, per-component reading.
+   ------------------------------------------------------------------------------------------- */
+
+.atom-checkbox[data-effect="focus-glow"] .atom-checkbox-input:focus-visible + .atom-checkbox-box {
+    outline: none;
+    box-shadow: 0 0 0 .25rem color-mix(in srgb, var(--field-focus-color) 30%, transparent);
+}
+
+.atom-checkbox[data-effect="focus-raise"] .atom-checkbox-input:focus-visible + .atom-checkbox-box {
+    transform: translateY(-1px) scale(1.08);
+    box-shadow: 0 .2rem .5rem color-mix(in srgb, #000000 20%, transparent);
+}
+
+.atom-checkbox[data-effect="focus-underline"] .atom-checkbox-input:focus-visible ~ .atom-checkbox-text {
+    text-decoration: underline;
+    text-decoration-color: var(--field-focus-color);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+}
+
+/* Literal @keyframes name, component-prefixed — see AtomTextField.razor.css for why. */
+.atom-checkbox[data-effect="shake-on-error"][data-state="error"] .atom-checkbox-box {
+    animation: atom-checkbox-shake 320ms ease;
+}
+
+@keyframes atom-checkbox-shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-3px); }
+    40% { transform: translateX(3px); }
+    60% { transform: translateX(-2px); }
+    80% { transform: translateX(2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-checkbox-box,
+    .atom-checkbox-check,
+    .atom-checkbox-dash {
+        transition-duration: 0ms;
+    }
+
+    .atom-checkbox[data-effect="shake-on-error"][data-state="error"] .atom-checkbox-box {
+        animation: none;
+    }
+}

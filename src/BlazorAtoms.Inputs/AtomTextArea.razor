@@ -1,0 +1,51 @@
+@inherits AtomInputBase<string?>
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr(RootClass)"
+     style="@StyleAttr(RootStyle)"
+     data-state="@State"
+     data-variant="@VariantAttr"
+     data-size="@SizeAttr"
+     data-effect="@EffectAttr">
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <label class="atom-text-area-label @LabelCol">
+            @Label
+            @if (Required)
+            {
+                <span class="atom-text-area-required" aria-hidden="true">*</span>
+            }
+        </label>
+    }
+    <div class="atom-text-area-control @ControlCol">
+        <div class="atom-text-area-box">
+            @* value= (not child content) so Blazor diffs the textarea's value property, the same way
+               its own InputTextArea does — child content would only seed the initial render. *@
+            <textarea class="atom-text-area-field"
+                      value="@Value"
+                      rows="@Rows"
+                      placeholder="@Placeholder"
+                      maxlength="@MaxLength"
+                      spellcheck="@SpellcheckAttr"
+                      disabled="@IsDisabled"
+                      readonly="@IsReadOnly"
+                      required="@Required"
+                      data-resize="@ResizeAttr"
+                      aria-disabled="@(IsDisabled ? "true" : null)"
+                      aria-invalid="@(HasError ? "true" : null)"
+                      aria-label="@EffectiveAriaLabel"
+                      @oninput="OnInputEvent"
+                      @onchange="OnChangeEvent"></textarea>
+        </div>
+        @if (!string.IsNullOrEmpty(DisplayText) || ShowCounter)
+        {
+            <div class="atom-text-area-footer">
+                <span class="atom-text-area-subtext" data-state="@State">@DisplayText</span>
+                @if (ShowCounter)
+                {
+                    <span class="atom-text-area-counter" data-state="@CounterState">@CounterText</span>
+                }
+            </div>
+        }
+    </div>
+</div>

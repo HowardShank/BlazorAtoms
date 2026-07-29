@@ -1,0 +1,275 @@
+/* ---- customization hooks -------------------------------------------------------------------
+   Every visual value is a --field-* custom property declared here with its default. Three ways to
+   retarget one, in ascending priority:
+
+     1. this file's [data-variant] / [data-size] / [data-effect] rules  (the built-in looks)
+     2. a consumer stylesheet targeting .atom-text-field                (app-wide theming)
+     3. the component's own parameters (Radius, BorderColor, ...)       (inline style, always wins)
+
+   Sizes deliberately touch only --field-pad-* / --field-control-size / --field-font-size, and
+   variants only the frame properties, so the two axes compose without fighting.
+   ------------------------------------------------------------------------------------------- */
+.atom-text-field {
+    --field-width: 100%;
+    --field-font-size: inherit;
+    --field-radius: 6px;
+    --field-border-width: 1px;
+    --field-border-color: #cbd5e1;
+    --field-bg: #ffffff;
+    --field-text-color: inherit;
+    --field-accent: #2563eb;
+    --field-focus-color: var(--field-accent);
+    --field-error-color: #dc2626;
+    --field-muted-color: #64748b;
+    --field-pad-y: .45rem;
+    --field-pad-x: .6rem;
+    --field-gap: .4rem;
+    --field-transition: 150ms ease;
+
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: .5rem 1rem;
+    font: inherit;
+}
+
+.atom-text-field-label {
+    font-weight: 600;
+    padding-top: .35rem;
+}
+
+.atom-text-field-required {
+    color: var(--field-error-color);
+    margin-inline-start: .15rem;
+}
+
+.atom-text-field-control {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* The frame lives on the box, not on the <input> — that way prefix/suffix/clear sit *inside* the
+   border and the whole frame reacts to :focus-within as one unit. */
+.atom-text-field-box {
+    display: flex;
+    align-items: center;
+    gap: var(--field-gap);
+    box-sizing: border-box;
+    width: var(--field-width);
+    max-width: 100%;
+    padding: var(--field-pad-y) var(--field-pad-x);
+    border: var(--field-border-width) solid var(--field-border-color);
+    border-radius: var(--field-radius);
+    background: var(--field-bg);
+    color: var(--field-text-color);
+    transition: border-color var(--field-transition), box-shadow var(--field-transition),
+                background-color var(--field-transition), transform var(--field-transition);
+}
+
+.atom-text-field-box:focus-within {
+    border-color: var(--field-focus-color);
+}
+
+/* The input is a bare text surface — the visible chrome is all on the box above. */
+.atom-text-field-field {
+    flex: 1 1 auto;
+    min-width: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: var(--field-font-size);
+    outline: none;
+}
+
+.atom-text-field-field::placeholder {
+    color: var(--field-muted-color);
+    opacity: 1;
+}
+
+.atom-text-field-prefix,
+.atom-text-field-suffix {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    color: var(--field-muted-color);
+}
+
+.atom-text-field-prefix svg,
+.atom-text-field-suffix svg {
+    width: 1em;
+    height: 1em;
+}
+
+/* tabindex="-1" in the markup keeps this out of the tab order — it's a shortcut, not a step. */
+.atom-text-field-clear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 1.15em;
+    height: 1.15em;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--field-muted-color);
+    cursor: pointer;
+    transition: color var(--field-transition), background-color var(--field-transition);
+}
+
+.atom-text-field-clear:hover,
+.atom-text-field-clear:focus-visible {
+    color: var(--field-text-color);
+    background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.atom-text-field-clear svg {
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+}
+
+.atom-text-field-subtext {
+    font-size: .8125em;
+    color: var(--field-muted-color);
+}
+
+/* ---- states -------------------------------------------------------------------------------- */
+
+.atom-text-field[data-state="error"] .atom-text-field-box {
+    border-color: var(--field-error-color);
+}
+
+.atom-text-field[data-state="error"] .atom-text-field-subtext {
+    color: var(--field-error-color);
+}
+
+/* Disabled greys the whole control; read-only keeps normal text (the value is still legible and
+   selectable) and only softens the frame. */
+.atom-text-field[data-state="disabled"] {
+    opacity: .55;
+}
+
+.atom-text-field[data-state="disabled"] .atom-text-field-field {
+    cursor: not-allowed;
+}
+
+.atom-text-field[data-state="readonly"] .atom-text-field-box {
+    background: color-mix(in srgb, var(--field-border-color) 18%, var(--field-bg));
+}
+
+/* ---- variants ------------------------------------------------------------------------------ */
+
+/* Outline is the default look defined above — no rule needed. */
+
+.atom-text-field[data-variant="filled"] {
+    --field-bg: color-mix(in srgb, var(--field-border-color) 22%, #ffffff);
+}
+
+.atom-text-field[data-variant="filled"] .atom-text-field-box {
+    border-color: transparent;
+    border-bottom-color: var(--field-border-color);
+    border-radius: var(--field-radius) var(--field-radius) 0 0;
+}
+
+.atom-text-field[data-variant="filled"] .atom-text-field-box:focus-within {
+    border-bottom-color: var(--field-focus-color);
+}
+
+.atom-text-field[data-variant="underline"] .atom-text-field-box {
+    border-width: 0 0 var(--field-border-width) 0;
+    border-radius: 0;
+    background: transparent;
+    padding-inline: 0;
+}
+
+/* ---- sizes --------------------------------------------------------------------------------- */
+
+.atom-text-field[data-size="small"] {
+    --field-pad-y: .25rem;
+    --field-pad-x: .45rem;
+    --field-font-size: .875em;
+    --field-radius: 4px;
+}
+
+/* Medium is the default declared at the top — no rule needed. */
+
+.atom-text-field[data-size="large"] {
+    --field-pad-y: .65rem;
+    --field-pad-x: .8rem;
+    --field-font-size: 1.125em;
+    --field-radius: 8px;
+}
+
+/* ---- effects ------------------------------------------------------------------------------
+   Each effect is one self-contained block keyed off data-effect, triggered by a CSS pseudo-class
+   or data-state — no C# state, so they behave the same in every render mode. Add an effect by
+   adding an InputEffect member and one block here.
+   ------------------------------------------------------------------------------------------- */
+
+.atom-text-field[data-effect="focus-glow"] .atom-text-field-box:focus-within {
+    box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--field-focus-color) 30%, transparent);
+}
+
+.atom-text-field[data-effect="focus-raise"] .atom-text-field-box:focus-within {
+    transform: translateY(-1px);
+    box-shadow: 0 .25rem .6rem color-mix(in srgb, #000000 18%, transparent);
+}
+
+/* Wipe-in rule under the box. The box is the positioning context; the pseudo-element scales from
+   the center so the rule grows out both ways. */
+.atom-text-field[data-effect="focus-underline"] .atom-text-field-box {
+    position: relative;
+}
+
+.atom-text-field[data-effect="focus-underline"] .atom-text-field-box::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: calc(-1 * var(--field-border-width));
+    height: 2px;
+    background: var(--field-focus-color);
+    transform: scaleX(0);
+    transition: transform var(--field-transition);
+}
+
+.atom-text-field[data-effect="focus-underline"] .atom-text-field-box:focus-within::after {
+    transform: scaleX(1);
+}
+
+/* Keyframes are referenced by literal name (never through a var) — a scoped-CSS animation shorthand
+   built from var() silently does nothing. Name is component-prefixed since @keyframes stay global. */
+.atom-text-field[data-effect="shake-on-error"][data-state="error"] .atom-text-field-box {
+    animation: atom-text-field-shake 320ms ease;
+}
+
+@keyframes atom-text-field-shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-4px); }
+    40% { transform: translateX(4px); }
+    60% { transform: translateX(-2px); }
+    80% { transform: translateX(2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-text-field-box,
+    .atom-text-field-clear,
+    .atom-text-field[data-effect="focus-underline"] .atom-text-field-box::after {
+        transition-duration: 0ms;
+    }
+
+    .atom-text-field[data-effect="shake-on-error"][data-state="error"] .atom-text-field-box {
+        animation: none;
+    }
+}

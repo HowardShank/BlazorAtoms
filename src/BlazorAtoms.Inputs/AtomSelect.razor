@@ -1,0 +1,52 @@
+@typeparam TValue
+@inherits AtomInputBase<TValue>
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr(RootClass)"
+     style="@StyleAttr(RootStyle)"
+     data-state="@State"
+     data-variant="@VariantAttr"
+     data-size="@SizeAttr"
+     data-effect="@EffectAttr">
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <label class="atom-select-label @LabelCol">
+            @Label
+            @if (Required)
+            {
+                <span class="atom-select-required" aria-hidden="true">*</span>
+            }
+        </label>
+    }
+    <div class="atom-select-control @ControlCol">
+        <div class="atom-select-box">
+            <select class="atom-select-field"
+                    value="@SelectedKey"
+                    disabled="@IsDisabled"
+                    required="@Required"
+                    aria-disabled="@(IsDisabled ? "true" : null)"
+                    aria-invalid="@(HasError ? "true" : null)"
+                    aria-label="@EffectiveAriaLabel"
+                    @onchange="OnChangeEvent">
+                @if (!string.IsNullOrEmpty(Placeholder))
+                {
+                    <option value="" disabled="@(!PlaceholderSelectable)">@Placeholder</option>
+                }
+                @foreach (var option in EffectiveOptions)
+                {
+                    <option value="@OptionKey(option)" disabled="@IsOptionDisabled(option)">@OptionText(option)</option>
+                }
+                @ChildContent
+            </select>
+            @* Decorative chevron — a native select's own arrow can't be styled, so appearance:none
+               removes it and this one is drawn instead. *@
+            <svg class="atom-select-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M6 9l6 6 6-6" />
+            </svg>
+        </div>
+        @if (!string.IsNullOrEmpty(DisplayText))
+        {
+            <span class="atom-select-subtext" data-state="@State">@DisplayText</span>
+        }
+    </div>
+</div>

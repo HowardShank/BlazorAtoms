@@ -1,0 +1,220 @@
+/* ---- customization hooks -------------------------------------------------------------------
+   Same --field-* contract as AtomTextField (see that file's header for the priority order).
+   ------------------------------------------------------------------------------------------- */
+.atom-select {
+    --field-width: 100%;
+    --field-font-size: inherit;
+    --field-radius: 6px;
+    --field-border-width: 1px;
+    --field-border-color: #cbd5e1;
+    --field-bg: #ffffff;
+    --field-text-color: inherit;
+    --field-accent: #2563eb;
+    --field-focus-color: var(--field-accent);
+    --field-error-color: #dc2626;
+    --field-muted-color: #64748b;
+    --field-pad-y: .45rem;
+    --field-pad-x: .6rem;
+    --field-gap: .4rem;
+    --field-transition: 150ms ease;
+
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: .5rem 1rem;
+    font: inherit;
+}
+
+.atom-select-label {
+    font-weight: 600;
+    padding-top: .35rem;
+}
+
+.atom-select-required {
+    color: var(--field-error-color);
+    margin-inline-start: .15rem;
+}
+
+.atom-select-control {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.atom-select-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    width: var(--field-width);
+    max-width: 100%;
+    border: var(--field-border-width) solid var(--field-border-color);
+    border-radius: var(--field-radius);
+    background: var(--field-bg);
+    color: var(--field-text-color);
+    transition: border-color var(--field-transition), box-shadow var(--field-transition),
+                background-color var(--field-transition), transform var(--field-transition);
+}
+
+.atom-select-box:focus-within {
+    border-color: var(--field-focus-color);
+}
+
+/* appearance:none drops the platform arrow (which can't be styled) in favor of the SVG below; the
+   padding-inline-end reserves that arrow's space. The popup list itself stays native — it is drawn
+   by the OS and is not stylable from here, which is the trade for needing no positioning JS. */
+.atom-select-field {
+    appearance: none;
+    -webkit-appearance: none;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: var(--field-pad-y) var(--field-pad-x);
+    padding-inline-end: calc(var(--field-pad-x) + 1.4em);
+    border: 0;
+    margin: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: var(--field-font-size);
+    outline: none;
+    cursor: pointer;
+}
+
+.atom-select-arrow {
+    position: absolute;
+    inset-inline-end: var(--field-pad-x);
+    width: 1.1em;
+    height: 1.1em;
+    fill: none;
+    stroke: var(--field-muted-color);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+    transition: transform var(--field-transition), stroke var(--field-transition);
+}
+
+.atom-select-box:focus-within .atom-select-arrow {
+    stroke: var(--field-focus-color);
+}
+
+.atom-select-subtext {
+    font-size: .8125em;
+    color: var(--field-muted-color);
+}
+
+/* ---- states -------------------------------------------------------------------------------- */
+
+.atom-select[data-state="error"] .atom-select-box {
+    border-color: var(--field-error-color);
+}
+
+.atom-select[data-state="error"] .atom-select-subtext {
+    color: var(--field-error-color);
+}
+
+/* No `readonly` exists for <select>, so both states render native `disabled` and look alike. */
+.atom-select[data-state="disabled"],
+.atom-select[data-state="readonly"] {
+    opacity: .55;
+}
+
+.atom-select[data-state="disabled"] .atom-select-field,
+.atom-select[data-state="readonly"] .atom-select-field {
+    cursor: not-allowed;
+}
+
+/* ---- variants ------------------------------------------------------------------------------ */
+
+.atom-select[data-variant="filled"] {
+    --field-bg: color-mix(in srgb, var(--field-border-color) 22%, #ffffff);
+}
+
+.atom-select[data-variant="filled"] .atom-select-box {
+    border-color: transparent;
+    border-bottom-color: var(--field-border-color);
+    border-radius: var(--field-radius) var(--field-radius) 0 0;
+}
+
+.atom-select[data-variant="filled"] .atom-select-box:focus-within {
+    border-bottom-color: var(--field-focus-color);
+}
+
+.atom-select[data-variant="underline"] .atom-select-box {
+    border-width: 0 0 var(--field-border-width) 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.atom-select[data-variant="underline"] .atom-select-field {
+    padding-inline-start: 0;
+}
+
+/* ---- sizes --------------------------------------------------------------------------------- */
+
+.atom-select[data-size="small"] {
+    --field-pad-y: .25rem;
+    --field-pad-x: .45rem;
+    --field-font-size: .875em;
+    --field-radius: 4px;
+}
+
+.atom-select[data-size="large"] {
+    --field-pad-y: .65rem;
+    --field-pad-x: .8rem;
+    --field-font-size: 1.125em;
+    --field-radius: 8px;
+}
+
+/* ---- effects ------------------------------------------------------------------------------- */
+
+.atom-select[data-effect="focus-glow"] .atom-select-box:focus-within {
+    box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--field-focus-color) 30%, transparent);
+}
+
+.atom-select[data-effect="focus-raise"] .atom-select-box:focus-within {
+    transform: translateY(-1px);
+    box-shadow: 0 .25rem .6rem color-mix(in srgb, #000000 18%, transparent);
+}
+
+.atom-select[data-effect="focus-underline"] .atom-select-box::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: calc(-1 * var(--field-border-width));
+    height: 2px;
+    background: var(--field-focus-color);
+    transform: scaleX(0);
+    transition: transform var(--field-transition);
+}
+
+.atom-select[data-effect="focus-underline"] .atom-select-box:focus-within::after {
+    transform: scaleX(1);
+}
+
+/* Literal @keyframes name, component-prefixed — see AtomTextField.razor.css for why. */
+.atom-select[data-effect="shake-on-error"][data-state="error"] .atom-select-box {
+    animation: atom-select-shake 320ms ease;
+}
+
+@keyframes atom-select-shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-4px); }
+    40% { transform: translateX(4px); }
+    60% { transform: translateX(-2px); }
+    80% { transform: translateX(2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-select-box,
+    .atom-select-arrow,
+    .atom-select[data-effect="focus-underline"] .atom-select-box::after {
+        transition-duration: 0ms;
+    }
+
+    .atom-select[data-effect="shake-on-error"][data-state="error"] .atom-select-box {
+        animation: none;
+    }
+}

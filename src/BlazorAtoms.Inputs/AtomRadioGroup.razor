@@ -1,0 +1,67 @@
+@typeparam TValue
+@inherits AtomInputBase<TValue>
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr(RootClass)"
+     style="@StyleAttr(RootStyle)"
+     data-state="@State"
+     data-variant="@VariantAttr"
+     data-size="@SizeAttr"
+     data-effect="@EffectAttr"
+     data-orientation="@OrientationAttr">
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <label class="atom-radio-group-label @LabelCol">
+            @Label
+            @if (Required)
+            {
+                <span class="atom-radio-group-required" aria-hidden="true">*</span>
+            }
+        </label>
+    }
+    <div class="atom-radio-group-control @ControlCol">
+        @* role="radiogroup" names the set as a whole; the individual inputs keep their native radio
+           role, which is what gives free arrow-key navigation within the shared `name`. *@
+        <div class="atom-radio-group-options"
+             role="radiogroup"
+             aria-label="@EffectiveAriaLabel"
+             aria-invalid="@(HasError ? "true" : null)">
+            @foreach (var option in EffectiveOptions)
+            {
+                var selected = IsSelected(option);
+                var optionDisabled = IsOptionDisabled(option);
+                <label class="atom-radio-group-option"
+                       data-placement="@PlacementAttr"
+                       data-selected="@(selected ? "true" : null)"
+                       data-disabled="@(optionDisabled ? "true" : null)">
+                    <input class="atom-radio-group-input"
+                           type="radio"
+                           name="@EffectiveName"
+                           value="@OptionKey(option)"
+                           checked="@selected"
+                           disabled="@optionDisabled"
+                           @onchange="() => SelectAsync(option)" />
+                    @* Painted mark; the native radio is transparent above it. Same technique as
+                       AtomCheckbox — see that component's CSS for why. *@
+                    <span class="atom-radio-group-mark" aria-hidden="true">
+                        <span class="atom-radio-group-dot"></span>
+                    </span>
+                    <span class="atom-radio-group-text">
+                        @if (OptionTemplate is not null)
+                        {
+                            @OptionTemplate(option)
+                        }
+                        else
+                        {
+                            @OptionText(option)
+                        }
+                    </span>
+                </label>
+            }
+        </div>
+        @if (!string.IsNullOrEmpty(DisplayText))
+        {
+            <span class="atom-radio-group-subtext" data-state="@State">@DisplayText</span>
+        }
+    </div>
+</div>

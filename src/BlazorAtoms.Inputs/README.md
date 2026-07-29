@@ -1,8 +1,11 @@
 # BlazorAtoms.Inputs
 
-Form input components for Blazor. `AtomRangeInput` is a labeled slider/range control;
-`AtomCrtInput` is a CRT-terminal-styled text input. No JavaScript, no dependencies, works in Server
-or WebAssembly and every render mode.
+Form input components for Blazor. The seven **standard fields** — `AtomTextField`, `AtomTextArea`,
+`AtomNumberField`, `AtomCheckbox`, `AtomSwitch`, `AtomRadioGroup`, `AtomSelect` — share one
+parameter surface and one CSS contract ([jump to them](#the-standard-form-fields)). Alongside them:
+`AtomRangeInput`, a labeled slider/range control, and `AtomCrtInput`/`AtomCrtDisplay`, a
+CRT-terminal-styled input and display. No JavaScript, no dependencies, works in Server or
+WebAssembly and every render mode.
 
 ## Install
 
@@ -355,3 +358,226 @@ difference isn't perceptible anyway.
 
 Practical consequence: very high values still work, but the effective rate is quantized to
 multiples of ~62.5 cps, so e.g. `700` and `750` render identically.
+
+---
+
+## The standard form fields
+
+Seven components — `AtomTextField`, `AtomTextArea`, `AtomNumberField`, `AtomCheckbox`, `AtomSwitch`,
+`AtomRadioGroup`, `AtomSelect` — built on one shared base. Each wraps a **native** control (`input`,
+`textarea`, `select`), so keyboard behavior, form submission, mobile pickers, and screen-reader roles
+all come from the platform. No JS in any of them.
+
+```razor
+@using BlazorAtoms.Inputs
+
+<EditForm Model="model" OnValidSubmit="SaveAsync">
+    <DataAnnotationsValidator />
+
+    <AtomTextField   @bind-Value="model.Name"     Label="Name" Placeholder="First and last" Clearable="true" />
+    <AtomTextArea    @bind-Value="model.Notes"    Label="Notes" MaxLength="120" ShowCounter="true" />
+    <AtomNumberField TValue="int" @bind-Value="model.Quantity" Label="Quantity" Min="1" Max="99" SuffixText="units" />
+    <AtomCheckbox    @bind-Value="model.Accepted" Label="Terms" Text="I accept the terms" />
+    <AtomSwitch      @bind-Value="model.Notify"   Label="Notifications" Text="Email me about releases" />
+    <AtomRadioGroup  TValue="string" @bind-Value="model.Color" Label="Color" Options="colors" />
+    <AtomSelect      TValue="string" @bind-Value="model.Tier"  Label="Tier"  Options="tiers"
+                     Placeholder="Choose a tier…" />
+</EditForm>
+
+@code {
+    MyModel model = new();
+    string[] colors = ["Red", "Green", "Blue"];
+    string[] tiers = ["Free", "Pro", "Team"];
+}
+```
+
+### Shared parameters
+
+Every one of the seven takes all of these, from `AtomInputBase<TValue>`:
+
+| Parameter | Type | Default | Notes |
+|---|---|---|---|
+| `Value` (`@bind-Value`) | `TValue` | — | The bound value. `TValue` is fixed per component (`string?` for text, `bool` for checkbox/switch) or generic. |
+| `ValueChanged` | `EventCallback<TValue>` | — | Only needed directly when not using `@bind-Value`. |
+| `ValueExpression` | `Expression<Func<TValue>>` | — | Populated automatically by `@bind-Value`. |
+| `ValidationFor` | `Expression<Func<TValue>>` | — | Explicit validation target; falls back to `ValueExpression`, so `@bind-Value` inside an `EditForm` participates on its own. |
+| `Label` | `string?` | — | Form label in its own column. |
+| `LabelCol` / `ControlCol` | `string` | `clr-col-12 clr-col-md-2` / `…-md-10` | Responsive column classes. |
+| `HelpText` | `string?` | — | Shown under the control; replaced by the first validation message while in error. |
+| `AriaLabel` | `string?` | — | Accessible name for the control. Falls back to `Label`, then a per-component default. |
+| `Required` | `bool` | `false` | Native `required` plus an asterisk after the label. |
+| `Disabled` | `bool` | `false` | Native `disabled`: greyed, not focusable, not submitted. |
+| `ReadOnly` | `bool` | `false` | Native `readonly` where the platform has one (text/textarea/number); folds into `Disabled` elsewhere — see below. |
+| `Visible` | `bool` | `true` | `false` hides via `display:none` and keeps the element in the DOM. |
+| `Variant` | `InputVariant` | `Outline` | `Outline` / `Filled` / `Underline` → `data-variant`. |
+| `Size` | `InputSize` | `Medium` | `Small` / `Medium` / `Large` → `data-size`. |
+| `Effect` | `InputEffect` | `None` | `None` / `FocusGlow` / `FocusRaise` / `FocusUnderline` / `ShakeOnError` → `data-effect`. |
+| `Width` | `double?` | — | px → `--field-width`. |
+| `FontSize` | `double?` | — | px → `--field-font-size`. |
+| `Radius` | `double?` | — | px → `--field-radius`. |
+| `BorderWidth` | `double?` | — | px → `--field-border-width`. `0` removes the frame. |
+| `TextColor` | `string?` | — | → `--field-text-color`. |
+| `BackgroundColor` | `string?` | — | → `--field-bg`. |
+| `BorderColor` | `string?` | — | → `--field-border-color`. |
+| `AccentColor` | `string?` | — | Checked/filled accent → `--field-accent`. |
+| `FocusColor` | `string?` | — | Focus border/ring → `--field-focus-color`. Defaults to the accent. |
+| `ErrorColor` | `string?` | — | → `--field-error-color`. |
+| `CssClass` / `Style` | `string?` | — | Appended after the component's own class/style, so `Style` wins over the custom properties. |
+
+`ReadOnly` vs `Disabled`: the HTML spec only supports `readonly` on text-like inputs and textareas.
+`AtomTextField`, `AtomTextArea`, and `AtomNumberField` therefore render a real `readonly` (focusable,
+selectable, still submitted); `AtomCheckbox`, `AtomSwitch`, `AtomRadioGroup`, and `AtomSelect` render
+`disabled` instead. Either way the root carries `data-state="readonly"` so CSS can tell them apart.
+
+### Theming with `--field-*`
+
+Each component's scoped CSS declares its defaults as `--field-*` custom properties and then reads
+them everywhere. Three levels, in ascending priority:
+
+1. the built-in `[data-variant]` / `[data-size]` / `[data-effect]` rules,
+2. a consumer stylesheet targeting the component's root class (app-wide theming),
+3. the parameters above, which emit an inline style — always the winner.
+
+```css
+/* Every field on the page, without touching any component's parameters */
+.atom-text-field, .atom-text-area, .atom-number-field,
+.atom-checkbox, .atom-switch, .atom-radio-group, .atom-select {
+    --field-accent: #7c3aed;
+    --field-radius: 10px;
+    --field-border-color: #d8b4fe;
+}
+```
+
+Motion is opt-in through `Effect` and is pure CSS (`:focus-within`, `:checked`, `[data-state]`) — no
+C# trigger state, so it behaves identically under prerender, Server, and WebAssembly, and every
+effect is disabled under `prefers-reduced-motion: reduce`. `FocusUnderline` wipes a rule under the
+frame on the box-shaped fields; on `AtomCheckbox`/`AtomSwitch`/`AtomRadioGroup` — which have no frame
+to wipe — it underlines the caption instead.
+
+### AtomTextField
+
+Single-line text over `<input>`.
+
+| Parameter | Type | Default | Notes |
+|---|---|---|---|
+| `Type` | `TextFieldType` | `Text` | `Text` / `Email` / `Url` / `Tel` / `Search` / `Password`. Changes browser affordances only; the value stays a string. |
+| `Placeholder` | `string?` | — | |
+| `MaxLength` | `int?` | — | Native `maxlength`. |
+| `Autocomplete` | `string?` | — | Native token (`email`, `new-password`, `off`, …). |
+| `InputMode` | `string?` | — | On-screen-keyboard hint. |
+| `Spellcheck` | `bool?` | — | `null` omits the attribute. |
+| `UpdateOn` | `InputUpdateOn` | `Input` | `Input` commits per keystroke; `Change` commits on blur/Enter — cheaper on Blazor Server. |
+| `Clearable` | `bool` | `false` | Shows a × button while the field has a value; clearing commits `null`. |
+| `PrefixContent` / `SuffixContent` | `RenderFragment?` | — | Content inside the frame, before/after the input. |
+
+### AtomTextArea
+
+Multi-line text over `<textarea>`. Shares `Placeholder`, `MaxLength`, `Spellcheck`, and `UpdateOn`
+with `AtomTextField`, plus:
+
+| Parameter | Type | Default | Notes |
+|---|---|---|---|
+| `Rows` | `int` | `4` | Ignored when `Height` is set. |
+| `Height` | `double?` | — | px → `--field-height`. |
+| `Resize` | `TextAreaResize` | `Vertical` | `None` / `Vertical` / `Horizontal` / `Both`. |
+| `ShowCounter` | `bool` | `false` | `12 / 200` when `MaxLength` is set, otherwise the bare count. |
+| `CounterWarnAt` | `double` | `0.9` | Fraction of `MaxLength` at which the counter takes `data-state="near"`. |
+
+Auto-grow is deliberately absent: measuring the scroll height needs JS, which would break the
+library's zero-JS guarantee for this component.
+
+### AtomNumberField&lt;TValue&gt;
+
+Numeric input over `<input type="number">`. `TValue` may be `int`, `long`, `short`, `float`,
+`double`, `decimal`, or their nullable variants.
+
+| Parameter | Type | Default | Notes |
+|---|---|---|---|
+| `Min` / `Max` / `Step` | `double?` | — | Native attributes; omitted when null. `double?` rather than `TValue` because a number field's bounds are genuinely optional. |
+| `Placeholder` | `string?` | — | |
+| `ShowSpinners` | `bool` | `true` | `false` hides the arrows; arrow-key stepping still works. |
+| `PrefixText` / `SuffixText` | `string?` | — | Static text inside the frame (`$`, `kg`, `%`). |
+| `UpdateOn` | `InputUpdateOn` | `Input` | |
+
+With a nullable `TValue`, clearing the box commits `null`. With a non-nullable one it leaves `Value`
+untouched — as does any input the type can't represent (`3.7` into an `int`), rather than zeroing it.
+Values are always formatted and parsed invariant, since the HTML spec fixes a number input's value to
+a `.`-separated literal.
+
+### AtomCheckbox
+
+Boolean over `<input type="checkbox">`. The native control carries the semantics; a sibling span
+paints the box.
+
+| Parameter | Type | Default | Notes |
+|---|---|---|---|
+| `Text` | `string?` | — | Caption inside the same `<label>` — clicking it toggles. |
+| `Indeterminate` | `bool` | `false` | Draws the mixed dash and reports `aria-checked="mixed"`. Presentational: `Value` is still the bound bool. |
+| `BoxShape` | `CheckShape` | `Rounded` | `Square` / `Rounded` / `Circle`. |
+| `TextPlacement` | `LabelPlacement` | `End` | Which side `Text` sits on. |
+| `BoxSize` | `double?` | — | px → `--field-control-size`. |
+
+### AtomSwitch
+
+On/off toggle over `<input type="checkbox" role="switch">`.
+
+| Parameter | Type | Default | Notes |
+|---|---|---|---|
+| `Text` | `string?` | — | Caption inside the same `<label>`. |
+| `OnText` / `OffText` | `string?` | — | Short text inside the track; only the matching one shows. |
+| `ThumbContent` | `RenderFragment?` | — | Content drawn inside the thumb. |
+| `TrackWidth` / `TrackHeight` | `double?` | — | px → `--field-track-width` / `--field-track-height`. The thumb size and travel derive from the height. |
+| `TextPlacement` | `LabelPlacement` | `End` | |
+
+### AtomRadioGroup&lt;TValue&gt;
+
+Single choice across native radios sharing one `name`, which is what gives free mutual exclusivity
+and arrow-key navigation.
+
+| Parameter | Type | Default | Notes |
+|---|---|---|---|
+| `Options` | `IEnumerable<TValue>?` | — | The choices, in render order. |
+| `OptionLabel` | `Func<TValue, string>?` | — | Caption per option. Defaults to `ToString()`. |
+| `OptionTemplate` | `RenderFragment<TValue>?` | — | Markup per option; wins over `OptionLabel`. |
+| `OptionDisabled` | `Func<TValue, bool>?` | — | Disables individual choices while the rest stay live. |
+| `Name` | `string?` | — | Native `name`; defaults to a per-instance generated value so two groups on a page stay independent. |
+| `Orientation` | `Orientation` | `Vertical` | `Horizontal` lays the options out in a wrapping row. |
+| `TextPlacement` | `LabelPlacement` | `End` | |
+| `MarkSize` | `double?` | — | px → `--field-control-size`. |
+
+Selection round-trips the `TValue` itself (the change handler closes over the option), never a parsed
+string — so records, classes, and enums all work, including options whose `ToString()` collides.
+
+### AtomSelect&lt;TValue&gt;
+
+Dropdown over `<select>` — the platform's own popup, so type-ahead and the mobile picker are free.
+
+| Parameter | Type | Default | Notes |
+|---|---|---|---|
+| `Options` | `IEnumerable<TValue>?` | — | The choices, in render order. |
+| `OptionLabel` | `Func<TValue, string>?` | — | Display text per option. Defaults to `ToString()`. |
+| `OptionDisabled` | `Func<TValue, bool>?` | — | Greys out individual options. |
+| `Placeholder` | `string?` | — | Leading empty option ("Choose one…"). |
+| `PlaceholderSelectable` | `bool` | `false` | `true` lets the placeholder be re-selected to clear the value (needs a `TValue` that can be empty); `false` renders it `disabled`. |
+| `ChildContent` | `RenderFragment?` | — | Raw `<option>`/`<optgroup>` markup appended after `Options`. |
+
+A selected value is matched against `Options` first, so the exact option object comes back; only
+`ChildContent` values fall through to type conversion. Multi-select is not supported — `multiple`
+needs a collection-typed value and a different event shape, which is a separate component. A styled
+or searchable dropdown is `BlazorAtoms.Overlays.AtomDropdown` (planned), since that needs positioning
+JS.
+
+### CSS hooks
+
+Each component's DOM is the same shape, so a selector written for one reads the same on all seven:
+
+```
+.atom-<name>[data-state][data-variant][data-size][data-effect]
+  .atom-<name>-label      the column label
+  .atom-<name>-control    the control column
+    …the native element, plus any painted box/track/mark
+  .atom-<name>-subtext    help text or the validation message
+```
+
+`data-state` is `error` → `disabled` → `readonly` in that priority, and absent in the normal state.
+`data-effect` is absent for `Effect="None"`.

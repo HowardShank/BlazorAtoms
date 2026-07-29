@@ -1,0 +1,226 @@
+/* ---- customization hooks -------------------------------------------------------------------
+   Same --field-* contract as AtomTextField (see that file's header for the priority order), plus
+   --field-control-size for the mark diameter and --field-option-gap for the spacing between options.
+   ------------------------------------------------------------------------------------------- */
+.atom-radio-group {
+    --field-font-size: inherit;
+    --field-border-width: 1px;
+    --field-border-color: #94a3b8;
+    --field-bg: #ffffff;
+    --field-text-color: inherit;
+    --field-accent: #2563eb;
+    --field-focus-color: var(--field-accent);
+    --field-error-color: #dc2626;
+    --field-muted-color: #64748b;
+    --field-control-size: 18px;
+    --field-gap: .5rem;
+    --field-option-gap: .45rem;
+    --field-transition: 150ms ease;
+
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: .5rem 1rem;
+    font: inherit;
+}
+
+.atom-radio-group-label {
+    font-weight: 600;
+}
+
+.atom-radio-group-required {
+    color: var(--field-error-color);
+    margin-inline-start: .15rem;
+}
+
+.atom-radio-group-control {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.atom-radio-group-options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--field-option-gap);
+}
+
+/* Horizontal wraps rather than overflowing — a long option list on a narrow column stays readable. */
+.atom-radio-group[data-orientation="horizontal"] .atom-radio-group-options {
+    flex-direction: row;
+    flex-wrap: wrap;
+    column-gap: 1rem;
+}
+
+.atom-radio-group-option {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--field-gap);
+    width: fit-content;
+    font-size: var(--field-font-size);
+    color: var(--field-text-color);
+    cursor: pointer;
+}
+
+.atom-radio-group-option[data-placement="start"] {
+    flex-direction: row-reverse;
+}
+
+.atom-radio-group-option[data-disabled="true"] {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+/* Transparent but focusable/tabbable/submitted — never display:none. See AtomCheckbox.razor.css. */
+.atom-radio-group-input {
+    position: absolute;
+    inset-inline-start: 0;
+    width: var(--field-control-size);
+    height: var(--field-control-size);
+    margin: 0;
+    opacity: 0;
+    cursor: inherit;
+}
+
+.atom-radio-group-mark {
+    position: relative;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: var(--field-control-size);
+    height: var(--field-control-size);
+    border: var(--field-border-width) solid var(--field-border-color);
+    border-radius: 50%;
+    background: var(--field-bg);
+    transition: border-color var(--field-transition), box-shadow var(--field-transition),
+                transform var(--field-transition);
+}
+
+.atom-radio-group-dot {
+    width: 55%;
+    height: 55%;
+    border-radius: 50%;
+    background: var(--field-accent);
+    transform: scale(0);
+    transition: transform var(--field-transition);
+}
+
+/* Checked state comes straight off the native input's own :checked — no C# per-option state. */
+.atom-radio-group-input:checked + .atom-radio-group-mark {
+    border-color: var(--field-accent);
+}
+
+.atom-radio-group-input:checked + .atom-radio-group-mark .atom-radio-group-dot {
+    transform: scale(1);
+}
+
+.atom-radio-group-input:focus-visible + .atom-radio-group-mark {
+    outline: 2px solid var(--field-focus-color);
+    outline-offset: 2px;
+}
+
+.atom-radio-group-subtext {
+    font-size: .8125em;
+    color: var(--field-muted-color);
+}
+
+/* ---- states -------------------------------------------------------------------------------- */
+
+.atom-radio-group[data-state="error"] .atom-radio-group-mark {
+    border-color: var(--field-error-color);
+}
+
+.atom-radio-group[data-state="error"] .atom-radio-group-subtext {
+    color: var(--field-error-color);
+}
+
+/* `readonly` is ignored on a radio, so both states render native `disabled`; the per-option
+   [data-disabled] rule above already dims them, so this only marks the group. */
+.atom-radio-group[data-state="disabled"] .atom-radio-group-option,
+.atom-radio-group[data-state="readonly"] .atom-radio-group-option {
+    cursor: not-allowed;
+}
+
+/* ---- variants ------------------------------------------------------------------------------ */
+
+/* Outline is the default look defined above. Filled tints the unselected mark; underline reads the
+   selected option as an underlined caption instead of relying on the dot alone. */
+.atom-radio-group[data-variant="filled"] {
+    --field-bg: color-mix(in srgb, var(--field-border-color) 25%, #ffffff);
+}
+
+.atom-radio-group[data-variant="filled"] .atom-radio-group-input:checked + .atom-radio-group-mark {
+    background: #ffffff;
+}
+
+.atom-radio-group[data-variant="underline"] .atom-radio-group-option[data-selected="true"] .atom-radio-group-text {
+    text-decoration: underline;
+    text-decoration-color: var(--field-accent);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+}
+
+/* ---- sizes --------------------------------------------------------------------------------- */
+
+.atom-radio-group[data-size="small"] {
+    --field-control-size: 14px;
+    --field-font-size: .875em;
+    --field-option-gap: .3rem;
+}
+
+.atom-radio-group[data-size="large"] {
+    --field-control-size: 22px;
+    --field-font-size: 1.125em;
+    --field-option-gap: .6rem;
+}
+
+/* ---- effects ------------------------------------------------------------------------------
+   Effects apply per option, keyed off the focused radio — the group has no single frame to treat.
+   ------------------------------------------------------------------------------------------- */
+
+.atom-radio-group[data-effect="focus-glow"] .atom-radio-group-input:focus-visible + .atom-radio-group-mark {
+    outline: none;
+    box-shadow: 0 0 0 .25rem color-mix(in srgb, var(--field-focus-color) 30%, transparent);
+}
+
+.atom-radio-group[data-effect="focus-raise"] .atom-radio-group-input:focus-visible + .atom-radio-group-mark {
+    transform: translateY(-1px) scale(1.08);
+    box-shadow: 0 .2rem .5rem color-mix(in srgb, #000000 20%, transparent);
+}
+
+.atom-radio-group[data-effect="focus-underline"] .atom-radio-group-input:focus-visible ~ .atom-radio-group-text {
+    text-decoration: underline;
+    text-decoration-color: var(--field-focus-color);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+}
+
+/* Literal @keyframes name, component-prefixed — see AtomTextField.razor.css for why. Shakes the
+   option list as a unit, since the error belongs to the group rather than to one radio. */
+.atom-radio-group[data-effect="shake-on-error"][data-state="error"] .atom-radio-group-options {
+    animation: atom-radio-group-shake 320ms ease;
+}
+
+@keyframes atom-radio-group-shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-4px); }
+    40% { transform: translateX(4px); }
+    60% { transform: translateX(-2px); }
+    80% { transform: translateX(2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-radio-group-mark,
+    .atom-radio-group-dot {
+        transition-duration: 0ms;
+    }
+
+    .atom-radio-group[data-effect="shake-on-error"][data-state="error"] .atom-radio-group-options {
+        animation: none;
+    }
+}

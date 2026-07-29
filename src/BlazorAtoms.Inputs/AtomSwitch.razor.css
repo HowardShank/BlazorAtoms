@@ -1,0 +1,282 @@
+/* ---- customization hooks -------------------------------------------------------------------
+   Same --field-* contract as AtomTextField (see that file's header for the priority order), plus
+   --field-track-width / --field-track-height. The thumb size and its travel distance are both
+   derived from the track height, so those two vars are the only geometry knobs needed.
+   ------------------------------------------------------------------------------------------- */
+.atom-switch {
+    --field-font-size: inherit;
+    --field-border-width: 1px;
+    --field-border-color: #94a3b8;
+    --field-bg: #cbd5e1;
+    --field-text-color: inherit;
+    --field-accent: #2563eb;
+    --field-focus-color: var(--field-accent);
+    --field-error-color: #dc2626;
+    --field-muted-color: #64748b;
+    --field-thumb-color: #ffffff;
+    --field-track-width: 42px;
+    --field-track-height: 22px;
+    --field-thumb-inset: 2px;
+    --field-gap: .5rem;
+    --field-transition: 150ms ease;
+
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: .5rem 1rem;
+    font: inherit;
+}
+
+.atom-switch-label {
+    font-weight: 600;
+}
+
+.atom-switch-required {
+    color: var(--field-error-color);
+    margin-inline-start: .15rem;
+}
+
+.atom-switch-control {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.atom-switch-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--field-gap);
+    width: fit-content;
+    font-size: var(--field-font-size);
+    cursor: pointer;
+}
+
+.atom-switch-wrap[data-placement="start"] {
+    flex-direction: row-reverse;
+}
+
+/* Transparent but focusable/tabbable/submitted — never display:none. See AtomCheckbox.razor.css. */
+.atom-switch-input {
+    position: absolute;
+    inset-inline-start: 0;
+    width: var(--field-track-width);
+    height: var(--field-track-height);
+    margin: 0;
+    opacity: 0;
+    cursor: inherit;
+}
+
+.atom-switch-track {
+    position: relative;
+    flex: 0 0 auto;
+    display: inline-block;
+    box-sizing: border-box;
+    width: var(--field-track-width);
+    height: var(--field-track-height);
+    border-radius: calc(var(--field-track-height) / 2);
+    background: var(--field-bg);
+    transition: background-color var(--field-transition), box-shadow var(--field-transition),
+                transform var(--field-transition);
+}
+
+/* Square thumb inset from the track on all sides; its travel is the leftover track width, so the
+   two geometry vars are enough and nothing needs measuring in C#. */
+.atom-switch-thumb {
+    position: absolute;
+    top: var(--field-thumb-inset);
+    inset-inline-start: var(--field-thumb-inset);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: calc(var(--field-track-height) - 2 * var(--field-thumb-inset));
+    height: calc(var(--field-track-height) - 2 * var(--field-thumb-inset));
+    border-radius: 50%;
+    background: var(--field-thumb-color);
+    color: var(--field-accent);
+    font-size: calc(var(--field-track-height) * .5);
+    line-height: 1;
+    box-shadow: 0 1px 2px color-mix(in srgb, #000000 25%, transparent);
+    transition: transform var(--field-transition), background-color var(--field-transition);
+}
+
+.atom-switch-thumb svg {
+    width: 1em;
+    height: 1em;
+}
+
+.atom-switch-input:checked + .atom-switch-track {
+    background: var(--field-accent);
+}
+
+.atom-switch-input:checked + .atom-switch-track .atom-switch-thumb {
+    transform: translateX(calc(var(--field-track-width) - var(--field-track-height)));
+}
+
+.atom-switch-input:focus-visible + .atom-switch-track {
+    outline: 2px solid var(--field-focus-color);
+    outline-offset: 2px;
+}
+
+/* OnText/OffText live in the track; only the one matching the current state is shown, and each sits
+   opposite the thumb's resting position so the thumb never covers it. */
+.atom-switch-state {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: calc(var(--field-track-height) * .42);
+    font-weight: 700;
+    letter-spacing: .02em;
+    color: var(--field-thumb-color);
+    opacity: 0;
+    transition: opacity var(--field-transition);
+    pointer-events: none;
+}
+
+.atom-switch-state-on {
+    inset-inline-start: calc(var(--field-track-height) * .32);
+}
+
+.atom-switch-state-off {
+    inset-inline-end: calc(var(--field-track-height) * .32);
+    color: var(--field-muted-color);
+}
+
+.atom-switch-input:checked + .atom-switch-track .atom-switch-state-on { opacity: 1; }
+.atom-switch-input:not(:checked) + .atom-switch-track .atom-switch-state-off { opacity: 1; }
+
+.atom-switch-text {
+    color: var(--field-text-color);
+}
+
+.atom-switch-subtext {
+    font-size: .8125em;
+    color: var(--field-muted-color);
+}
+
+/* ---- states -------------------------------------------------------------------------------- */
+
+.atom-switch[data-state="error"] .atom-switch-track {
+    box-shadow: 0 0 0 2px var(--field-error-color);
+}
+
+.atom-switch[data-state="error"] .atom-switch-subtext {
+    color: var(--field-error-color);
+}
+
+/* `readonly` is ignored on a checkbox, so both states render native `disabled` and look alike. */
+.atom-switch[data-state="disabled"],
+.atom-switch[data-state="readonly"] {
+    opacity: .55;
+}
+
+.atom-switch[data-state="disabled"] .atom-switch-wrap,
+.atom-switch[data-state="readonly"] .atom-switch-wrap {
+    cursor: not-allowed;
+}
+
+/* ---- variants ------------------------------------------------------------------------------ */
+
+/* Outline draws the track as a ring instead of a solid fill — the switch reads as an outline
+   control while off, and fills in when on. */
+.atom-switch[data-variant="outline"] .atom-switch-track {
+    background: transparent;
+    border: var(--field-border-width) solid var(--field-border-color);
+}
+
+.atom-switch[data-variant="outline"] .atom-switch-thumb {
+    background: var(--field-border-color);
+}
+
+.atom-switch[data-variant="outline"] .atom-switch-input:checked + .atom-switch-track {
+    background: var(--field-accent);
+    border-color: var(--field-accent);
+}
+
+.atom-switch[data-variant="outline"] .atom-switch-input:checked + .atom-switch-track .atom-switch-thumb {
+    background: var(--field-thumb-color);
+}
+
+/* Filled is the solid-track default declared at the top — no rule needed. */
+
+/* Underline: a rail rather than a pill, thumb riding on top of it. */
+.atom-switch[data-variant="underline"] .atom-switch-track {
+    background: transparent;
+    border-bottom: 2px solid var(--field-border-color);
+    border-radius: 0;
+}
+
+.atom-switch[data-variant="underline"] .atom-switch-thumb {
+    background: var(--field-border-color);
+}
+
+.atom-switch[data-variant="underline"] .atom-switch-input:checked + .atom-switch-track {
+    border-bottom-color: var(--field-accent);
+}
+
+.atom-switch[data-variant="underline"] .atom-switch-input:checked + .atom-switch-track .atom-switch-thumb {
+    background: var(--field-accent);
+}
+
+/* ---- sizes --------------------------------------------------------------------------------- */
+
+.atom-switch[data-size="small"] {
+    --field-track-width: 32px;
+    --field-track-height: 17px;
+    --field-font-size: .875em;
+}
+
+.atom-switch[data-size="large"] {
+    --field-track-width: 56px;
+    --field-track-height: 30px;
+    --field-font-size: 1.125em;
+}
+
+/* ---- effects ------------------------------------------------------------------------------
+   focus-underline has no frame to wipe on a pill control, so it underlines the caption — same
+   reading as AtomCheckbox.
+   ------------------------------------------------------------------------------------------- */
+
+.atom-switch[data-effect="focus-glow"] .atom-switch-input:focus-visible + .atom-switch-track {
+    outline: none;
+    box-shadow: 0 0 0 .25rem color-mix(in srgb, var(--field-focus-color) 30%, transparent);
+}
+
+.atom-switch[data-effect="focus-raise"] .atom-switch-input:focus-visible + .atom-switch-track {
+    transform: translateY(-1px);
+    box-shadow: 0 .2rem .5rem color-mix(in srgb, #000000 20%, transparent);
+}
+
+.atom-switch[data-effect="focus-underline"] .atom-switch-input:focus-visible ~ .atom-switch-text {
+    text-decoration: underline;
+    text-decoration-color: var(--field-focus-color);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+}
+
+/* Literal @keyframes name, component-prefixed — see AtomTextField.razor.css for why. */
+.atom-switch[data-effect="shake-on-error"][data-state="error"] .atom-switch-track {
+    animation: atom-switch-shake 320ms ease;
+}
+
+@keyframes atom-switch-shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-3px); }
+    40% { transform: translateX(3px); }
+    60% { transform: translateX(-2px); }
+    80% { transform: translateX(2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-switch-track,
+    .atom-switch-thumb,
+    .atom-switch-state {
+        transition-duration: 0ms;
+    }
+
+    .atom-switch[data-effect="shake-on-error"][data-state="error"] .atom-switch-track {
+        animation: none;
+    }
+}

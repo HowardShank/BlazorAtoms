@@ -1,0 +1,960 @@
+@using System.ComponentModel.DataAnnotations
+@using System.Globalization
+@using Microsoft.AspNetCore.Components.Forms
+@using BlazorAtoms.Inputs
+
+<PageTitle>Standard Inputs Playground</PageTitle>
+
+<h1>Standard form fields playground</h1>
+<p>The seven standard <code>BlazorAtoms.Inputs</code> fields, all built on the same
+   <code>AtomInputBase&lt;TValue&gt;</code>: one <code>@@bind-Value</code> contract, one
+   <code>EditContext</code>-aware error state, and three shared styling axes
+   (<code>Variant</code> / <code>Size</code> / <code>Effect</code>) plus the <code>--field-*</code>
+   custom properties every field's CSS reads. The panel below drives all seven at once — that shared
+   surface is the point. Each field's own parameters sit beside it.</p>
+<p>They are wrapped in a real <code>&lt;EditForm&gt;</code> with a <code>DataAnnotationsValidator</code>,
+   so <em>Validate now</em> produces genuine error states (try it with <code>Effect="ShakeOnError"</code>).</p>
+<p><a href="playground/rangeinput">&larr; Range Input playground</a></p>
+
+<div class="ff-controls">
+    <div class="ctrl">
+        <label>Variant</label>
+        <select @bind="VariantSel">
+            @foreach (var v in Variants) { <option value="@v">@v</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Size</label>
+        <select @bind="SizeSel">
+            @foreach (var s in Sizes) { <option value="@s">@s</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Effect</label>
+        <select @bind="EffectSel">
+            @foreach (var e in Effects) { <option value="@e">@e</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>State</label>
+        <div class="row"><input type="checkbox" id="ffDis" @bind="DisabledAll" /><label for="ffDis" class="inline">Disabled</label></div>
+        <div class="row"><input type="checkbox" id="ffRo" @bind="ReadOnlyAll" /><label for="ffRo" class="inline">ReadOnly</label></div>
+        <div class="row"><input type="checkbox" id="ffVis" @bind="VisibleAll" /><label for="ffVis" class="inline">Visible</label></div>
+        <div class="row"><input type="checkbox" id="ffReq" @bind="RequiredAll" /><label for="ffReq" class="inline">Required</label></div>
+    </div>
+    <div class="ctrl">
+        <label>Validation</label>
+        <div class="row">
+            <button type="button" class="clr-btn" @onclick="ValidateNow">Validate now</button>
+            <button type="button" class="clr-btn" @onclick="ClearValidation">Clear</button>
+        </div>
+        <span class="note">@ValidationNote</span>
+    </div>
+    <div class="ctrl">
+        <label>Help text (all)</label>
+        <input type="text" @bind="HelpTextV" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Aria label (all)</label>
+        <input type="text" @bind="AriaLabelV" @bind:event="oninput" placeholder="(falls back to Label)" />
+    </div>
+    <div class="ctrl">
+        <label>LabelCol</label>
+        <input type="text" @bind="LabelColV" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>ControlCol</label>
+        <input type="text" @bind="ControlColV" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>CssClass</label>
+        <input type="text" @bind="CssClassV" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Style</label>
+        <input type="text" @bind="StyleV" @bind:event="oninput" placeholder="e.g. margin-bottom:0" />
+    </div>
+    <div class="ctrl">
+        <label>Width (px, 0=auto) <span class="val">@WidthV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="600" step="10" @bind="WidthV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>FontSize (px, 0=inherit) <span class="val">@FontSizeV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="28" step="1" @bind="FontSizeV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Radius (px, -1=default) <span class="val">@RadiusV.ToString(Inv)</span></label>
+        <input type="range" min="-1" max="24" step="1" @bind="RadiusV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>BorderWidth (px, -1=default) <span class="val">@BorderWidthV.ToString(Inv)</span></label>
+        <input type="range" min="-1" max="6" step="1" @bind="BorderWidthV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>TextColor</label>
+        <div class="row color">
+            <input type="color" @bind="TextColorV" @bind:event="oninput" aria-label="Text color picker" />
+            <input type="text" @bind="TextColorV" @bind:event="oninput" placeholder="(default)" />
+            <button type="button" class="clr-btn" @onclick="() => TextColorV = string.Empty">Clear</button>
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>BackgroundColor</label>
+        <div class="row color">
+            <input type="color" @bind="BgColorV" @bind:event="oninput" aria-label="Background color picker" />
+            <input type="text" @bind="BgColorV" @bind:event="oninput" placeholder="(default)" />
+            <button type="button" class="clr-btn" @onclick="() => BgColorV = string.Empty">Clear</button>
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>BorderColor</label>
+        <div class="row color">
+            <input type="color" @bind="BorderColorV" @bind:event="oninput" aria-label="Border color picker" />
+            <input type="text" @bind="BorderColorV" @bind:event="oninput" placeholder="(default)" />
+            <button type="button" class="clr-btn" @onclick="() => BorderColorV = string.Empty">Clear</button>
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>AccentColor</label>
+        <div class="row color">
+            <input type="color" @bind="AccentColorV" @bind:event="oninput" aria-label="Accent color picker" />
+            <input type="text" @bind="AccentColorV" @bind:event="oninput" placeholder="(default)" />
+            <button type="button" class="clr-btn" @onclick="() => AccentColorV = string.Empty">Clear</button>
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>FocusColor</label>
+        <div class="row color">
+            <input type="color" @bind="FocusColorV" @bind:event="oninput" aria-label="Focus color picker" />
+            <input type="text" @bind="FocusColorV" @bind:event="oninput" placeholder="(= AccentColor)" />
+            <button type="button" class="clr-btn" @onclick="() => FocusColorV = string.Empty">Clear</button>
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>ErrorColor</label>
+        <div class="row color">
+            <input type="color" @bind="ErrorColorV" @bind:event="oninput" aria-label="Error color picker" />
+            <input type="text" @bind="ErrorColorV" @bind:event="oninput" placeholder="(default)" />
+            <button type="button" class="clr-btn" @onclick="() => ErrorColorV = string.Empty">Clear</button>
+        </div>
+    </div>
+</div>
+
+<EditForm EditContext="_editContext" class="ff-stage">
+    <DataAnnotationsValidator />
+
+    @* ---- AtomTextField ---------------------------------------------------------------------- *@
+    <section class="ff-field">
+        <h2>AtomTextField</h2>
+        <div class="ff-preview">
+            <AtomTextField @bind-Value="_model.Name"
+                           Label="Name"
+                           Type="@TypeSel"
+                           Placeholder="@Nz(TfPlaceholder)"
+                           MaxLength="@Opt(TfMaxLength)"
+                           Autocomplete="@Nz(TfAutocomplete)"
+                           InputMode="@Nz(TfInputMode)"
+                           Spellcheck="@TriState(TfSpellcheck)"
+                           UpdateOn="@TfUpdateOn"
+                           Clearable="@TfClearable"
+                           PrefixContent="@(TfPrefix ? PersonIcon : null)"
+                           SuffixContent="@(TfSuffix ? RenderText("chars") : null)"
+                           HelpText="@Nz(HelpTextV)" AriaLabel="@Nz(AriaLabelV)"
+                           LabelCol="@LabelColV" ControlCol="@ControlColV"
+                           Variant="@VariantSel" Size="@SizeSel" Effect="@EffectSel"
+                           Disabled="@DisabledAll" ReadOnly="@ReadOnlyAll" Visible="@VisibleAll" Required="@RequiredAll"
+                           Width="@Opt(WidthV)" FontSize="@Opt(FontSizeV)" Radius="@Signed(RadiusV)" BorderWidth="@Signed(BorderWidthV)"
+                           TextColor="@Nz(TextColorV)" BackgroundColor="@Nz(BgColorV)" BorderColor="@Nz(BorderColorV)"
+                           AccentColor="@Nz(AccentColorV)" FocusColor="@Nz(FocusColorV)" ErrorColor="@Nz(ErrorColorV)"
+                           CssClass="@Nz(CssClassV)" Style="@Nz(StyleV)" />
+        </div>
+        <div class="ff-opts">
+            <div class="ctrl">
+                <label>Type</label>
+                <select @bind="TypeSel">
+                    @foreach (var t in FieldTypes) { <option value="@t">@t</option> }
+                </select>
+            </div>
+            <div class="ctrl">
+                <label>UpdateOn</label>
+                <select @bind="TfUpdateOn">
+                    @foreach (var u in UpdateOns) { <option value="@u">@u</option> }
+                </select>
+            </div>
+            <div class="ctrl">
+                <label>Placeholder</label>
+                <input type="text" @bind="TfPlaceholder" @bind:event="oninput" placeholder="(none)" />
+            </div>
+            <div class="ctrl">
+                <label>MaxLength (0=none) <span class="val">@TfMaxLength</span></label>
+                <input type="range" min="0" max="60" step="1" @bind="TfMaxLength" @bind:event="oninput" />
+            </div>
+            <div class="ctrl">
+                <label>Autocomplete</label>
+                <input type="text" @bind="TfAutocomplete" @bind:event="oninput" placeholder="(none)" />
+            </div>
+            <div class="ctrl">
+                <label>InputMode</label>
+                <input type="text" @bind="TfInputMode" @bind:event="oninput" placeholder="(none)" />
+            </div>
+            <div class="ctrl">
+                <label>Spellcheck</label>
+                <select @bind="TfSpellcheck">
+                    @foreach (var t in TriStates) { <option value="@t">@t</option> }
+                </select>
+            </div>
+            <div class="ctrl">
+                <label>Slots</label>
+                <div class="row"><input type="checkbox" id="ffTfClr" @bind="TfClearable" /><label for="ffTfClr" class="inline">Clearable</label></div>
+                <div class="row"><input type="checkbox" id="ffTfPre" @bind="TfPrefix" /><label for="ffTfPre" class="inline">PrefixContent</label></div>
+                <div class="row"><input type="checkbox" id="ffTfSuf" @bind="TfSuffix" /><label for="ffTfSuf" class="inline">SuffixContent</label></div>
+            </div>
+        </div>
+    </section>
+
+    @* ---- AtomTextArea ----------------------------------------------------------------------- *@
+    <section class="ff-field">
+        <h2>AtomTextArea</h2>
+        <div class="ff-preview">
+            <AtomTextArea @bind-Value="_model.Notes"
+                          Label="Notes"
+                          Placeholder="@Nz(TaPlaceholder)"
+                          Rows="@TaRows"
+                          Height="@Opt(TaHeight)"
+                          MaxLength="@Opt(TaMaxLength)"
+                          Resize="@TaResize"
+                          Spellcheck="@TriState(TaSpellcheck)"
+                          UpdateOn="@TaUpdateOn"
+                          ShowCounter="@TaShowCounter"
+                          CounterWarnAt="@TaWarnAt"
+                          HelpText="@Nz(HelpTextV)" AriaLabel="@Nz(AriaLabelV)"
+                          LabelCol="@LabelColV" ControlCol="@ControlColV"
+                          Variant="@VariantSel" Size="@SizeSel" Effect="@EffectSel"
+                          Disabled="@DisabledAll" ReadOnly="@ReadOnlyAll" Visible="@VisibleAll" Required="@RequiredAll"
+                          Width="@Opt(WidthV)" FontSize="@Opt(FontSizeV)" Radius="@Signed(RadiusV)" BorderWidth="@Signed(BorderWidthV)"
+                          TextColor="@Nz(TextColorV)" BackgroundColor="@Nz(BgColorV)" BorderColor="@Nz(BorderColorV)"
+                          AccentColor="@Nz(AccentColorV)" FocusColor="@Nz(FocusColorV)" ErrorColor="@Nz(ErrorColorV)"
+                          CssClass="@Nz(CssClassV)" Style="@Nz(StyleV)" />
+        </div>
+        <div class="ff-opts">
+            <div class="ctrl">
+                <label>Resize</label>
+                <select @bind="TaResize">
+                    @foreach (var r in Resizes) { <option value="@r">@r</option> }
+                </select>
+            </div>
+            <div class="ctrl">
+                <label>UpdateOn</label>
+                <select @bind="TaUpdateOn">
+                    @foreach (var u in UpdateOns) { <option value="@u">@u</option> }
+                </select>
+            </div>
+            <div class="ctrl">
+                <label>Placeholder</label>
+                <input type="text" @bind="TaPlaceholder" @bind:event="oninput" placeholder="(none)" />
+            </div>
+            <div class="ctrl">
+                <label>Rows <span class="val">@TaRows</span></label>
+                <input type="range" min="1" max="12" step="1" @bind="TaRows" @bind:event="oninput" />
+            </div>
+            <div class="ctrl">
+                <label>Height (px, 0=Rows) <span class="val">@TaHeight.ToString(Inv)</span></label>
+                <input type="range" min="0" max="300" step="10" @bind="TaHeight" @bind:event="oninput" @bind:culture="Inv" />
+            </div>
+            <div class="ctrl">
+                <label>MaxLength (0=none) <span class="val">@TaMaxLength</span></label>
+                <input type="range" min="0" max="400" step="10" @bind="TaMaxLength" @bind:event="oninput" />
+            </div>
+            <div class="ctrl">
+                <label>Spellcheck</label>
+                <select @bind="TaSpellcheck">
+                    @foreach (var t in TriStates) { <option value="@t">@t</option> }
+                </select>
+            </div>
+            <div class="ctrl">
+                <label>Counter</label>
+                <div class="row"><input type="checkbox" id="ffTaCnt" @bind="TaShowCounter" /><label for="ffTaCnt" class="inline">ShowCounter</label></div>
+            </div>
+            <div class="ctrl">
+                <label>CounterWarnAt <span class="val">@TaWarnAt.ToString(Inv)</span></label>
+                <input type="range" min="0.1" max="1" step="0.05" @bind="TaWarnAt" @bind:event="oninput" @bind:culture="Inv" />
+            </div>
+        </div>
+    </section>
+
+    @* ---- AtomNumberField -------------------------------------------------------------------- *@
+    <section class="ff-field">
+        <h2>AtomNumberField&lt;int&gt;</h2>
+        <div class="ff-preview">
+            <AtomNumberField TValue="int" @bind-Value="_model.Quantity"
+                             Label="Quantity"
+                             Min="@(NfUseMin ? NfMin : null)"
+                             Max="@(NfUseMax ? NfMax : null)"
+                             Step="@(NfUseStep ? NfStep : null)"
+                             Placeholder="@Nz(NfPlaceholder)"
+                             ShowSpinners="@NfSpinners"
+                             PrefixText="@Nz(NfPrefix)"
+                             SuffixText="@Nz(NfSuffix)"
+                             UpdateOn="@NfUpdateOn"
+                             HelpText="@Nz(HelpTextV)" AriaLabel="@Nz(AriaLabelV)"
+                             LabelCol="@LabelColV" ControlCol="@ControlColV"
+                             Variant="@VariantSel" Size="@SizeSel" Effect="@EffectSel"
+                             Disabled="@DisabledAll" ReadOnly="@ReadOnlyAll" Visible="@VisibleAll" Required="@RequiredAll"
+                             Width="@Opt(WidthV)" FontSize="@Opt(FontSizeV)" Radius="@Signed(RadiusV)" BorderWidth="@Signed(BorderWidthV)"
+                             TextColor="@Nz(TextColorV)" BackgroundColor="@Nz(BgColorV)" BorderColor="@Nz(BorderColorV)"
+                             AccentColor="@Nz(AccentColorV)" FocusColor="@Nz(FocusColorV)" ErrorColor="@Nz(ErrorColorV)"
+                             CssClass="@Nz(CssClassV)" Style="@Nz(StyleV)" />
+        </div>
+        <div class="ff-opts">
+            <div class="ctrl">
+                <label>Min</label>
+                <div class="row"><input type="checkbox" id="ffNfMin" @bind="NfUseMin" /><input type="number" @bind="NfMin" @bind:event="oninput" @bind:culture="Inv" disabled="@(!NfUseMin)" /></div>
+            </div>
+            <div class="ctrl">
+                <label>Max</label>
+                <div class="row"><input type="checkbox" id="ffNfMax" @bind="NfUseMax" /><input type="number" @bind="NfMax" @bind:event="oninput" @bind:culture="Inv" disabled="@(!NfUseMax)" /></div>
+            </div>
+            <div class="ctrl">
+                <label>Step</label>
+                <div class="row"><input type="checkbox" id="ffNfStep" @bind="NfUseStep" /><input type="number" @bind="NfStep" @bind:event="oninput" @bind:culture="Inv" disabled="@(!NfUseStep)" /></div>
+            </div>
+            <div class="ctrl">
+                <label>UpdateOn</label>
+                <select @bind="NfUpdateOn">
+                    @foreach (var u in UpdateOns) { <option value="@u">@u</option> }
+                </select>
+            </div>
+            <div class="ctrl">
+                <label>Placeholder</label>
+                <input type="text" @bind="NfPlaceholder" @bind:event="oninput" placeholder="(none)" />
+            </div>
+            <div class="ctrl">
+                <label>PrefixText</label>
+                <input type="text" @bind="NfPrefix" @bind:event="oninput" placeholder="(none)" />
+            </div>
+            <div class="ctrl">
+                <label>SuffixText</label>
+                <input type="text" @bind="NfSuffix" @bind:event="oninput" placeholder="(none)" />
+            </div>
+            <div class="ctrl">
+                <label>Spinners</label>
+                <div class="row"><input type="checkbox" id="ffNfSpin" @bind="NfSpinners" /><label for="ffNfSpin" class="inline">ShowSpinners</label></div>
+            </div>
+        </div>
+    </section>
+
+    @* ---- AtomCheckbox ----------------------------------------------------------------------- *@
+    <section class="ff-field">
+        <h2>AtomCheckbox</h2>
+        <div class="ff-preview">
+            <AtomCheckbox @bind-Value="_model.Accepted"
+                          Label="Terms"
+                          Text="@Nz(CbText)"
+                          Indeterminate="@CbIndeterminate"
+                          BoxShape="@CbShape"
+                          TextPlacement="@CbPlacement"
+                          BoxSize="@Opt(CbBoxSize)"
+                          HelpText="@Nz(HelpTextV)" AriaLabel="@Nz(AriaLabelV)"
+                          LabelCol="@LabelColV" ControlCol="@ControlColV"
+                          Variant="@VariantSel" Size="@SizeSel" Effect="@EffectSel"
+                          Disabled="@DisabledAll" ReadOnly="@ReadOnlyAll" Visible="@VisibleAll" Required="@RequiredAll"
+                          FontSize="@Opt(FontSizeV)" Radius="@Signed(RadiusV)" BorderWidth="@Signed(BorderWidthV)"
+                          TextColor="@Nz(TextColorV)" BackgroundColor="@Nz(BgColorV)" BorderColor="@Nz(BorderColorV)"
+                          AccentColor="@Nz(AccentColorV)" FocusColor="@Nz(FocusColorV)" ErrorColor="@Nz(ErrorColorV)"
+                          CssClass="@Nz(CssClassV)" Style="@Nz(StyleV)" />
+        </div>
+        <div class="ff-opts">
+            <div class="ctrl">
+                <label>BoxShape</label>
+                <select @bind="CbShape">
+                    @foreach (var s in CheckShapes) { <option value="@s">@s</option> }
+                </select>
+            </div>
+            <div class="ctrl">
+                <label>TextPlacement</label>
+                <select @bind="CbPlacement">
+                    @foreach (var p in Placements) { <option value="@p">@p</option> }
+                </select>
+            </div>
+            <div class="ctrl">
+                <label>Text</label>
+                <input type="text" @bind="CbText" @bind:event="oninput" placeholder="(none)" />
+            </div>
+            <div class="ctrl">
+                <label>BoxSize (px, 0=Size) <span class="val">@CbBoxSize.ToString(Inv)</span></label>
+                <input type="range" min="0" max="40" step="1" @bind="CbBoxSize" @bind:event="oninput" @bind:culture="Inv" />
+            </div>
+            <div class="ctrl">
+                <label>Mixed state</label>
+                <div class="row"><input type="checkbox" id="ffCbInd" @bind="CbIndeterminate" /><label for="ffCbInd" class="inline">Indeterminate</label></div>
+            </div>
+        </div>
+    </section>
+
+    @* ---- AtomSwitch ------------------------------------------------------------------------- *@
+    <section class="ff-field">
+        <h2>AtomSwitch</h2>
+        <div class="ff-preview">
+            <AtomSwitch @bind-Value="_model.Notify"
+                        Label="Notifications"
+                        Text="@Nz(SwText)"
+                        OnText="@Nz(SwOnText)"
+                        OffText="@Nz(SwOffText)"
+                        ThumbContent="@(SwThumb ? CheckIcon : null)"
+                        TrackWidth="@Opt(SwTrackWidth)"
+                        TrackHeight="@Opt(SwTrackHeight)"
+                        TextPlacement="@SwPlacement"
+                        HelpText="@Nz(HelpTextV)" AriaLabel="@Nz(AriaLabelV)"
+                        LabelCol="@LabelColV" ControlCol="@ControlColV"
+                        Variant="@VariantSel" Size="@SizeSel" Effect="@EffectSel"
+                        Disabled="@DisabledAll" ReadOnly="@ReadOnlyAll" Visible="@VisibleAll" Required="@RequiredAll"
+                        FontSize="@Opt(FontSizeV)" BorderWidth="@Signed(BorderWidthV)"
+                        TextColor="@Nz(TextColorV)" BackgroundColor="@Nz(BgColorV)" BorderColor="@Nz(BorderColorV)"
+                        AccentColor="@Nz(AccentColorV)" FocusColor="@Nz(FocusColorV)" ErrorColor="@Nz(ErrorColorV)"
+                        CssClass="@Nz(CssClassV)" Style="@Nz(StyleV)" />
+        </div>
+        <div class="ff-opts">
+            <div class="ctrl">
+                <label>TextPlacement</label>
+                <select @bind="SwPlacement">
+                    @foreach (var p in Placements) { <option value="@p">@p</option> }
+                </select>
+            </div>
+            <div class="ctrl">
+                <label>Text</label>
+                <input type="text" @bind="SwText" @bind:event="oninput" placeholder="(none)" />
+            </div>
+            <div class="ctrl">
+                <label>OnText</label>
+                <input type="text" @bind="SwOnText" @bind:event="oninput" placeholder="(none)" />
+            </div>
+            <div class="ctrl">
+                <label>OffText</label>
+                <input type="text" @bind="SwOffText" @bind:event="oninput" placeholder="(none)" />
+            </div>
+            <div class="ctrl">
+                <label>TrackWidth (px, 0=Size) <span class="val">@SwTrackWidth.ToString(Inv)</span></label>
+                <input type="range" min="0" max="90" step="2" @bind="SwTrackWidth" @bind:event="oninput" @bind:culture="Inv" />
+            </div>
+            <div class="ctrl">
+                <label>TrackHeight (px, 0=Size) <span class="val">@SwTrackHeight.ToString(Inv)</span></label>
+                <input type="range" min="0" max="48" step="2" @bind="SwTrackHeight" @bind:event="oninput" @bind:culture="Inv" />
+            </div>
+            <div class="ctrl">
+                <label>Thumb</label>
+                <div class="row"><input type="checkbox" id="ffSwThumb" @bind="SwThumb" /><label for="ffSwThumb" class="inline">ThumbContent icon</label></div>
+            </div>
+        </div>
+    </section>
+
+    @* ---- AtomRadioGroup --------------------------------------------------------------------- *@
+    <section class="ff-field">
+        <h2>AtomRadioGroup&lt;string&gt;</h2>
+        <div class="ff-preview">
+            <AtomRadioGroup TValue="string" @bind-Value="_model.Color"
+                            Label="Color"
+                            Options="@RadioOptions"
+                            OptionLabel="@(RgUseLabel ? ColorLabel : null)"
+                            OptionTemplate="@(RgUseTemplate ? RadioTemplate : null)"
+                            OptionDisabled="@(RgDisableSecond ? IsGreen : null)"
+                            Name="@Nz(RgName)"
+                            Orientation="@RgOrientation"
+                            TextPlacement="@RgPlacement"
+                            MarkSize="@Opt(RgMarkSize)"
+                            HelpText="@Nz(HelpTextV)" AriaLabel="@Nz(AriaLabelV)"
+                            LabelCol="@LabelColV" ControlCol="@ControlColV"
+                            Variant="@VariantSel" Size="@SizeSel" Effect="@EffectSel"
+                            Disabled="@DisabledAll" ReadOnly="@ReadOnlyAll" Visible="@VisibleAll" Required="@RequiredAll"
+                            FontSize="@Opt(FontSizeV)" BorderWidth="@Signed(BorderWidthV)"
+                            TextColor="@Nz(TextColorV)" BackgroundColor="@Nz(BgColorV)" BorderColor="@Nz(BorderColorV)"
+                            AccentColor="@Nz(AccentColorV)" FocusColor="@Nz(FocusColorV)" ErrorColor="@Nz(ErrorColorV)"
+                            CssClass="@Nz(CssClassV)" Style="@Nz(StyleV)" />
+        </div>
+        <div class="ff-opts">
+            <div class="ctrl">
+                <label>Orientation</label>
+                <select @bind="RgOrientation">
+                    @foreach (var o in Orientations) { <option value="@o">@o</option> }
+                </select>
+            </div>
+            <div class="ctrl">
+                <label>TextPlacement</label>
+                <select @bind="RgPlacement">
+                    @foreach (var p in Placements) { <option value="@p">@p</option> }
+                </select>
+            </div>
+            <div class="ctrl">
+                <label>Options (comma separated)</label>
+                <input type="text" @bind="RgOptionsRaw" @bind:event="oninput" />
+            </div>
+            <div class="ctrl">
+                <label>Name (blank=generated)</label>
+                <input type="text" @bind="RgName" @bind:event="oninput" placeholder="(generated)" />
+            </div>
+            <div class="ctrl">
+                <label>MarkSize (px, 0=Size) <span class="val">@RgMarkSize.ToString(Inv)</span></label>
+                <input type="range" min="0" max="40" step="1" @bind="RgMarkSize" @bind:event="oninput" @bind:culture="Inv" />
+            </div>
+            <div class="ctrl">
+                <label>Option rendering</label>
+                <div class="row"><input type="checkbox" id="ffRgLbl" @bind="RgUseLabel" /><label for="ffRgLbl" class="inline">OptionLabel</label></div>
+                <div class="row"><input type="checkbox" id="ffRgTpl" @bind="RgUseTemplate" /><label for="ffRgTpl" class="inline">OptionTemplate</label></div>
+                <div class="row"><input type="checkbox" id="ffRgDis" @bind="RgDisableSecond" /><label for="ffRgDis" class="inline">OptionDisabled (2nd)</label></div>
+            </div>
+        </div>
+    </section>
+
+    @* ---- AtomSelect ------------------------------------------------------------------------- *@
+    <section class="ff-field">
+        <h2>AtomSelect&lt;string&gt;</h2>
+        <div class="ff-preview">
+            <AtomSelect TValue="string" @bind-Value="_model.Tier"
+                        Label="Tier"
+                        Options="@Tiers"
+                        OptionLabel="@(SelUseLabel ? TierLabel : null)"
+                        OptionDisabled="@(SelDisableLast ? IsTeam : null)"
+                        Placeholder="@Nz(SelPlaceholder)"
+                        PlaceholderSelectable="@SelPlaceholderSelectable"
+                        HelpText="@Nz(HelpTextV)" AriaLabel="@Nz(AriaLabelV)"
+                        LabelCol="@LabelColV" ControlCol="@ControlColV"
+                        Variant="@VariantSel" Size="@SizeSel" Effect="@EffectSel"
+                        Disabled="@DisabledAll" ReadOnly="@ReadOnlyAll" Visible="@VisibleAll" Required="@RequiredAll"
+                        Width="@Opt(WidthV)" FontSize="@Opt(FontSizeV)" Radius="@Signed(RadiusV)" BorderWidth="@Signed(BorderWidthV)"
+                        TextColor="@Nz(TextColorV)" BackgroundColor="@Nz(BgColorV)" BorderColor="@Nz(BorderColorV)"
+                        AccentColor="@Nz(AccentColorV)" FocusColor="@Nz(FocusColorV)" ErrorColor="@Nz(ErrorColorV)"
+                        CssClass="@Nz(CssClassV)" Style="@Nz(StyleV)">
+                @if (SelExtraOption)
+                {
+                    <option value="Enterprise">Enterprise (raw ChildContent option)</option>
+                }
+            </AtomSelect>
+        </div>
+        <div class="ff-opts">
+            <div class="ctrl">
+                <label>Placeholder</label>
+                <input type="text" @bind="SelPlaceholder" @bind:event="oninput" placeholder="(none)" />
+            </div>
+            <div class="ctrl">
+                <label>Options</label>
+                <div class="row"><input type="checkbox" id="ffSelSelectable" @bind="SelPlaceholderSelectable" /><label for="ffSelSelectable" class="inline">PlaceholderSelectable</label></div>
+                <div class="row"><input type="checkbox" id="ffSelLbl" @bind="SelUseLabel" /><label for="ffSelLbl" class="inline">OptionLabel</label></div>
+                <div class="row"><input type="checkbox" id="ffSelDis" @bind="SelDisableLast" /><label for="ffSelDis" class="inline">OptionDisabled (Team)</label></div>
+                <div class="row"><input type="checkbox" id="ffSelExtra" @bind="SelExtraOption" /><label for="ffSelExtra" class="inline">ChildContent option</label></div>
+            </div>
+        </div>
+    </section>
+</EditForm>
+
+<div class="ff-values">
+    <span class="ff-values-title">Bound model</span>
+    <code>Name=@Quoted(_model.Name) · Notes=@Quoted(_model.Notes) · Quantity=@_model.Quantity ·
+          Accepted=@_model.Accepted · Notify=@_model.Notify · Color=@Quoted(_model.Color) ·
+          Tier=@Quoted(_model.Tier)</code>
+</div>
+
+<CodeSnippetBox Code="@Snippet" FileName="FormFieldsExample.razor" />
+
+<style>
+    .ff-controls, .ff-opts { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1rem 1.5rem; }
+    .ff-controls { background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; margin-bottom:1.5rem; }
+    .ff-controls .ctrl, .ff-opts .ctrl { display:flex; flex-direction:column; gap:.4rem; }
+    .ff-controls label, .ff-opts label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; gap:.5rem; }
+    .ff-controls label .val, .ff-opts label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
+    .ff-controls input[type=range], .ff-opts input[type=range] { width:100%; accent-color:#2563eb; }
+    .ff-controls input[type=text], .ff-controls select, .ff-opts input[type=text], .ff-opts input[type=number], .ff-opts select
+        { padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; min-width:0; }
+    .ff-controls .row, .ff-opts .row { display:flex; align-items:center; gap:.5rem; }
+    .ff-controls .row input[type=checkbox], .ff-opts .row input[type=checkbox] { accent-color:#2563eb; width:16px; height:16px; flex:none; }
+    .ff-controls .row.color input[type=color] { flex:none; width:38px; height:32px; padding:2px; background:#070b10; border:1px solid #1b2330; border-radius:6px; cursor:pointer; }
+    .ff-controls .row.color input[type=text] { flex:1 1 auto; min-width:0; }
+    .ff-controls .row label.inline, .ff-opts .row label.inline { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; justify-content:flex-start; }
+    .ff-controls .clr-btn, .ff-opts .clr-btn { flex:none; padding:.35rem .55rem; border:1px solid #1b2330; background:#161d29; color:#cfd8e3; border-radius:6px; cursor:pointer; font-size:.75rem; }
+    .ff-controls .clr-btn:hover { background:#1e2836; }
+    .ff-controls .note { font-size:.75rem; color:#5fb7c9; font-family:ui-monospace,monospace; }
+
+    .ff-stage { display:flex; flex-direction:column; gap:1.25rem; }
+    .ff-field { border:1px solid #e2e8f0; border-radius:12px; padding:1.25rem 1.5rem; }
+    .ff-field h2 { margin:0 0 1rem; font-size:1rem; font-family:ui-monospace,Consolas,monospace; color:#334155; }
+    .ff-field .ff-preview { margin-bottom:1.25rem; }
+    .ff-field .ff-opts { background:#0d1118; border:1px solid #1b2330; border-radius:10px; padding:1rem 1.25rem; color:#cfd8e3; }
+
+    .ff-values { margin-top:1.5rem; padding:.85rem 1rem; border:1px solid #1b2330; border-radius:10px; background:#0d1118; color:#cfd8e3; }
+    .ff-values-title { display:block; font-size:.75rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; margin-bottom:.35rem; }
+    .ff-values code { font-family:ui-monospace,Consolas,monospace; font-size:.8rem; color:#9ecbff; }
+</style>
+
+@code {
+    private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
+
+    private static readonly InputVariant[] Variants = Enum.GetValues<InputVariant>();
+    private static readonly InputSize[] Sizes = Enum.GetValues<InputSize>();
+    private static readonly InputEffect[] Effects = Enum.GetValues<InputEffect>();
+    private static readonly TextFieldType[] FieldTypes = Enum.GetValues<TextFieldType>();
+    private static readonly TextAreaResize[] Resizes = Enum.GetValues<TextAreaResize>();
+    private static readonly InputUpdateOn[] UpdateOns = Enum.GetValues<InputUpdateOn>();
+    private static readonly CheckShape[] CheckShapes = Enum.GetValues<CheckShape>();
+    private static readonly LabelPlacement[] Placements = Enum.GetValues<LabelPlacement>();
+    private static readonly Orientation[] Orientations = Enum.GetValues<Orientation>();
+    private static readonly string[] TriStates = ["(unset)", "true", "false"];
+    private static readonly string[] Tiers = ["Free", "Pro", "Team"];
+
+    // The bound model. Attributes are real DataAnnotations, so "Validate now" produces genuine
+    // messages through each field's own EditContext wiring rather than a faked error state.
+    private sealed class DemoModel
+    {
+        [Required(ErrorMessage = "Name is required")]
+        [StringLength(20, MinimumLength = 3, ErrorMessage = "Name must be 3-20 characters")]
+        public string? Name { get; set; } = "Ada Lovelace";
+
+        [StringLength(120, ErrorMessage = "Notes cap out at 120 characters")]
+        public string? Notes { get; set; } = "Zero JS: every field is a native control in a themed frame.";
+
+        [Range(1, 99, ErrorMessage = "Quantity must be 1-99")]
+        public int Quantity { get; set; } = 3;
+
+        [Range(typeof(bool), "true", "true", ErrorMessage = "You must accept the terms")]
+        public bool Accepted { get; set; }
+
+        public bool Notify { get; set; } = true;
+
+        [Required(ErrorMessage = "Pick a color")]
+        public string? Color { get; set; } = "Green";
+
+        [Required(ErrorMessage = "Pick a tier")]
+        public string? Tier { get; set; }
+    }
+
+    private readonly DemoModel _model = new();
+    private EditContext _editContext = default!;
+    private string ValidationNote = "not validated yet";
+
+    protected override void OnInitialized() => _editContext = new EditContext(_model);
+
+    private void ValidateNow()
+    {
+        var ok = _editContext.Validate();
+        ValidationNote = ok ? "all valid" : "showing real errors";
+    }
+
+    private void ClearValidation()
+    {
+        // Validate() leaves messages in the context's own store, which has no public clear; a fresh
+        // EditContext is the documented way back to a pristine state.
+        _editContext = new EditContext(_model);
+        ValidationNote = "cleared";
+    }
+
+    // ---- shared axes -------------------------------------------------------------------------
+
+    private InputVariant VariantSel = InputVariant.Outline;
+    private InputSize SizeSel = InputSize.Medium;
+    private InputEffect EffectSel = InputEffect.None;
+    private bool DisabledAll;
+    private bool ReadOnlyAll;
+    private bool VisibleAll = true;
+    private bool RequiredAll;
+    private string HelpTextV = "";
+    private string AriaLabelV = "";
+    private string LabelColV = "clr-col-12 clr-col-md-3";
+    private string ControlColV = "clr-col-12 clr-col-md-9";
+    private string CssClassV = "";
+    private string StyleV = "";
+    private double WidthV;
+    private double FontSizeV;
+    private double RadiusV = -1;
+    private double BorderWidthV = -1;
+    private string TextColorV = "";
+    private string BgColorV = "";
+    private string BorderColorV = "";
+    private string AccentColorV = "";
+    private string FocusColorV = "";
+    private string ErrorColorV = "";
+
+    // ---- per-field state ---------------------------------------------------------------------
+
+    private TextFieldType TypeSel = TextFieldType.Text;
+    private string TfPlaceholder = "First and last name";
+    private int TfMaxLength = 20;
+    private string TfAutocomplete = "name";
+    private string TfInputMode = "";
+    private string TfSpellcheck = "(unset)";
+    private InputUpdateOn TfUpdateOn = InputUpdateOn.Input;
+    private bool TfClearable = true;
+    private bool TfPrefix;
+    private bool TfSuffix;
+
+    private string TaPlaceholder = "Anything worth noting…";
+    private int TaRows = 4;
+    private double TaHeight;
+    private int TaMaxLength = 120;
+    private TextAreaResize TaResize = TextAreaResize.Vertical;
+    private string TaSpellcheck = "(unset)";
+    private InputUpdateOn TaUpdateOn = InputUpdateOn.Input;
+    private bool TaShowCounter = true;
+    private double TaWarnAt = 0.9;
+
+    private bool NfUseMin = true;
+    private double NfMin = 1;
+    private bool NfUseMax = true;
+    private double NfMax = 99;
+    private bool NfUseStep = true;
+    private double NfStep = 1;
+    private string NfPlaceholder = "";
+    private bool NfSpinners = true;
+    private string NfPrefix = "";
+    private string NfSuffix = "units";
+    private InputUpdateOn NfUpdateOn = InputUpdateOn.Input;
+
+    private string CbText = "I accept the terms";
+    private bool CbIndeterminate;
+    private CheckShape CbShape = CheckShape.Rounded;
+    private LabelPlacement CbPlacement = LabelPlacement.End;
+    private double CbBoxSize;
+
+    private string SwText = "Email me about releases";
+    private string SwOnText = "";
+    private string SwOffText = "";
+    private bool SwThumb;
+    private double SwTrackWidth;
+    private double SwTrackHeight;
+    private LabelPlacement SwPlacement = LabelPlacement.End;
+
+    private string RgOptionsRaw = "Red,Green,Blue";
+    private bool RgUseLabel;
+    private bool RgUseTemplate;
+    private bool RgDisableSecond;
+    private string RgName = "";
+    private Orientation RgOrientation = Orientation.Vertical;
+    private LabelPlacement RgPlacement = LabelPlacement.End;
+    private double RgMarkSize;
+
+    private string SelPlaceholder = "Choose a tier…";
+    private bool SelPlaceholderSelectable;
+    private bool SelUseLabel;
+    private bool SelDisableLast;
+    private bool SelExtraOption;
+
+    // ---- derived -----------------------------------------------------------------------------
+
+    private string[] RadioOptions =>
+        RgOptionsRaw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    // Declared as fields, not methods: a `cond ? MethodGroup : null` ternary has no natural type,
+    // so the delegate has to already exist to be passed conditionally.
+    private static readonly Func<string, string> ColorLabel = option => $"Color: {option}";
+
+    private static readonly Func<string, bool> IsGreen = option => option == "Green";
+
+    private static readonly Func<string, string> TierLabel = tier => tier switch
+    {
+        "Free" => "Free — $0",
+        "Pro" => "Pro — $12/mo",
+        _ => $"{tier} — talk to us",
+    };
+
+    private static readonly Func<string, bool> IsTeam = tier => tier == "Team";
+
+    private RenderFragment<string> RadioTemplate => option => builder =>
+        builder.AddMarkupContent(0,
+            $"<span style=\"display:inline-flex;align-items:center;gap:.4rem\">" +
+            $"<span style=\"width:.8em;height:.8em;border-radius:50%;background:{option.ToLowerInvariant()}\"></span>" +
+            $"<b>{option}</b></span>");
+
+    private static readonly RenderFragment PersonIcon = b => b.AddMarkupContent(0,
+        "<svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\">" +
+        "<path d=\"M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5z\"/></svg>");
+
+    private static readonly RenderFragment CheckIcon = b => b.AddMarkupContent(0,
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" " +
+        "stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12.5l4.5 4.5L19 7.5\"/></svg>");
+
+    private static RenderFragment RenderText(string text) => b => b.AddContent(0, text);
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
+
+    /// <summary>0 means "leave the parameter unset" for sliders whose zero has no useful meaning.</summary>
+    private static double? Opt(double v) => v > 0 ? v : null;
+
+    private static int? Opt(int v) => v > 0 ? v : null;
+
+    /// <summary>For sliders where 0 IS meaningful (Radius, BorderWidth), -1 is the unset sentinel.</summary>
+    private static double? Signed(double v) => v >= 0 ? v : null;
+
+    private static bool? TriState(string s) => s switch { "true" => true, "false" => false, _ => null };
+
+    private static string Quoted(string? s) => s is null ? "null" : $"\"{s}\"";
+
+    // ---- generated snippet -------------------------------------------------------------------
+
+    /// <summary>Shared attributes, emitted once per field so the snippet mirrors what the previews
+    /// above are actually rendering. Only non-default values are written, so the snippet stays as
+    /// short as the current configuration allows.</summary>
+    private string SharedAttrs(string indent, bool sizing = true)
+    {
+        var sb = new System.Text.StringBuilder();
+        void Add(string a) => sb.Append('\n').Append(indent).Append(a);
+
+        if (!string.IsNullOrEmpty(HelpTextV)) Add($"HelpText=\"{HelpTextV}\"");
+        if (!string.IsNullOrEmpty(AriaLabelV)) Add($"AriaLabel=\"{AriaLabelV}\"");
+        if (LabelColV != "clr-col-12 clr-col-md-2") Add($"LabelCol=\"{LabelColV}\"");
+        if (ControlColV != "clr-col-12 clr-col-md-10") Add($"ControlCol=\"{ControlColV}\"");
+        if (VariantSel != InputVariant.Outline) Add($"Variant=\"InputVariant.{VariantSel}\"");
+        if (SizeSel != InputSize.Medium) Add($"Size=\"InputSize.{SizeSel}\"");
+        if (EffectSel != InputEffect.None) Add($"Effect=\"InputEffect.{EffectSel}\"");
+        if (DisabledAll) Add("Disabled=\"true\"");
+        if (ReadOnlyAll) Add("ReadOnly=\"true\"");
+        if (!VisibleAll) Add("Visible=\"false\"");
+        if (RequiredAll) Add("Required=\"true\"");
+        if (sizing && WidthV > 0) Add($"Width=\"{WidthV.ToString(Inv)}\"");
+        if (FontSizeV > 0) Add($"FontSize=\"{FontSizeV.ToString(Inv)}\"");
+        if (sizing && RadiusV >= 0) Add($"Radius=\"{RadiusV.ToString(Inv)}\"");
+        if (BorderWidthV >= 0) Add($"BorderWidth=\"{BorderWidthV.ToString(Inv)}\"");
+        if (!string.IsNullOrEmpty(TextColorV)) Add($"TextColor=\"{TextColorV}\"");
+        if (!string.IsNullOrEmpty(BgColorV)) Add($"BackgroundColor=\"{BgColorV}\"");
+        if (!string.IsNullOrEmpty(BorderColorV)) Add($"BorderColor=\"{BorderColorV}\"");
+        if (!string.IsNullOrEmpty(AccentColorV)) Add($"AccentColor=\"{AccentColorV}\"");
+        if (!string.IsNullOrEmpty(FocusColorV)) Add($"FocusColor=\"{FocusColorV}\"");
+        if (!string.IsNullOrEmpty(ErrorColorV)) Add($"ErrorColor=\"{ErrorColorV}\"");
+        if (!string.IsNullOrEmpty(CssClassV)) Add($"CssClass=\"{CssClassV}\"");
+        if (!string.IsNullOrEmpty(StyleV)) Add($"Style=\"{StyleV}\"");
+        return sb.ToString();
+    }
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.Append("<EditForm Model=\"_model\" OnValidSubmit=\"SaveAsync\">\n");
+            sb.Append("    <DataAnnotationsValidator />\n\n");
+
+            // AtomTextField
+            sb.Append("    <AtomTextField @bind-Value=\"_model.Name\" Label=\"Name\"");
+            var i = "                   ";
+            if (TypeSel != TextFieldType.Text) sb.Append($"\n{i}Type=\"TextFieldType.{TypeSel}\"");
+            if (!string.IsNullOrEmpty(TfPlaceholder)) sb.Append($"\n{i}Placeholder=\"{TfPlaceholder}\"");
+            if (TfMaxLength > 0) sb.Append($"\n{i}MaxLength=\"{TfMaxLength}\"");
+            if (!string.IsNullOrEmpty(TfAutocomplete)) sb.Append($"\n{i}Autocomplete=\"{TfAutocomplete}\"");
+            if (!string.IsNullOrEmpty(TfInputMode)) sb.Append($"\n{i}InputMode=\"{TfInputMode}\"");
+            if (TriState(TfSpellcheck) is bool sc) sb.Append($"\n{i}Spellcheck=\"{sc.ToString().ToLowerInvariant()}\"");
+            if (TfUpdateOn != InputUpdateOn.Input) sb.Append($"\n{i}UpdateOn=\"InputUpdateOn.{TfUpdateOn}\"");
+            if (TfClearable) sb.Append($"\n{i}Clearable=\"true\"");
+            sb.Append(SharedAttrs(i));
+            if (TfPrefix || TfSuffix)
+            {
+                sb.Append(">\n");
+                if (TfPrefix) sb.Append("        <PrefixContent><svg class=\"icon\" …/></PrefixContent>\n");
+                if (TfSuffix) sb.Append("        <SuffixContent>chars</SuffixContent>\n");
+                sb.Append("    </AtomTextField>\n\n");
+            }
+            else
+            {
+                sb.Append(" />\n\n");
+            }
+
+            // AtomTextArea
+            sb.Append("    <AtomTextArea @bind-Value=\"_model.Notes\" Label=\"Notes\"");
+            i = "                  ";
+            if (!string.IsNullOrEmpty(TaPlaceholder)) sb.Append($"\n{i}Placeholder=\"{TaPlaceholder}\"");
+            if (TaRows != 4) sb.Append($"\n{i}Rows=\"{TaRows}\"");
+            if (TaHeight > 0) sb.Append($"\n{i}Height=\"{TaHeight.ToString(Inv)}\"");
+            if (TaMaxLength > 0) sb.Append($"\n{i}MaxLength=\"{TaMaxLength}\"");
+            if (TaResize != TextAreaResize.Vertical) sb.Append($"\n{i}Resize=\"TextAreaResize.{TaResize}\"");
+            if (TriState(TaSpellcheck) is bool tsc) sb.Append($"\n{i}Spellcheck=\"{tsc.ToString().ToLowerInvariant()}\"");
+            if (TaUpdateOn != InputUpdateOn.Input) sb.Append($"\n{i}UpdateOn=\"InputUpdateOn.{TaUpdateOn}\"");
+            if (TaShowCounter) sb.Append($"\n{i}ShowCounter=\"true\"");
+            if (Math.Abs(TaWarnAt - 0.9) > 0.001) sb.Append($"\n{i}CounterWarnAt=\"{TaWarnAt.ToString(Inv)}\"");
+            sb.Append(SharedAttrs(i));
+            sb.Append(" />\n\n");
+
+            // AtomNumberField
+            sb.Append("    <AtomNumberField TValue=\"int\" @bind-Value=\"_model.Quantity\" Label=\"Quantity\"");
+            i = "                     ";
+            if (NfUseMin) sb.Append($"\n{i}Min=\"{NfMin.ToString(Inv)}\"");
+            if (NfUseMax) sb.Append($"\n{i}Max=\"{NfMax.ToString(Inv)}\"");
+            if (NfUseStep) sb.Append($"\n{i}Step=\"{NfStep.ToString(Inv)}\"");
+            if (!string.IsNullOrEmpty(NfPlaceholder)) sb.Append($"\n{i}Placeholder=\"{NfPlaceholder}\"");
+            if (!NfSpinners) sb.Append($"\n{i}ShowSpinners=\"false\"");
+            if (!string.IsNullOrEmpty(NfPrefix)) sb.Append($"\n{i}PrefixText=\"{NfPrefix}\"");
+            if (!string.IsNullOrEmpty(NfSuffix)) sb.Append($"\n{i}SuffixText=\"{NfSuffix}\"");
+            if (NfUpdateOn != InputUpdateOn.Input) sb.Append($"\n{i}UpdateOn=\"InputUpdateOn.{NfUpdateOn}\"");
+            sb.Append(SharedAttrs(i));
+            sb.Append(" />\n\n");
+
+            // AtomCheckbox
+            sb.Append("    <AtomCheckbox @bind-Value=\"_model.Accepted\" Label=\"Terms\"");
+            i = "                  ";
+            if (!string.IsNullOrEmpty(CbText)) sb.Append($"\n{i}Text=\"{CbText}\"");
+            if (CbIndeterminate) sb.Append($"\n{i}Indeterminate=\"true\"");
+            if (CbShape != CheckShape.Rounded) sb.Append($"\n{i}BoxShape=\"CheckShape.{CbShape}\"");
+            if (CbPlacement != LabelPlacement.End) sb.Append($"\n{i}TextPlacement=\"LabelPlacement.{CbPlacement}\"");
+            if (CbBoxSize > 0) sb.Append($"\n{i}BoxSize=\"{CbBoxSize.ToString(Inv)}\"");
+            sb.Append(SharedAttrs(i, sizing: false));
+            sb.Append(" />\n\n");
+
+            // AtomSwitch
+            sb.Append("    <AtomSwitch @bind-Value=\"_model.Notify\" Label=\"Notifications\"");
+            i = "                ";
+            if (!string.IsNullOrEmpty(SwText)) sb.Append($"\n{i}Text=\"{SwText}\"");
+            if (!string.IsNullOrEmpty(SwOnText)) sb.Append($"\n{i}OnText=\"{SwOnText}\"");
+            if (!string.IsNullOrEmpty(SwOffText)) sb.Append($"\n{i}OffText=\"{SwOffText}\"");
+            if (SwTrackWidth > 0) sb.Append($"\n{i}TrackWidth=\"{SwTrackWidth.ToString(Inv)}\"");
+            if (SwTrackHeight > 0) sb.Append($"\n{i}TrackHeight=\"{SwTrackHeight.ToString(Inv)}\"");
+            if (SwPlacement != LabelPlacement.End) sb.Append($"\n{i}TextPlacement=\"LabelPlacement.{SwPlacement}\"");
+            sb.Append(SharedAttrs(i, sizing: false));
+            if (SwThumb)
+            {
+                sb.Append(">\n        <ThumbContent><svg class=\"icon\" …/></ThumbContent>\n    </AtomSwitch>\n\n");
+            }
+            else
+            {
+                sb.Append(" />\n\n");
+            }
+
+            // AtomRadioGroup
+            sb.Append("    <AtomRadioGroup TValue=\"string\" @bind-Value=\"_model.Color\" Label=\"Color\"");
+            i = "                    ";
+            sb.Append($"\n{i}Options=\"_colors\"");
+            // Named methods rather than inline lambdas: a lambda containing quotes cannot be written
+            // inside a Razor attribute without escaping gymnastics, so the snippet stays copy-pastable.
+            if (RgUseLabel) sb.Append($"\n{i}OptionLabel=\"ColorLabel\"");
+            if (RgDisableSecond) sb.Append($"\n{i}OptionDisabled=\"IsGreen\"");
+            if (!string.IsNullOrEmpty(RgName)) sb.Append($"\n{i}Name=\"{RgName}\"");
+            if (RgOrientation != Orientation.Vertical) sb.Append($"\n{i}Orientation=\"Orientation.{RgOrientation}\"");
+            if (RgPlacement != LabelPlacement.End) sb.Append($"\n{i}TextPlacement=\"LabelPlacement.{RgPlacement}\"");
+            if (RgMarkSize > 0) sb.Append($"\n{i}MarkSize=\"{RgMarkSize.ToString(Inv)}\"");
+            sb.Append(SharedAttrs(i, sizing: false));
+            if (RgUseTemplate)
+            {
+                sb.Append(">\n        <OptionTemplate Context=\"color\">\n");
+                sb.Append("            <b>@color</b>\n");
+                sb.Append("        </OptionTemplate>\n    </AtomRadioGroup>\n\n");
+            }
+            else
+            {
+                sb.Append(" />\n\n");
+            }
+
+            // AtomSelect
+            sb.Append("    <AtomSelect TValue=\"string\" @bind-Value=\"_model.Tier\" Label=\"Tier\"");
+            i = "                ";
+            sb.Append($"\n{i}Options=\"_tiers\"");
+            if (SelUseLabel) sb.Append($"\n{i}OptionLabel=\"TierLabel\"");
+            if (SelDisableLast) sb.Append($"\n{i}OptionDisabled=\"IsTeam\"");
+            if (!string.IsNullOrEmpty(SelPlaceholder)) sb.Append($"\n{i}Placeholder=\"{SelPlaceholder}\"");
+            if (SelPlaceholderSelectable) sb.Append($"\n{i}PlaceholderSelectable=\"true\"");
+            sb.Append(SharedAttrs(i));
+            if (SelExtraOption)
+            {
+                sb.Append(">\n        <option value=\"Enterprise\">Enterprise</option>\n    </AtomSelect>\n");
+            }
+            else
+            {
+                sb.Append(" />\n");
+            }
+
+            sb.Append("</EditForm>");
+            return sb.ToString();
+        }
+    }
+}

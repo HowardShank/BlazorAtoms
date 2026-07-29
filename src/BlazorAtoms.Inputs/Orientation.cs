@@ -1,15 +1,18 @@
 namespace BlazorAtoms.Inputs;
 
 /// <summary>
-/// Layout axis of <see cref="AtomRangeInput{TValue}"/>'s track. Vertical renders the same
-/// horizontal-range internals rotated in place (see <c>AtomRangeInput.razor.css</c>) — every other
-/// feature (fill, handle offset/rotation/shape, icons) keeps working unchanged.
+/// Layout axis, shared by the controls in this library that have one — <see cref="AtomRangeInput{TValue}"/>'s
+/// track and <see cref="AtomRadioGroup{TValue}"/>'s option list. Each component states its own
+/// default; the meaning of each member is per-component and documented below.
 /// </summary>
 public enum Orientation
 {
-    /// <summary>Default left-to-right track.</summary>
+    /// <summary>Range: left-to-right track (its default). Radio group: options in a row.</summary>
     Horizontal,
 
-    /// <summary>Bottom-to-top track (min at bottom, max at top — standard vertical-slider convention).</summary>
+    /// <summary>Range: bottom-to-top track (min at bottom, max at top — standard vertical-slider
+    /// convention). Radio group: options stacked (its default). Note the range renders the same
+    /// horizontal internals rotated in place (see <c>AtomRangeInput.razor.css</c>) — every other
+    /// feature (fill, handle offset/rotation/shape, icons) keeps working unchanged.</summary>
     Vertical,
 }

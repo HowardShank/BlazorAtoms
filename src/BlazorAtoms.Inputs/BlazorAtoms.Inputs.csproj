@@ -6,8 +6,8 @@
   <PropertyGroup>
     <PackageId>BlazorAtoms.Inputs</PackageId>
     <Title>Blazor Inputs</Title>
-    <Description>Form input components for Blazor. AtomRangeInput renders a labeled slider/range control — native &lt;input type="range"&gt; for free pointer/touch/keyboard support, min/max/step, a ReadOnly (greyed, no input) vs Disabled (renders nothing) distinction, help text, and an EditContext/DataAnnotations-aware error state with an inline error icon. Server or WebAssembly, no JS.</Description>
-    <PackageTags>Blazor;Input;Range;Slider;Form;Validation;WebAssembly;Server</PackageTags>
+    <Description>Form input components for Blazor. The standard fields — AtomTextField, AtomTextArea, AtomNumberField, AtomCheckbox, AtomSwitch, AtomRadioGroup, AtomSelect — each wrap a native control and share one base: @bind-Value, an EditContext/DataAnnotations-aware error state, a real ReadOnly vs Disabled distinction, and Variant/Size/Effect styling axes over --field-* custom properties. Also AtomRangeInput (labeled slider/range control) and AtomCrtInput/AtomCrtDisplay (CRT-terminal styled text input and display). Server or WebAssembly, no JS.</Description>
+    <PackageTags>Blazor;Input;TextField;TextArea;Number;Checkbox;Switch;Radio;Select;Range;Slider;Form;Validation;WebAssembly;Server</PackageTags>
     <Version>0.1.0</Version>
   </PropertyGroup>
 

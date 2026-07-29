@@ -1,7 +1,8 @@
 # BlazorAtoms.Inputs — development notes
 
-Internal implementation notes for maintainers of `AtomRangeInput`. This is not packed into the
-NuGet package; see `README.md` for consumer-facing usage docs.
+Internal implementation notes for maintainers. This is not packed into the NuGet package; see
+`README.md` for consumer-facing usage docs. The first half covers `AtomRangeInput` (the oldest
+component here); [the standard form fields](#the-standard-form-fields) are at the end.
 
 ## Why hand-rolled EditContext instead of InputBase<TValue>
 
@@ -192,3 +193,112 @@ To stop a moved handle from being clipped or overlapping the label/help rows, th
 No error-state convention existed anywhere in this repo before this component. Established here:
 `aria-invalid="true"` on the `<input>` when in error, `data-state="error"` (or `"readonly"`) on the
 component root and the subtext span for CSS hooking.
+
+---
+
+# The standard form fields
+
+`AtomTextField`, `AtomTextArea`, `AtomNumberField`, `AtomCheckbox`, `AtomSwitch`, `AtomRadioGroup`,
+`AtomSelect`. Built as a set, on one base, to a single DOM/CSS contract — the individual controls are
+simple, so the value of the batch is that contract, not the markup.
+
+## AtomInputBase&lt;TValue&gt;
+
+Holds the `@bind-Value` triple, the `EditContext` glue, label/help/visibility, the three styling axes
+(`Variant`/`Size`/`Effect`), and the `--field-*` theming parameters. Rationale for hand-rolling the
+`EditContext` glue rather than inheriting `InputBase<TValue>` is the same as `AtomRangeInput`'s (see
+above): single inheritance, and every component in this repo needs `AtomComponentBase`. The
+difference is that the glue now lives in *one* place instead of being copied per component.
+
+Notes for anyone adding an eighth field:
+
+- **Override `OnParametersSet` → call `base.OnParametersSet()`.** That's where the `FieldIdentifier`
+  is recomputed. A lazy alternative was considered and rejected: the Razor compiler emits a fresh
+  `ValueExpression` lambda every render, so a reference-equality cache would miss every time and
+  `FieldIdentifier.Create` would run per property access instead of once per parameter set.
+- **`DefaultAriaLabel` is abstract** — every field must name itself for the case where neither
+  `AriaLabel` nor `Label` is set.
+- **`SupportsNativeReadOnly` is virtual and defaults to `false`.** Only override it to `true` for
+  controls where the HTML spec actually honors `readonly` (text-like inputs, textarea). Everything
+  else must fall back to `disabled`, because a `readonly` checkbox/radio/select/range stays fully
+  interactive in every browser. `IsDisabled`/`IsReadOnly`/`BlocksInput` encode the three questions
+  that follow from that ("which attribute renders", "which attribute renders", "may we commit").
+- **`SetValueAsync` is the only commit path.** It short-circuits on `BlocksInput` and on an unchanged
+  value, then raises `ValueChanged` and `NotifyFieldChanged`. Per-component handlers only parse.
+- **`Kebab`** turns a PascalCase enum member into an attribute value (`ShakeOnError` →
+  `shake-on-error`) so multi-word members read as ordinary CSS attribute selectors. It's `internal
+  static` so tests can hit it directly.
+- **No generated element ids.** The visible `<label>` carries no `for`; the control's own `aria-label`
+  names it (and checkbox/switch/radio nest the input inside the label for implicit association). A
+  per-instance id would differ between the prerender and interactive passes.
+
+## Why `--field-*` is duplicated in seven CSS files
+
+Each component declares the same default block at the top of its own `.razor.css`. That's deliberate,
+not an oversight: scoped CSS is per-component, every library here is standalone, and there is no
+shared stylesheet to hang a `:root` block on without shipping global CSS. The cost is a duplicated
+default block; the benefit is that a consumer can restyle one component, or all of them, with the
+same variable names either way.
+
+Consequence when editing: a change to a shared default (say `--field-border-color`) has to be made in
+every file that declares it. The variant/size/effect *rules* are likewise per-component — which is
+what lets `FocusUnderline` mean "wipe a rule under the frame" on the box-shaped fields and "underline
+the caption" on the frameless ones, from one enum member.
+
+## Painted controls over hidden native inputs
+
+`AtomCheckbox`, `AtomSwitch`, and `AtomRadioGroup` render the native input **transparent and stacked
+over** a painted `<span>` (`opacity: 0`, sized to the control, `position: absolute`) rather than
+styling the native control directly, which no engine allows consistently.
+
+Rules that matter here:
+
+- Never `display: none` or `visibility: hidden` on the native input — either makes it unfocusable and
+  drops it from form submission. Opacity keeps it a real control.
+- The visuals hang off the input's own `:checked` / `:focus-visible` via sibling selectors
+  (`input:checked + .box`), so there is zero C# state for the checked appearance and it stays correct
+  through prerender.
+- `AtomCheckbox.Indeterminate` exists *because* of this. The native `indeterminate` flag is a DOM
+  property settable only from JS, so the mixed state is a root `data-indeterminate` attribute plus
+  `aria-checked="mixed"`, and the dash is drawn by CSS.
+
+## Value parsing
+
+Three components have to convert a browser string back into `TValue`, and each picks the narrowest
+mechanism that works:
+
+- **`AtomNumberField`** uses `NumberConvert`, kept separate from `RangeConvert` because a number field
+  can be *empty* and a slider can't: parsing must distinguish "cleared" from "unparseable" instead of
+  collapsing both to `0`. Invariant culture throughout — the HTML spec fixes a number input's value
+  to a `.`-separated literal regardless of locale. Anything the target type can't hold (`3.7` into an
+  `int`, an empty box with a non-nullable `TValue`) is dropped, leaving `Value` valid.
+- **`AtomRadioGroup`** never parses: the change handler closes over the option, so `TValue` round-trips
+  as itself. That's what makes records/classes work, and why two options with the same `ToString()`
+  still behave correctly.
+- **`AtomSelect`** matches the reported `value` against `Options` first (returning the exact object)
+  and only falls through to `Enum.Parse`/`Convert.ChangeType` for values that came from
+  `ChildContent`. Option keys are written with `IFormattable`+invariant so the round trip survives a
+  `de-DE` client.
+
+## Deliberate omissions
+
+Each of these is a "no" with a reason, not a to-do:
+
+- **Textarea auto-grow** — needs to measure `scrollHeight`, i.e. JS.
+- **Multi-select** — `multiple` needs a collection-typed `Value` and a different change-event shape;
+  that's a different component, not a flag on this one.
+- **A styled/searchable dropdown** — the native popup list is drawn by the OS and can't be styled
+  from here. That's the trade for needing no positioning JS; a real combobox is
+  `BlazorAtoms.Overlays.AtomDropdown` (Tier C, planned).
+- **Debounce** — belongs to the consumer's binding, and `UpdateOn="Change"` already covers the common
+  "don't hammer the Server circuit" case.
+- **An `<AtomRadio>` child component** — `Options` + `OptionTemplate` covers the same ground without a
+  cascading context; revisit only if per-option parameters appear.
+
+## Not retrofitted: AtomRangeInput and AtomCrtInput
+
+Both predate `AtomInputBase<TValue>` and still carry their own copy of the `EditContext` glue. Left
+alone deliberately, to keep the seven-field batch purely additive. If retrofitting later: `AtomCrtInput`
+is the closer fit (string value, same skeleton), while `AtomRangeInput` is generic with its own
+`Min`/`Max`/`Step` in `TValue` and a `ReadOnly`-equals-`Disabled` rule that the base now expresses as
+`SupportsNativeReadOnly => false`.
