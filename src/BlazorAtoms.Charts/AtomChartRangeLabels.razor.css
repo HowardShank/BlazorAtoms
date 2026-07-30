@@ -1,0 +1,15 @@
+/* On the <g> itself: the <text> children are built with RenderTreeBuilder, not written as markup here, so
+   they never get Blazor's scoped-CSS attribute and a rule requiring that attribute directly on them could
+   never match — see AtomChartGridlines.razor.css. fill/font-size/dominant-baseline are inherited SVG/text
+   properties; opacity is not, but the two range labels never overlap, so applying it to the group looks
+   identical to applying it per label. */
+.atom-chart-range-labels {
+    fill: currentColor;
+    /* px inside a scaled viewBox. */
+    font-size: 6px;
+    opacity: 0.6;
+    /* Centres the glyph on the computed point vertically. The chart supplies the exact arc position, so
+       there is no manual baseline nudge here as there is for the cartesian tick labels — those sit in a
+       single row where `middle` is inconsistent across engines and a +3 offset is more predictable. */
+    dominant-baseline: middle;
+}

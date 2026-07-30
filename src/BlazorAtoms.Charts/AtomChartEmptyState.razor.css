@@ -1,0 +1,15 @@
+.atom-chart-empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0.35rem;
+    text-align: center;
+    padding: 0.5rem;
+    min-width: 0;
+}
+
+.atom-chart-empty-state-text {
+    font-size: 0.9em;
+    opacity: 0.55;
+}

@@ -1,0 +1,29 @@
+@inherits AtomComponentBase
+
+@* IsFixed: the cascaded value is `this`, whose reference never changes, so subscription would buy
+   nothing — children are re-rendered explicitly instead (see NotifyChildren in the .cs). *@
+<CascadingValue Value="this" IsFixed="true">
+    <div @attributes="AdditionalAttributes"
+         class="@ClassAttr("atom-tabs")"
+         style="@StyleAttr(RootStyle)"
+         data-variant="@VariantAttr"
+         data-size="@SizeAttr"
+         data-effect="@EffectAttr"
+         data-orientation="@OrientationAttr"
+         data-align="@AlignAttr"
+         data-scrollable="@ScrollableAttr">
+        @* One key handler on the tablist rather than one per tab — keydown bubbles from the buttons,
+           and the strip is the element that owns "which tab is next". *@
+        <div class="atom-tabs-list"
+             @ref="_listRef"
+             role="tablist"
+             aria-label="@AriaLabel"
+             aria-orientation="@OrientationAttr"
+             @onkeydown="HandleKeyDownAsync">
+            @TabList
+        </div>
+        <div class="atom-tabs-panels">
+            @Panels
+        </div>
+    </div>
+</CascadingValue>

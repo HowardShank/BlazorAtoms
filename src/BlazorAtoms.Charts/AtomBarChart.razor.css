@@ -1,0 +1,157 @@
+/*
+    aspect-ratio matches the viewBox, so the graphic fills its box exactly with no letterboxing and no
+    non-uniform stretch — which is what lets the corner radius stay circular. Setting Height overrides it
+    and can reintroduce letterboxing; that is the caller's call to make.
+
+    Chrome — gridlines, baseline, axis labels, value readouts — belongs to the element components now, each
+    with its own stylesheet. What stays here is layout: where each of those elements sits inside the plot,
+    which flips with the orientation and so can only be decided by the chart. Those rules need `::deep`,
+    because scoped CSS otherwise only ever matches markup this component declared itself.
+*/
+
+/* The frame's areas (heading, plot, legend, caption) stack in this column. */
+.atom-bar-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    width: var(--chart-width, 100%);
+}
+
+/* --- plot layout --------------------------------------------------------------------------------- */
+
+/* A row, so an axis title can sit on its side to the left of everything else. */
+.atom-bar-chart-frame {
+    display: flex;
+    align-items: stretch;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+.atom-bar-chart-stack {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.atom-bar-chart-axis-title-inline {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    /* vertical-rl plus a half turn reads bottom-to-top, the conventional direction for a vertical axis. */
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+}
+
+.atom-bar-chart-axis-title-block {
+    padding-top: 0.15rem;
+}
+
+.atom-bar-chart-svg {
+    display: block;
+    width: 100%;
+    aspect-ratio: 2 / 1;
+    height: var(--chart-height, auto);
+}
+
+.atom-bar-chart-bar {
+    fill: var(--chart-series-color, currentColor);
+}
+
+/* --- vertical bars ------------------------------------------------------------------------------- */
+
+.atom-bar-chart[data-orientation="vertical"] .atom-bar-chart-plot {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Labels sit under the chart, so they come second in the visual order even though they are first in the
+   DOM — source order puts them adjacent to the data they name. */
+.atom-bar-chart[data-orientation="vertical"] .atom-bar-chart-plot ::deep .atom-chart-category-axis {
+    order: 2;
+}
+
+/* --- horizontal bars ----------------------------------------------------------------------------- */
+
+/* The labels become a column beside the chart, one row per bar. This is the layout to reach for when
+   labels are long — they get their own line instead of competing for bar width. */
+.atom-bar-chart[data-orientation="horizontal"] .atom-bar-chart-plot {
+    display: flex;
+    align-items: stretch;
+    gap: 0.5rem;
+    /* Wrap so the tick row can sit on its own line beneath the label column and the chart. */
+    flex-wrap: wrap;
+}
+
+.atom-bar-chart[data-orientation="horizontal"] .atom-bar-chart-plot ::deep .atom-chart-category-axis {
+    flex-direction: column;
+    gap: 0;
+    /* No padding: percentage padding resolves against WIDTH even for top/bottom, so it cannot express a
+       share of the height. The SVG drops its vertical padding in this orientation instead, so both tracks
+       span the full height and equal flex items line up. */
+    padding: 0;
+    order: 0;
+    flex: 0 0 auto;
+    max-width: 40%;
+}
+
+/* Each label centres in its own equal share of the height, matching the bar slots. */
+.atom-bar-chart[data-orientation="horizontal"] .atom-bar-chart-plot ::deep .atom-chart-category-axis-label {
+    text-align: right;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+/* The value axis is the HTML row underneath in this orientation — full width of its own line. */
+.atom-bar-chart[data-orientation="horizontal"] .atom-bar-chart-plot ::deep .atom-chart-value-axis {
+    flex: 1 1 100%;
+    order: 3;
+}
+
+/* flex-basis explicitly 0%, not the base rule's implicit "auto": with basis auto, flex-basis resolves to
+   the item's specified `width` — which the base .atom-bar-chart-svg rule sets to 100%. That 925px basis
+   left no room for the category-axis column beside it, so the row wrapped, stranding the axis alone on its
+   own line — where its column children (flex-basis 0, overflow: hidden) collapse to zero height and the
+   category labels render with no visible box at all. Basis 0% sidesteps `width` entirely, so flex-grow is
+   free to hand the SVG whatever room the axis column leaves. */
+.atom-bar-chart[data-orientation="horizontal"] .atom-bar-chart-svg {
+    flex: 1 1 0%;
+}
+
+/* --- draw-in ------------------------------------------------------------------------------------
+   Bars scale out of the zero line. transform-box: fill-box makes the transform origin relative to the
+   bar's own geometry rather than the SVG's, which is what lets one rule work for every bar. */
+
+.atom-bar-chart-svg[data-animate] .atom-bar-chart-bar {
+    transform-box: fill-box;
+    transform-origin: bottom;
+    animation: atom-bar-chart-grow var(--chart-duration, 700ms) ease-out forwards;
+}
+
+/* A bar below zero hangs from the zero line, so it has to grow downward — origin top, not bottom.
+   Without this it would animate upward into place, away from its own baseline. */
+.atom-bar-chart-svg[data-animate] .atom-bar-chart-bar[data-negative] {
+    transform-origin: top;
+}
+
+.atom-bar-chart[data-orientation="horizontal"] .atom-bar-chart-svg[data-animate] .atom-bar-chart-bar {
+    transform-origin: left;
+    animation-name: atom-bar-chart-grow-x;
+}
+
+@keyframes atom-bar-chart-grow {
+    from { transform: scaleY(0); }
+    to   { transform: scaleY(1); }
+}
+
+@keyframes atom-bar-chart-grow-x {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-bar-chart-svg[data-animate] .atom-bar-chart-bar {
+        animation: none;
+        /* Reset the from-state, or the bars stay scaled to nothing and the chart renders empty. */
+        transform: none;
+    }
+}

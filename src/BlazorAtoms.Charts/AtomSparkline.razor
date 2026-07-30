@@ -1,0 +1,47 @@
+@inherits AtomSeriesChartBase
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-sparkline")"
+     style="@StyleAttr(RootStyle)">
+    <AtomChartFrame Chart="@ChartCtx"
+                    Heading="@Heading"
+                    Caption="@Caption"
+                    Legend="@Legend"
+                    EmptyState="@EmptyState"
+                    Placement="@EffectiveLegendPlacement">
+        <Plot>
+            <svg class="atom-sparkline-svg"
+                 viewBox="@ViewBox"
+                 role="img"
+                 aria-label="@EffectiveAriaLabel"
+                 data-animate="@AnimateAttr">
+                <title>@EffectiveAriaLabel</title>
+                <g transform="translate(@N(Pad), @N(Pad))">
+                    @if (HasData)
+                    {
+                        @if (Fill)
+                        {
+                            <path class="atom-sparkline-area" d="@AreaPath(PlotWidth, PlotHeight, Smooth)" />
+                        }
+
+                        @* pathLength="100" re-bases the draw-in dash maths onto 0-100, so the CSS is the same
+                           whatever the geometry works out to. Same trick as AtomProgressRing. *@
+                        <path class="atom-sparkline-line"
+                              d="@LinePath(PlotWidth, PlotHeight, Smooth)"
+                              pathLength="100" />
+
+                        @if (ShowLastPoint)
+                        {
+                            <circle class="atom-sparkline-point"
+                                    cx="@N(XAt(Series.Length - 1, PlotWidth))"
+                                    cy="@N(YAt(Series[Series.Length - 1], PlotHeight))"
+                                    r="@N(PointRadius)">
+                                <title>@TitleAt(Series.Length - 1)</title>
+                            </circle>
+                        }
+                    }
+                </g>
+            </svg>
+        </Plot>
+    </AtomChartFrame>
+</div>

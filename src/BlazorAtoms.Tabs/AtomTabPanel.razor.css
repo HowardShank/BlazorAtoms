@@ -1,0 +1,63 @@
+/* AtomTabPanel — one content region.
+
+   Same ancestor-selector approach as AtomTab: rules key off `.atom-tabs[data-*]`, so no ::deep. */
+
+.atom-tab-panel {
+    padding: var(--tabs-panel-padding, 1rem);
+    min-width: 0;
+}
+
+/* The panel is focusable so Tab out of the strip lands on the content (the ARIA tabs pattern), but
+   that focus ring is a navigation aid, not a text cursor — keep it inside the box so it never
+   overlaps the active tab above it. */
+.atom-tab-panel:focus-visible {
+    outline: 2px solid var(--tabs-accent, #2563eb);
+    outline-offset: -2px;
+}
+
+/* [hidden] alone loses to `display: flex`/`grid` if a consumer sets one on the panel, so make the
+   attribute authoritative. Needed for the Always and Lazy strategies, where inactive panels stay in
+   the DOM rather than being removed. */
+.atom-tab-panel[hidden] {
+    display: none;
+}
+
+/* ---- effects ------------------------------------------------------------------------------- */
+
+/* Keyed off [data-active] rather than element creation, so the animation replays on every switch in
+   all three PanelRender modes — under Always/Lazy the element persists, so there is no new element to
+   trigger it. */
+.atom-tabs[data-effect="fade-panel"] .atom-tab-panel[data-active] {
+    animation: atom-tab-panel-fade var(--tabs-duration) ease-out;
+}
+
+@keyframes atom-tab-panel-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.atom-tabs[data-effect="slide-panel"] .atom-tab-panel[data-active] {
+    animation: atom-tab-panel-slide calc(var(--tabs-duration) * 1.6) ease-out;
+}
+
+@keyframes atom-tab-panel-slide {
+    from { opacity: 0; transform: translateX(-.75rem); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+.atom-tabs[data-effect="slide-panel"][data-orientation="vertical"] .atom-tab-panel[data-active] {
+    animation-name: atom-tab-panel-slide-vertical;
+}
+
+@keyframes atom-tab-panel-slide-vertical {
+    from { opacity: 0; transform: translateY(-.75rem); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- reduced motion ------------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-tab-panel[data-active] {
+        animation: none;
+    }
+}

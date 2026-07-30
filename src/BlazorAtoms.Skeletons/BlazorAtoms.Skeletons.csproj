@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <Import Project="$(RepoRoot)build\Packable.props" />
+  <Import Project="$(RepoRoot)build\Shared.props" />
+
+  <PropertyGroup>
+    <PackageId>BlazorAtoms.Skeletons</PackageId>
+    <Title>Blazor Skeletons</Title>
+    <Description>Loading-placeholder components for Blazor. AtomSkeletonBlock is the painted primitive; AtomSkeletonText stacks it into ragged paragraph lines, AtomSkeletonAvatar presets it to a circle/square/rounded portrait, and AtomSkeletonCard composes all three into a media+avatar+text card shape. Shimmer, Pulse or None animation over a --skeleton-* custom-property surface, with prefers-reduced-motion holding a static color. Decorative by default (aria-hidden), or a polite live region when given an AriaLabel. Zero dependencies, no JavaScript, identical in every render mode.</Description>
+    <PackageTags>Blazor;Skeleton;Placeholder;Loading;Shimmer;Progress;WebAssembly;Server</PackageTags>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BlazorAtoms.Skeletons.Tests" />
+  </ItemGroup>
+
+</Project>

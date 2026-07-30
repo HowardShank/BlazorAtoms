@@ -1,0 +1,88 @@
+@inherits AtomCartesianChartBase
+
+@* Which axis is which flips with the orientation: for vertical bars the value axis is the vertical one, so
+   its title is the sideways cell on the left; for horizontal bars the two swap. An element cannot know
+   which slot it was placed in, so the chart decides here. *@
+@{
+    var inlineTitle = IsVertical ? ValueAxisTitle : CategoryAxisTitle;
+    var blockTitle = IsVertical ? CategoryAxisTitle : ValueAxisTitle;
+}
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-bar-chart")"
+     style="@StyleAttr(RootStyle)"
+     data-orientation="@OrientationAttr">
+<AtomChartFrame Chart="@ChartCtx"
+                Heading="@Heading"
+                Caption="@Caption"
+                Legend="@Legend"
+                EmptyState="@EmptyState"
+                Placement="@EffectiveLegendPlacement">
+    <Plot>
+    <div class="atom-bar-chart-frame">
+
+        @if (inlineTitle is not null)
+        {
+            <div class="atom-bar-chart-axis-title-inline">@inlineTitle</div>
+        }
+
+        <div class="atom-bar-chart-stack">
+
+            @* Own wrapper rather than laying out straight inside the frame's plot area: the label row and
+               tick row are reordered around the SVG with `order`, and the whole thing flips from a column
+               to a row for horizontal bars. That layout belongs to this chart, and a frame-scoped element
+               cannot be styled from this stylesheet. *@
+            <div class="atom-bar-chart-plot">
+
+                @CategoryAxis
+
+                <svg class="atom-bar-chart-svg"
+                     viewBox="@ViewBox"
+                     role="img"
+                     aria-label="@EffectiveAriaLabel"
+                     data-animate="@AnimateAttr">
+                    <title>@EffectiveAriaLabel</title>
+
+                    @Gridlines
+                    @Baseline
+
+                    @if (IsVertical)
+                    {
+                        @* Vertical bars label the value axis inside the SVG. The horizontal case renders the
+                           same slot as an HTML row below, where it can align to fractions of the width. *@
+                        @ValueAxis
+                    }
+
+                    @if (HasData)
+                    {
+                        @for (var i = 0; i < Series.Length; i++)
+                        {
+                            var bar = BarAt(i);
+                            <rect class="atom-bar-chart-bar"
+                                  x="@N(bar.X)" y="@N(bar.Y)"
+                                  width="@N(bar.W)" height="@N(bar.H)"
+                                  rx="@N(Radius ?? 0)"
+                                  data-negative="@(Series[i] < 0 ? "true" : null)">
+                                <title>@TitleAt(i)</title>
+                            </rect>
+                        }
+
+                        @ValueLabels
+                    }
+                </svg>
+
+                @if (!IsVertical)
+                {
+                    @ValueAxis
+                }
+            </div>
+
+            @if (blockTitle is not null)
+            {
+                <div class="atom-bar-chart-axis-title-block">@blockTitle</div>
+            }
+        </div>
+    </div>
+    </Plot>
+</AtomChartFrame>
+</div>

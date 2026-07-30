@@ -1,0 +1,12 @@
+@inherits AtomChartElementBase
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-chart-heading")"
+     style="@StyleAttr(null)">
+    <span class="atom-chart-heading-title">@ChildContent</span>
+
+    @if (!string.IsNullOrEmpty(Subtitle))
+    {
+        <span class="atom-chart-heading-subtitle">@Subtitle</span>
+    }
+</div>

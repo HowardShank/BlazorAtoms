@@ -1,0 +1,20 @@
+@inherits AtomComponentBase
+
+@if (ShouldRenderPanel)
+{
+    @* hidden rather than removed for the Always/Lazy strategies: the element stays put so scroll
+       position, uncommitted input and media playback survive a switch. tabindex="0" makes the panel
+       itself focusable, which is what the ARIA tabs pattern asks for so Tab out of the strip lands on
+       the content. *@
+    <div @attributes="AdditionalAttributes"
+         id="@Id"
+         class="@ClassAttr("atom-tab-panel")"
+         style="@StyleAttr(PanelStyle)"
+         role="tabpanel"
+         aria-labelledby="@TabId"
+         hidden="@(!IsActive)"
+         tabindex="@(IsActive ? 0 : -1)"
+         data-active="@(IsActive ? "true" : null)">
+        @ChildContent
+    </div>
+}

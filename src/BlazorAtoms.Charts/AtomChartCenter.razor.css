@@ -1,0 +1,13 @@
+.atom-chart-center {
+    /* The chart's ring/dial wrapper is the positioning context. */
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    /* The hole is decoration for the graphic, not a hit target — let clicks and hovers reach the arcs
+       underneath so their native tooltips still work. */
+    pointer-events: none;
+}

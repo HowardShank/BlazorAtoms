@@ -1,0 +1,35 @@
+/* --- SVG shape (vertical axis, in the plot's gutter) --------------------------------------------- */
+
+/*
+    On .atom-chart-value-axis itself, not on .atom-chart-value-axis-label: in the SVG branch the <text>
+    children are built with RenderTreeBuilder rather than written as markup in this file, so the Razor
+    compiler never sees them and never stamps Blazor's scoped-CSS attribute onto them — a rule requiring
+    that attribute directly on the <text> could never match. fill/font-size are inherited SVG properties,
+    so setting them on the wrapping <g> reaches every tick label the same as if it had matched directly.
+
+    This selector also matches the HTML branch's root <div> (same class, mutually exclusive per render).
+    fill has no effect there; font-size and opacity are both overridden by the more specific
+    `div.atom-chart-value-axis` rule below, so the HTML row keeps its own 0.75em/0.6 rather than the SVG
+    branch's 9px/0.6.
+*/
+.atom-chart-value-axis {
+    fill: currentColor;
+    /* px, not em: this is inside a scaled viewBox, where em would resolve against the SVG's own font size
+       and then be scaled again by the box. 9 matches the on-mark readouts. */
+    font-size: 9px;
+    opacity: 0.6;
+    min-width: 0;
+}
+
+/* --- HTML shape (horizontal axis, beneath the bars) ---------------------------------------------- */
+
+/* space-between puts the first and last ticks exactly on the ends of the plot with the rest evenly
+   between — which is where the gridlines are. The padding matches the SVG's own, as percentages of the box
+   width, so the two tracks scale together; C# emits the values because the left pad widens for the gutter. */
+div.atom-chart-value-axis {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75em;
+    opacity: 0.6;
+    padding: 0 var(--chart-pad-right, 1.875%) 0 var(--chart-pad-left, 1.875%);
+}

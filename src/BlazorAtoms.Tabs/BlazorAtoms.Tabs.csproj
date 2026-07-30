@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <Import Project="$(RepoRoot)build\Packable.props" />
+  <Import Project="$(RepoRoot)build\Shared.props" />
+
+  <PropertyGroup>
+    <PackageId>BlazorAtoms.Tabs</PackageId>
+    <Title>Blazor Tabs</Title>
+    <Description>Tab components for Blazor. AtomTabs owns the selected value and cascades it to AtomTab strip buttons and AtomTabPanel content regions, paired by a string Value. Full ARIA tabs pattern — tablist/tab/tabpanel roles, aria-selected, aria-controls/aria-labelledby pairing, roving tabindex, and Arrow/Home/End navigation with automatic or manual activation. Line, Enclosed, Pill and Bar variants over a --tabs-* custom-property surface, horizontal or vertical orientation, a scrollable strip, and three panel-rendering strategies. Ships one small self-imported JS module whose only job is cancelling the browser's default scroll for the navigation keys — no script tag, no DI registration, and the tabs work if it fails to load.</Description>
+    <PackageTags>Blazor;Tabs;TabControl;TabStrip;TabPanel;ARIA;Keyboard;WebAssembly;Server</PackageTags>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BlazorAtoms.Tabs.Tests" />
+  </ItemGroup>
+
+</Project>

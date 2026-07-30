@@ -1,0 +1,65 @@
+/* The frame's areas (heading, plot + legend, caption) stack in this column; the ring and an end-placed
+   legend sit side by side inside the frame's own body row. */
+.atom-donut {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    width: var(--chart-width, 100%);
+}
+
+/* The ring keeps the square aspect and the positioning context for the centre content. The legend lives in
+   the frame's own area, so a non-square legend cannot distort the ring. */
+.atom-donut-ring {
+    position: relative;
+    min-width: 0;
+    aspect-ratio: 1 / 1;
+    height: var(--chart-height, auto);
+}
+
+.atom-donut-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.atom-donut-track,
+.atom-donut-slice {
+    fill: none;
+}
+
+.atom-donut-track {
+    stroke: var(--chart-track-color, currentColor);
+    stroke-opacity: 0.12;
+}
+
+.atom-donut-slice {
+    /* stroke comes from the palette, inline per slice. */
+    stroke-linecap: butt;
+}
+
+/* The centre content, the on-ring percentages and the legend all belong to element components now, each
+   with its own stylesheet — scoped CSS could not reach them from here anyway, since an element rendered
+   into a slot carries the element's scope and not the chart's. */
+
+/* --- draw-in ------------------------------------------------------------------------------------
+   Rotating the whole group is the one animation that works for any number of slices: animating each
+   slice's own dash would need per-slice delays and lengths in CSS, which cannot see the data. */
+
+.atom-donut-svg[data-animate] {
+    animation: atom-donut-in var(--chart-duration, 700ms) ease-out forwards;
+    transform-origin: center;
+    opacity: 0;
+}
+
+@keyframes atom-donut-in {
+    from { transform: rotate(-25deg) scale(0.92); opacity: 0; }
+    to   { transform: none; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-donut-svg[data-animate] {
+        animation: none;
+        transform: none;
+        opacity: 1;
+    }
+}

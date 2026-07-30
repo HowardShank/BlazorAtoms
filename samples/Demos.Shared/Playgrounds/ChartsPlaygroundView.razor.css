@@ -1,0 +1,65 @@
+/* Playground chrome only — nothing here styles a chart. */
+
+.ch-stage {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.ch-pane {
+    flex: 1 1 24rem;
+    min-width: 0;
+}
+
+.ch-preview {
+    padding: 1rem;
+    border: 1px solid rgba(128, 128, 128, 0.35);
+    border-radius: 6px;
+    margin-bottom: 1.25rem;
+    background: rgba(128, 128, 128, 0.05);
+}
+
+/* Donut and gauge are square, so they sit side by side rather than each spanning the page. */
+.ch-round {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.ch-round > div {
+    flex: 1 1 18rem;
+    min-width: 0;
+    max-width: 26rem;
+}
+
+.ch-ctrl {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+}
+
+.ch-ctrl > label:first-child {
+    flex: 0 0 10rem;
+}
+
+.ch-ctrl input[type="text"],
+.ch-ctrl select {
+    flex: 1 1 6rem;
+    min-width: 0;
+}
+
+.ch-ctrl .ch-wide { flex: 1 1 100%; }
+.ch-ctrl .ch-narrow { flex: 0 0 5rem; }
+
+.ch-ctrl .val {
+    opacity: 0.7;
+    font-weight: normal;
+}
+
+.note {
+    opacity: 0.75;
+    font-size: 0.9em;
+}

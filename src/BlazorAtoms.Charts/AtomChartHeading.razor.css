@@ -1,0 +1,19 @@
+.atom-chart-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+}
+
+.atom-chart-heading-title {
+    font-weight: 600;
+    /* em rather than rem, so a chart dropped into small print scales with it. */
+    font-size: 1.05em;
+    line-height: 1.3;
+}
+
+.atom-chart-heading-subtitle {
+    font-size: 0.85em;
+    opacity: 0.65;
+    line-height: 1.3;
+}

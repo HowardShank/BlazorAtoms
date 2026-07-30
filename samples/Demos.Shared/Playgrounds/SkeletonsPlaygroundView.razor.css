@@ -1,0 +1,83 @@
+/*
+    Playground chrome only — nothing here styles a skeleton. The point of this page is that the
+    components look right on their own, so anything that dressed them up would be hiding the thing
+    under test. The two panes just make the controls readable beside the preview.
+*/
+
+.sk-stage {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.sk-pane {
+    flex: 1 1 22rem;
+    min-width: 0;
+}
+
+.sk-preview {
+    padding: 1rem;
+    border: 1px solid rgba(128, 128, 128, 0.35);
+    border-radius: 6px;
+    margin-bottom: 1.25rem;
+    /* A skeleton is grey on grey; give it a surface so its edges are visible in both themes. */
+    background: rgba(128, 128, 128, 0.06);
+}
+
+.sk-ctrl {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+}
+
+.sk-ctrl > label {
+    flex: 0 0 11rem;
+}
+
+.sk-ctrl input[type="text"],
+.sk-ctrl select {
+    flex: 1 1 8rem;
+    min-width: 0;
+}
+
+.sk-ctrl .val {
+    opacity: 0.7;
+    font-weight: normal;
+}
+
+.note {
+    opacity: 0.75;
+    font-size: 0.9em;
+}
+
+/* --- the "loaded" half of the swap demo -------------------------------------------------------- */
+
+.sk-loaded-media {
+    display: block;
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 0;
+}
+
+.sk-loaded-body {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    margin-top: 0.75rem;
+}
+
+.sk-loaded-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #8a94a6;
+    flex-shrink: 0;
+}
+
+.sk-loaded p {
+    margin: 0;
+}

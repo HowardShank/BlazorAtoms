@@ -30,6 +30,8 @@ each shipped as its own standalone NuGet package with ~0 third-party dependencie
 | [`BlazorAtoms.Navigation`](src/BlazorAtoms.Navigation/README.md) | `AtomScrollTo` — scroll-to-top/bottom/anchor button with auto-hide-until-scrolled. |
 | [`BlazorAtoms.Ratings`](src/BlazorAtoms.Ratings/README.md) | `AtomRating` — one component for both a read-only fractional-fill display and an interactive star/heart/etc. picker. |
 | `BlazorAtoms.Screensavers` | `AtomScreensaverRain` — Matrix-style falling code rain effect. |
+| [`BlazorAtoms.Charts`](src/BlazorAtoms.Charts/README.md) | `AtomSparkline`, `AtomLineChart`, `AtomBarChart`, `AtomDonut`, `AtomGauge` — small inline-SVG data visuals over one series of doubles; no charting library, no JS, native `<title>` tooltips. |
+| [`BlazorAtoms.Skeletons`](src/BlazorAtoms.Skeletons/README.md) | `AtomSkeletonBlock` plus `AtomSkeletonText`/`AtomSkeletonAvatar`/`AtomSkeletonCard` presets — loading placeholders with Shimmer/Pulse/None animation, `prefers-reduced-motion` aware, decorative by default. |
 | [`BlazorAtoms.Tooltips`](src/BlazorAtoms.Tooltips/README.md) | Three tooltip components — pure-CSS bubble, SVG-outlined shape, and SVG gradient-painted shape. |
 
 Each package's own `README.md` (linked above) is its usage documentation — install steps, examples,

@@ -1,0 +1,877 @@
+@using BlazorAtoms.Charts
+
+<PageTitle>Charts Playground</PageTitle>
+
+<h1>Charts playground</h1>
+<p>
+    Five small data visuals drawn as inline SVG &mdash; no charting library, no JavaScript. Edit the
+    dataset below and every chart re-plots. Hover any bar, point or slice: the tooltip is an SVG
+    <code>&lt;title&gt;</code>, so it comes from the browser rather than from interop.
+</p>
+<p class="note">
+    <strong>Every piece of chrome is an opt-in child component.</strong> A chart with no element slots
+    filled draws only its marks. Each element carries its own <code>CssClass</code> and
+    <code>Style</code>, which is what the <em>Element styling</em> panel below drives.
+</p>
+<p class="note">
+    Turn on &ldquo;reduce motion&rdquo; in your OS settings and the draw-in animations are skipped &mdash;
+    the charts appear complete rather than half-drawn.
+</p>
+<p><a href="playground/skeletons">&larr; Skeletons playground</a></p>
+
+<div class="ch-stage">
+    <div class="ch-pane">
+        <h2>Data</h2>
+        <div class="ch-ctrl">
+            <label>Values <span class="val">comma separated</span></label>
+            <input type="text" class="ch-wide" @bind="RawValues" @bind:event="oninput" />
+        </div>
+        <div class="ch-ctrl">
+            <label>Labels</label>
+            <input type="text" class="ch-wide" @bind="RawLabels" @bind:event="oninput" />
+        </div>
+        <div class="ch-ctrl">
+            <button type="button" @onclick="@(() => RawValues = "12, 19, 7, 23, 15, 28")">sample</button>
+            <button type="button" @onclick="@(() => RawValues = "-5, 3, -8, 12, 6")">with negatives</button>
+            <button type="button" @onclick="@(() => RawValues = "4, 4, 4, 4")">flat</button>
+            <button type="button" @onclick="@(() => RawValues = "9")">single</button>
+            <button type="button" @onclick="@(() => RawValues = "")">empty</button>
+        </div>
+        @if (ParseError is not null)
+        {
+            <p class="note">@ParseError</p>
+        }
+
+        <h2>Shared axes</h2>
+        <div class="ch-ctrl">
+            <label>Series color</label>
+            <input type="text" placeholder="(currentColor)" @bind="SeriesColor" @bind:event="oninput" />
+            <button class="clr-btn" type="button" @onclick="@(() => SeriesColor = "")">clear</button>
+        </div>
+        <div class="ch-ctrl">
+            <label>Width</label>
+            <input type="text" placeholder="100%" @bind="Width" @bind:event="oninput" />
+        </div>
+        <div class="ch-ctrl">
+            <label>Height</label>
+            <input type="text" placeholder="(per chart)" @bind="Height" @bind:event="oninput" />
+        </div>
+        <div class="ch-ctrl">
+            <label>Duration</label>
+            <input type="text" placeholder="700ms" @bind="Duration" @bind:event="oninput" />
+        </div>
+        <div class="ch-ctrl">
+            <label>Aria label</label>
+            <input type="text" placeholder="(generated)" @bind="AriaLabel" @bind:event="oninput" />
+        </div>
+        <div class="ch-ctrl">
+            <label><input type="checkbox" @bind="Animate" /> Animate</label>
+            <label><input type="checkbox" @bind="Visible" /> Visible</label>
+        </div>
+        <div class="ch-ctrl">
+            <label>Min / Max override</label>
+            <input type="text" class="ch-narrow" placeholder="min" @bind="RawMin" @bind:event="oninput" />
+            <input type="text" class="ch-narrow" placeholder="max" @bind="RawMax" @bind:event="oninput" />
+        </div>
+
+        <h2>Page furniture <span class="val">(all five charts)</span></h2>
+        <div class="ch-ctrl">
+            <label><input type="checkbox" @bind="UseHeading" /> Heading</label>
+            <input type="text" class="ch-narrow" placeholder="title" @bind="HeadingText" @bind:event="oninput" />
+            <input type="text" class="ch-narrow" placeholder="subtitle" @bind="HeadingSubtitle" @bind:event="oninput" />
+        </div>
+        <div class="ch-ctrl">
+            <label><input type="checkbox" @bind="UseCaption" /> Caption</label>
+            <input type="text" class="ch-wide" @bind="CaptionText" @bind:event="oninput" />
+        </div>
+        <div class="ch-ctrl">
+            <label><input type="checkbox" @bind="UseEmptyState" /> Empty state</label>
+            <input type="text" class="ch-wide" @bind="EmptyStateText" @bind:event="oninput" />
+        </div>
+        <p class="note">
+            Clear the dataset with <em>empty</em> above to see the empty state. Without it a chart with no
+            data renders a correctly sized, entirely blank box &mdash; which reads as a broken component
+            rather than a query that returned nothing.
+        </p>
+        <div class="ch-ctrl">
+            <label><input type="checkbox" @bind="UseLegend" /> Legend</label>
+            <label>Placement</label>
+            <select @bind="LegendPlacementRaw">
+                <option value="">(per chart)</option>
+                <option value="Below">Below</option>
+                <option value="End">End</option>
+            </select>
+        </div>
+        <div class="ch-ctrl">
+            <label>Legend columns <span class="val">@LegendColumns</span></label>
+            <input type="range" min="1" max="6" step="1" @bind="LegendColumns" @bind:event="oninput" />
+        </div>
+        <div class="ch-ctrl">
+            <label><input type="checkbox" @bind="LegendShowValues" /> Legend values</label>
+            <label>Percentages</label>
+            <select @bind="LegendShowPercentRaw">
+                <option value="">auto</option>
+                <option value="true">always</option>
+                <option value="false">never</option>
+            </select>
+        </div>
+        <p class="note">
+            <em>auto</em> shows percentages only where the values sum to something &mdash; a donut's slices
+            are shares of a whole; a line chart's points are not.
+        </p>
+    </div>
+
+    <div class="ch-pane">
+        <h2>Cartesian chrome <span class="val">(line + bar)</span></h2>
+        <div class="ch-ctrl">
+            <label><input type="checkbox" @bind="UseBaseline" /> Baseline</label>
+            <label><input type="checkbox" @bind="UseGridlines" /> Gridlines</label>
+            <label><input type="checkbox" @bind="GridlinesDashed" /> dashed</label>
+        </div>
+        <div class="ch-ctrl">
+            <label><input type="checkbox" @bind="UseValueLabels" /> Value readouts</label>
+            <label><input type="checkbox" @bind="UseValueAxis" /> Value axis</label>
+            <label><input type="checkbox" @bind="NiceScale" /> Nice scale</label>
+        </div>
+        <p class="note">
+            With <strong>Nice scale</strong> on, the range rounds outward to a readable step and the tick
+            count follows from it &mdash; so <em>Gridline count</em> becomes a target. Turn it off to get
+            exactly that many lines, at whatever values fall out.
+        </p>
+        <div class="ch-ctrl">
+            <label>Gridline count <span class="val">@GridlineCount</span></label>
+            <input type="range" min="0" max="10" step="1" @bind="GridlineCount" @bind:event="oninput" />
+        </div>
+        <div class="ch-ctrl">
+            <label>Value axis width <span class="val">@(RawAxisWidth is "" ? "30 (default)" : RawAxisWidth)</span></label>
+            <input type="text" class="ch-narrow" placeholder="30" @bind="RawAxisWidth" @bind:event="oninput" />
+        </div>
+        <p class="note">
+            The gutter is a <em>chart</em> parameter, not the axis element's: the chart has to reserve the
+            space before it lays out a single mark, and a parent cannot read a child component's parameters
+            during its own render pass. Widen it for long labels.
+        </p>
+        <div class="ch-ctrl">
+            <label><input type="checkbox" @bind="UseCategoryAxis" /> Category axis</label>
+            <label><input type="checkbox" @bind="CategoryWrap" /> wrap labels</label>
+        </div>
+        <div class="ch-ctrl">
+            <label><input type="checkbox" @bind="UseValueAxisTitle" /> Value axis title</label>
+            <input type="text" class="ch-narrow" @bind="ValueAxisTitleText" @bind:event="oninput" />
+        </div>
+        <div class="ch-ctrl">
+            <label><input type="checkbox" @bind="UseCategoryAxisTitle" /> Category axis title</label>
+            <input type="text" class="ch-narrow" @bind="CategoryAxisTitleText" @bind:event="oninput" />
+        </div>
+        <div class="ch-ctrl">
+            <label>Axis color</label>
+            <input type="text" placeholder="(currentColor)" @bind="AxisColor" @bind:event="oninput" />
+        </div>
+
+        <h2>Line family</h2>
+        <div class="ch-ctrl">
+            <label><input type="checkbox" @bind="Smooth" /> Smooth</label>
+            <label><input type="checkbox" @bind="Fill" /> Fill / area</label>
+            <label><input type="checkbox" @bind="ShowPoints" /> Points</label>
+            <label><input type="checkbox" @bind="ShowLastPoint" /> Last point</label>
+        </div>
+        <div class="ch-ctrl">
+            <label>Stroke width <span class="val">@StrokeWidth</span></label>
+            <input type="range" min="1" max="8" step="0.5" @bind="StrokeWidth" @bind:event="oninput" />
+        </div>
+        <div class="ch-ctrl">
+            <label>Area color / opacity</label>
+            <input type="text" class="ch-narrow" placeholder="(series)" @bind="AreaColor" @bind:event="oninput" />
+            <input type="range" min="0" max="1" step="0.05" @bind="AreaOpacity" @bind:event="oninput" />
+        </div>
+
+        <h2>Bar</h2>
+        <div class="ch-ctrl">
+            <label>Orientation</label>
+            <select @bind="Orientation">
+                @foreach (var o in Enum.GetValues<ChartOrientation>())
+                {
+                    <option value="@o">@o</option>
+                }
+            </select>
+        </div>
+        <div class="ch-ctrl">
+            <label>Bar gap <span class="val">@BarGap</span></label>
+            <input type="range" min="0" max="0.9" step="0.05" @bind="BarGap" @bind:event="oninput" />
+        </div>
+        <div class="ch-ctrl">
+            <label>Corner radius <span class="val">@BarRadius</span></label>
+            <input type="range" min="0" max="10" step="0.5" @bind="BarRadius" @bind:event="oninput" />
+        </div>
+    </div>
+
+    <div class="ch-pane">
+        <h2>Donut</h2>
+        <div class="ch-ctrl">
+            <label>Thickness <span class="val">@DonutThickness</span></label>
+            <input type="range" min="2" max="45" step="1" @bind="DonutThickness" @bind:event="oninput" />
+        </div>
+        <div class="ch-ctrl">
+            <label>Start angle <span class="val">@DonutStart</span></label>
+            <input type="range" min="0" max="360" step="5" @bind="DonutStart" @bind:event="oninput" />
+        </div>
+        <div class="ch-ctrl">
+            <label>Pad angle <span class="val">@DonutPad</span></label>
+            <input type="range" min="0" max="5" step="0.25" @bind="DonutPad" @bind:event="oninput" />
+        </div>
+        <div class="ch-ctrl">
+            <label>Palette</label>
+            <input type="text" class="ch-wide" placeholder="(built-in)" @bind="RawPalette" @bind:event="oninput" />
+        </div>
+        <div class="ch-ctrl">
+            <label>Track color</label>
+            <input type="text" placeholder="(currentColor)" @bind="TrackColor" @bind:event="oninput" />
+        </div>
+        <div class="ch-ctrl">
+            <label><input type="checkbox" @bind="UseCenter" /> Center content</label>
+            <label><input type="checkbox" @bind="UseSliceLabels" /> Slice %</label>
+        </div>
+        <div class="ch-ctrl">
+            <label>Min slice % <span class="val">@SliceMinPercent</span></label>
+            <input type="range" min="0" max="20" step="1" @bind="SliceMinPercent" @bind:event="oninput" />
+        </div>
+        <p class="note">
+            Tooltips need hover, which touch devices don't have &mdash; so the legend is what makes a donut
+            readable on a phone. Slice percentages skip anything thinner than the minimum, since nothing
+            here can measure text to detect a collision. The threshold lives on the element, because
+            dropping a label changes no geometry.
+        </p>
+
+        <h2>Gauge</h2>
+        <div class="ch-ctrl">
+            <label>Value <span class="val">@GaugeValue</span></label>
+            <input type="range" min="-20" max="120" step="1" @bind="GaugeValue" @bind:event="oninput" />
+        </div>
+        <div class="ch-ctrl">
+            <label>Min / Max</label>
+            <input type="number" class="ch-narrow" @bind="GaugeMin" @bind:event="oninput" />
+            <input type="number" class="ch-narrow" @bind="GaugeMax" @bind:event="oninput" />
+        </div>
+        <div class="ch-ctrl">
+            <label>Sweep angle <span class="val">@GaugeSweep</span></label>
+            <input type="range" min="30" max="360" step="10" @bind="GaugeSweep" @bind:event="oninput" />
+        </div>
+        <div class="ch-ctrl">
+            <label>Thickness <span class="val">@GaugeThickness</span></label>
+            <input type="range" min="2" max="40" step="1" @bind="GaugeThickness" @bind:event="oninput" />
+        </div>
+        <div class="ch-ctrl">
+            <label><input type="checkbox" @bind="ShowNeedle" /> Needle</label>
+            <label><input type="checkbox" @bind="ShowValueArc" /> Value arc</label>
+            <label><input type="checkbox" @bind="UseBands" /> Bands</label>
+        </div>
+        <div class="ch-ctrl">
+            <label><input type="checkbox" @bind="UseReadout" /> Readout</label>
+            <label><input type="checkbox" @bind="UseRangeLabels" /> Range labels</label>
+        </div>
+        <div class="ch-ctrl">
+            <label>Readout offset <span class="val">@(ReadoutOffset is null ? "auto" : Inv(ReadoutOffset.Value))</span></label>
+            <input type="range" min="-0.2" max="0.4" step="0.02" value="@Inv(ReadoutOffset ?? 0.16)"
+                   @oninput="@(e => ReadoutOffset = double.Parse(e.Value?.ToString() ?? "0", System.Globalization.CultureInfo.InvariantCulture))" />
+            <button class="clr-btn" type="button" @onclick="@(() => ReadoutOffset = null)">auto</button>
+        </div>
+        <div class="ch-ctrl">
+            <label>Needle color</label>
+            <input type="text" placeholder="(series)" @bind="NeedleColor" @bind:event="oninput" />
+        </div>
+        <p class="note">
+            The readout sits below centre on a partial dial because the needle pivots at the centre &mdash;
+            centred, it renders under the hub. A full 360&deg; sweep has no gap to move into, so it stays put.
+            The readout and the centre content are separate slots now, so both can be shown at once.
+        </p>
+
+        <h2>Element styling</h2>
+        <p class="note">
+            The reason all of this became components. Pick an element and give it a class or an inline style;
+            it lands on that element's own root and nothing else. Note that a <code>CssClass</code> from a
+            page with scoped CSS won't match &mdash; the class has to be global, or use
+            <code>Style</code>.
+        </p>
+        <div class="ch-ctrl">
+            <label>Element</label>
+            <select @bind="StyleTarget">
+                @foreach (var name in ElementNames)
+                {
+                    <option value="@name">@name</option>
+                }
+            </select>
+        </div>
+        <div class="ch-ctrl">
+            <label>CssClass</label>
+            <input type="text" class="ch-wide" @bind="TargetCss" @bind:event="oninput" />
+        </div>
+        <div class="ch-ctrl">
+            <label>Style</label>
+            <input type="text" class="ch-wide" placeholder="e.g. fill:#d62728; font-weight:700"
+                   @bind="TargetStyle" @bind:event="oninput" />
+        </div>
+        <div class="ch-ctrl">
+            <button type="button" @onclick="StyleTheAxisRed">colour the value axis</button>
+            <button type="button" @onclick="ClearElementStyling">clear all</button>
+        </div>
+    </div>
+</div>
+
+<h2>AtomSparkline</h2>
+<div class="ch-preview">
+    <AtomSparkline Values="@Values" Labels="@Labels" Min="@Min" Max="@Max"
+                   SeriesColor="@Nz(SeriesColor)" Width="@Nz(Width)" Height="@Nz(Height)"
+                   Duration="@Nz(Duration)" AriaLabel="@Nz(AriaLabel)"
+                   Animate="@Animate" Visible="@Visible"
+                   Heading="@Slot(UseHeading, HeadingEl)"
+                   Caption="@Slot(UseCaption, CaptionEl)"
+                   Legend="@Slot(UseLegend, LegendEl)"
+                   EmptyState="@Slot(UseEmptyState, EmptyStateEl)"
+                   LegendPlacement="@LegendPlacement"
+                   Fill="@Fill" ShowLastPoint="@ShowLastPoint" Smooth="@Smooth"
+                   StrokeWidth="@StrokeWidth" AreaColor="@Nz(AreaColor)" AreaOpacity="@AreaOpacity" />
+</div>
+
+<h2>AtomLineChart</h2>
+<div class="ch-preview">
+    <AtomLineChart Values="@Values" Labels="@Labels" Min="@Min" Max="@Max"
+                   SeriesColor="@Nz(SeriesColor)" Width="@Nz(Width)" Height="@Nz(Height)"
+                   Duration="@Nz(Duration)" AriaLabel="@Nz(AriaLabel)"
+                   Animate="@Animate" Visible="@Visible"
+                   Heading="@Slot(UseHeading, HeadingEl)"
+                   Caption="@Slot(UseCaption, CaptionEl)"
+                   Legend="@Slot(UseLegend, LegendEl)"
+                   EmptyState="@Slot(UseEmptyState, EmptyStateEl)"
+                   LegendPlacement="@LegendPlacement"
+                   Baseline="@Slot(UseBaseline, BaselineEl)"
+                   Gridlines="@Slot(UseGridlines, GridlinesEl)"
+                   ValueLabels="@Slot(UseValueLabels, ValueLabelsEl)"
+                   ValueAxis="@Slot(UseValueAxis, ValueAxisEl)"
+                   CategoryAxis="@Slot(UseCategoryAxis, CategoryAxisEl)"
+                   ValueAxisTitle="@Slot(UseValueAxisTitle, ValueAxisTitleEl)"
+                   CategoryAxisTitle="@Slot(UseCategoryAxisTitle, CategoryAxisTitleEl)"
+                   GridlineCount="@GridlineCount" NiceScale="@NiceScale"
+                   ValueAxisWidth="@AxisWidth" AxisColor="@Nz(AxisColor)"
+                   ShowPoints="@ShowPoints" ShowArea="@Fill" Smooth="@Smooth"
+                   StrokeWidth="@StrokeWidth" AreaColor="@Nz(AreaColor)" AreaOpacity="@AreaOpacity" />
+</div>
+
+<h2>AtomBarChart</h2>
+<div class="ch-preview">
+    <AtomBarChart Values="@Values" Labels="@Labels" Min="@Min" Max="@Max"
+                  SeriesColor="@Nz(SeriesColor)" Width="@Nz(Width)" Height="@Nz(Height)"
+                  Duration="@Nz(Duration)" AriaLabel="@Nz(AriaLabel)"
+                  Animate="@Animate" Visible="@Visible"
+                  Heading="@Slot(UseHeading, HeadingEl)"
+                  Caption="@Slot(UseCaption, CaptionEl)"
+                  Legend="@Slot(UseLegend, LegendEl)"
+                  EmptyState="@Slot(UseEmptyState, EmptyStateEl)"
+                  LegendPlacement="@LegendPlacement"
+                  Baseline="@Slot(UseBaseline, BaselineEl)"
+                  Gridlines="@Slot(UseGridlines, GridlinesEl)"
+                  ValueLabels="@Slot(UseValueLabels, ValueLabelsEl)"
+                  ValueAxis="@Slot(UseValueAxis, ValueAxisEl)"
+                  CategoryAxis="@Slot(UseCategoryAxis, CategoryAxisEl)"
+                  ValueAxisTitle="@Slot(UseValueAxisTitle, ValueAxisTitleEl)"
+                  CategoryAxisTitle="@Slot(UseCategoryAxisTitle, CategoryAxisTitleEl)"
+                  GridlineCount="@GridlineCount" NiceScale="@NiceScale"
+                  ValueAxisWidth="@AxisWidth" AxisColor="@Nz(AxisColor)"
+                  Orientation="@Orientation" BarGap="@BarGap" Radius="@BarRadius" />
+</div>
+
+<div class="ch-round">
+    <div>
+        <h2>AtomDonut</h2>
+        <div class="ch-preview">
+            <AtomDonut Values="@Values" Labels="@Labels"
+                       SeriesColor="@Nz(SeriesColor)" Width="@Nz(Width)" Height="@Nz(Height)"
+                       Duration="@Nz(Duration)" AriaLabel="@Nz(AriaLabel)"
+                       Animate="@Animate" Visible="@Visible"
+                       Heading="@Slot(UseHeading, HeadingEl)"
+                       Caption="@Slot(UseCaption, CaptionEl)"
+                       Legend="@Slot(UseLegend, LegendEl)"
+                       EmptyState="@Slot(UseEmptyState, EmptyStateEl)"
+                       LegendPlacement="@LegendPlacement"
+                       Thickness="@DonutThickness" StartAngle="@DonutStart" PadAngle="@DonutPad"
+                       Palette="@Palette" TrackColor="@Nz(TrackColor)"
+                       SliceLabels="@Slot(UseSliceLabels, SliceLabelsEl)"
+                       Center="@Slot(UseCenter, DonutCenterEl)" />
+        </div>
+    </div>
+
+    <div>
+        <h2>AtomGauge</h2>
+        <div class="ch-preview">
+            <AtomGauge Value="@GaugeValue" Min="@GaugeMin" Max="@GaugeMax"
+                       SeriesColor="@Nz(SeriesColor)" Width="@Nz(Width)" Height="@Nz(Height)"
+                       Duration="@Nz(Duration)" AriaLabel="@Nz(AriaLabel)"
+                       Animate="@Animate" Visible="@Visible"
+                       Heading="@Slot(UseHeading, HeadingEl)"
+                       Caption="@Slot(UseCaption, CaptionEl)"
+                       Legend="@Slot(UseLegend, LegendEl)"
+                       EmptyState="@Slot(UseEmptyState, EmptyStateEl)"
+                       LegendPlacement="@LegendPlacement"
+                       SweepAngle="@GaugeSweep" Thickness="@GaugeThickness"
+                       Bands="@(UseBands ? Bands : null)"
+                       ShowNeedle="@ShowNeedle" ShowValueArc="@ShowValueArc"
+                       Readout="@Slot(UseReadout, ReadoutEl)"
+                       RangeLabels="@Slot(UseRangeLabels, RangeLabelsEl)"
+                       TrackColor="@Nz(TrackColor)" NeedleColor="@Nz(NeedleColor)" />
+        </div>
+    </div>
+</div>
+
+<CodeSnippetBox Code="@Snippet" FileName="ChartsExample.razor" />
+
+@code {
+    // ---- data ---------------------------------------------------------------------------------
+
+    private string RawValues { get; set; } = "12, 19, 7, 23, 15, 28";
+    private string RawLabels { get; set; } = "Jan, Feb, Mar, Apr, May, Jun";
+    private string RawPalette { get; set; } = "";
+    private string RawMin { get; set; } = "";
+    private string RawMax { get; set; } = "";
+
+    private string? ParseError { get; set; }
+
+    private double[] Values
+    {
+        get
+        {
+            ParseError = null;
+            var parts = RawValues.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var list = new List<double>(parts.Length);
+            foreach (var part in parts)
+            {
+                if (double.TryParse(part, System.Globalization.CultureInfo.InvariantCulture, out var v))
+                {
+                    list.Add(v);
+                }
+                else
+                {
+                    // Skip rather than blank the charts: the point of this box is to type into it.
+                    ParseError = $"Ignoring \"{part}\" — not a number.";
+                }
+            }
+            return list.ToArray();
+        }
+    }
+
+    private string[] Labels =>
+        RawLabels.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    private string[]? Palette
+    {
+        get
+        {
+            var p = RawPalette.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            return p.Length > 0 ? p : null;
+        }
+    }
+
+    private double? Min => double.TryParse(RawMin, System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : null;
+    private double? Max => double.TryParse(RawMax, System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : null;
+
+    // ---- shared axes --------------------------------------------------------------------------
+
+    private string SeriesColor { get; set; } = "";
+    private string Width { get; set; } = "";
+    private string Height { get; set; } = "";
+    private string Duration { get; set; } = "";
+    private string AriaLabel { get; set; } = "";
+    private bool Animate { get; set; } = true;
+    private bool Visible { get; set; } = true;
+
+    // ---- which element slots are filled -------------------------------------------------------
+
+    private bool UseHeading { get; set; } = true;
+    private bool UseCaption { get; set; }
+    private bool UseLegend { get; set; } = true;
+    private bool UseEmptyState { get; set; } = true;
+    private bool UseBaseline { get; set; } = true;
+    private bool UseGridlines { get; set; }
+    private bool UseValueLabels { get; set; }
+    private bool UseValueAxis { get; set; } = true;
+    private bool UseCategoryAxis { get; set; } = true;
+    private bool UseValueAxisTitle { get; set; }
+    private bool UseCategoryAxisTitle { get; set; }
+    private bool UseCenter { get; set; } = true;
+    private bool UseSliceLabels { get; set; } = true;
+    private bool UseReadout { get; set; } = true;
+    private bool UseRangeLabels { get; set; } = true;
+
+    // ---- element parameters -------------------------------------------------------------------
+
+    private string HeadingText { get; set; } = "Revenue";
+    private string HeadingSubtitle { get; set; } = "FY25, thousands";
+    private string CaptionText { get; set; } = "Source: the general ledger.";
+    private string EmptyStateText { get; set; } = "No data";
+    private int LegendColumns { get; set; } = 1;
+    private bool LegendShowValues { get; set; } = true;
+    private string LegendShowPercentRaw { get; set; } = "";
+    private bool GridlinesDashed { get; set; } = true;
+    private bool CategoryWrap { get; set; }
+    private string ValueAxisTitleText { get; set; } = "Revenue ($k)";
+    private string CategoryAxisTitleText { get; set; } = "Month";
+    private double SliceMinPercent { get; set; } = 5;
+    private double? ReadoutOffset { get; set; }
+
+    private bool? LegendShowPercent => LegendShowPercentRaw switch
+    {
+        "true" => true,
+        "false" => false,
+        _ => null,
+    };
+
+    private string LegendPlacementRaw { get; set; } = "";
+
+    private ChartLegendPlacement? LegendPlacement => LegendPlacementRaw switch
+    {
+        "Below" => ChartLegendPlacement.Below,
+        "End" => ChartLegendPlacement.End,
+        _ => null,
+    };
+
+    // ---- cartesian chrome ---------------------------------------------------------------------
+
+    private int GridlineCount { get; set; } = 4;
+    private string AxisColor { get; set; } = "";
+    private bool NiceScale { get; set; } = true;
+    private string RawAxisWidth { get; set; } = "";
+
+    private double? AxisWidth =>
+        double.TryParse(RawAxisWidth, System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : null;
+
+    // ---- line family --------------------------------------------------------------------------
+
+    private bool Smooth { get; set; }
+    private bool Fill { get; set; }
+    private bool ShowPoints { get; set; } = true;
+    private bool ShowLastPoint { get; set; } = true;
+    private double StrokeWidth { get; set; } = 2;
+    private string AreaColor { get; set; } = "";
+    private double AreaOpacity { get; set; } = 0.18;
+
+    // ---- bar ----------------------------------------------------------------------------------
+
+    private ChartOrientation Orientation { get; set; } = ChartOrientation.Vertical;
+    private double BarGap { get; set; } = 0.25;
+    private double BarRadius { get; set; } = 2;
+
+    // ---- donut --------------------------------------------------------------------------------
+
+    private double DonutThickness { get; set; } = 18;
+    private double DonutStart { get; set; }
+    private double DonutPad { get; set; } = 0.5;
+    private string TrackColor { get; set; } = "";
+
+    // ---- gauge --------------------------------------------------------------------------------
+
+    private double GaugeValue { get; set; } = 72;
+    private double GaugeMin { get; set; }
+    private double GaugeMax { get; set; } = 100;
+    private double GaugeSweep { get; set; } = 240;
+    private double GaugeThickness { get; set; } = 12;
+    private bool ShowNeedle { get; set; } = true;
+    private bool ShowValueArc { get; set; }
+    private bool UseBands { get; set; } = true;
+    private string NeedleColor { get; set; } = "";
+
+    private static readonly GaugeBand[] Bands =
+    [
+        new(60, "#59a14f"),
+        new(85, "#edc948"),
+        new(100, "#e15759"),
+    ];
+
+    // ---- per-element CssClass / Style ---------------------------------------------------------
+
+    /// <summary>
+    /// Every element's styling hooks, behind one picker rather than thirty text boxes.
+    /// </summary>
+    /// <remarks>
+    /// Keyed by slot name, which is also the element's own name here — <c>ValueAxis</c> holds an
+    /// <c>AtomChartValueAxis</c>. <c>Center</c> is shared by the donut and the gauge, so styling it styles
+    /// both, which is the honest reflection of it being one component.
+    /// </remarks>
+    private static readonly string[] ElementNames =
+    [
+        "Heading", "Caption", "Legend", "EmptyState",
+        "ValueAxis", "CategoryAxis", "ValueAxisTitle", "CategoryAxisTitle",
+        "ValueLabels", "Gridlines", "Baseline",
+        "Center", "SliceLabels", "Readout", "RangeLabels",
+    ];
+
+    private readonly Dictionary<string, string> ElementCss = [];
+    private readonly Dictionary<string, string> ElementStyle = [];
+
+    private string StyleTarget { get; set; } = "ValueAxis";
+
+    private string TargetCss
+    {
+        get => ElementCss.GetValueOrDefault(StyleTarget, "");
+        set => ElementCss[StyleTarget] = value;
+    }
+
+    private string TargetStyle
+    {
+        get => ElementStyle.GetValueOrDefault(StyleTarget, "");
+        set => ElementStyle[StyleTarget] = value;
+    }
+
+    private string? Css(string element) => Nz(ElementCss.GetValueOrDefault(element, ""));
+    private string? Sty(string element) => Nz(ElementStyle.GetValueOrDefault(element, ""));
+
+    private void StyleTheAxisRed()
+    {
+        // SVG text takes fill, not color — a distinction worth showing rather than explaining.
+        ElementStyle["ValueAxis"] = "fill:#d62728; font-weight:700; opacity:1";
+        ElementStyle["CategoryAxis"] = "color:#d62728; font-weight:600";
+        StyleTarget = "ValueAxis";
+    }
+
+    private void ClearElementStyling()
+    {
+        ElementCss.Clear();
+        ElementStyle.Clear();
+    }
+
+    // ---- the element fragments ----------------------------------------------------------------
+    // A slot takes a fragment, so each element is declared once here and handed to every chart that has
+    // the matching slot. Slot(false, …) passes null, which is what "not opted in" means.
+
+    private static RenderFragment? Slot(bool on, RenderFragment element) => on ? element : null;
+
+    private RenderFragment HeadingEl => @<AtomChartHeading CssClass="@Css("Heading")" Style="@Sty("Heading")"
+                                                          Subtitle="@Nz(HeadingSubtitle)">@HeadingText</AtomChartHeading>;
+
+    private RenderFragment CaptionEl => @<AtomChartCaption CssClass="@Css("Caption")" Style="@Sty("Caption")">@CaptionText</AtomChartCaption>;
+
+    private RenderFragment LegendEl => @<AtomChartLegend CssClass="@Css("Legend")" Style="@Sty("Legend")"
+                                                        Columns="@LegendColumns" ShowValues="@LegendShowValues"
+                                                        ShowPercent="@LegendShowPercent" />;
+
+    private RenderFragment EmptyStateEl => @<AtomChartEmptyState CssClass="@Css("EmptyState")" Style="@Sty("EmptyState")"
+                                                                Text="@EmptyStateText" />;
+
+    private RenderFragment BaselineEl => @<AtomChartBaseline CssClass="@Css("Baseline")" Style="@Sty("Baseline")" />;
+
+    private RenderFragment GridlinesEl => @<AtomChartGridlines CssClass="@Css("Gridlines")" Style="@Sty("Gridlines")"
+                                                              Dashed="@GridlinesDashed" />;
+
+    private RenderFragment ValueLabelsEl => @<AtomChartValueLabels CssClass="@Css("ValueLabels")" Style="@Sty("ValueLabels")" />;
+
+    private RenderFragment ValueAxisEl => @<AtomChartValueAxis CssClass="@Css("ValueAxis")" Style="@Sty("ValueAxis")" />;
+
+    private RenderFragment CategoryAxisEl => @<AtomChartCategoryAxis CssClass="@Css("CategoryAxis")" Style="@Sty("CategoryAxis")"
+                                                                    Wrap="@CategoryWrap" />;
+
+    private RenderFragment ValueAxisTitleEl => @<AtomChartAxisTitle CssClass="@Css("ValueAxisTitle")" Style="@Sty("ValueAxisTitle")">@ValueAxisTitleText</AtomChartAxisTitle>;
+
+    private RenderFragment CategoryAxisTitleEl => @<AtomChartAxisTitle CssClass="@Css("CategoryAxisTitle")" Style="@Sty("CategoryAxisTitle")">@CategoryAxisTitleText</AtomChartAxisTitle>;
+
+    private RenderFragment SliceLabelsEl => @<AtomChartSliceLabels CssClass="@Css("SliceLabels")" Style="@Sty("SliceLabels")"
+                                                                  MinPercent="@SliceMinPercent" />;
+
+    private RenderFragment ReadoutEl => @<AtomChartReadout CssClass="@Css("Readout")" Style="@Sty("Readout")"
+                                                          Offset="@ReadoutOffset" />;
+
+    private RenderFragment RangeLabelsEl => @<AtomChartRangeLabels CssClass="@Css("RangeLabels")" Style="@Sty("RangeLabels")" />;
+
+    private RenderFragment DonutCenterEl => @<AtomChartCenter CssClass="@Css("Center")" Style="@Sty("Center")">
+        @* Positives only, matching what the ring actually draws: AtomDonut drops negative values, so
+           summing everything would print a total that contradicts its own percentages. *@
+        <strong>@Values.Where(v => v > 0).Sum().ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)</strong>
+        <div><small>total</small></div>
+    </AtomChartCenter>;
+
+    private static string? Nz(string s) => string.IsNullOrWhiteSpace(s) ? null : s;
+
+    private static string Inv(double v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+    // ---- snippet ------------------------------------------------------------------------------
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder();
+            var values = string.Join(", ", Values.Select(v => Inv(v) + "d"));
+            var labels = string.Join(", ", Labels.Select(l => $"\"{l}\""));
+
+            sb.AppendLine("@* one dataset, five ways to draw it — every piece of chrome opted in *@");
+            sb.AppendLine($"@code {{ double[] data = [{values}]; }}");
+            sb.AppendLine();
+
+            // --- sparkline ---
+            sb.Append("<AtomSparkline Values=\"@data\"");
+            if (Smooth) sb.Append(" Smooth=\"true\"");
+            if (Fill) sb.Append(" Fill=\"true\"");
+            if (!ShowLastPoint) sb.Append(" ShowLastPoint=\"false\"");
+            Common(sb);
+            Close(sb, "AtomSparkline", Furniture());
+
+            // --- line chart ---
+            sb.Append("<AtomLineChart Values=\"@data\"");
+            if (Labels.Length > 0) sb.Append($" Labels=\"@(new[] {{ {labels} }})\"");
+            Cartesian(sb);
+            if (!ShowPoints) sb.Append(" ShowPoints=\"false\"");
+            if (Fill) sb.Append(" ShowArea=\"true\"");
+            if (Smooth) sb.Append(" Smooth=\"true\"");
+            Common(sb);
+            Close(sb, "AtomLineChart", Furniture().Concat(CartesianSlots()));
+
+            // --- bar chart ---
+            sb.Append("<AtomBarChart Values=\"@data\"");
+            if (Labels.Length > 0) sb.Append($" Labels=\"@(new[] {{ {labels} }})\"");
+            Cartesian(sb);
+            if (Orientation != ChartOrientation.Vertical) sb.Append($" Orientation=\"ChartOrientation.{Orientation}\"");
+            if (BarGap != 0.25) sb.Append($" BarGap=\"{Inv(BarGap)}\"");
+            if (BarRadius != 0) sb.Append($" Radius=\"{Inv(BarRadius)}\"");
+            Common(sb);
+            Close(sb, "AtomBarChart", Furniture().Concat(CartesianSlots()));
+
+            // --- donut ---
+            sb.Append("<AtomDonut Values=\"@data\"");
+            if (DonutThickness != 18) sb.Append($" Thickness=\"{Inv(DonutThickness)}\"");
+            if (DonutStart != 0) sb.Append($" StartAngle=\"{Inv(DonutStart)}\"");
+            if (DonutPad != 0.5) sb.Append($" PadAngle=\"{Inv(DonutPad)}\"");
+            if (Palette is not null) sb.Append($" Palette=\"@(new[] {{ {string.Join(", ", Palette.Select(c => $"\"{c}\""))} }})\"");
+            Common(sb);
+            Close(sb, "AtomDonut", Furniture().Concat(DonutSlots()));
+
+            // --- gauge ---
+            sb.Append($"<AtomGauge Value=\"{Inv(GaugeValue)}\"");
+            if (GaugeMin != 0) sb.Append($" Min=\"{Inv(GaugeMin)}\"");
+            if (GaugeMax != 100) sb.Append($" Max=\"{Inv(GaugeMax)}\"");
+            if (GaugeSweep != 240) sb.Append($" SweepAngle=\"{Inv(GaugeSweep)}\"");
+            if (GaugeThickness != 12) sb.Append($" Thickness=\"{Inv(GaugeThickness)}\"");
+            if (!ShowNeedle) sb.Append(" ShowNeedle=\"false\"");
+            if (ShowValueArc) sb.Append(" ShowValueArc=\"true\"");
+            if (UseBands) sb.Append(" Bands=\"@bands\"");
+            Common(sb);
+            Close(sb, "AtomGauge", Furniture().Concat(GaugeSlots()));
+
+            if (UseBands)
+            {
+                sb.AppendLine();
+                sb.Append("@code { GaugeBand[] bands = [new(60, \"#59a14f\"), new(85, \"#edc948\"), new(100, \"#e15759\")]; }");
+            }
+
+            return sb.ToString().TrimEnd();
+        }
+    }
+
+    /// <summary>Closes the opening tag: self-closing with no slots, or a block with the slots nested.</summary>
+    private static void Close(System.Text.StringBuilder sb, string tag, IEnumerable<string> slots)
+    {
+        var lines = slots.ToArray();
+
+        if (lines.Length == 0)
+        {
+            sb.AppendLine(" />");
+            sb.AppendLine();
+            return;
+        }
+
+        sb.AppendLine(">");
+        foreach (var line in lines) sb.AppendLine($"    {line}");
+        sb.AppendLine($"</{tag}>");
+        sb.AppendLine();
+    }
+
+    /// <summary>The slots every chart has.</summary>
+    private IEnumerable<string> Furniture()
+    {
+        if (UseHeading)
+        {
+            yield return SlotLine("Heading", "AtomChartHeading",
+                Attr("Subtitle", Nz(HeadingSubtitle)), HeadingText);
+        }
+
+        if (UseEmptyState)
+        {
+            yield return SlotLine("EmptyState", "AtomChartEmptyState", Attr("Text", EmptyStateText));
+        }
+
+        if (UseLegend)
+        {
+            var attrs = (LegendColumns > 1 ? Attr("Columns", Inv(LegendColumns)) : "")
+                        + (LegendShowValues ? "" : " ShowValues=\"false\"")
+                        + (LegendShowPercent is null ? "" : Attr("ShowPercent", LegendShowPercent.Value ? "true" : "false"));
+            yield return SlotLine("Legend", "AtomChartLegend", attrs);
+        }
+
+        if (UseCaption)
+        {
+            yield return SlotLine("Caption", "AtomChartCaption", "", CaptionText);
+        }
+    }
+
+    private IEnumerable<string> CartesianSlots()
+    {
+        if (UseValueAxis) yield return SlotLine("ValueAxis", "AtomChartValueAxis");
+        if (UseCategoryAxis) yield return SlotLine("CategoryAxis", "AtomChartCategoryAxis", CategoryWrap ? " Wrap=\"true\"" : "");
+        if (UseGridlines) yield return SlotLine("Gridlines", "AtomChartGridlines", GridlinesDashed ? "" : " Dashed=\"false\"");
+        if (UseBaseline) yield return SlotLine("Baseline", "AtomChartBaseline");
+        if (UseValueLabels) yield return SlotLine("ValueLabels", "AtomChartValueLabels");
+        if (UseValueAxisTitle) yield return SlotLine("ValueAxisTitle", "AtomChartAxisTitle", "", ValueAxisTitleText);
+        if (UseCategoryAxisTitle) yield return SlotLine("CategoryAxisTitle", "AtomChartAxisTitle", "", CategoryAxisTitleText);
+    }
+
+    private IEnumerable<string> DonutSlots()
+    {
+        if (UseSliceLabels)
+        {
+            yield return SlotLine("SliceLabels", "AtomChartSliceLabels",
+                SliceMinPercent == 5 ? "" : Attr("MinPercent", Inv(SliceMinPercent)));
+        }
+
+        if (UseCenter) yield return SlotLine("Center", "AtomChartCenter", "", "<strong>@total</strong>");
+    }
+
+    private IEnumerable<string> GaugeSlots()
+    {
+        if (UseReadout)
+        {
+            yield return SlotLine("Readout", "AtomChartReadout",
+                ReadoutOffset is null ? "" : Attr("Offset", Inv(ReadoutOffset.Value)));
+        }
+
+        if (UseRangeLabels) yield return SlotLine("RangeLabels", "AtomChartRangeLabels");
+    }
+
+    /// <summary>One nested slot, with the element's own styling hooks appended if they are set.</summary>
+    private string SlotLine(string slot, string element, string attrs = "", string? content = null)
+    {
+        var all = attrs + Attr("CssClass", Css(slot)) + Attr("Style", Sty(slot));
+
+        return content is null
+            ? $"<{slot}><{element}{all} /></{slot}>"
+            : $"<{slot}><{element}{all}>{content}</{element}></{slot}>";
+    }
+
+    private static string Attr(string name, string? value) => value is null ? "" : $" {name}=\"{value}\"";
+
+    /// <summary>The cartesian parameters that stay on the chart rather than moving to an element.</summary>
+    private void Cartesian(System.Text.StringBuilder sb)
+    {
+        if (GridlineCount != 4) sb.Append($" GridlineCount=\"{GridlineCount}\"");
+        if (!NiceScale) sb.Append(" NiceScale=\"false\"");
+        if (AxisWidth is not null) sb.Append($" ValueAxisWidth=\"{Inv(AxisWidth.Value)}\"");
+        if (Nz(AxisColor) is not null) sb.Append($" AxisColor=\"{AxisColor}\"");
+    }
+
+    /// <summary>The axes every chart shares, emitted only when they differ from the defaults.</summary>
+    private void Common(System.Text.StringBuilder sb)
+    {
+        if (Nz(SeriesColor) is not null) sb.Append($" SeriesColor=\"{SeriesColor}\"");
+        if (Nz(Width) is not null) sb.Append($" Width=\"{Width}\"");
+        if (Nz(Height) is not null) sb.Append($" Height=\"{Height}\"");
+        if (Nz(Duration) is not null) sb.Append($" Duration=\"{Duration}\"");
+        if (Nz(AriaLabel) is not null) sb.Append($" AriaLabel=\"{AriaLabel}\"");
+        if (LegendPlacement is not null) sb.Append($" LegendPlacement=\"ChartLegendPlacement.{LegendPlacement}\"");
+        if (!Animate) sb.Append(" Animate=\"false\"");
+        if (!Visible) sb.Append(" Visible=\"false\"");
+    }
+}

@@ -1,0 +1,32 @@
+@inherits AtomChartElementBase
+
+@if (Rows.Count > 0)
+{
+    <ul @attributes="AdditionalAttributes"
+        class="@ClassAttr("atom-chart-legend")"
+        style="@StyleAttr(RootStyle)">
+        @foreach (var row in Rows)
+        {
+            <li class="atom-chart-legend-item">
+                @* Inline background: the colour is data, and there is no way to express one custom
+                   property per row in a static stylesheet. *@
+                <span class="atom-chart-legend-swatch" style="background:@SwatchColor(row)"></span>
+
+                @if (!string.IsNullOrEmpty(row.Label))
+                {
+                    <span class="atom-chart-legend-label">@row.Label</span>
+                }
+
+                @if (ShowValues)
+                {
+                    <span class="atom-chart-legend-value">@Format(row.Value)</span>
+                }
+
+                @if (ShowsPercent)
+                {
+                    <span class="atom-chart-legend-percent">@PercentText(row)</span>
+                }
+            </li>
+        }
+    </ul>
+}

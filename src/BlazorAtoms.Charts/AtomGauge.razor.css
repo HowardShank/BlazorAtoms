@@ -1,0 +1,78 @@
+/* The frame's areas (heading, plot, legend, caption) stack in this column. The square aspect and the
+   positioning context for the readout belong to the dial, not the root — otherwise a heading would be
+   counted into the 1:1 box and squash the dial. */
+.atom-gauge {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    width: var(--chart-width, 100%);
+}
+
+.atom-gauge-dial {
+    position: relative;
+    min-width: 0;
+    aspect-ratio: 1 / 1;
+    height: var(--chart-height, auto);
+}
+
+.atom-gauge-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.atom-gauge-track,
+.atom-gauge-band,
+.atom-gauge-value-arc {
+    fill: none;
+    /* Butt caps: rounded ends would make each band overlap its neighbour by half a stroke width, so the
+       colour boundaries would no longer sit at the values they claim. */
+    stroke-linecap: butt;
+}
+
+.atom-gauge-track {
+    stroke: var(--chart-track-color, currentColor);
+    stroke-opacity: 0.15;
+}
+
+.atom-gauge-value-arc {
+    stroke: var(--chart-series-color, currentColor);
+}
+
+.atom-gauge-needle {
+    stroke: var(--chart-needle-color, var(--chart-series-color, currentColor));
+    stroke-width: 2.5;
+    stroke-linecap: round;
+}
+
+.atom-gauge-hub {
+    fill: var(--chart-needle-color, var(--chart-series-color, currentColor));
+}
+
+/* The readout, the centre content and the range labels belong to element components now, each with its own
+   stylesheet — scoped CSS could not reach them from here anyway, since an element rendered into a slot
+   carries the element's scope and not the chart's. */
+
+/* --- draw-in ------------------------------------------------------------------------------------
+   The needle swings up from the dial's start, and the value arc grows with it. Both animate transform
+   or dash only, so neither triggers layout. */
+
+.atom-gauge-svg[data-animate] .atom-gauge-needle,
+.atom-gauge-svg[data-animate] .atom-gauge-value-arc {
+    animation: atom-gauge-swing var(--chart-duration, 700ms) ease-out backwards;
+    transform-origin: 50px 50px;
+}
+
+@keyframes atom-gauge-swing {
+    from { transform: rotate(-20deg); opacity: 0; }
+    to   { transform: none; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-gauge-svg[data-animate] .atom-gauge-needle,
+    .atom-gauge-svg[data-animate] .atom-gauge-value-arc {
+        animation: none;
+        transform: none;
+        opacity: 1;
+    }
+}

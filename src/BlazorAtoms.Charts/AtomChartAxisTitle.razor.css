@@ -1,0 +1,8 @@
+.atom-chart-axis-title {
+    font-size: 0.75em;
+    opacity: 0.6;
+    text-align: center;
+    /* The rotation for a vertical axis is applied by the chart's own wrapper cell, not here — this element
+       cannot tell which axis it was placed on. */
+    white-space: nowrap;
+}

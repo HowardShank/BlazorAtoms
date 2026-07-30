@@ -1,0 +1,20 @@
+@inherits AtomSkeletonBase
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-skeleton-text")"
+     style="@StyleAttr(RootStyle)"
+     role="@RoleAttr"
+     aria-live="@AriaLiveAttr"
+     aria-label="@AriaLabel"
+     aria-hidden="@AriaHiddenAttr">
+    @for (var i = 0; i < LineCount; i++)
+    {
+        <AtomSkeletonBlock Animation="@Animation"
+                           BaseColor="@BaseColor"
+                           HighlightColor="@HighlightColor"
+                           Duration="@Duration"
+                           Width="@LineWidth(i)"
+                           Height="@LineHeight"
+                           Radius="@LineRadius" />
+    }
+</div>

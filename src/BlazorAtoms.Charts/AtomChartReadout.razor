@@ -1,0 +1,7 @@
+@inherits AtomChartElementBase
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-chart-readout")"
+     style="@StyleAttr(RootStyle)">
+    <span class="atom-chart-readout-value">@Chart?.ReadoutText</span>
+</div>

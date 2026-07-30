@@ -1,0 +1,142 @@
+/* AtomTabs — container, strip and panel region.
+
+   Theming priority, lowest to highest:
+     1. the defaults block below
+     2. this file's [data-variant] / [data-size] / [data-orientation] / [data-align] rules
+     3. a consumer stylesheet targeting .atom-tabs
+     4. the component's parameters (AccentColor, Radius, ...) — inline, always wins
+
+   SCOPE SPLIT: this file owns only the wrappers it renders itself (.atom-tabs, -list, -panels).
+   Everything that styles a tab or a panel lives in AtomTab.razor.css / AtomTabPanel.razor.css, keyed
+   off an ANCESTOR `.atom-tabs[data-*]` selector. Blazor's scope rewriter appends the scope id to the
+   final selector only, so an ancestor match by class works across component scopes — which is what
+   keeps ::deep out of this family entirely. The --tabs-* tokens inherit down the DOM for the same
+   reason. */
+
+.atom-tabs {
+    /* ---- hooks ---- */
+    --tabs-accent: #2563eb;
+    --tabs-tab-color: color-mix(in srgb, currentColor 70%, transparent);
+    --tabs-active-tab-color: var(--tabs-accent);
+    --tabs-indicator-color: var(--tabs-accent);
+    --tabs-indicator-thickness: 2px;
+    --tabs-border-color: color-mix(in srgb, currentColor 15%, transparent);
+    --tabs-panel-bg: transparent;
+    --tabs-radius: 8px;
+    --tabs-panel-padding: 1rem;
+    --tabs-gap: .25rem;
+    --tabs-font-size: .9375rem;
+    --tabs-duration: .18s;
+    --tabs-tab-pad-y: .5rem;
+    --tabs-tab-pad-x: .9rem;
+
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    color: inherit;
+    font-size: var(--tabs-font-size);
+}
+
+.atom-tabs-list {
+    display: flex;
+    flex: 0 0 auto;
+    gap: var(--tabs-gap);
+    /* min-width:0 so a scrollable strip can actually be narrower than its content. */
+    min-width: 0;
+}
+
+.atom-tabs-panels {
+    /* min-height/width:0 so a scrolling panel shrinks instead of stretching the container. */
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+}
+
+/* ---- orientation --------------------------------------------------------------------------- */
+
+.atom-tabs[data-orientation="horizontal"] .atom-tabs-list {
+    flex-direction: row;
+    align-items: flex-end;
+}
+
+.atom-tabs[data-orientation="vertical"] {
+    flex-direction: row;
+}
+
+.atom-tabs[data-orientation="vertical"] .atom-tabs-list {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+/* ---- alignment ----------------------------------------------------------------------------- */
+
+.atom-tabs[data-align="center"] .atom-tabs-list { justify-content: center; }
+.atom-tabs[data-align="end"] .atom-tabs-list    { justify-content: flex-end; }
+
+/* Stretch grows the tabs themselves, so it is not a justify-content value — the flex-grow that does
+   the work lives on .atom-tab, in that component's stylesheet. */
+
+/* ---- scrollable strip ---------------------------------------------------------------------- */
+
+/* No scroll buttons: knowing whether the strip overflows means measuring it, which needs JS. Native
+   overflow scrolling works with a wheel, a trackpad, touch, and the keyboard. */
+.atom-tabs[data-scrollable][data-orientation="horizontal"] .atom-tabs-list {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+}
+
+.atom-tabs[data-scrollable][data-orientation="vertical"] .atom-tabs-list {
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+}
+
+/* ---- variant: line (default) --------------------------------------------------------------- */
+
+/* The rule runs the length of the strip; the active tab paints its own segment over it. */
+.atom-tabs[data-variant="line"][data-orientation="horizontal"] .atom-tabs-list {
+    border-bottom: var(--tabs-indicator-thickness) solid var(--tabs-border-color);
+}
+
+.atom-tabs[data-variant="line"][data-orientation="vertical"] .atom-tabs-list {
+    border-inline-end: var(--tabs-indicator-thickness) solid var(--tabs-border-color);
+}
+
+/* ---- variant: enclosed --------------------------------------------------------------------- */
+
+.atom-tabs[data-variant="enclosed"][data-orientation="horizontal"] .atom-tabs-list {
+    border-bottom: 1px solid var(--tabs-border-color);
+}
+
+.atom-tabs[data-variant="enclosed"][data-orientation="vertical"] .atom-tabs-list {
+    border-inline-end: 1px solid var(--tabs-border-color);
+}
+
+/* ---- variant: bar -------------------------------------------------------------------------- */
+
+.atom-tabs[data-variant="bar"] .atom-tabs-list {
+    padding: .25rem;
+    border: 1px solid var(--tabs-border-color);
+    border-radius: var(--tabs-radius);
+    background: color-mix(in srgb, currentColor 5%, transparent);
+}
+
+/* ---- panel region -------------------------------------------------------------------------- */
+
+.atom-tabs[data-variant="enclosed"] .atom-tabs-panels {
+    border: 1px solid var(--tabs-border-color);
+    /* Square off the edge that meets the strip, so panel and active tab read as one surface. */
+    border-start-start-radius: 0;
+    border-start-end-radius: var(--tabs-radius);
+    border-end-end-radius: var(--tabs-radius);
+    border-end-start-radius: var(--tabs-radius);
+    border-top: 0;
+    background: var(--tabs-panel-bg);
+}
+
+.atom-tabs[data-variant="enclosed"][data-orientation="vertical"] .atom-tabs-panels {
+    border: 1px solid var(--tabs-border-color);
+    border-inline-start: 0;
+    border-radius: 0 var(--tabs-radius) var(--tabs-radius) 0;
+}

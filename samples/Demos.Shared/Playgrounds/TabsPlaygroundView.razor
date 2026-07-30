@@ -1,0 +1,540 @@
+@using System.Globalization
+@using BlazorAtoms.Tabs
+
+<PageTitle>Tabs Playground</PageTitle>
+
+<h1>Tabs playground</h1>
+<p><code>AtomTabs</code> owns the selected value; <code>AtomTab</code> and <code>AtomTabPanel</code> pair
+   up by a string <code>Value</code>. Two named slots (<code>TabList</code> and <code>Panels</code>)
+   rather than one flat child list, because Blazor renders children in source order — interleaved tabs
+   and panels could not be laid out as a strip above a panel region without hoisting nodes across the
+   render tree, which the framework can't do.</p>
+<p>Full ARIA tabs pattern: <code>tablist</code>/<code>tab</code>/<code>tabpanel</code> roles,
+   <code>aria-selected</code>, <code>aria-controls</code>&harr;<code>aria-labelledby</code> id pairs,
+   roving <code>tabindex</code>, and Arrow/Home/End navigation. <strong>Click a tab, then try the
+   arrow keys</strong> &mdash; and <code>Ctrl+Home</code>, which scrolls the page instead of jumping to
+   the first tab.</p>
+<p>One small self-imported JS module (<code>atom-tabs.js</code>) cancels the browser's default scroll for
+   exactly the keys the component consumes, per axis &mdash; Blazor decides
+   <code>:preventDefault</code> at render time, so it can't be applied per key without also swallowing
+   <code>Tab</code>. Nothing to wire up, and the tabs still navigate if it fails to load. Try
+   <code>Orientation="Vertical"</code> with a tall page: that's the case where the missing guard was
+   visible.</p>
+<p><a href="playground/cardlayout">&larr; Card layout playground</a></p>
+
+<div class="tab-controls">
+    <div class="ctrl">
+        <label>Variant</label>
+        <select @bind="VariantSel">
+            @foreach (var v in Variants) { <option value="@v">@v</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Size</label>
+        <select @bind="SizeSel">
+            @foreach (var s in Sizes) { <option value="@s">@s</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Orientation</label>
+        <select @bind="OrientationSel">
+            @foreach (var o in Orientations) { <option value="@o">@o</option> }
+        </select>
+        <span class="note">also sets aria-orientation, which picks the arrow keys</span>
+    </div>
+    <div class="ctrl">
+        <label>Align</label>
+        <select @bind="AlignSel">
+            @foreach (var a in Aligns) { <option value="@a">@a</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Effect</label>
+        <select @bind="EffectSel">
+            @foreach (var e in Effects) { <option value="@e">@e</option> }
+        </select>
+        <span class="note">CSS only &mdash; no C# state</span>
+    </div>
+    <div class="ctrl">
+        <label>ActivationMode</label>
+        <select @bind="ActivationSel">
+            @foreach (var a in Activations) { <option value="@a">@a</option> }
+        </select>
+        <span class="note">Manual: arrows move focus, Enter selects</span>
+    </div>
+    <div class="ctrl">
+        <label>PanelRender</label>
+        <select @bind="PanelRenderSel">
+            @foreach (var r in PanelRenders) { <option value="@r">@r</option> }
+        </select>
+        <span class="note">type in the Bravo panel's box, switch away and back</span>
+    </div>
+    <div class="ctrl">
+        <label>Tabs (comma-separated)</label>
+        <input type="text" @bind="TabsCsv" @bind:event="oninput" placeholder="(no tabs)" />
+        <span class="note">@TabKeys.Count tab(s)</span>
+    </div>
+    <div class="ctrl">
+        <label>AriaLabel</label>
+        <input type="text" @bind="AriaLabelV" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Content</label>
+        <div class="row"><input type="checkbox" id="tabIcon" @bind="ShowIcons" /><label for="tabIcon" class="inline">Icon slot</label></div>
+        <div class="row"><input type="checkbox" id="tabBadge" @bind="ShowBadge" /><label for="tabBadge" class="inline">Badge on 2nd tab</label></div>
+        <div class="row"><input type="checkbox" id="tabCustom" @bind="CustomCaption" /><label for="tabCustom" class="inline">ChildContent on 1st tab</label></div>
+        <div class="row"><input type="checkbox" id="tabDis" @bind="DisableThird" /><label for="tabDis" class="inline">Disable 3rd tab</label></div>
+        <div class="row"><input type="checkbox" id="tabScroll" @bind="ScrollableV" /><label for="tabScroll" class="inline">Scrollable strip</label></div>
+        <div class="row"><input type="checkbox" id="tabVis" @bind="VisibleV" /><label for="tabVis" class="inline">Visible</label></div>
+    </div>
+    <div class="ctrl">
+        <label>IndicatorThickness (px, 0=default) <span class="val">@IndicatorThicknessV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="10" step="1" @bind="IndicatorThicknessV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Radius (px, -1=default) <span class="val">@RadiusV.ToString(Inv)</span></label>
+        <input type="range" min="-1" max="28" step="1" @bind="RadiusV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>PanelPadding (px, -1=default) <span class="val">@PanelPaddingV.ToString(Inv)</span></label>
+        <input type="range" min="-1" max="48" step="1" @bind="PanelPaddingV" @bind:event="oninput" @bind:culture="Inv" />
+        <span class="note">cascades; a panel's own Padding wins</span>
+    </div>
+    <div class="ctrl">
+        <label>Panel 1 Padding (px, -1=inherit) <span class="val">@Panel1PaddingV.ToString(Inv)</span></label>
+        <input type="range" min="-1" max="48" step="1" @bind="Panel1PaddingV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Gap (px, -1=default) <span class="val">@GapV.ToString(Inv)</span></label>
+        <input type="range" min="-1" max="24" step="1" @bind="GapV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>FontSize (px, 0=Size) <span class="val">@FontSizeV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="28" step="1" @bind="FontSizeV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Duration (s, 0=default) <span class="val">@DurationV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="1.5" step="0.05" @bind="DurationV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>AccentColor</label>
+        <div class="row color">
+            <input type="color" @bind="AccentPick" @bind:event="oninput" />
+            <input type="text" @bind="AccentColorV" @bind:event="oninput" placeholder="(#2563eb)" />
+            <button type="button" class="clr-btn" @onclick="@(() => AccentColorV = "")">clear</button>
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>TabColor</label>
+        <div class="row color">
+            <input type="color" @bind="TabPick" @bind:event="oninput" />
+            <input type="text" @bind="TabColorV" @bind:event="oninput" placeholder="(muted ink)" />
+            <button type="button" class="clr-btn" @onclick="@(() => TabColorV = "")">clear</button>
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>ActiveTabColor</label>
+        <div class="row color">
+            <input type="color" @bind="ActiveTabPick" @bind:event="oninput" />
+            <input type="text" @bind="ActiveTabColorV" @bind:event="oninput" placeholder="(accent)" />
+            <button type="button" class="clr-btn" @onclick="@(() => ActiveTabColorV = "")">clear</button>
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>IndicatorColor</label>
+        <div class="row color">
+            <input type="color" @bind="IndicatorPick" @bind:event="oninput" />
+            <input type="text" @bind="IndicatorColorV" @bind:event="oninput" placeholder="(accent)" />
+            <button type="button" class="clr-btn" @onclick="@(() => IndicatorColorV = "")">clear</button>
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>BorderColor</label>
+        <div class="row color">
+            <input type="color" @bind="BorderPick" @bind:event="oninput" />
+            <input type="text" @bind="BorderColorV" @bind:event="oninput" placeholder="(currentColor tint)" />
+            <button type="button" class="clr-btn" @onclick="@(() => BorderColorV = "")">clear</button>
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>PanelBackgroundColor</label>
+        <div class="row color">
+            <input type="color" @bind="PanelBgPick" @bind:event="oninput" />
+            <input type="text" @bind="PanelBgV" @bind:event="oninput" placeholder="(transparent)" />
+            <button type="button" class="clr-btn" @onclick="@(() => PanelBgV = "")">clear</button>
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>CssClass</label>
+        <input type="text" @bind="CssClassV" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Style</label>
+        <input type="text" @bind="StyleV" @bind:event="oninput" placeholder="e.g. max-width:40rem" />
+    </div>
+</div>
+
+<div class="tab-stage">
+    <section class="tab-case">
+        <h2>AtomTabs</h2>
+        <AtomTabs @bind-Value="ActiveTab"
+                  Variant="@VariantSel" Size="@SizeSel" Orientation="@OrientationSel"
+                  Align="@AlignSel" Effect="@EffectSel"
+                  ActivationMode="@ActivationSel" PanelRender="@PanelRenderSel"
+                  Scrollable="@ScrollableV" Visible="@VisibleV"
+                  AriaLabel="@Nz(AriaLabelV)"
+                  AccentColor="@Nz(AccentColorV)" TabColor="@Nz(TabColorV)"
+                  ActiveTabColor="@Nz(ActiveTabColorV)" IndicatorColor="@Nz(IndicatorColorV)"
+                  IndicatorThickness="@Opt(IndicatorThicknessV)"
+                  BorderColor="@Nz(BorderColorV)" PanelBackgroundColor="@Nz(PanelBgV)"
+                  Radius="@Signed(RadiusV)" PanelPadding="@Signed(PanelPaddingV)"
+                  Gap="@Signed(GapV)" FontSize="@Opt(FontSizeV)" Duration="@Opt(DurationV)"
+                  CssClass="@Nz(CssClassV)" Style="@Nz(StyleV)">
+            <TabList>
+                @foreach (var (key, index) in TabKeys.Select((k, i) => (k, i)))
+                {
+                    <AtomTab Value="@key"
+                             Title="@key"
+                             Icon="@(ShowIcons ? IconFor(index) : null)"
+                             Badge="@(ShowBadge && index == 1 ? "3" : null)"
+                             Disabled="@(DisableThird && index == 2)"
+                             ChildContent="@(CustomCaption && index == 0 ? CustomFirstCaption : null)" />
+                }
+            </TabList>
+            <Panels>
+                @foreach (var (key, index) in TabKeys.Select((k, i) => (k, i)))
+                {
+                    <AtomTabPanel Value="@key" Padding="@(index == 0 ? Signed(Panel1PaddingV) : null)">
+                        <h3>@key</h3>
+                        @if (index == 1)
+                        {
+                            <p>Type below, switch tabs and come back &mdash; the text survives on
+                               <code>Always</code> and <code>Lazy</code>, and is lost on
+                               <code>Active</code>, which removes the panel from the DOM.</p>
+                            <input type="text" class="tab-probe" placeholder="uncommitted input" />
+                        }
+                        else
+                        {
+                            <p>
+                                Panel content for <code>@key</code>. The panel is focusable, so Tab out
+                                of the strip lands here.
+                            </p>
+                            <p>
+                                Panel content for <code>@key</code>. The panel is focusable, so Tab out
+                                of the strip lands here.
+                            </p>
+                            <p>
+                                Panel content for <code>@key</code>. The panel is focusable, so Tab out
+                                of the strip lands here.
+                            </p>
+                            <p>
+                                Panel content for <code>@key</code>. The panel is focusable, so Tab out
+                                of the strip lands here.
+                            </p>
+                            <p>
+                                Panel content for <code>@key</code>. The panel is focusable, so Tab out
+                                of the strip lands here.
+                            </p>
+                            <p>
+                                Panel content for <code>@key</code>. The panel is focusable, so Tab out
+                                of the strip lands here.
+                            </p>
+                            <p>
+                                Panel content for <code>@key</code>. The panel is focusable, so Tab out
+                                of the strip lands here.
+                            </p>
+                            <p>
+                                Panel content for <code>@key</code>. The panel is focusable, so Tab out
+                                of the strip lands here.
+                            </p>
+                            <p>
+                                Panel content for <code>@key</code>. The panel is focusable, so Tab out
+                                of the strip lands here.
+                            </p>
+                            <p>
+                                Panel content for <code>@key</code>. The panel is focusable, so Tab out
+                                of the strip lands here.
+                            </p>
+                            <p>
+                                Panel content for <code>@key</code>. The panel is focusable, so Tab out
+                                of the strip lands here.
+                            </p>
+                            <p>
+                                Panel content for <code>@key</code>. The panel is focusable, so Tab out
+                                of the strip lands here.
+                            </p>
+                            <p>
+                                Panel content for <code>@key</code>. The panel is focusable, so Tab out
+                                of the strip lands here.
+                            </p>
+                            <p>
+                                Panel content for <code>@key</code>. The panel is focusable, so Tab out
+                                of the strip lands here.
+                            </p>
+                            <p>
+                                Panel content for <code>@key</code>. The panel is focusable, so Tab out
+                                of the strip lands here.
+                            </p>
+                            <p>
+                                Panel content for <code>@key</code>. The panel is focusable, so Tab out
+                                of the strip lands here.
+                            </p>
+                            <p>
+                                Panel content for <code>@key</code>. The panel is focusable, so Tab out
+                                of the strip lands here.
+                            </p>
+                        }
+                    </AtomTabPanel>
+                }
+            </Panels>
+        </AtomTabs>
+    </section>
+
+    <section class="tab-case">
+        <h2>Variant &times; Orientation</h2>
+        <p class="note">Current Size / Effect / Align apply. Each set has its own independent selection
+           and its own generated id prefix.</p>
+        <div class="tab-matrix">
+            @foreach (var variant in Variants)
+            {
+                <div class="tab-matrix-cell">
+                    <code>@variant</code>
+                    <AtomTabs Value="one" Variant="@variant" Size="@SizeSel" Effect="@EffectSel"
+                              Align="@AlignSel" AriaLabel="@($"{variant} sample")">
+                        <TabList>
+                            <AtomTab Value="one" Title="One" />
+                            <AtomTab Value="two" Title="Two" />
+                        </TabList>
+                        <Panels>
+                            <AtomTabPanel Value="one">First.</AtomTabPanel>
+                            <AtomTabPanel Value="two">Second.</AtomTabPanel>
+                        </Panels>
+                    </AtomTabs>
+                </div>
+            }
+        </div>
+    </section>
+</div>
+
+<p class="tab-log">Bound value: <code>@(string.IsNullOrEmpty(ActiveTab) ? "(unset — first tab shown)" : ActiveTab)</code>
+   &middot; changes: <code>@_changes</code></p>
+
+<CodeSnippetBox Code="@Snippet" FileName="TabsExample.razor" />
+
+<style>
+    .tab-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(215px,1fr)); gap:1rem 1.5rem; }
+    .tab-controls { background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; margin-bottom:1.5rem; }
+    .tab-controls .ctrl { display:flex; flex-direction:column; gap:.4rem; }
+    .tab-controls label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; gap:.5rem; }
+    .tab-controls label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
+    .tab-controls input[type=range] { width:100%; accent-color:#2563eb; }
+    .tab-controls input[type=text], .tab-controls select
+        { padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; min-width:0; }
+    .tab-controls .row { display:flex; align-items:center; gap:.5rem; }
+    .tab-controls .row input[type=checkbox] { accent-color:#2563eb; width:16px; height:16px; flex:none; }
+    .tab-controls .row.color input[type=color] { flex:none; width:38px; height:32px; padding:2px; background:#070b10; border:1px solid #1b2330; border-radius:6px; cursor:pointer; }
+    .tab-controls .row.color input[type=text] { flex:1 1 auto; min-width:0; }
+    .tab-controls .row label.inline { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; justify-content:flex-start; }
+    .tab-controls .clr-btn { flex:none; padding:.35rem .55rem; border:1px solid #1b2330; background:#161d29; color:#cfd8e3; border-radius:6px; cursor:pointer; font-size:.75rem; }
+    .tab-controls .clr-btn:hover { background:#1e2836; }
+    .note { font-size:.75rem; color:#5fb7c9; font-family:ui-monospace,monospace; }
+
+    .tab-stage { display:flex; flex-direction:column; gap:1.25rem; }
+    .tab-case { border:1px solid #e2e8f0; border-radius:12px; padding:1.25rem 1.5rem; }
+    .tab-case h2 { margin:0 0 .75rem; font-size:1rem; font-family:ui-monospace,Consolas,monospace; color:#334155; }
+    .tab-case > .note { display:block; margin-bottom:.75rem; color:#64748b; }
+    .tab-case h3 { margin:0 0 .5rem; font-size:.95rem; }
+
+    .tab-matrix { display:grid; grid-template-columns:repeat(auto-fit,minmax(17rem,1fr)); gap:1.5rem; }
+    .tab-matrix-cell > code { display:block; margin-bottom:.4rem; font-size:.8rem; color:#64748b; }
+
+    .tab-probe { padding:.4rem .5rem; border:1px solid #cbd5e1; border-radius:6px; font:inherit; font-size:.85rem; }
+    .tab-log { font-family:ui-monospace,monospace; font-size:.8rem; color:#64748b; }
+</style>
+
+@code {
+    private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
+
+    private static readonly TabsVariant[] Variants = Enum.GetValues<TabsVariant>();
+    private static readonly TabsSize[] Sizes = Enum.GetValues<TabsSize>();
+    private static readonly TabsOrientation[] Orientations = Enum.GetValues<TabsOrientation>();
+    private static readonly TabsAlign[] Aligns = Enum.GetValues<TabsAlign>();
+    private static readonly TabsEffect[] Effects = Enum.GetValues<TabsEffect>();
+    private static readonly TabsActivation[] Activations = Enum.GetValues<TabsActivation>();
+    private static readonly TabPanelRender[] PanelRenders = Enum.GetValues<TabPanelRender>();
+
+    private TabsVariant VariantSel = TabsVariant.Line;
+    private TabsSize SizeSel = TabsSize.Medium;
+    private TabsOrientation OrientationSel = TabsOrientation.Horizontal;
+    private TabsAlign AlignSel = TabsAlign.Start;
+    private TabsEffect EffectSel = TabsEffect.None;
+    private TabsActivation ActivationSel = TabsActivation.Automatic;
+    private TabPanelRender PanelRenderSel = TabPanelRender.Active;
+
+    /// <summary>Backing text for the tab set. Parsed rather than bound directly, since no native input
+    /// edits a collection.</summary>
+    private string TabsCsv = "Alpha, Bravo, Charlie";
+
+    private IReadOnlyList<string> TabKeys =>
+        TabsCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    /// <summary>Deliberately starts empty, to show the container falling back to the first tab without
+    /// writing anything into the bound field.</summary>
+    private string ActiveTab
+    {
+        get => _activeTab;
+        set { _activeTab = value; _changes++; }
+    }
+
+    private string _activeTab = "";
+    private int _changes;
+
+    private bool ShowIcons;
+    private bool ShowBadge = true;
+    private bool CustomCaption;
+    private bool DisableThird;
+    private bool ScrollableV;
+    private bool VisibleV = true;
+    private string AriaLabelV = "Account settings";
+
+    private double IndicatorThicknessV;
+    private double RadiusV = -1;
+    private double PanelPaddingV = -1;
+    private double Panel1PaddingV = -1;
+    private double GapV = -1;
+    private double FontSizeV;
+    private double DurationV;
+
+    private string AccentColorV = "";
+    private string TabColorV = "";
+    private string ActiveTabColorV = "";
+    private string IndicatorColorV = "";
+    private string BorderColorV = "";
+    private string PanelBgV = "";
+    private string CssClassV = "";
+    private string StyleV = "";
+
+    private string AccentPick { get => Hex(AccentColorV, "#2563eb"); set => AccentColorV = value; }
+    private string TabPick { get => Hex(TabColorV, "#64748b"); set => TabColorV = value; }
+    private string ActiveTabPick { get => Hex(ActiveTabColorV, "#2563eb"); set => ActiveTabColorV = value; }
+    private string IndicatorPick { get => Hex(IndicatorColorV, "#2563eb"); set => IndicatorColorV = value; }
+    private string BorderPick { get => Hex(BorderColorV, "#e2e8f0"); set => BorderColorV = value; }
+    private string PanelBgPick { get => Hex(PanelBgV, "#ffffff"); set => PanelBgV = value; }
+
+    // ---- fragments ---------------------------------------------------------------------------
+
+    private static readonly RenderFragment CustomFirstCaption = b => b.AddMarkupContent(0,
+        "<em>Custom</em>&nbsp;<strong>caption</strong>");
+
+    /// <summary>Three simple glyphs cycled by index, so the Icon slot is exercised on every tab
+    /// whatever the tab count.</summary>
+    private static RenderFragment IconFor(int index) => (index % 3) switch
+    {
+        0 => GearIcon,
+        1 => CardIcon,
+        _ => BellIcon,
+    };
+
+    private static readonly RenderFragment GearIcon = b => b.AddMarkupContent(0,
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\">" +
+        "<circle cx=\"12\" cy=\"12\" r=\"3.5\"/><path d=\"M12 2v3M12 19v3M2 12h3M19 12h3\" stroke-linecap=\"round\"/></svg>");
+
+    private static readonly RenderFragment CardIcon = b => b.AddMarkupContent(0,
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\">" +
+        "<rect x=\"2.5\" y=\"5\" width=\"19\" height=\"14\" rx=\"2\"/><path d=\"M2.5 10h19\"/></svg>");
+
+    private static readonly RenderFragment BellIcon = b => b.AddMarkupContent(0,
+        "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\">" +
+        "<path d=\"M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6\"/><path d=\"M10 20a2 2 0 0 0 4 0\"/></svg>");
+
+    // ---- helpers -----------------------------------------------------------------------------
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
+
+    /// <summary>0 means "leave the parameter unset" for sliders whose zero has no useful meaning.</summary>
+    private static double? Opt(double v) => v > 0 ? v : null;
+
+    /// <summary>For sliders where 0 IS meaningful (Radius, Gap, padding), -1 is the unset sentinel.</summary>
+    private static double? Signed(double v) => v >= 0 ? v : null;
+
+    private static string Hex(string v, string fallback) =>
+        v.StartsWith('#') && (v.Length == 7 || v.Length == 4) ? v : fallback;
+
+    // ---- generated snippet -------------------------------------------------------------------
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder();
+            const string i = "          ";
+            var keys = TabKeys;
+
+            sb.Append("<AtomTabs @bind-Value=\"_tab\"");
+            if (VariantSel != TabsVariant.Line) sb.Append($"\n{i}Variant=\"TabsVariant.{VariantSel}\"");
+            if (SizeSel != TabsSize.Medium) sb.Append($"\n{i}Size=\"TabsSize.{SizeSel}\"");
+            if (OrientationSel != TabsOrientation.Horizontal)
+                sb.Append($"\n{i}Orientation=\"TabsOrientation.{OrientationSel}\"");
+            if (AlignSel != TabsAlign.Start) sb.Append($"\n{i}Align=\"TabsAlign.{AlignSel}\"");
+            if (EffectSel != TabsEffect.None) sb.Append($"\n{i}Effect=\"TabsEffect.{EffectSel}\"");
+            if (ActivationSel != TabsActivation.Automatic)
+                sb.Append($"\n{i}ActivationMode=\"TabsActivation.{ActivationSel}\"");
+            if (PanelRenderSel != TabPanelRender.Active)
+                sb.Append($"\n{i}PanelRender=\"TabPanelRender.{PanelRenderSel}\"");
+            if (ScrollableV) sb.Append($"\n{i}Scrollable=\"true\"");
+            if (!VisibleV) sb.Append($"\n{i}Visible=\"false\"");
+            if (!string.IsNullOrEmpty(AriaLabelV)) sb.Append($"\n{i}AriaLabel=\"{AriaLabelV}\"");
+            if (!string.IsNullOrEmpty(AccentColorV)) sb.Append($"\n{i}AccentColor=\"{AccentColorV}\"");
+            if (!string.IsNullOrEmpty(TabColorV)) sb.Append($"\n{i}TabColor=\"{TabColorV}\"");
+            if (!string.IsNullOrEmpty(ActiveTabColorV)) sb.Append($"\n{i}ActiveTabColor=\"{ActiveTabColorV}\"");
+            if (!string.IsNullOrEmpty(IndicatorColorV)) sb.Append($"\n{i}IndicatorColor=\"{IndicatorColorV}\"");
+            if (IndicatorThicknessV > 0) sb.Append($"\n{i}IndicatorThickness=\"{IndicatorThicknessV.ToString(Inv)}\"");
+            if (!string.IsNullOrEmpty(BorderColorV)) sb.Append($"\n{i}BorderColor=\"{BorderColorV}\"");
+            if (!string.IsNullOrEmpty(PanelBgV)) sb.Append($"\n{i}PanelBackgroundColor=\"{PanelBgV}\"");
+            if (RadiusV >= 0) sb.Append($"\n{i}Radius=\"{RadiusV.ToString(Inv)}\"");
+            if (PanelPaddingV >= 0) sb.Append($"\n{i}PanelPadding=\"{PanelPaddingV.ToString(Inv)}\"");
+            if (GapV >= 0) sb.Append($"\n{i}Gap=\"{GapV.ToString(Inv)}\"");
+            if (FontSizeV > 0) sb.Append($"\n{i}FontSize=\"{FontSizeV.ToString(Inv)}\"");
+            if (DurationV > 0) sb.Append($"\n{i}Duration=\"{DurationV.ToString(Inv)}\"");
+            if (!string.IsNullOrEmpty(CssClassV)) sb.Append($"\n{i}CssClass=\"{CssClassV}\"");
+            if (!string.IsNullOrEmpty(StyleV)) sb.Append($"\n{i}Style=\"{StyleV}\"");
+            sb.Append(">\n");
+
+            sb.Append("    <TabList>\n");
+            for (var t = 0; t < keys.Count; t++)
+            {
+                var key = keys[t];
+                sb.Append($"        <AtomTab Value=\"{key}\"");
+                if (!(CustomCaption && t == 0)) sb.Append($" Title=\"{key}\"");
+                if (ShowBadge && t == 1) sb.Append(" Badge=\"3\"");
+                if (DisableThird && t == 2) sb.Append(" Disabled=\"true\"");
+
+                var hasSlots = ShowIcons || (CustomCaption && t == 0);
+                if (!hasSlots)
+                {
+                    sb.Append(" />\n");
+                    continue;
+                }
+
+                sb.Append(">\n");
+                if (ShowIcons) sb.Append("            <Icon><svg …/></Icon>\n");
+                if (CustomCaption && t == 0)
+                    sb.Append("            <ChildContent><em>Custom</em> <strong>caption</strong></ChildContent>\n");
+                sb.Append("        </AtomTab>\n");
+            }
+            sb.Append("    </TabList>\n");
+
+            sb.Append("    <Panels>\n");
+            for (var t = 0; t < keys.Count; t++)
+            {
+                sb.Append($"        <AtomTabPanel Value=\"{keys[t]}\"");
+                if (t == 0 && Panel1PaddingV >= 0) sb.Append($" Padding=\"{Panel1PaddingV.ToString(Inv)}\"");
+                sb.Append($">\n            <p>{keys[t]} content.</p>\n        </AtomTabPanel>\n");
+            }
+            sb.Append("    </Panels>\n");
+            sb.Append("</AtomTabs>");
+
+            return sb.ToString();
+        }
+    }
+}

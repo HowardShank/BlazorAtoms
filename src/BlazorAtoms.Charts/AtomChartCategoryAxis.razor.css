@@ -1,0 +1,46 @@
+.atom-chart-category-axis {
+    display: flex;
+    /* No gap. A gap is distributed between the label items but not between the mark slots, so any gap at
+       all shifts the outer labels away from the marks they name — measured at 1.5px with 0.25rem. */
+    gap: 0;
+    font-size: 0.8em;
+    opacity: 0.75;
+    min-width: 0;
+    /* Matches the SVG's internal padding so the first and last labels line up with the end marks.
+       Percentages of the box width — which is what the SVG scales with — rather than pixels, and emitted
+       from C# because the left pad widens when the value-axis gutter appears. */
+    padding: 0 var(--chart-pad-right, 1.875%) 0 var(--chart-pad-left, 1.875%);
+}
+
+.atom-chart-category-axis-label {
+    flex: 1 1 0;
+    min-width: 0;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Anchoring the end labels to the plot's edges is only correct when the end marks actually sit there — a
+   line chart's points do (XAt spans exactly 0..width), a bar chart's bars do not (each is inset within its
+   own slot by BarGap, first and last included). The chart sets data-align-ends accordingly; gated on it
+   rather than applied unconditionally, or every bar chart's end labels would drift outward from their
+   bars — the bug this rule exists to avoid re-introducing. */
+.atom-chart-category-axis[data-align-ends] .atom-chart-category-axis-label:first-child { text-align: left; }
+.atom-chart-category-axis[data-align-ends] .atom-chart-category-axis-label:last-child { text-align: right; }
+
+/* A single point is both :first-child and :last-child at once, so both rules above match it — and
+   :last-child, declared second, wins the tie, pinning a lone label to the right edge. But XAt centres a
+   single point at width/2, not at either edge, so its label has to be centred too. :only-child is exactly
+   "first and last with nothing between," and placed after both rules it overrides them by source order at
+   equal specificity. */
+.atom-chart-category-axis[data-align-ends] .atom-chart-category-axis-label:only-child { text-align: center; }
+
+.atom-chart-category-axis[data-wrap] .atom-chart-category-axis-label {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    /* anywhere rather than break-word: a single long token (an ID, a URL) would otherwise overflow its
+       slot and push the neighbouring labels off their marks. */
+    overflow-wrap: anywhere;
+}

@@ -1,0 +1,15 @@
+/*
+    Layout only. The lines are AtomSkeletonBlock children, so everything about how they look — color,
+    shimmer, reduced-motion — comes from that component's stylesheet.
+
+    Nothing here selects .atom-skeleton-block: scoped CSS stamps its scope id on the *final* selector,
+    and the blocks carry AtomSkeletonBlock's scope rather than this one, so such a rule would silently
+    never match. Line geometry is passed as parameters instead.
+*/
+
+.atom-skeleton-text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--skeleton-gap, 0.55rem);
+    width: var(--skeleton-width, 100%);
+}

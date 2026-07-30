@@ -1,0 +1,10 @@
+/* On the <g> itself: the <line> child is built with RenderTreeBuilder, not written as markup here, so it
+   never gets Blazor's scoped-CSS attribute and a rule requiring that attribute directly on it could never
+   match. stroke/stroke-width/stroke-opacity are inherited SVG properties, so setting them on the wrapper
+   reaches the line the same as if it had matched directly — see AtomChartGridlines.razor.css. */
+.atom-chart-baseline {
+    stroke: var(--chart-axis-color, currentColor);
+    stroke-width: 1;
+    /* Stronger than a gridline — it is the origin, not a guide — but still well below the series. */
+    stroke-opacity: 0.25;
+}

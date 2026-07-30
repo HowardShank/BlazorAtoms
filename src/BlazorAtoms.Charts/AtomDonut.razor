@@ -1,0 +1,57 @@
+@inherits AtomSeriesChartBase
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-donut")"
+     style="@StyleAttr(RootStyle)">
+<AtomChartFrame Chart="@ChartCtx"
+                Heading="@Heading"
+                Caption="@Caption"
+                Legend="@Legend"
+                EmptyState="@EmptyState"
+                Placement="@EffectiveLegendPlacement">
+    <Plot>
+    @* The ring holds the square aspect and the positioning context for the centre content. *@
+    <div class="atom-donut-ring">
+        <svg class="atom-donut-svg"
+             viewBox="0 0 100 100"
+             role="img"
+             aria-label="@EffectiveAriaLabel"
+             data-animate="@AnimateAttr">
+            <title>@EffectiveAriaLabel</title>
+
+            @* Rotated so slices start at StartAngle measured clockwise from 12 o'clock, which is where a
+               reader expects a pie to begin. SVG's own 0deg is 3 o'clock. *@
+            <g transform="rotate(@N(StartAngle - 90) 50 50)">
+                <circle class="atom-donut-track"
+                        cx="50" cy="50" r="@N(ArcRadius)"
+                        stroke-width="@N(ResolvedThickness)" />
+
+                @if (HasTotal)
+                {
+                    @foreach (var slice in Slices)
+                    {
+                        @* pathLength="100" re-bases the dash maths onto 0-100, so a slice's arc length is
+                           just its percentage — no circumference, no pi, and independent of the radius. *@
+                        <circle class="atom-donut-slice"
+                                cx="50" cy="50" r="@N(ArcRadius)"
+                                stroke="@slice.Color"
+                                stroke-width="@N(ResolvedThickness)"
+                                pathLength="100"
+                                stroke-dasharray="@N(slice.Length) @N(100 - slice.Length)"
+                                stroke-dashoffset="@N(-slice.Offset)">
+                            <title>@slice.Title</title>
+                        </circle>
+                    }
+                }
+            </g>
+
+            @* Outside the rotated group, so the labels stay upright at any StartAngle. *@
+            @SliceLabels
+        </svg>
+
+        @* The centre element positions itself against this wrapper. *@
+        @Center
+    </div>
+    </Plot>
+</AtomChartFrame>
+</div>

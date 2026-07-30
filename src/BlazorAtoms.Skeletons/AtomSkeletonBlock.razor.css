@@ -1,0 +1,62 @@
+/*
+    The family's only painting stylesheet. AtomSkeletonText / Avatar / Card render this component
+    instead of re-drawing a placeholder, so these rules are the single definition of what a skeleton
+    looks like and how it animates.
+
+    Keyframe names are written literally in the animation shorthand — a scoped stylesheet cannot
+    resolve a @keyframes name through a var().
+*/
+
+.atom-skeleton-block {
+    display: block;
+    width: var(--skeleton-width, 100%);
+    height: var(--skeleton-height, 1rem);
+    border-radius: var(--skeleton-radius, 4px);
+    background-color: var(--skeleton-base-color, #e3e6ea);
+    /* A placeholder is a shape, never a text container: stop it collapsing or inheriting line-height. */
+    flex-shrink: 0;
+}
+
+/* --- Shimmer ------------------------------------------------------------------------------------
+   A 3-stop gradient twice the width of the box, slid across it. background-position animates on the
+   compositor's paint step rather than triggering layout, and because the two outer stops are the base
+   color the band appears to travel over an otherwise flat shape. */
+
+.atom-skeleton-block[data-animation="shimmer"] {
+    background-image: linear-gradient(
+        90deg,
+        var(--skeleton-base-color, #e3e6ea) 0%,
+        var(--skeleton-highlight-color, #f3f5f8) 50%,
+        var(--skeleton-base-color, #e3e6ea) 100%);
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    animation: atom-skeleton-shimmer var(--skeleton-duration, 1.4s) linear infinite;
+}
+
+@keyframes atom-skeleton-shimmer {
+    from { background-position: 150% 0; }
+    to   { background-position: -50% 0; }
+}
+
+/* --- Pulse --------------------------------------------------------------------------------------
+   Opacity only, so it composites without repainting the gradient. */
+
+.atom-skeleton-block[data-animation="pulse"] {
+    animation: atom-skeleton-pulse var(--skeleton-duration, 1.4s) ease-in-out infinite;
+}
+
+@keyframes atom-skeleton-pulse {
+    50% { opacity: 0.45; }
+}
+
+/* --- Reduced motion ----------------------------------------------------------------------------
+   Hold the flat base color. The shimmer's background-image is cleared as well as its animation:
+   leaving the gradient painted would freeze a highlight band mid-sweep across the shape. */
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-skeleton-block[data-animation] {
+        animation: none;
+        background-image: none;
+        opacity: 1;
+    }
+}

@@ -1,0 +1,36 @@
+/* On the <g> itself: the <text> children are built with RenderTreeBuilder, not written as markup here, so
+   they never get Blazor's scoped-CSS attribute and a rule requiring that attribute directly on them could
+   never match. fill/font-size are inherited SVG properties, so setting them on the wrapper reaches every
+   readout the same as if it had matched directly — see AtomChartGridlines.razor.css.
+   opacity does NOT inherit, but applying it to the group composites the same way visually here: the
+   readouts never overlap each other, so group-level and per-element opacity look identical. */
+.atom-chart-value-labels {
+    fill: currentColor;
+    /* px inside a scaled viewBox — see AtomChartValueAxis.razor.css. */
+    font-size: 9px;
+    opacity: 0.8;
+}
+
+/* --- draw-in ------------------------------------------------------------------------------------
+   Keyed off the SVG's own data-animate rather than the chart's class, so one rule serves both charts. The
+   group is the animated element, so all the readouts fade as one and no per-mark delay is needed.
+
+   The keyframes name is written literally: a scoped stylesheet renames its own keyframes, and a name
+   resolved through a var() would not be rewritten and so would not match. */
+svg[data-animate] .atom-chart-value-labels {
+    opacity: 0;
+    animation: atom-chart-value-labels-fade var(--chart-duration, 700ms) ease-out forwards;
+}
+
+@keyframes atom-chart-value-labels-fade {
+    to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    svg[data-animate] .atom-chart-value-labels {
+        animation: none;
+        /* Reset the start state as well, or the readouts stay at opacity 0 — rendered but invisible, which
+           is worse than the motion was. */
+        opacity: 1;
+    }
+}

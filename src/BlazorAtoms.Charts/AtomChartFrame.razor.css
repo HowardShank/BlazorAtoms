@@ -1,0 +1,49 @@
+/* Layout areas shared by all five charts. The chart root is the flex column these stack in; each chart's
+   own stylesheet owns the root, this one owns the areas inside it. */
+
+.atom-chart-heading-area,
+.atom-chart-caption-area {
+    /* Full width of the column, so a heading is never constrained by the plot's own basis. */
+    flex: 0 0 auto;
+    min-width: 0;
+}
+
+/* The plot and an end-placed legend sit side by side and wrap when there is no room — which is how the
+   donut's ring and key have always been laid out. */
+.atom-chart-body {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.atom-chart-plot {
+    /* 12rem basis so a square plot (donut, gauge) has a sensible floor before the legend wraps under it.
+       min-width: 0 is what actually lets it shrink — a flex item's automatic minimum size is its content
+       width otherwise, and an SVG's is not zero. */
+    flex: 1 1 12rem;
+    min-width: 0;
+    /* Positioning context for the empty state, which covers the drawing rather than displacing it. */
+    position: relative;
+}
+
+.atom-chart-legend-area {
+    min-width: 0;
+}
+
+.atom-chart-legend-area[data-placement="end"] {
+    flex: 1 1 9rem;
+}
+
+.atom-chart-legend-area[data-placement="below"] {
+    flex: 0 0 auto;
+}
+
+.atom-chart-empty-area {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

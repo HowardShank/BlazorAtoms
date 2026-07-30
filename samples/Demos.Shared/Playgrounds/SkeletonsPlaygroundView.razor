@@ -1,0 +1,377 @@
+@using BlazorAtoms.Skeletons
+
+<PageTitle>Skeletons Playground</PageTitle>
+
+<h1>Skeletons playground</h1>
+<p>
+    Loading placeholders. <code>AtomSkeletonBlock</code> is the painted primitive; the other three are
+    presets that render it &mdash; so the shimmer, the pulse and the reduced-motion behaviour have one
+    definition. Everything here is pure CSS with no JavaScript, and renders identically in every render
+    mode.
+</p>
+<p class="note">
+    Turn on &ldquo;reduce motion&rdquo; in your OS display settings and every animation below stops on a
+    flat colour, without the layout shifting.
+</p>
+<p><a href="playground/cardlayout">&larr; Card layout playground</a></p>
+
+<div class="sk-stage">
+    <div class="sk-pane">
+        <h2>Preview</h2>
+
+        <div class="sk-preview">
+            @switch (Kind)
+            {
+                case SkeletonKind.Block:
+                    <AtomSkeletonBlock Animation="@Animation"
+                                       BaseColor="@Nz(BaseColor)"
+                                       HighlightColor="@Nz(HighlightColor)"
+                                       Duration="@Nz(Duration)"
+                                       Visible="@Visible"
+                                       AriaLabel="@Nz(AriaLabel)"
+                                       Width="@Nz(BlockWidth)"
+                                       Height="@Nz(BlockHeight)"
+                                       Radius="@Nz(BlockRadius)" />
+                    break;
+
+                case SkeletonKind.Text:
+                    <AtomSkeletonText Animation="@Animation"
+                                      BaseColor="@Nz(BaseColor)"
+                                      HighlightColor="@Nz(HighlightColor)"
+                                      Duration="@Nz(Duration)"
+                                      Visible="@Visible"
+                                      AriaLabel="@Nz(AriaLabel)"
+                                      Lines="@TextLines"
+                                      LineHeight="@TextLineHeight"
+                                      LineRadius="@Nz(TextLineRadius)"
+                                      Gap="@Nz(TextGap)"
+                                      LastLineWidth="@LastLineWidth"
+                                      Width="@Nz(TextWidth)" />
+                    break;
+
+                case SkeletonKind.Avatar:
+                    <AtomSkeletonAvatar Animation="@Animation"
+                                        BaseColor="@Nz(BaseColor)"
+                                        HighlightColor="@Nz(HighlightColor)"
+                                        Duration="@Nz(Duration)"
+                                        Visible="@Visible"
+                                        AriaLabel="@Nz(AriaLabel)"
+                                        Size="@AvatarSize"
+                                        Shape="@AvatarShape" />
+                    break;
+
+                case SkeletonKind.Card:
+                    <AtomSkeletonCard Animation="@Animation"
+                                      BaseColor="@Nz(BaseColor)"
+                                      HighlightColor="@Nz(HighlightColor)"
+                                      Duration="@Nz(Duration)"
+                                      Visible="@Visible"
+                                      AriaLabel="@Nz(AriaLabel)"
+                                      ShowMedia="@ShowMedia"
+                                      MediaHeight="@MediaHeight"
+                                      ShowAvatar="@ShowAvatar"
+                                      AvatarSize="@CardAvatarSize"
+                                      Lines="@CardLines"
+                                      LineGap="@Nz(CardLineGap)"
+                                      Gap="@Nz(CardGap)"
+                                      Padding="@Nz(CardPadding)"
+                                      Width="@Nz(CardWidth)" />
+                    break;
+            }
+        </div>
+
+        <h2>Swap for real content</h2>
+        <p class="note">
+            What a skeleton is actually for: same footprint, so nothing jumps when the data lands.
+        </p>
+        <div class="sk-ctrl">
+            <label><input type="checkbox" @bind="Loaded" /> Loaded</label>
+        </div>
+        <div class="sk-preview">
+            @if (Loaded)
+            {
+                <div class="sk-loaded">
+                    <img class="sk-loaded-media" src="_content/Demos.Shared/beach-tree.jpg" alt="A tree on a beach" />
+                    <div class="sk-loaded-body">
+                        <div class="sk-loaded-avatar"></div>
+                        <div>
+                            <p>
+                                Real content, arriving after the skeleton. The placeholder above reserved
+                                roughly this much room, so the page does not lurch when the request
+                                finishes.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <AtomSkeletonCard Animation="@Animation"
+                                  BaseColor="@Nz(BaseColor)"
+                                  HighlightColor="@Nz(HighlightColor)"
+                                  Duration="@Nz(Duration)"
+                                  AriaLabel="Loading article" />
+            }
+        </div>
+    </div>
+
+    <div class="sk-pane">
+        <h2>Component</h2>
+        <div class="sk-ctrl">
+            <label>Preview</label>
+            <select @bind="Kind">
+                @foreach (var k in Enum.GetValues<SkeletonKind>())
+                {
+                    <option value="@k">Atom Skeleton @k</option>
+                }
+            </select>
+        </div>
+
+        <h2>Shared axes</h2>
+        <div class="sk-ctrl">
+            <label>Animation</label>
+            <select @bind="Animation">
+                @foreach (var a in Enum.GetValues<SkeletonAnimation>())
+                {
+                    <option value="@a">@a</option>
+                }
+            </select>
+        </div>
+        <div class="sk-ctrl">
+            <label>Base color</label>
+            <input type="text" placeholder="(theme default)" @bind="BaseColor" @bind:event="oninput" />
+            <button class="clr-btn" type="button" @onclick="@(() => BaseColor = "")">clear</button>
+        </div>
+        <div class="sk-ctrl">
+            <label>Highlight color <span class="val">(Shimmer only)</span></label>
+            <input type="text" placeholder="(theme default)" @bind="HighlightColor" @bind:event="oninput" />
+            <button class="clr-btn" type="button" @onclick="@(() => HighlightColor = "")">clear</button>
+        </div>
+        <div class="sk-ctrl">
+            <label>Duration</label>
+            <input type="text" placeholder="e.g. 1.4s or 900ms" @bind="Duration" @bind:event="oninput" />
+            <button class="clr-btn" type="button" @onclick="@(() => Duration = "")">clear</button>
+        </div>
+        <div class="sk-ctrl">
+            <label>Aria label <span class="val">(empty = aria-hidden)</span></label>
+            <input type="text" placeholder="(decorative)" @bind="AriaLabel" @bind:event="oninput" />
+            <button class="clr-btn" type="button" @onclick="@(() => AriaLabel = "")">clear</button>
+        </div>
+        <div class="sk-ctrl">
+            <label><input type="checkbox" @bind="Visible" /> Visible</label>
+        </div>
+
+        @switch (Kind)
+        {
+            case SkeletonKind.Block:
+                <h2>Block</h2>
+                <div class="sk-ctrl">
+                    <label>Width</label>
+                    <input type="text" placeholder="100%" @bind="BlockWidth" @bind:event="oninput" />
+                </div>
+                <div class="sk-ctrl">
+                    <label>Height</label>
+                    <input type="text" placeholder="1rem" @bind="BlockHeight" @bind:event="oninput" />
+                </div>
+                <div class="sk-ctrl">
+                    <label>Radius</label>
+                    <input type="text" placeholder="4px" @bind="BlockRadius" @bind:event="oninput" />
+                </div>
+                break;
+
+            case SkeletonKind.Text:
+                <h2>Text</h2>
+                <div class="sk-ctrl">
+                    <label>Lines <span class="val">@TextLines</span></label>
+                    <input type="range" min="0" max="10" step="1" @bind="TextLines" @bind:event="oninput" />
+                </div>
+                <div class="sk-ctrl">
+                    <label>Line height</label>
+                    <input type="text" @bind="TextLineHeight" @bind:event="oninput" />
+                </div>
+                <div class="sk-ctrl">
+                    <label>Line radius</label>
+                    <input type="text" placeholder="4px" @bind="TextLineRadius" @bind:event="oninput" />
+                </div>
+                <div class="sk-ctrl">
+                    <label>Gap</label>
+                    <input type="text" placeholder="0.55rem" @bind="TextGap" @bind:event="oninput" />
+                </div>
+                <div class="sk-ctrl">
+                    <label>Last line width <span class="val">(ignored when Lines = 1)</span></label>
+                    <input type="text" @bind="LastLineWidth" @bind:event="oninput" />
+                </div>
+                <div class="sk-ctrl">
+                    <label>Width</label>
+                    <input type="text" placeholder="100%" @bind="TextWidth" @bind:event="oninput" />
+                </div>
+                break;
+
+            case SkeletonKind.Avatar:
+                <h2>Avatar</h2>
+                <div class="sk-ctrl">
+                    <label>Size</label>
+                    <input type="text" @bind="AvatarSize" @bind:event="oninput" />
+                </div>
+                <div class="sk-ctrl">
+                    <label>Shape</label>
+                    <select @bind="AvatarShape">
+                        @foreach (var s in Enum.GetValues<SkeletonAvatarShape>())
+                        {
+                            <option value="@s">@s</option>
+                        }
+                    </select>
+                </div>
+                <p class="note">
+                    No <code>Radius</code> parameter here on purpose &mdash; <code>Shape</code> owns the
+                    corners. Use <code>AtomSkeletonBlock</code> for an arbitrary radius.
+                </p>
+                break;
+
+            case SkeletonKind.Card:
+                <h2>Card</h2>
+                <div class="sk-ctrl">
+                    <label><input type="checkbox" @bind="ShowMedia" /> Show media</label>
+                </div>
+                <div class="sk-ctrl">
+                    <label>Media height</label>
+                    <input type="text" @bind="MediaHeight" @bind:event="oninput" />
+                </div>
+                <div class="sk-ctrl">
+                    <label><input type="checkbox" @bind="ShowAvatar" /> Show avatar</label>
+                </div>
+                <div class="sk-ctrl">
+                    <label>Avatar size</label>
+                    <input type="text" @bind="CardAvatarSize" @bind:event="oninput" />
+                </div>
+                <div class="sk-ctrl">
+                    <label>Lines <span class="val">@CardLines</span></label>
+                    <input type="range" min="0" max="10" step="1" @bind="CardLines" @bind:event="oninput" />
+                </div>
+                <div class="sk-ctrl">
+                    <label>Line gap</label>
+                    <input type="text" placeholder="(text default)" @bind="CardLineGap" @bind:event="oninput" />
+                </div>
+                <div class="sk-ctrl">
+                    <label>Gap</label>
+                    <input type="text" placeholder="0.75rem" @bind="CardGap" @bind:event="oninput" />
+                </div>
+                <div class="sk-ctrl">
+                    <label>Padding</label>
+                    <input type="text" placeholder="0" @bind="CardPadding" @bind:event="oninput" />
+                </div>
+                <div class="sk-ctrl">
+                    <label>Width</label>
+                    <input type="text" placeholder="100%" @bind="CardWidth" @bind:event="oninput" />
+                </div>
+                break;
+        }
+    </div>
+</div>
+
+<CodeSnippetBox Code="@Snippet" FileName="SkeletonsExample.razor" />
+
+@code {
+    private enum SkeletonKind { Block, Text, Avatar, Card }
+
+    private SkeletonKind Kind { get; set; } = SkeletonKind.Card;
+    private bool Loaded { get; set; }
+
+    // shared axes
+    private SkeletonAnimation Animation { get; set; } = SkeletonAnimation.Shimmer;
+    private string BaseColor { get; set; } = "";
+    private string HighlightColor { get; set; } = "";
+    private string Duration { get; set; } = "";
+    private string AriaLabel { get; set; } = "";
+    private bool Visible { get; set; } = true;
+
+    // block
+    private string BlockWidth { get; set; } = "";
+    private string BlockHeight { get; set; } = "";
+    private string BlockRadius { get; set; } = "";
+
+    // text
+    private int TextLines { get; set; } = 3;
+    private string TextLineHeight { get; set; } = "0.8rem";
+    private string TextLineRadius { get; set; } = "";
+    private string TextGap { get; set; } = "";
+    private string LastLineWidth { get; set; } = "60%";
+    private string TextWidth { get; set; } = "";
+
+    // avatar
+    private string AvatarSize { get; set; } = "40px";
+    private SkeletonAvatarShape AvatarShape { get; set; } = SkeletonAvatarShape.Circle;
+
+    // card
+    private bool ShowMedia { get; set; } = true;
+    private string MediaHeight { get; set; } = "120px";
+    private bool ShowAvatar { get; set; } = true;
+    private string CardAvatarSize { get; set; } = "40px";
+    private int CardLines { get; set; } = 3;
+    private string CardLineGap { get; set; } = "";
+    private string CardGap { get; set; } = "";
+    private string CardPadding { get; set; } = "";
+    private string CardWidth { get; set; } = "";
+
+    /// <summary>Empty textbox means "unset", so the component keeps its CSS default.</summary>
+    private static string? Nz(string s) => string.IsNullOrWhiteSpace(s) ? null : s;
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.Append('<').Append("AtomSkeleton").Append(Kind);
+
+            if (Animation != SkeletonAnimation.Shimmer) sb.Append($" Animation=\"{Animation}\"");
+            Attr(sb, "BaseColor", BaseColor);
+            Attr(sb, "HighlightColor", HighlightColor);
+            Attr(sb, "Duration", Duration);
+            Attr(sb, "AriaLabel", AriaLabel);
+            if (!Visible) sb.Append(" Visible=\"false\"");
+
+            switch (Kind)
+            {
+                case SkeletonKind.Block:
+                    Attr(sb, "Width", BlockWidth);
+                    Attr(sb, "Height", BlockHeight);
+                    Attr(sb, "Radius", BlockRadius);
+                    break;
+
+                case SkeletonKind.Text:
+                    if (TextLines != 3) sb.Append($" Lines=\"{TextLines}\"");
+                    if (TextLineHeight != "0.8rem") Attr(sb, "LineHeight", TextLineHeight);
+                    Attr(sb, "LineRadius", TextLineRadius);
+                    Attr(sb, "Gap", TextGap);
+                    if (LastLineWidth != "60%") Attr(sb, "LastLineWidth", LastLineWidth);
+                    Attr(sb, "Width", TextWidth);
+                    break;
+
+                case SkeletonKind.Avatar:
+                    if (AvatarSize != "40px") Attr(sb, "Size", AvatarSize);
+                    if (AvatarShape != SkeletonAvatarShape.Circle) sb.Append($" Shape=\"{AvatarShape}\"");
+                    break;
+
+                case SkeletonKind.Card:
+                    if (!ShowMedia) sb.Append(" ShowMedia=\"false\"");
+                    if (MediaHeight != "120px") Attr(sb, "MediaHeight", MediaHeight);
+                    if (!ShowAvatar) sb.Append(" ShowAvatar=\"false\"");
+                    if (CardAvatarSize != "40px") Attr(sb, "AvatarSize", CardAvatarSize);
+                    if (CardLines != 3) sb.Append($" Lines=\"{CardLines}\"");
+                    Attr(sb, "LineGap", CardLineGap);
+                    Attr(sb, "Gap", CardGap);
+                    Attr(sb, "Padding", CardPadding);
+                    Attr(sb, "Width", CardWidth);
+                    break;
+            }
+
+            sb.Append(" />");
+            return sb.ToString();
+        }
+    }
+
+    private static void Attr(System.Text.StringBuilder sb, string name, string value)
+    {
+        if (!string.IsNullOrWhiteSpace(value)) sb.Append($" {name}=\"{value}\"");
+    }
+}

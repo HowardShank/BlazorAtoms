@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <Import Project="$(RepoRoot)build\Packable.props" />
+  <Import Project="$(RepoRoot)build\Shared.props" />
+
+  <PropertyGroup>
+    <PackageId>BlazorAtoms.Charts</PackageId>
+    <Title>Blazor Charts</Title>
+    <Description>Small data visuals for Blazor drawn as inline SVG: AtomSparkline, AtomLineChart, AtomBarChart, AtomDonut and AtomGauge. One series of doubles plus optional labels — no charting library, no JavaScript, no dependencies. Crisp at any zoom, themeable through --chart-* custom properties and currentColor, with an opt-in draw-in animation that respects prefers-reduced-motion. Each mark carries an SVG title, so hover values and accessible names come from the browser rather than from interop.</Description>
+    <PackageTags>Blazor;Charts;Sparkline;BarChart;LineChart;Donut;Gauge;SVG;DataVisualization;WebAssembly;Server</PackageTags>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BlazorAtoms.Charts.Tests" />
+  </ItemGroup>
+
+</Project>

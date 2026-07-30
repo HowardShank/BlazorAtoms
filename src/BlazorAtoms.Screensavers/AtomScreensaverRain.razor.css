@@ -1,28 +1,28 @@
-.matrix-rain {
+.atom-screensaver-rain {
     display: block;
-    width: var(--mr-width, 100%);
-    height: var(--mr-height, 100%);
+    width: var(--screensaver-rain-width, 100%);
+    height: var(--screensaver-rain-height, 100%);
     position: relative;
     overflow: hidden;
     background: #000;
 }
 
-.matrix-rain__canvas {
+.atom-screensaver-rain__canvas {
     display: block;
     width: 100%;
     height: 100%;
-    color: var(--mr-color, #0F0);
+    color: var(--screensaver-rain-color, #0F0);
     background: #000;
-    font-family: var(--mr-font, monospace);
+    font-family: var(--screensaver-rain-font, monospace);
 }
 
 /* Glow variant: CSS drop-shadow on the whole bitmap */
-.matrix-rain[data-glow="true"] .matrix-rain__canvas {
-    filter: drop-shadow(0 0 8px var(--mr-bg, var(--mr-color, #273527)));
+.atom-screensaver-rain[data-glow="true"] .atom-screensaver-rain__canvas {
+    filter: drop-shadow(0 0 8px var(--screensaver-rain-bg, var(--screensaver-rain-color, #273527)));
 }
 
 /* Scanlines overlay */
-.matrix-rain[data-scanlines="true"]::after {
+.atom-screensaver-rain[data-scanlines="true"]::after {
     content: "";
     position: absolute;
     inset: 0;

@@ -1,0 +1,74 @@
+@inherits AtomChartBase
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-gauge")"
+     style="@StyleAttr(RootStyle)">
+<AtomChartFrame Chart="@ChartCtx"
+                Heading="@Heading"
+                Caption="@Caption"
+                Legend="@Legend"
+                EmptyState="@EmptyState"
+                Placement="@EffectiveLegendPlacement">
+    <Plot>
+    @* The dial holds the square aspect and the positioning context for the readout. *@
+    <div class="atom-gauge-dial">
+        <svg class="atom-gauge-svg"
+             viewBox="0 0 100 100"
+             role="img"
+             aria-label="@EffectiveAriaLabel"
+             data-animate="@AnimateAttr">
+            <title>@EffectiveAriaLabel</title>
+
+            @* Rotated so the sweep is centred on 12 o'clock. Everything inside is drawn as a full circle and
+               trimmed by stroke-dasharray, with pathLength="100" making those lengths percentages. *@
+            <g transform="rotate(@N(-90 - SweepAngle / 2) 50 50)">
+                <circle class="atom-gauge-track"
+                        cx="50" cy="50" r="@N(ArcRadius)"
+                        stroke-width="@N(ResolvedThickness)"
+                        pathLength="100"
+                        stroke-dasharray="@N(TrackLength) @N(100 - TrackLength)" />
+
+                @foreach (var band in BandArcs)
+                {
+                    <circle class="atom-gauge-band"
+                            cx="50" cy="50" r="@N(ArcRadius)"
+                            stroke="@band.Color"
+                            stroke-width="@N(ResolvedThickness)"
+                            pathLength="100"
+                            stroke-dasharray="@N(band.Length) @N(100 - band.Length)"
+                            stroke-dashoffset="@N(-band.Offset)">
+                        <title>@band.Title</title>
+                    </circle>
+                }
+
+                @if (ShowValueArc)
+                {
+                    <circle class="atom-gauge-value-arc"
+                            cx="50" cy="50" r="@N(ArcRadius)"
+                            stroke-width="@N(ResolvedThickness)"
+                            pathLength="100"
+                            stroke-dasharray="@N(ValueLength) @N(100 - ValueLength)" />
+                }
+
+                @if (ShowNeedle)
+                {
+                    <line class="atom-gauge-needle"
+                          x1="50" y1="50"
+                          x2="@N(NeedleX)" y2="@N(NeedleY)" />
+                    <circle class="atom-gauge-hub" cx="50" cy="50" r="3" />
+                }
+            </g>
+
+            @* Outside the rotated group: text inside it would inherit the rotation and sit at a tilt that
+               changes with SweepAngle. RangeLabels computes absolute angles instead. *@
+            @RangeLabels
+        </svg>
+
+        @* Both position themselves against this wrapper, and can coexist — the readout knows to sit clear
+           of the needle's hub, while the centre element centres exactly. *@
+        @Center
+        @Readout
+    </div>
+    </Plot>
+</AtomChartFrame>
+</div>

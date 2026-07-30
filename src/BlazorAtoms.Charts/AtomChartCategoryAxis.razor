@@ -1,0 +1,14 @@
+@inherits AtomChartElementBase
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-chart-category-axis")"
+     style="@StyleAttr(null)"
+     data-wrap="@WrapAttr"
+     data-align-ends="@AlignEndsAttr">
+    @foreach (var label in Labels)
+    {
+        @* Rendered even when null, so every mark keeps its own equal share of the track and the labels
+           that do exist stay under the marks they name. *@
+        <span class="atom-chart-category-axis-label">@label</span>
+    }
+</div>

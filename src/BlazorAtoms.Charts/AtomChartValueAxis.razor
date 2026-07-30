@@ -1,0 +1,23 @@
+@inherits AtomChartElementBase
+
+@if (InSvg)
+{
+    <g @attributes="AdditionalAttributes"
+       class="@ClassAttr("atom-chart-value-axis")"
+       style="@StyleAttr(null)">
+        @TextMarks(Ticks, "atom-chart-value-axis-label")
+    </g>
+}
+else
+{
+    @* Horizontal value axis: an HTML row, because it aligns to fractions of the WIDTH — which
+       space-between and percentage padding do exactly, and which lets the text inherit the page font. *@
+    <div @attributes="AdditionalAttributes"
+         class="@ClassAttr("atom-chart-value-axis")"
+         style="@StyleAttr(null)">
+        @foreach (var tick in Ticks)
+        {
+            <span class="atom-chart-value-axis-tick">@tick.Text</span>
+        }
+    </div>
+}

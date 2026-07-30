@@ -1,0 +1,32 @@
+/*
+    Layout only — the shapes are child components and paint themselves.
+
+    .atom-skeleton-card-body and .atom-skeleton-card-lines are written in this component's markup, so
+    they carry this scope and these rules match. Selecting the children directly (e.g.
+    `.atom-skeleton-card > .atom-skeleton-text`) would not: the scope id lands on the final selector,
+    and the child roots carry their own component's scope. Hence the wrapper div.
+*/
+
+.atom-skeleton-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--skeleton-gap, 0.75rem);
+    width: var(--skeleton-width, 100%);
+    padding: var(--skeleton-padding, 0);
+    /* Clip the edge-to-edge media band if a caller rounds the card via Style/CssClass. */
+    overflow: hidden;
+}
+
+.atom-skeleton-card-body {
+    display: flex;
+    gap: var(--skeleton-gap, 0.75rem);
+    /* Top-aligned: the avatar sits level with the first line, as it would in a real card header. */
+    align-items: flex-start;
+}
+
+.atom-skeleton-card-lines {
+    /* Take the width the avatar leaves. min-width:0 so a long line can't push the flex item wider
+       than the card — the classic flexbox overflow. */
+    flex: 1 1 auto;
+    min-width: 0;
+}

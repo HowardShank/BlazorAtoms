@@ -1,0 +1,42 @@
+@inherits AtomSkeletonBase
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-skeleton-card")"
+     style="@StyleAttr(RootStyle)"
+     role="@RoleAttr"
+     aria-live="@AriaLiveAttr"
+     aria-label="@AriaLabel"
+     aria-hidden="@AriaHiddenAttr">
+
+    @if (ShowMedia)
+    {
+        @* Radius 0: the media band runs edge to edge, so its own corners would fight the card's. *@
+        <AtomSkeletonBlock Animation="@Animation"
+                           BaseColor="@BaseColor"
+                           HighlightColor="@HighlightColor"
+                           Duration="@Duration"
+                           Height="@MediaHeight"
+                           Radius="0" />
+    }
+
+    <div class="atom-skeleton-card-body">
+        @if (ShowAvatar)
+        {
+            <AtomSkeletonAvatar Animation="@Animation"
+                                BaseColor="@BaseColor"
+                                HighlightColor="@HighlightColor"
+                                Duration="@Duration"
+                                Size="@AvatarSize" />
+        }
+
+        @* Wrapper is written here, so it carries this component's scope and can be styled below. *@
+        <div class="atom-skeleton-card-lines">
+            <AtomSkeletonText Animation="@Animation"
+                              BaseColor="@BaseColor"
+                              HighlightColor="@HighlightColor"
+                              Duration="@Duration"
+                              Lines="@Lines"
+                              Gap="@LineGap" />
+        </div>
+    </div>
+</div>

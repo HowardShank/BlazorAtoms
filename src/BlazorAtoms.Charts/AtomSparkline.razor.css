@@ -1,0 +1,84 @@
+/*
+    The area is the series colour at low fill-opacity rather than a mixed colour, so the default works
+    against currentColor without color-mix(). Keyframe names are literal — a scoped stylesheet cannot
+    resolve a @keyframes name through a var().
+*/
+
+/* The frame's areas (heading, plot, legend, caption) stack in this column. A sparkline with none of them
+   is a single-item column, which lays out exactly as the old display:block did. */
+.atom-sparkline {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    width: var(--chart-width, 100%);
+}
+
+.atom-sparkline-svg {
+    display: block;
+    width: 100%;
+    /*
+        Locked to the viewBox's 300x40. Without this, uniform scaling fitted the artwork to whichever axis
+        ran out first: at width:100% with a fixed 3rem height, a 925px-wide box drew the strip ~180px wide
+        and centred, leaving it floating in the middle of its own container.
+
+        Setting Height brings that back — it is the caller's choice, and only visible as letterboxing when
+        the box no longer matches this ratio.
+    */
+    aspect-ratio: 300 / 40;
+    height: var(--chart-height, auto);
+}
+
+.atom-sparkline-line {
+    fill: none;
+    stroke: var(--chart-series-color, currentColor);
+    stroke-width: var(--chart-stroke-width, 2);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.atom-sparkline-area {
+    fill: var(--chart-area-color, var(--chart-series-color, currentColor));
+    fill-opacity: var(--chart-area-opacity, 0.18);
+    stroke: none;
+}
+
+.atom-sparkline-point {
+    fill: var(--chart-series-color, currentColor);
+}
+
+/* --- Draw-in ------------------------------------------------------------------------------------
+   pathLength="100" on the line means the dash length is 100 regardless of the actual path length, so
+   this animation needs no knowledge of the geometry. */
+
+.atom-sparkline-svg[data-animate] .atom-sparkline-line {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: atom-sparkline-draw var(--chart-duration, 700ms) ease-out forwards;
+}
+
+@keyframes atom-sparkline-draw {
+    to { stroke-dashoffset: 0; }
+}
+
+/* Area and marker fade in rather than draw, so they arrive with the line instead of appearing first. */
+.atom-sparkline-svg[data-animate] .atom-sparkline-area,
+.atom-sparkline-svg[data-animate] .atom-sparkline-point {
+    opacity: 0;
+    animation: atom-sparkline-fade var(--chart-duration, 700ms) ease-out forwards;
+}
+
+@keyframes atom-sparkline-fade {
+    to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-sparkline-svg[data-animate] .atom-sparkline-line,
+    .atom-sparkline-svg[data-animate] .atom-sparkline-area,
+    .atom-sparkline-svg[data-animate] .atom-sparkline-point {
+        animation: none;
+        /* Reset the animation's start state too: without this the line stays fully dashed-out and the
+           area invisible, i.e. the chart would render empty rather than un-animated. */
+        stroke-dashoffset: 0;
+        opacity: 1;
+    }
+}

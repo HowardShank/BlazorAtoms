@@ -1,8 +1,8 @@
 @using BlazorAtoms.Screensavers
 
-<PageTitle>ScreensaverRain Playground</PageTitle>
+<PageTitle>AtomScreensaverRain Playground</PageTitle>
 
-<h1>ScreensaverRain playground</h1>
+<h1>AtomScreensaverRain playground</h1>
 <p>
     Matrix-style digital rain. Use the controls below to experiment with the display options.
     The canvas is driven by a small JS module and is disposed automatically when you leave the page.
@@ -12,7 +12,7 @@
 <div class="ss-stage">
     <div class="ss-pane ss-preview">
         <h2>Preview</h2>
-        <ScreensaverRain @ref="_screensaver"
+        <AtomScreensaverRain @ref="_screensaver"
                          TextColor="@TextColor"
                          BackgroundColor="@BackgroundColor"
                          FontFamily="@FontFamily"
@@ -83,7 +83,7 @@
     </div>
 </div>
 
-<CodeSnippetBox Code="@Snippet" FileName="ScreensaverRainExample.razor" />
+<CodeSnippetBox Code="@Snippet" FileName="AtomScreensaverRainExample.razor" />
 
 @code {
     private string TextColor { get; set; } = "#00FF00";
@@ -97,7 +97,7 @@
     private string Height { get; set; } = "360px";
     private bool Disabled { get; set; }
 
-    private ScreensaverRain _screensaver = default!;
+    private AtomScreensaverRain _screensaver = default!;
 
     private string SpeedDisplay => Speed.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "x";
 
@@ -110,9 +110,9 @@
     {
         get
         {
-            var sb = new System.Text.StringBuilder("<ScreensaverRain");
+            var sb = new System.Text.StringBuilder("<AtomScreensaverRain");
             if (TextColor != "#00FF00") sb.Append($" TextColor=\"{TextColor}\"");
-            if (BackgroundColor != "#00FF00") sb.Append($" BackgroundColor=\"{BackgroundColor}\"");
+            if (BackgroundColor != "#222f22") sb.Append($" BackgroundColor=\"{BackgroundColor}\"");
             if (FontFamily != "monospace") sb.Append($" FontFamily=\"{FontFamily}\"");
             if (FontSize != 16) sb.Append($" FontSize=\"{FontSize}\"");
             if (Speed != 1) sb.Append($" Speed=\"{Speed}\"");

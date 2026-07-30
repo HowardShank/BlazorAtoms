@@ -1,0 +1,78 @@
+@inherits AtomCartesianChartBase
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-line-chart")"
+     style="@StyleAttr(RootStyle)">
+<AtomChartFrame Chart="@ChartCtx"
+                Heading="@Heading"
+                Caption="@Caption"
+                Legend="@Legend"
+                EmptyState="@EmptyState"
+                Placement="@EffectiveLegendPlacement">
+    <Plot>
+    <div class="atom-line-chart-plot">
+
+        @if (ValueAxisTitle is not null)
+        {
+            @* The chart's wrapper turns the title on its side, not the element — an element cannot see
+               which slot it was placed in, and for horizontal bars these two swap axes. *@
+            <div class="atom-line-chart-axis-title-inline">@ValueAxisTitle</div>
+        }
+
+        <div class="atom-line-chart-stack">
+            <svg class="atom-line-chart-svg"
+                 viewBox="@ViewBox"
+                 role="img"
+                 aria-label="@EffectiveAriaLabel"
+                 data-animate="@AnimateAttr">
+                <title>@EffectiveAriaLabel</title>
+
+                @* Every element slot below draws in this group's coordinate space, which is why their
+                   coordinates need no knowledge of PadLeft/PadTop. *@
+                <g transform="translate(@N(PadLeft), @N(PadTop))">
+
+                    @ValueAxis
+                    @Gridlines
+                    @Baseline
+
+                    @if (HasData)
+                    {
+                        @if (ShowArea)
+                        {
+                            <path class="atom-line-chart-area" d="@AreaPath(PlotWidth, PlotHeight, Smooth)" />
+                        }
+
+                        <path class="atom-line-chart-line"
+                              d="@LinePath(PlotWidth, PlotHeight, Smooth)"
+                              pathLength="100" />
+
+                        @if (ShowPoints)
+                        {
+                            @for (var i = 0; i < Series.Length; i++)
+                            {
+                                <circle class="atom-line-chart-point"
+                                        cx="@N(XAt(i, PlotWidth))"
+                                        cy="@N(YAt(Series[i], PlotHeight))"
+                                        r="@N(PointRadius)">
+                                    @* Native tooltip and accessible text, no interop. *@
+                                    <title>@TitleAt(i)</title>
+                                </circle>
+                            }
+                        }
+
+                        @ValueLabels
+                    }
+                </g>
+            </svg>
+
+            @CategoryAxis
+
+            @if (CategoryAxisTitle is not null)
+            {
+                <div class="atom-line-chart-axis-title-block">@CategoryAxisTitle</div>
+            }
+        </div>
+    </div>
+    </Plot>
+</AtomChartFrame>
+</div>

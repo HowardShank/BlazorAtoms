@@ -1,0 +1,18 @@
+/* On the <g> itself: the <text> children are built with RenderTreeBuilder, not written as markup here, so
+   they never get Blazor's scoped-CSS attribute and a rule requiring that attribute directly on them could
+   never match — see AtomChartGridlines.razor.css. Every property below is inherited
+   (fill/font-size/font-weight/paint-order/stroke/stroke-width/pointer-events all are), so setting them on
+   the wrapper reaches every label the same as if it had matched directly. */
+.atom-chart-slice-labels {
+    fill: #fff;
+    /* px inside a scaled viewBox — em would resolve against the SVG's font size and then be scaled again. */
+    font-size: 6px;
+    font-weight: 600;
+    /* White over the slice colour, with a dark halo so it stays legible on a pale palette entry. There is
+       no way to pick a contrasting colour per slice without parsing the caller's arbitrary CSS colour. */
+    paint-order: stroke;
+    stroke: rgba(0, 0, 0, 0.45);
+    stroke-width: 1.5;
+    /* Let hovers through to the slice underneath, whose title is the tooltip. */
+    pointer-events: none;
+}

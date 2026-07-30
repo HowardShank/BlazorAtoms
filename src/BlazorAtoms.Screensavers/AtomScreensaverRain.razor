@@ -1,7 +1,7 @@
 @inherits AtomComponentBase
 
 @*
-    ScreensaverRain.razor
+    AtomScreensaverRain.razor
     ---------------------
     Matrix-style digital rain screensaver. Renders a canvas element and drives the animation
     via a tiny JS module. Supports theme parameters (glow, scanlines, background color, font)
@@ -11,7 +11,7 @@
     {
 
 <div @attributes="AdditionalAttributes"
-     class="@ClassAttr("matrix-rain")"
+     class="@ClassAttr("atom-screensaver-rain")"
      style="@StyleAttr(RootStyle)"
      data-background="@BackgroundColor"
      data-font="@FontFamily"
@@ -19,6 +19,6 @@
      data-scanlines="@(Scanlines ? "true" : null)"
      role="img"
      aria-label="Matrix rain screensaver">
-        <canvas @ref="_canvasRef" id="@_canvasId" class="matrix-rain__canvas"></canvas>
+        <canvas @ref="_canvasRef" id="@_canvasId" class="atom-screensaver-rain__canvas"></canvas>
 </div>
 }

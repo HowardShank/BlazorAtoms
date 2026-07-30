@@ -1,0 +1,17 @@
+/*
+    On the <g> itself, not on .atom-chart-gridline: the <line> children are built with
+    RenderTreeBuilder rather than written as markup in this file, so the Razor compiler never sees them
+    and never stamps Blazor's scoped-CSS attribute onto them — a rule that requires the attribute directly
+    on the <line> can never match. stroke/stroke-width/stroke-opacity/stroke-dasharray are all inherited SVG
+    properties, so setting them here reaches every line inside exactly as if they'd matched directly.
+*/
+.atom-chart-gridlines {
+    stroke: var(--chart-axis-color, currentColor);
+    stroke-width: 1;
+    /* Chrome is a reading aid, not data: it must never compete with the series for attention. */
+    stroke-opacity: 0.12;
+}
+
+.atom-chart-gridlines[data-dashed] {
+    stroke-dasharray: 3 3;
+}

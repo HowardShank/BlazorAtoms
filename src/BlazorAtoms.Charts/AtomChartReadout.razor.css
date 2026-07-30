@@ -1,0 +1,27 @@
+.atom-chart-readout {
+    /* The gauge's dial wrapper is the positioning context. */
+    position: absolute;
+    left: 0;
+    right: 0;
+    /* Anchored at the dial's centre plus the offset, then pulled back by half its own height so the
+       content's centre lands exactly there.
+
+       A percentage `top` resolves against the container's HEIGHT, which is what makes this exact. An earlier
+       attempt used padding-top on a centre-aligned flex box: that shifts content by only half the padding
+       and takes no account of the readout's own height, so the text still clipped the hub by 2px at small
+       sizes. */
+    top: calc(50% + var(--chart-readout-offset, 0%));
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    /* Let hovers through to the bands, whose titles are the tooltips. */
+    pointer-events: none;
+}
+
+.atom-chart-readout-value {
+    font-size: 1.4em;
+    font-variant-numeric: tabular-nums;
+}

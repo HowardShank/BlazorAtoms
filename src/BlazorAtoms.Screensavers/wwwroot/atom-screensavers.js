@@ -9,7 +9,7 @@ function resolveCanvas(canvasOrId) {
 
 function updateLayout(state) {
     const canvas = state.canvas;
-    const fontSize = Math.max(1, parseFontSize(readStyle(canvas, "--mr-font-size", "16px")));
+    const fontSize = Math.max(1, parseFontSize(readStyle(canvas, "--screensaver-rain-font-size", "16px")));
     // Size canvas from its own rendered box, not the parent — CSS like `width: 50%` shrinks
     // the canvas below its parent, and sizing from the parent would produce a permanent width
     // mismatch that fires updateLayout every frame (which clears the canvas → no trail).
@@ -74,16 +74,16 @@ function draw(state) {
     const { ctx, canvas, chars } = state;
 
     // Read latest CSS variables so control changes are picked up every frame.
-    const color = readStyle(canvas, "--mr-color", "#0F0");
-    const backgroundColor = readStyle(canvas, "--mr-bg", color);
+    const color = readStyle(canvas, "--screensaver-rain-color", "#0F0");
+    const backgroundColor = readStyle(canvas, "--screensaver-rain-bg", color);
     const glow = canvas.closest("[data-glow='true']") !== null;
-    const fontFamily = readStyle(canvas, "--mr-font", "monospace");
+    const fontFamily = readStyle(canvas, "--screensaver-rain-font", "monospace");
 
     // Recalculate columns/drops whenever the font size or container size changes.
     if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
         updateLayout(state);
     }
-    const fontSize = Math.max(1, parseFontSize(readStyle(canvas, "--mr-font-size", "16px")));
+    const fontSize = Math.max(1, parseFontSize(readStyle(canvas, "--screensaver-rain-font-size", "16px")));
     if (fontSize !== state.fontSize) {
         updateLayout(state);
     }
@@ -104,7 +104,7 @@ function draw(state) {
         ctx.shadowBlur = 0;
     }
 
-    const speed = Math.max(0, parseFloat(readStyle(canvas, "--mr-speed", "1")) || 1);
+    const speed = Math.max(0, parseFloat(readStyle(canvas, "--screensaver-rain-speed", "1")) || 1);
 
     for (let i = 0; i < columns; i++) {
         const text = chars[Math.floor(Math.random() * chars.length)];

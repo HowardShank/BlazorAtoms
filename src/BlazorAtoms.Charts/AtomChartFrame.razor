@@ -1,0 +1,38 @@
+@* Layout shell shared by all five charts — see AtomChartFrame.razor.cs for why it exists. *@
+
+@* IsFixed="false" and the value rebuilt by the chart each render: the elements only read from it, so
+   Blazor's own change detection re-renders them and there is no registration list to notify. *@
+<CascadingValue Value="Chart" IsFixed="false">
+
+    @if (Heading is not null)
+    {
+        <div class="atom-chart-heading-area">@Heading</div>
+    }
+
+    <div class="atom-chart-body">
+        <div class="atom-chart-plot">
+            @Plot
+
+            @if (ShowsEmptyState)
+            {
+                <div class="atom-chart-empty-area">@EmptyState</div>
+            }
+        </div>
+
+        @if (ShowsLegendBeside)
+        {
+            <div class="atom-chart-legend-area" data-placement="end">@Legend</div>
+        }
+    </div>
+
+    @if (ShowsLegendBelow)
+    {
+        <div class="atom-chart-legend-area" data-placement="below">@Legend</div>
+    }
+
+    @if (Caption is not null)
+    {
+        <div class="atom-chart-caption-area">@Caption</div>
+    }
+
+</CascadingValue>

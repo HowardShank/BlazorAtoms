@@ -59,9 +59,9 @@ dotnet test tests/BlazorAtoms.Badges.Tests/BlazorAtoms.Badges.Tests.csproj
 - JavaScript and graphics policy: `src/LIBRARY-CATALOG.md`
 - Playground requirements: `samples/Demos.Shared/Playgrounds/README.md`
 - Shared component styling helpers: `src/BlazorAtoms.Shared/`
-- Example self-importing component: `src/BlazorAtoms.Screensavers/ScreensaverRain.razor.cs`
+- Example self-importing component: `src/BlazorAtoms.Screensavers/AtomScreensaverRain.razor.cs`
 - Example bUnit JS-interop tests:
-  - `tests/BlazorAtoms.Screensavers.Tests/ScreensaverRainTests.cs`
+  - `tests/BlazorAtoms.Screensavers.Tests/AtomScreensaverRainTests.cs`
   - `tests/BlazorAtoms.Canvas.Tests/Canvas2DContextTests.cs`
   - `tests/BlazorAtoms.Highlights.Tests/AtomHighlighterTests.cs`
 

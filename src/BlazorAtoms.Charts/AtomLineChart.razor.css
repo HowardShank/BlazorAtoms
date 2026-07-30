@@ -1,0 +1,112 @@
+/* The frame's areas (heading, plot, legend, caption) stack in this column. With none of them present it is
+   a single-item column and lays out exactly as the old display:block did. */
+.atom-line-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    width: var(--chart-width, 100%);
+}
+
+/* --- plot layout --------------------------------------------------------------------------------- */
+
+/* A row, so a value-axis title can sit on its side to the left of everything else. With no title the first
+   item is absent and the stack takes the full width. */
+.atom-line-chart-plot {
+    display: flex;
+    align-items: stretch;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+/* The SVG, the category labels and the category-axis title share one width, which is what keeps the
+   label row's percentage padding matching the SVG's own internal padding. */
+.atom-line-chart-stack {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.atom-line-chart-axis-title-inline {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    /* vertical-rl plus a half turn reads bottom-to-top, which is the conventional direction for a value
+       axis title. vertical-lr alone would read top-to-bottom. */
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+}
+
+.atom-line-chart-axis-title-block {
+    /* Sits under the category labels, across the same width as the plot. */
+    padding-top: 0.15rem;
+}
+
+.atom-line-chart-svg {
+    display: block;
+    width: 100%;
+    /*
+        aspect-ratio matches the viewBox (320x160), which is what keeps the drawing filling the box.
+
+        With a fixed height instead, uniform scaling ("meet") fits the viewBox to whichever axis runs out
+        first: in a 925x160 box the 2:1 artwork is drawn only ~320px wide and centred, while the HTML
+        category labels still span the full width — so the points sat under nothing and the value gutter
+        appeared to float in the middle of the chart. Setting Height reintroduces exactly that, which is
+        why it is not the default.
+    */
+    aspect-ratio: 2 / 1;
+    height: var(--chart-height, auto);
+}
+
+/* --- series -------------------------------------------------------------------------------------
+   Chrome — gridlines, baseline, axis labels, value readouts — belongs to the element components now, each
+   with its own stylesheet. Scoped CSS could not reach them from here in any case: an element rendered into
+   a slot carries the element's scope id, not this chart's. */
+
+.atom-line-chart-line {
+    fill: none;
+    stroke: var(--chart-series-color, currentColor);
+    stroke-width: var(--chart-stroke-width, 2);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.atom-line-chart-area {
+    fill: var(--chart-area-color, var(--chart-series-color, currentColor));
+    fill-opacity: var(--chart-area-opacity, 0.18);
+    stroke: none;
+}
+
+.atom-line-chart-point {
+    fill: var(--chart-series-color, currentColor);
+}
+
+/* --- draw-in ------------------------------------------------------------------------------------ */
+
+.atom-line-chart-svg[data-animate] .atom-line-chart-line {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: atom-line-chart-draw var(--chart-duration, 700ms) ease-out forwards;
+}
+
+@keyframes atom-line-chart-draw {
+    to { stroke-dashoffset: 0; }
+}
+
+.atom-line-chart-svg[data-animate] .atom-line-chart-area,
+.atom-line-chart-svg[data-animate] .atom-line-chart-point {
+    opacity: 0;
+    animation: atom-line-chart-fade var(--chart-duration, 700ms) ease-out forwards;
+}
+
+@keyframes atom-line-chart-fade {
+    to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-line-chart-svg[data-animate] .atom-line-chart-line,
+    .atom-line-chart-svg[data-animate] .atom-line-chart-area,
+    .atom-line-chart-svg[data-animate] .atom-line-chart-point {
+        animation: none;
+        stroke-dashoffset: 0;
+        opacity: 1;
+    }
+}
