@@ -1,0 +1,155 @@
+@using System.Globalization
+@using BlazorAtoms.Equipment
+
+<PageTitle>Lighting Playground</PageTitle>
+
+<h1>Lighting playground</h1>
+<p><code>&lt;AtomLightBulb&gt;</code> and <code>&lt;AtomLightSwitch&gt;</code> &mdash; both interactive
+   (click or Space/Enter toggles, <code>@@bind-IsOn</code> works on either), unlike
+   <a href="playground/stoplight"><code>AtomStoplight</code></a>, which just displays a host-supplied
+   state. Both are pure inline SVG, no JS.</p>
+<p><a href="playground/activityindicators">&larr; Back to demo</a></p>
+
+<h2>AtomLightBulb</h2>
+<div class="lt-stage">
+    <AtomLightBulb @bind-IsOn="BulbOn" Disabled="@BulbDisabled" Width="@BulbWidthV"
+                   GlowColor="@Nz(BulbGlowColor)" AriaLabel="@Nz(BulbAriaLabel)"
+                   CssClass="@Nz(BulbHatchClass)" Style="@Nz(BulbHatchStyle)" />
+    <div class="lt-readout">IsOn = <code>@BulbOn.ToString().ToLowerInvariant()</code></div>
+</div>
+<div class="lt-controls">
+    <div class="ctrl">
+        <label>State</label>
+        <div class="row"><input type="checkbox" id="bulbOn" @bind="BulbOn" /><label for="bulbOn" class="inline">On (click the bulb too)</label></div>
+        <div class="row"><input type="checkbox" id="bulbDis" @bind="BulbDisabled" /><label for="bulbDis" class="inline">Disabled</label></div>
+    </div>
+    <div class="ctrl">
+        <label>Width (px) <span class="val">@BulbWidthV.ToString(Inv)</span></label>
+        <input type="range" min="32" max="200" step="4" @bind="BulbWidthV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Glow color (GlowColor)</label>
+        <div class="row color">
+            <input type="color" @bind="BulbGlowColor" @bind:event="oninput" aria-label="Glow color picker" />
+            <input type="text" @bind="BulbGlowColor" @bind:event="oninput" placeholder="(default warm)" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Aria label (AriaLabel)</label>
+        <input type="text" @bind="BulbAriaLabel" @bind:event="oninput" placeholder="(auto)" />
+    </div>
+    <div class="ctrl">
+        <label>Extra class (CssClass)</label>
+        <input type="text" @bind="BulbHatchClass" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Extra style (Style)</label>
+        <input type="text" @bind="BulbHatchStyle" @bind:event="oninput" placeholder="(none)" />
+    </div>
+</div>
+<CodeSnippetBox Code="@BulbSnippet" FileName="AtomLightBulbExample.razor" />
+
+<h2>AtomLightSwitch</h2>
+<div class="lt-stage">
+    <AtomLightSwitch @bind-IsOn="SwitchOn" Disabled="@SwitchDisabled" Width="@SwitchWidthV"
+                      AriaLabel="@Nz(SwitchAriaLabel)"
+                      CssClass="@Nz(SwitchHatchClass)" Style="@Nz(SwitchHatchStyle)" />
+    <div class="lt-readout">IsOn = <code>@SwitchOn.ToString().ToLowerInvariant()</code></div>
+</div>
+<div class="lt-controls">
+    <div class="ctrl">
+        <label>State</label>
+        <div class="row"><input type="checkbox" id="swOn" @bind="SwitchOn" /><label for="swOn" class="inline">On (click the switch too)</label></div>
+        <div class="row"><input type="checkbox" id="swDis" @bind="SwitchDisabled" /><label for="swDis" class="inline">Disabled</label></div>
+    </div>
+    <div class="ctrl">
+        <label>Width (px) <span class="val">@SwitchWidthV.ToString(Inv)</span></label>
+        <input type="range" min="24" max="160" step="4" @bind="SwitchWidthV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Aria label (AriaLabel)</label>
+        <input type="text" @bind="SwitchAriaLabel" @bind:event="oninput" placeholder="(auto)" />
+    </div>
+    <div class="ctrl">
+        <label>Extra class (CssClass)</label>
+        <input type="text" @bind="SwitchHatchClass" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Extra style (Style)</label>
+        <input type="text" @bind="SwitchHatchStyle" @bind:event="oninput" placeholder="(none)" />
+    </div>
+</div>
+<CodeSnippetBox Code="@SwitchSnippet" FileName="AtomLightSwitchExample.razor" />
+
+<style>
+    .lt-stage { display:flex; flex-direction:column; align-items:center; gap:1rem; background:#0a0a0c; border:1px solid #d0d0d8; border-radius:12px; padding:2rem 1.5rem; margin-bottom:1.5rem; }
+    .lt-readout { color:#6b7785; font-size:.85rem; }
+    .lt-readout code { color:#0a7ea4; }
+    .lt-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem 1.5rem; background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; margin-bottom:1.5rem; }
+    .lt-controls .ctrl { display:flex; flex-direction:column; gap:.4rem; }
+    .lt-controls label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; gap:.5rem; }
+    .lt-controls label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
+    .lt-controls input[type=range] { width:100%; accent-color:#ffd76a; }
+    .lt-controls input[type=text] { padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; }
+    .lt-controls .row { display:flex; align-items:center; gap:.5rem; }
+    .lt-controls .row.color input[type=color] { flex:none; width:38px; height:32px; padding:2px; background:#070b10; border:1px solid #1b2330; border-radius:6px; cursor:pointer; }
+    .lt-controls .row.color input[type=text] { flex:1 1 auto; min-width:0; }
+    .lt-controls .row input[type=checkbox] { accent-color:#ffd76a; width:16px; height:16px; }
+    .lt-controls .row label.inline { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; justify-content:flex-start; }
+</style>
+
+@code {
+    private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
+
+    // ---- bulb ----------------------------------------------------------------------------
+    private bool BulbOn;
+    private bool BulbDisabled;
+    private double BulbWidthV = 64;
+    private string BulbGlowColor = "";
+    private string BulbAriaLabel = "";
+    private string BulbHatchClass = "";
+    private string BulbHatchStyle = "";
+
+    private string BulbSnippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder("<AtomLightBulb");
+            sb.Append(" @bind-IsOn=\"isOn\"");
+            if (BulbDisabled) sb.Append(" Disabled=\"true\"");
+            if (BulbWidthV != 64) sb.Append($" Width=\"{BulbWidthV.ToString(Inv)}\"");
+            if (!string.IsNullOrEmpty(BulbGlowColor)) sb.Append($" GlowColor=\"{BulbGlowColor}\"");
+            if (!string.IsNullOrEmpty(BulbAriaLabel)) sb.Append($" AriaLabel=\"{BulbAriaLabel}\"");
+            if (!string.IsNullOrEmpty(BulbHatchClass)) sb.Append($" CssClass=\"{BulbHatchClass}\"");
+            if (!string.IsNullOrEmpty(BulbHatchStyle)) sb.Append($" Style=\"{BulbHatchStyle}\"");
+            sb.Append(" />");
+            return sb.ToString();
+        }
+    }
+
+    // ---- switch --------------------------------------------------------------------------
+    private bool SwitchOn;
+    private bool SwitchDisabled;
+    private double SwitchWidthV = 48;
+    private string SwitchAriaLabel = "";
+    private string SwitchHatchClass = "";
+    private string SwitchHatchStyle = "";
+
+    private string SwitchSnippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder("<AtomLightSwitch");
+            sb.Append(" @bind-IsOn=\"isOn\"");
+            if (SwitchDisabled) sb.Append(" Disabled=\"true\"");
+            if (SwitchWidthV != 48) sb.Append($" Width=\"{SwitchWidthV.ToString(Inv)}\"");
+            if (!string.IsNullOrEmpty(SwitchAriaLabel)) sb.Append($" AriaLabel=\"{SwitchAriaLabel}\"");
+            if (!string.IsNullOrEmpty(SwitchHatchClass)) sb.Append($" CssClass=\"{SwitchHatchClass}\"");
+            if (!string.IsNullOrEmpty(SwitchHatchStyle)) sb.Append($" Style=\"{SwitchHatchStyle}\"");
+            sb.Append(" />");
+            return sb.ToString();
+        }
+    }
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
+}

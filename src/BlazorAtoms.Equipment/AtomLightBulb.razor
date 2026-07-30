@@ -1,0 +1,26 @@
+@inherits AtomComponentBase
+
+<svg @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-lightbulb")"
+     style="@StyleAttr(RootStyle)"
+     viewBox="0 0 100 150"
+     role="switch"
+     aria-checked="@(IsOn ? "true" : "false")"
+     aria-disabled="@(Disabled ? "true" : null)"
+     aria-label="@AriaLabelValue"
+     tabindex="@(Interactive ? "0" : null)"
+     data-on="@(IsOn ? "true" : null)"
+     @onclick="Toggle"
+     @onkeydown="OnKey">
+
+    <circle class="atom-lightbulb-glass" cx="50" cy="48" r="34" />
+    <polygon class="atom-lightbulb-neck" points="28,78 72,78 65,96 35,96" />
+    <path class="atom-lightbulb-filament" d="M 36,58 L 43,34 L 50,58 L 57,34 L 64,58" />
+    <line class="atom-lightbulb-lead" x1="36" y1="58" x2="35" y2="92" />
+    <line class="atom-lightbulb-lead" x1="64" y1="58" x2="65" y2="92" />
+    <rect class="atom-lightbulb-base" x="33" y="96" width="34" height="36" rx="4" />
+    <line class="atom-lightbulb-thread" x1="33" y1="104" x2="67" y2="104" />
+    <line class="atom-lightbulb-thread" x1="33" y1="112" x2="67" y2="112" />
+    <line class="atom-lightbulb-thread" x1="33" y1="120" x2="67" y2="120" />
+    <rect class="atom-lightbulb-contact" x="45" y="130" width="10" height="6" rx="2" />
+</svg>

@@ -1,0 +1,66 @@
+.atom-lightbulb {
+    display: inline-block;
+    width: var(--lightbulb-width, 64px);
+    height: auto;
+    cursor: pointer;
+}
+
+.atom-lightbulb[aria-disabled="true"] {
+    cursor: default;
+    opacity: .5;
+}
+
+.atom-lightbulb-glass {
+    fill: rgba(255, 255, 255, .04);
+    stroke: rgba(255, 255, 255, .28);
+    stroke-width: 2;
+    transition: fill .25s ease, filter .25s ease;
+}
+
+/* currentColor carries the glow hue to both the glass tint and the filament together, so "on" is
+   one property flip rather than two (same trick as the stoplight's lamp). */
+.atom-lightbulb[data-on] {
+    color: var(--lightbulb-glow, #ffd76a);
+}
+
+.atom-lightbulb[data-on] .atom-lightbulb-glass {
+    fill: color-mix(in srgb, currentColor 30%, transparent);
+    filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 0 24px currentColor);
+}
+
+.atom-lightbulb-filament,
+.atom-lightbulb-lead {
+    fill: none;
+    stroke: #4c4a45;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke .25s ease, filter .25s ease;
+}
+
+.atom-lightbulb[data-on] .atom-lightbulb-filament {
+    stroke: currentColor;
+    filter: drop-shadow(0 0 3px currentColor);
+}
+
+.atom-lightbulb-neck,
+.atom-lightbulb-base {
+    fill: #8b8b90;
+    stroke: rgba(0, 0, 0, .25);
+    stroke-width: 1;
+}
+
+.atom-lightbulb-thread {
+    stroke: rgba(0, 0, 0, .3);
+    stroke-width: 1.5;
+}
+
+.atom-lightbulb-contact {
+    fill: #4a4a4d;
+}
+
+.atom-lightbulb:focus-visible {
+    outline: 2px solid var(--lightbulb-glow, #ffd76a);
+    outline-offset: 3px;
+    border-radius: 6px;
+}

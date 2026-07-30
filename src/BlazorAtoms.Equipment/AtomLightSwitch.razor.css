@@ -1,0 +1,55 @@
+.atom-lightswitch {
+    display: inline-block;
+    width: var(--lightswitch-width, 48px);
+    height: auto;
+    cursor: pointer;
+}
+
+.atom-lightswitch[aria-disabled="true"] {
+    cursor: default;
+    opacity: .5;
+}
+
+.atom-lightswitch-plate {
+    fill: #e8e6df;
+    stroke: rgba(0, 0, 0, .25);
+    stroke-width: 1.5;
+}
+
+.atom-lightswitch-screw {
+    fill: #9a988f;
+}
+
+.atom-lightswitch-screw-slot {
+    stroke: rgba(0, 0, 0, .4);
+    stroke-width: 1;
+}
+
+.atom-lightswitch-housing {
+    fill: #cfccc2;
+    stroke: rgba(0, 0, 0, .15);
+    stroke-width: 1;
+}
+
+.atom-lightswitch-lever {
+    fill: #f5f3ee;
+    stroke: rgba(0, 0, 0, .3);
+    stroke-width: 1;
+}
+
+/* Lighter cap on the lever's own top end (not the housing's) so it rotates with the lever and
+   reads as a highlight sweeping toward whichever way the switch is flipped. */
+.atom-lightswitch-lever-cap {
+    fill: #fff;
+    opacity: .6;
+}
+
+.atom-lightswitch g {
+    transition: transform .18s ease;
+}
+
+.atom-lightswitch:focus-visible {
+    outline: 2px solid #4a90d9;
+    outline-offset: 3px;
+    border-radius: 8px;
+}

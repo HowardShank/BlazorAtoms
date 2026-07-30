@@ -1,0 +1,26 @@
+@inherits AtomComponentBase
+
+<svg @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-lightswitch")"
+     style="@StyleAttr(RootStyle)"
+     viewBox="0 0 80 120"
+     role="switch"
+     aria-checked="@(IsOn ? "true" : "false")"
+     aria-disabled="@(Disabled ? "true" : null)"
+     aria-label="@AriaLabelValue"
+     tabindex="@(Interactive ? "0" : null)"
+     data-on="@(IsOn ? "true" : null)"
+     @onclick="Toggle"
+     @onkeydown="OnKey">
+
+    <rect class="atom-lightswitch-plate" x="4" y="4" width="72" height="112" rx="10" />
+    <circle class="atom-lightswitch-screw" cx="40" cy="16" r="3" />
+    <line class="atom-lightswitch-screw-slot" x1="37" y1="16" x2="43" y2="16" />
+    <circle class="atom-lightswitch-screw" cx="40" cy="104" r="3" />
+    <line class="atom-lightswitch-screw-slot" x1="37" y1="104" x2="43" y2="104" />
+    <rect class="atom-lightswitch-housing" x="22" y="28" width="36" height="64" rx="6" />
+    <g transform="@LeverTransform">
+        <rect class="atom-lightswitch-lever" x="33" y="38" width="14" height="44" rx="6" />
+        <rect class="atom-lightswitch-lever-cap" x="33" y="38" width="14" height="10" rx="5" />
+    </g>
+</svg>
