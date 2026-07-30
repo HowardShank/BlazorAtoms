@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <Import Project="$(RepoRoot)build\Packable.props" />
+  <Import Project="$(RepoRoot)build\Shared.props" />
+
+  <PropertyGroup>
+    <PackageId>BlazorAtoms.Equipment</PackageId>
+    <Title>Blazor Equipment</Title>
+    <Description>Semi-realistic status indicators for physical objects/equipment, drawn as pure inline SVG. AtomStoplight renders a traditional red/yellow/green traffic signal — layered rim/glass/sheen lamps with a currentColor glow on the active lamp, a protective visor over each, vertical or horizontal housing — driven by a single StoplightState enum. Server or WebAssembly, no JS.</Description>
+    <PackageTags>Blazor;Equipment;Stoplight;TrafficLight;Signal;Indicator;SVG;WebAssembly;Server</PackageTags>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+  </ItemGroup>
+
+</Project>

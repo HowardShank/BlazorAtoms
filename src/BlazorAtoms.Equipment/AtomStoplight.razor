@@ -1,0 +1,29 @@
+@inherits AtomComponentBase
+
+<svg @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-stoplight")"
+     style="@StyleAttr(RootStyle)"
+     viewBox="0 0 @Fmt(ViewBoxWidth) @Fmt(ViewBoxHeight)"
+     role="img"
+     aria-label="@AriaLabelValue"
+     data-orientation="@(IsVertical ? "vertical" : "horizontal")">
+
+    <rect class="atom-stoplight-housing"
+          x="6" y="6"
+          width="@Fmt(ViewBoxWidth - 12)" height="@Fmt(ViewBoxHeight - 12)"
+          rx="22" />
+
+    @for (var i = 0; i < 3; i++)
+    {
+        <g class="atom-stoplight-lamp" data-hue="@HueNames[i]" data-active="@(IsActive(i) ? "true" : null)">
+            <circle class="atom-stoplight-lamp-rim"
+                    cx="@Fmt(LampCx(i))" cy="@Fmt(LampCy(i))" r="@Fmt(LampRadius + 5)" />
+            <circle class="atom-stoplight-lamp-glass"
+                    cx="@Fmt(LampCx(i))" cy="@Fmt(LampCy(i))" r="@Fmt(LampRadius)" />
+            <ellipse class="atom-stoplight-lamp-sheen"
+                     cx="@Fmt(LampCx(i) - LampRadius * 0.32)" cy="@Fmt(LampCy(i) - LampRadius * 0.32)"
+                     rx="@Fmt(LampRadius * 0.46)" ry="@Fmt(LampRadius * 0.3)" />
+            <path class="atom-stoplight-lamp-visor" d="@VisorPath(LampCx(i), LampCy(i), LampRadius)" />
+        </g>
+    }
+</svg>

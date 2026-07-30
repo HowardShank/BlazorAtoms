@@ -1,0 +1,59 @@
+.atom-stoplight {
+    display: inline-block;
+    width: var(--stoplight-width, 96px);
+    height: auto;
+}
+
+.atom-stoplight-housing {
+    fill: #1c1c1e;
+    stroke: rgba(255, 255, 255, .08);
+    stroke-width: 2;
+}
+
+.atom-stoplight-lamp-rim {
+    fill: #0b0b0c;
+    stroke: rgba(255, 255, 255, .06);
+    stroke-width: 1.5;
+}
+
+/* Per-lamp hue, defaulting inside the fallback so an unset --stoplight-{color} still lights up;
+   --stoplight-red/-yellow/-green (set from the RedColor/YellowColor/GreenColor params) only need
+   to override the one hue they name. */
+.atom-stoplight-lamp[data-hue="red"] { --lamp-hue: var(--stoplight-red, #ff3b30); }
+.atom-stoplight-lamp[data-hue="yellow"] { --lamp-hue: var(--stoplight-yellow, #ffcc00); }
+.atom-stoplight-lamp[data-hue="green"] { --lamp-hue: var(--stoplight-green, #34c759); }
+
+/* currentColor carries the hue to glass/glow together, so "active" is one property flip rather than
+   three (fill + filter-color + sheen tint all move at once). */
+.atom-stoplight-lamp {
+    color: color-mix(in srgb, var(--lamp-hue) 20%, #15110f 80%);
+    transition: color .25s ease;
+}
+
+.atom-stoplight-lamp[data-active] {
+    color: var(--lamp-hue);
+}
+
+.atom-stoplight-lamp-glass {
+    fill: currentColor;
+    transition: filter .25s ease;
+}
+
+/* Two drop-shadows (tight + wide) read as a lamp glowing through glass rather than a flat halo. */
+.atom-stoplight-lamp[data-active] .atom-stoplight-lamp-glass {
+    filter: drop-shadow(0 0 6px currentColor) drop-shadow(0 0 18px currentColor);
+}
+
+.atom-stoplight-lamp-sheen {
+    fill: #fff;
+    opacity: .16;
+    transition: opacity .25s ease;
+}
+
+.atom-stoplight-lamp[data-active] .atom-stoplight-lamp-sheen {
+    opacity: .42;
+}
+
+.atom-stoplight-lamp-visor {
+    fill: #131314;
+}

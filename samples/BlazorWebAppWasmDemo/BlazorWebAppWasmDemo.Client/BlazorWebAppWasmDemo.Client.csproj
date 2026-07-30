@@ -21,6 +21,7 @@
     <ProjectReference Include="..\..\..\src\BlazorAtoms.Clocks\BlazorAtoms.Clocks.csproj" />
     <ProjectReference Include="..\..\..\src\BlazorAtoms.Canvas\BlazorAtoms.Canvas.csproj" />
     <ProjectReference Include="..\..\..\src\BlazorAtoms.Ratings\BlazorAtoms.Ratings.csproj" />
+    <ProjectReference Include="..\..\..\src\BlazorAtoms.Equipment\BlazorAtoms.Equipment.csproj" />
     <ProjectReference Include="..\..\BlazorAtoms.Branding\BlazorAtoms.Branding.csproj" />
     <ProjectReference Include="..\..\Demos.Shared\Demos.Shared.csproj" />
   </ItemGroup>
