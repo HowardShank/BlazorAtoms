@@ -1,0 +1,150 @@
+@using System.Globalization
+@using BlazorAtoms.Equipment
+
+<PageTitle>AtomFan Playground</PageTitle>
+
+<h1>AtomFan playground</h1>
+<p>Tune <code>&lt;AtomFan&gt;</code> live. Click the fan (or Space/Enter) to cycle
+   Off &rarr; Low &rarr; Medium &rarr; High &rarr; Off, same as a pull-chain/wall speed switch.
+   <code>Direction</code> is separate &mdash; a real reverse switch, not cycled by the same click.</p>
+<p><a href="playground/activityindicators">&larr; Back to demo</a></p>
+
+<div class="fan-stage">
+    <AtomFan @bind-Speed="Speed" Direction="@Direction" Kind="@Kind" Disabled="@Disabled" Width="@WidthV"
+             BladeColor="@Nz(BladeColor)" HousingColor="@Nz(HousingColor)" AccentColor="@Nz(AccentColor)"
+             ShowDirectionIndicator="@ShowDirectionIndicator" ShowSpeedLabel="@ShowSpeedLabel"
+             AriaLabel="@Nz(AriaLabel)"
+             CssClass="@Nz(HatchClass)" Style="@Nz(HatchStyle)" />
+    <div class="fan-readout">Speed = <code>@Speed</code></div>
+</div>
+
+<div class="fan-controls">
+    <div class="ctrl">
+        <label>Speed (click the fan too)</label>
+        <select @bind="Speed">
+            @foreach (var s in Speeds) { <option value="@s">@s</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Direction</label>
+        <select @bind="Direction">
+            @foreach (var d in Directions) { <option value="@d">@d</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Kind</label>
+        <select @bind="Kind">
+            @foreach (var k in Kinds) { <option value="@k">@k</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Width (px) <span class="val">@WidthV.ToString(Inv)</span></label>
+        <input type="range" min="48" max="240" step="4" @bind="WidthV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Mode</label>
+        <div class="row"><input type="checkbox" id="fanDis" @bind="Disabled" /><label for="fanDis" class="inline">Disabled</label></div>
+        <div class="row"><input type="checkbox" id="fanDir" @bind="ShowDirectionIndicator" /><label for="fanDir" class="inline">ShowDirectionIndicator</label></div>
+        <div class="row"><input type="checkbox" id="fanLbl" @bind="ShowSpeedLabel" /><label for="fanLbl" class="inline">ShowSpeedLabel</label></div>
+    </div>
+    <div class="ctrl">
+        <label>Blade color (BladeColor)</label>
+        <div class="row color">
+            <input type="color" @bind="BladeColor" @bind:event="oninput" aria-label="Blade color picker" />
+            <input type="text" @bind="BladeColor" @bind:event="oninput" placeholder="(default)" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Housing color (HousingColor)</label>
+        <div class="row color">
+            <input type="color" @bind="HousingColor" @bind:event="oninput" aria-label="Housing color picker" />
+            <input type="text" @bind="HousingColor" @bind:event="oninput" placeholder="(default)" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Accent color (AccentColor)</label>
+        <div class="row color">
+            <input type="color" @bind="AccentColor" @bind:event="oninput" aria-label="Accent color picker" />
+            <input type="text" @bind="AccentColor" @bind:event="oninput" placeholder="(default)" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Aria label (AriaLabel)</label>
+        <input type="text" @bind="AriaLabel" @bind:event="oninput" placeholder="(auto)" />
+    </div>
+    <div class="ctrl">
+        <label>Extra class (CssClass)</label>
+        <input type="text" @bind="HatchClass" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Extra style (Style)</label>
+        <input type="text" @bind="HatchStyle" @bind:event="oninput" placeholder="(none)" />
+    </div>
+</div>
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomFanExample.razor" />
+
+<style>
+    .fan-stage { display:flex; flex-direction:column; align-items:center; gap:1rem; background:#0a0a0c; border:1px solid #d0d0d8; border-radius:12px; padding:2.5rem 1.5rem; margin-bottom:1.5rem; }
+    .fan-readout { color:#6b7785; font-size:.85rem; }
+    .fan-readout code { color:#0a7ea4; }
+    .fan-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem 1.5rem; background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; }
+    .fan-controls .ctrl { display:flex; flex-direction:column; gap:.4rem; }
+    .fan-controls label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; gap:.5rem; }
+    .fan-controls label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
+    .fan-controls input[type=range] { width:100%; accent-color:#4a90d9; }
+    .fan-controls input[type=text], .fan-controls select { padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; }
+    .fan-controls .row { display:flex; align-items:center; gap:.5rem; }
+    .fan-controls .row.color input[type=color] { flex:none; width:38px; height:32px; padding:2px; background:#070b10; border:1px solid #1b2330; border-radius:6px; cursor:pointer; }
+    .fan-controls .row.color input[type=text] { flex:1 1 auto; min-width:0; }
+    .fan-controls .row input[type=checkbox] { accent-color:#4a90d9; width:16px; height:16px; }
+    .fan-controls .row label.inline { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; justify-content:flex-start; }
+</style>
+
+@code {
+    private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
+    private static readonly FanSpeed[] Speeds = (FanSpeed[])Enum.GetValues(typeof(FanSpeed));
+    private static readonly FanDirection[] Directions = (FanDirection[])Enum.GetValues(typeof(FanDirection));
+    private static readonly FanStyle[] Kinds = (FanStyle[])Enum.GetValues(typeof(FanStyle));
+
+    private FanSpeed Speed = FanSpeed.Off;
+    private FanDirection Direction = FanDirection.Forward;
+    private FanStyle Kind = FanStyle.Desk;
+    private bool Disabled;
+    private double WidthV = 96;
+
+    private string BladeColor = "";
+    private string HousingColor = "";
+    private string AccentColor = "";
+    private bool ShowDirectionIndicator = true;
+    private bool ShowSpeedLabel = true;
+    private string AriaLabel = "";
+
+    private string HatchClass = "";
+    private string HatchStyle = "";
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder("<AtomFan");
+            sb.Append(" @bind-Speed=\"speed\"");
+            if (Direction != FanDirection.Forward) sb.Append($" Direction=\"FanDirection.{Direction}\"");
+            if (Kind != FanStyle.Desk) sb.Append($" Kind=\"FanStyle.{Kind}\"");
+            if (Disabled) sb.Append(" Disabled=\"true\"");
+            if (WidthV != 96) sb.Append($" Width=\"{WidthV.ToString(Inv)}\"");
+            if (!string.IsNullOrEmpty(BladeColor)) sb.Append($" BladeColor=\"{BladeColor}\"");
+            if (!string.IsNullOrEmpty(HousingColor)) sb.Append($" HousingColor=\"{HousingColor}\"");
+            if (!string.IsNullOrEmpty(AccentColor)) sb.Append($" AccentColor=\"{AccentColor}\"");
+            if (!ShowDirectionIndicator) sb.Append(" ShowDirectionIndicator=\"false\"");
+            if (!ShowSpeedLabel) sb.Append(" ShowSpeedLabel=\"false\"");
+            if (!string.IsNullOrEmpty(AriaLabel)) sb.Append($" AriaLabel=\"{AriaLabel}\"");
+            if (!string.IsNullOrEmpty(HatchClass)) sb.Append($" CssClass=\"{HatchClass}\"");
+            if (!string.IsNullOrEmpty(HatchStyle)) sb.Append($" Style=\"{HatchStyle}\"");
+            sb.Append(" />");
+            return sb.ToString();
+        }
+    }
+}

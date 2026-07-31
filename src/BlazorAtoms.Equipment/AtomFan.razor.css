@@ -1,0 +1,107 @@
+.atom-fan {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    width: var(--fan-width, 96px);
+    cursor: pointer;
+}
+
+.atom-fan[aria-disabled="true"] {
+    cursor: default;
+    opacity: .5;
+}
+
+.atom-fan-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.atom-fan:focus-visible {
+    outline: 2px solid var(--fan-accent, #4a90d9);
+    outline-offset: 3px;
+    border-radius: 8px;
+}
+
+.atom-fan-blade {
+    fill: var(--fan-blade, #c9ccd1);
+    stroke: rgba(0, 0, 0, .25);
+    stroke-width: 1;
+    transition: opacity .25s ease;
+}
+
+/* Dim (not hide) the blades at rest, so "off" still reads as the same object rather than a
+   different one. */
+[data-speed="off"] .atom-fan-blade {
+    opacity: .55;
+}
+
+.atom-fan-hub,
+.atom-fan-base,
+.atom-fan-stand,
+.atom-fan-mount {
+    fill: var(--fan-housing, #4a4d55);
+    stroke: var(--fan-housing, #4a4d55);
+}
+
+.atom-fan-grille {
+    fill: none;
+    stroke: var(--fan-housing, #4a4d55);
+    stroke-width: 1.5;
+    opacity: .55;
+}
+
+.atom-fan-direction {
+    fill: none;
+    stroke: var(--fan-accent, #4a90d9);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transform-box: fill-box;
+    transform-origin: center;
+}
+
+/* One arrow, mirrored rather than a second computed path — a curved arrow pointing right reads as
+   clockwise/forward, and flipping it horizontally reads as counter-clockwise/reverse just as well. */
+[data-direction="reverse"] .atom-fan-direction {
+    transform: scaleX(-1);
+}
+
+/* view-box + an explicit coordinate, not fill-box + center: the three blade paths aren't a
+   symmetric shape around the hub (each one is a thin wedge reaching outward from it), so their
+   combined bounding box is off-center from (50,50) — fill-box's "center" would spin the group
+   around that lopsided bbox midpoint instead of the actual hub, which reads as an orbit rather
+   than a spin in place. */
+.atom-fan-blades {
+    transform-box: view-box;
+    transform-origin: 50px 50px;
+}
+
+@keyframes atom-fan-spin-cw {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes atom-fan-spin-ccw {
+    to { transform: rotate(-360deg); }
+}
+
+[data-spinning][data-direction="forward"] .atom-fan-blades {
+    animation: atom-fan-spin-cw var(--fan-duration, 1.2s) linear infinite;
+}
+
+[data-spinning][data-direction="reverse"] .atom-fan-blades {
+    animation: atom-fan-spin-ccw var(--fan-duration, 1.2s) linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-fan-blades {
+        animation: none !important;
+    }
+}
+
+.atom-fan-label {
+    margin-top: .3rem;
+    font: 600 .7rem/1 ui-monospace, Consolas, monospace;
+    letter-spacing: .06em;
+    color: var(--fan-accent, #4a90d9);
+}

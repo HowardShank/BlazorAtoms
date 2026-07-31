@@ -1,0 +1,51 @@
+@inherits AtomComponentBase
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-fan")"
+     style="@StyleAttr(RootStyle)"
+     role="button"
+     aria-label="@AriaLabelValue"
+     aria-disabled="@(Disabled ? "true" : null)"
+     tabindex="@(Interactive ? "0" : null)"
+     data-style="@(IsCeiling ? "ceiling" : "desk")"
+     data-direction="@(Direction == FanDirection.Forward ? "forward" : "reverse")"
+     data-speed="@SpeedAttr"
+     data-spinning="@(Speed != FanSpeed.Off ? "true" : null)"
+     @onclick="Toggle"
+     @onkeydown="OnKey">
+
+    <svg class="atom-fan-svg" viewBox="0 0 100 120">
+        @if (IsCeiling)
+        {
+            <line class="atom-fan-mount" x1="50" y1="4" x2="50" y2="18" />
+            <g class="atom-fan-blades">
+                <path class="atom-fan-blade" d="M 50,50 L 50,14 Q 58,20 54,50 Z" />
+                <path class="atom-fan-blade" d="M 50,50 L 82,66 Q 78,76 50,58 Z" />
+                <path class="atom-fan-blade" d="M 50,50 L 18,66 Q 22,76 50,58 Z" />
+            </g>
+            <circle class="atom-fan-hub" cx="50" cy="50" r="10" />
+        }
+        else
+        {
+            <rect class="atom-fan-base" x="38" y="100" width="24" height="8" rx="2" />
+            <rect class="atom-fan-stand" x="47" y="70" width="6" height="32" />
+            <g class="atom-fan-blades">
+                <path class="atom-fan-blade" d="M 50,50 L 50,20 Q 57,25 53,50 Z" />
+                <path class="atom-fan-blade" d="M 50,50 L 76,64 Q 73,73 50,57 Z" />
+                <path class="atom-fan-blade" d="M 50,50 L 24,64 Q 27,73 50,57 Z" />
+            </g>
+            <circle class="atom-fan-hub" cx="50" cy="50" r="8" />
+            <circle class="atom-fan-grille" cx="50" cy="50" r="34" />
+            <circle class="atom-fan-grille" cx="50" cy="50" r="24" />
+            <circle class="atom-fan-grille" cx="50" cy="50" r="14" />
+        }
+        @if (ShowDirectionIndicator)
+        {
+            <path class="atom-fan-direction" d="M 40,26 A 12,12 0 0 1 60,26 M 56,22 L 60,26 L 55,29" />
+        }
+    </svg>
+    @if (ShowSpeedLabel)
+    {
+        <div class="atom-fan-label">@SpeedLabelText</div>
+    }
+</div>
