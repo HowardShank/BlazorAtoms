@@ -931,6 +931,27 @@ public class ChartComponentTests : BunitContext
     }
 
     [Fact]
+    public void AtomBarGauge_StartColor_accepts_a_named_CSS_color_not_just_hex()
+    {
+        var cut = Render<AtomBarGauge>(p => p
+            .Add(c => c.BarStyle, BarGaugeStyle.Gradient)
+            .Add(c => c.StartColor, "purple")
+            .Add(c => c.EndColor, "#00ff00"));
+
+        var firstStop = cut.Find(".atom-bar-gauge-svg").QuerySelector("stop");
+        Assert.Equal("#800080", firstStop!.GetAttribute("stop-color"));
+    }
+
+    [Fact]
+    public void AtomDotGauge_StartColor_accepts_a_named_CSS_color_not_just_hex()
+    {
+        var cut = Render<AtomDotGauge>(p => p.Add(c => c.StartColor, "purple").Add(c => c.EndColor, "#00ff00"));
+
+        var firstDot = cut.FindAll(".atom-dot-gauge-dot")[0];
+        Assert.Equal("#800080", firstDot.GetAttribute("style")!.Split(':')[1].TrimEnd(';'));
+    }
+
+    [Fact]
     public void AtomBarGauge_range_labels_never_exceed_the_viewBox()
     {
         var cut = Render<AtomBarGauge>(p => p.Add(c => c.RangeLabels, Slot.Of<AtomChartRangeLabels>()));
