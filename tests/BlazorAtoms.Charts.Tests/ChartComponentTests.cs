@@ -562,6 +562,81 @@ public class ChartComponentTests : BunitContext
     }
 
     [Fact]
+    public void ReverseColors_swaps_which_end_StartColor_and_EndColor_apply_to()
+    {
+        var cut = Render<AtomGauge>(p => p
+            .Add(c => c.SegmentCount, 3)
+            .Add(c => c.StartColor, "#ff0000")
+            .Add(c => c.EndColor, "#00ff00")
+            .Add(c => c.ReverseColors, true)
+            .Add(c => c.SweepAngle, 360d));
+
+        var bands = cut.FindAll(".atom-gauge-band");
+        Assert.Equal("#00ff00", bands[0].GetAttribute("stroke"));
+        Assert.Equal("#ff0000", bands[2].GetAttribute("stroke"));
+    }
+
+    [Theory]
+    [InlineData("R")]
+    [InlineData("Re")]
+    public void A_partial_color_typed_into_StartColor_does_not_crash_the_render(string partialInput)
+    {
+        // A live-bound color text field re-renders on every keystroke — "R" then "Re" on the way to
+        // typing "Red" must render *something* rather than throwing mid-render.
+        var exception = Record.Exception(() => Render<AtomGauge>(p => p.Add(c => c.StartColor, partialInput)));
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void StartColor_accepts_a_named_CSS_color_not_just_hex()
+    {
+        var cut = Render<AtomGauge>(p => p
+            .Add(c => c.SegmentCount, 2)
+            .Add(c => c.StartColor, "purple")
+            .Add(c => c.SweepAngle, 360d));
+
+        var bands = cut.FindAll(".atom-gauge-band");
+        Assert.Equal("#800080", bands[0].GetAttribute("stroke"));
+    }
+
+    [Fact]
+    public void ReverseColors_has_no_effect_on_an_explicit_Bands_list()
+    {
+        var forward = Render<AtomGauge>(p => p.Add(c => c.Bands, new[] { new GaugeBand(50, "#123456"), new GaugeBand(100, "#abcdef") }));
+        var reversed = Render<AtomGauge>(p => p
+            .Add(c => c.Bands, new[] { new GaugeBand(50, "#123456"), new GaugeBand(100, "#abcdef") })
+            .Add(c => c.ReverseColors, true));
+
+        Assert.Equal(
+            forward.FindAll(".atom-gauge-band").Select(b => b.GetAttribute("stroke")),
+            reversed.FindAll(".atom-gauge-band").Select(b => b.GetAttribute("stroke")));
+    }
+
+    [Fact]
+    public void ReverseColors_also_swaps_AtomBarGauge_and_AtomDotGauge_gradient_ends()
+    {
+        var barForward = Render<AtomBarGauge>(p => p
+            .Add(c => c.BarStyle, BarGaugeStyle.Gradient).Add(c => c.StartColor, "#ff0000").Add(c => c.EndColor, "#00ff00"));
+        var barReversed = Render<AtomBarGauge>(p => p
+            .Add(c => c.BarStyle, BarGaugeStyle.Gradient).Add(c => c.StartColor, "#ff0000").Add(c => c.EndColor, "#00ff00")
+            .Add(c => c.ReverseColors, true));
+
+        var forwardStops = barForward.Find(".atom-bar-gauge-svg").QuerySelectorAll("stop");
+        var reversedStops = barReversed.Find(".atom-bar-gauge-svg").QuerySelectorAll("stop");
+        Assert.Equal("#ff0000", forwardStops[0].GetAttribute("stop-color"));
+        Assert.Equal("#00ff00", reversedStops[0].GetAttribute("stop-color"));
+
+        var dotForward = Render<AtomDotGauge>(p => p.Add(c => c.StartColor, "#ff0000").Add(c => c.EndColor, "#00ff00"));
+        var dotReversed = Render<AtomDotGauge>(p => p
+            .Add(c => c.StartColor, "#ff0000").Add(c => c.EndColor, "#00ff00").Add(c => c.ReverseColors, true));
+
+        var forwardDots = dotForward.FindAll(".atom-dot-gauge-dot");
+        var reversedDots = dotReversed.FindAll(".atom-dot-gauge-dot");
+        Assert.Equal("#ff0000", forwardDots[0].GetAttribute("style")!.Split(':')[1].TrimEnd(';'));
+        Assert.Equal("#00ff00", reversedDots[0].GetAttribute("style")!.Split(':')[1].TrimEnd(';'));
+    }
+
+    [Fact]
     public void Elevation_defaults_to_Floating_and_is_overridable()
     {
         var defaulted = Render<AtomGauge>();

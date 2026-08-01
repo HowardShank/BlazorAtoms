@@ -34,13 +34,41 @@ public abstract class AtomGaugeBase : AtomChartBase
     /// explicit empty <see cref="Bands"/> list for the old plain-track look.</summary>
     [Parameter] public int? SegmentCount { get; set; }
 
-    /// <summary>First segment's color when auto-generating from <see cref="SegmentCount"/>. Default a
-    /// red. No effect when <see cref="Bands"/> is set explicitly.</summary>
+    /// <summary>First segment's color when auto-generating from <see cref="SegmentCount"/>. Hex
+    /// (<c>#e5484d</c>/<c>e5484d</c>, 3 or 6 digit) or a standard CSS named color (<c>purple</c>) — the
+    /// same shapes <see cref="GaugeColorScale.ResolveHex"/> accepts. Default a red. Anything else (empty,
+    /// unrecognized, or a partial string mid-typed into a live-bound input) falls back to the default
+    /// rather than erroring. No effect when <see cref="Bands"/> is set explicitly.</summary>
     [Parameter] public string? StartColor { get; set; }
 
-    /// <summary>Last segment's color when auto-generating from <see cref="SegmentCount"/>. Default a
-    /// green. No effect when <see cref="Bands"/> is set explicitly.</summary>
+    /// <summary>Last segment's color when auto-generating from <see cref="SegmentCount"/>. Same accepted
+    /// shapes as <see cref="StartColor"/>. Default a green. No effect when <see cref="Bands"/> is set
+    /// explicitly.</summary>
     [Parameter] public string? EndColor { get; set; }
+
+    /// <summary>Swaps which end <see cref="StartColor"/>/<see cref="EndColor"/> apply to — the scale
+    /// sweeps <see cref="EndColor"/>-to-<see cref="StartColor"/> (green→red by default) instead of the
+    /// other way round. No effect when <see cref="Bands"/> is set explicitly: an explicit list is already
+    /// in whatever order the caller wrote it in.</summary>
+    [Parameter] public bool ReverseColors { get; set; }
+
+    /// <summary>The colour the scale actually starts from (<see cref="Min"/>'s end), after
+    /// <see cref="ReverseColors"/>. Every auto-generated scale (<see cref="EffectiveBands"/>, and each
+    /// concrete gauge's own Gradient/Ticks arc) reads colour through this pair rather than
+    /// <see cref="StartColor"/>/<see cref="EndColor"/> directly, so the switch only has to live in one
+    /// place. Accepts a named CSS color (e.g. "purple") the same as hex, resolved via
+    /// <see cref="GaugeColorScale.ResolveHex"/>, and falls back the same way an unset value would when
+    /// the parameter holds neither — a live-bound text input passes every partial keystroke through as
+    /// the caller types (e.g. "R" or "Re" on the way to a real color), and those must not crash or flash
+    /// black.</summary>
+    protected string ResolvedStartColor => ReverseColors ? ValidColorOr(EndColor, "#30a46c") : ValidColorOr(StartColor, "#e5484d");
+
+    /// <summary>The colour the scale actually ends at (<see cref="Max"/>'s end), after
+    /// <see cref="ReverseColors"/>.</summary>
+    protected string ResolvedEndColor => ReverseColors ? ValidColorOr(StartColor, "#e5484d") : ValidColorOr(EndColor, "#30a46c");
+
+    private static string ValidColorOr(string? color, string fallback) =>
+        GaugeColorScale.ResolveHex(color) ?? fallback;
 
     /// <summary>Coloured zones along the range, read in order — each begins where the previous ended.
     /// Set this to hand-build exact bands; leave it null and set <see cref="SegmentCount"/> instead to
@@ -86,7 +114,7 @@ public abstract class AtomGaugeBase : AtomChartBase
     /// defaults is still colored, not a plain track.</summary>
     protected IEnumerable<GaugeBand> EffectiveBands => Bands ?? GaugeColorScale.Bands(
         SegmentCount is int n and > 0 ? n : DefaultSegmentCount,
-        Min, Max, StartColor ?? "#e5484d", EndColor ?? "#30a46c");
+        Min, Max, ResolvedStartColor, ResolvedEndColor);
 
     protected string Format(double v) =>
         Formatter?.Invoke(v) ?? v.ToString("0.###", Inv);

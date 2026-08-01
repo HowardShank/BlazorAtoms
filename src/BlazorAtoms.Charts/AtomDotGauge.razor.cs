@@ -97,8 +97,8 @@ public partial class AtomDotGauge : AtomGaugeBase
     {
         get
         {
-            var start = StartColor ?? "#e5484d";
-            var end = EndColor ?? "#30a46c";
+            var start = ResolvedStartColor;
+            var end = ResolvedEndColor;
             var n = EffectiveDotCount;
             var active = ActiveIndex;
 

@@ -141,8 +141,8 @@ public partial class AtomBarGauge : AtomGaugeBase
     {
         get
         {
-            var start = StartColor ?? "#e5484d";
-            var end = EndColor ?? "#30a46c";
+            var start = ResolvedStartColor;
+            var end = ResolvedEndColor;
             for (var i = 0; i < GradientStopCount; i++)
             {
                 var t = (double)i / (GradientStopCount - 1);
@@ -160,8 +160,8 @@ public partial class AtomBarGauge : AtomGaugeBase
         get
         {
             var n = EffectiveTickCount;
-            var start = StartColor ?? "#e5484d";
-            var end = EndColor ?? "#30a46c";
+            var start = ResolvedStartColor;
+            var end = ResolvedEndColor;
             var activeIndex = (int)Math.Round(Fraction * (n - 1));
 
             for (var i = 0; i < n; i++)

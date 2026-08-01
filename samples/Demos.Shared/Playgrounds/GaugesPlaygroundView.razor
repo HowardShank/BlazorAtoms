@@ -42,6 +42,14 @@
             <input type="text" placeholder="(green)" class="ch-narrow" @bind="EndColor" @bind:event="oninput" />
         </div>
         <div class="ch-ctrl">
+            <label><input type="checkbox" @bind="ReverseColors" /> Reverse colors</label>
+        </div>
+        <p class="note">
+            <code>ReverseColors</code> swaps which end <code>StartColor</code>/<code>EndColor</code>
+            apply to &mdash; green&rarr;red instead of red&rarr;green. No effect on an explicit
+            <code>Bands</code> list, which is already in whatever order you wrote it in.
+        </p>
+        <div class="ch-ctrl">
             <label>Elevation</label>
             <select @bind="Elevation">
                 @foreach (var e in Enum.GetValues<GaugeElevation>())
@@ -308,7 +316,7 @@
                        BezelColor="@Nz(BezelColor)" BezelWidth="@BezelWidth" ShowPedestal="@ShowPedestal"
                        RedlineFrom="@RedlineFrom" RedlineColor="@Nz(RedlineColor)"
                        ShowTickRuler="@ShowTickRuler" MajorTickCount="@MajorTickCount" MinorTicksPerMajor="@MinorTicksPerMajor"
-                       SegmentCount="@SegmentCount" StartColor="@Nz(StartColor)" EndColor="@Nz(EndColor)"
+                       SegmentCount="@SegmentCount" StartColor="@Nz(StartColor)" EndColor="@Nz(EndColor)" ReverseColors="@ReverseColors"
                        Elevation="@Elevation" SegmentLabels="@SegmentLabels" />
         </div>
     </div>
@@ -325,7 +333,7 @@
                           RangeLabels="@Slot(UseRangeLabels, RangeLabelsEl)"
                           Banner="@Slot(UseBanner, BannerEl)"
                           NeedleColor="@Nz(NeedleColor)"
-                          SegmentCount="@SegmentCount" StartColor="@Nz(StartColor)" EndColor="@Nz(EndColor)"
+                          SegmentCount="@SegmentCount" StartColor="@Nz(StartColor)" EndColor="@Nz(EndColor)" ReverseColors="@ReverseColors"
                           Elevation="@Elevation" SegmentLabels="@SegmentLabels"
                           Orientation="@BarGaugeOrientation" BarStyle="@BarStyle" ShowPointer="@ShowBarPointer" />
         </div>
@@ -343,7 +351,7 @@
                           RangeLabels="@Slot(UseRangeLabels, RangeLabelsEl)"
                           Banner="@Slot(UseBanner, BannerEl)"
                           NeedleColor="@Nz(NeedleColor)"
-                          SegmentCount="@SegmentCount" StartColor="@Nz(StartColor)" EndColor="@Nz(EndColor)"
+                          SegmentCount="@SegmentCount" StartColor="@Nz(StartColor)" EndColor="@Nz(EndColor)" ReverseColors="@ReverseColors"
                           Elevation="@Elevation" SegmentLabels="@SegmentLabels"
                           Orientation="@DotGaugeOrientation" DotCount="@DotCount" DotSize="@DotSize"
                           ShowPointer="@ShowDotPointer" />
@@ -360,13 +368,13 @@
 <div class="ch-preview" style="display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap;">
     <div style="flex:1 1 260px; min-width:200px;">
         <AtomDotGauge Value="@GaugeValue" Min="@GaugeMin" Max="@GaugeMax"
-                      SegmentCount="@SegmentCount" StartColor="@Nz(StartColor)" EndColor="@Nz(EndColor)"
+                      SegmentCount="@SegmentCount" StartColor="@Nz(StartColor)" EndColor="@Nz(EndColor)" ReverseColors="@ReverseColors"
                       Elevation="@Elevation" ShowPointer="false" />
     </div>
     <div style="flex:0 0 120px;">
         <AtomGauge Value="@GaugeValue" Min="@GaugeMin" Max="@GaugeMax" Width="120"
                    SweepAngle="300" ShowValueArc="false"
-                   SegmentCount="@SegmentCount" StartColor="@Nz(StartColor)" EndColor="@Nz(EndColor)"
+                   SegmentCount="@SegmentCount" StartColor="@Nz(StartColor)" EndColor="@Nz(EndColor)" ReverseColors="@ReverseColors"
                    Elevation="@Elevation"
                    Readout="@Slot(true, ReadoutEl)" />
     </div>
@@ -386,6 +394,7 @@
     private int? SegmentCount { get; set; }
     private string StartColor { get; set; } = "";
     private string EndColor { get; set; } = "";
+    private bool ReverseColors { get; set; }
     private GaugeElevation Elevation { get; set; } = GaugeElevation.Floating;
     private string RawSegmentLabels { get; set; } = "";
 
@@ -634,6 +643,7 @@
         if (SegmentCount is int n) sb.Append($" SegmentCount=\"{n}\"");
         if (!string.IsNullOrEmpty(StartColor)) sb.Append($" StartColor=\"{StartColor}\"");
         if (!string.IsNullOrEmpty(EndColor)) sb.Append($" EndColor=\"{EndColor}\"");
+        if (ReverseColors) sb.Append(" ReverseColors=\"true\"");
         if (Elevation != GaugeElevation.Floating) sb.Append($" Elevation=\"GaugeElevation.{Elevation}\"");
         if (SegmentLabels is { } labels)
         {

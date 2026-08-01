@@ -294,8 +294,8 @@ public partial class AtomGauge : AtomGaugeBase
     {
         get
         {
-            var start = StartColor ?? "#e5484d";
-            var end = EndColor ?? "#30a46c";
+            var start = ResolvedStartColor;
+            var end = ResolvedEndColor;
             var sliceLength = TrackLength / GradientSliceCount;
 
             for (var i = 0; i < GradientSliceCount; i++)
@@ -318,8 +318,8 @@ public partial class AtomGauge : AtomGaugeBase
         get
         {
             var n = EffectiveTickCount;
-            var start = StartColor ?? "#e5484d";
-            var end = EndColor ?? "#30a46c";
+            var start = ResolvedStartColor;
+            var end = ResolvedEndColor;
             var activeIndex = (int)Math.Round(Fraction * (n - 1));
             var innerR = ArcRadius - ResolvedThickness / 2;
             var outerR = ArcRadius + ResolvedThickness / 2;

@@ -41,4 +41,61 @@ public class GaugeColorScaleTests : BunitContext
         Assert.Empty(GaugeColorScale.Bands(0, 0, 100, "#ff0000", "#00ff00"));
         Assert.Empty(GaugeColorScale.Bands(-1, 0, 100, "#ff0000", "#00ff00"));
     }
+
+    [Theory]
+    [InlineData("#ff0000", true)]
+    [InlineData("ff0000", true)]
+    [InlineData("#f00", true)]
+    [InlineData("f00", true)]
+    [InlineData(null, false)]
+    [InlineData("", false)]
+    [InlineData("R", false)]
+    [InlineData("Re", false)]
+    [InlineData("Red", false)]
+    [InlineData("#ff00", false)]
+    [InlineData("#gggggg", false)]
+    public void IsValidHex_accepts_only_3_or_6_digit_hex_with_or_without_a_hash(string? input, bool expected)
+    {
+        Assert.Equal(expected, GaugeColorScale.IsValidHex(input));
+    }
+
+    [Theory]
+    [InlineData("purple", "#800080")]
+    [InlineData("Purple", "#800080")]
+    [InlineData("PURPLE", "#800080")]
+    [InlineData(" purple ", "#800080")]
+    [InlineData("red", "#ff0000")]
+    [InlineData("rebeccapurple", "#663399")]
+    [InlineData("#ff0000", "#ff0000")]
+    [InlineData("ff0000", "#ff0000")]
+    [InlineData("#f00", "#f00")]
+    public void ResolveHex_accepts_named_CSS_colors_the_same_as_hex(string input, string expectedHex)
+    {
+        Assert.Equal(expectedHex, GaugeColorScale.ResolveHex(input));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("R")]
+    [InlineData("Re")]
+    [InlineData("notacolor")]
+    public void ResolveHex_returns_null_for_anything_neither_hex_nor_a_named_color(string? input)
+    {
+        Assert.Null(GaugeColorScale.ResolveHex(input));
+    }
+
+    [Theory]
+    [InlineData("R")]
+    [InlineData("Re")]
+    [InlineData("")]
+    [InlineData("#12")]
+    public void Lerp_never_throws_on_malformed_input_it_was_not_told_to_validate(string malformed)
+    {
+        // A live-bound color text field passes every keystroke through, including partial input on the
+        // way to a real color — Lerp must not crash mid-render on any of it, even though the *right* fix
+        // is validating with IsValidHex before it ever reaches here (which every gauge now does).
+        var exception = Record.Exception(() => GaugeColorScale.Lerp(malformed, "#00ff00", 0.5));
+        Assert.Null(exception);
+    }
 }
