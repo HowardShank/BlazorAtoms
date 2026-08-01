@@ -1,0 +1,24 @@
+.atom-chart-banner {
+    /* The gauge's own dial/track wrapper is the positioning context, same as AtomChartReadout. */
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    /* Half above the edge, half below it — a straddle, not a caption sitting clear underneath. */
+    transform: translate(-50%, 50%);
+    pointer-events: none;
+    max-width: 90%;
+}
+
+.atom-chart-banner-text {
+    display: block;
+    font-size: .78em;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    padding: .3em .9em;
+    border-radius: 999px;
+    background: var(--chart-readout-color, #33414d);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .25);
+}

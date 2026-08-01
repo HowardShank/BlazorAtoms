@@ -1,0 +1,96 @@
+.atom-dot-gauge {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    width: var(--chart-width, 100%);
+}
+
+.atom-dot-gauge-wrap {
+    position: relative;
+    min-width: 0;
+    /* Same reasoning as AtomBarGauge: the dial's 1.5em pill default assumes a big round face, which
+       overwhelms a row of small dots. AtomChartReadout's own FontSize/Padding params override this. */
+    --chart-readout-font-size: 1em;
+    --chart-readout-padding: .2em .5em;
+}
+
+.atom-dot-gauge-wrap[data-orientation="vertical"] {
+    height: var(--chart-height, 220px);
+    width: fit-content;
+}
+
+.atom-dot-gauge-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.atom-dot-gauge-wrap[data-orientation="vertical"] .atom-dot-gauge-svg {
+    height: 100%;
+    width: auto;
+}
+
+/* Every reference dot-scale keeps every dot fully saturated — position/value reads off size, not a
+   dimmed-vs-lit toggle like AtomStoplight's lamps (wrong metaphor here: a dot is never "off", it is
+   always a step on a fixed scale). --dot-hue is set per-dot inline; the active one gets a ring and a
+   glow instead of a hue change. */
+.atom-dot-gauge-dot {
+    fill: var(--dot-hue);
+    stroke: none;
+    transition: filter .2s ease;
+}
+
+.atom-dot-gauge-dot[data-active="true"] {
+    stroke: #fff;
+    stroke-width: 1.5;
+    filter: drop-shadow(0 0 3px var(--dot-hue));
+}
+
+.atom-dot-gauge-pointer {
+    fill: var(--chart-needle-color, currentColor);
+}
+
+[data-elevation]:not([data-elevation="flat"]) .atom-dot-gauge-pointer {
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .35));
+}
+
+/* --- draw-in -------------------------------------------------------------------------------------- */
+
+.atom-dot-gauge-svg[data-animate] .atom-dot-gauge-dot {
+    animation: atom-dot-gauge-pop var(--chart-duration, 500ms) ease-out backwards;
+}
+
+@keyframes atom-dot-gauge-pop {
+    from { opacity: 0; transform: scale(.5); transform-box: fill-box; transform-origin: center; }
+    to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-dot-gauge-svg[data-animate] .atom-dot-gauge-dot {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* --- elevation ------------------------------------------------------------------------------------
+   Same filter-based recipe as AtomGauge.razor.css — see that file's comment for why. */
+
+.atom-dot-gauge-sheen {
+    fill: #fff;
+    opacity: 0;
+    pointer-events: none;
+}
+
+[data-elevation="raised"] .atom-dot-gauge-svg {
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .25));
+}
+
+[data-elevation="floating"] .atom-dot-gauge-svg {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .18)) drop-shadow(0 14px 26px rgba(0, 0, 0, .22));
+}
+
+[data-elevation="floating"] .atom-dot-gauge-sheen {
+    opacity: .22;
+    filter: blur(4px);
+}

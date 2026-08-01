@@ -1,0 +1,51 @@
+@inherits AtomGaugeBase
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-dot-gauge")"
+     style="@StyleAttr(RootStyle)"
+     data-elevation="@ElevationAttr">
+<AtomChartFrame Chart="@ChartCtx"
+                Heading="@Heading"
+                Caption="@Caption"
+                Legend="@Legend"
+                EmptyState="@EmptyState"
+                Placement="@EffectiveLegendPlacement">
+    <Plot>
+    <div class="atom-dot-gauge-wrap" data-orientation="@(IsVertical ? "vertical" : "horizontal")">
+        <svg class="atom-dot-gauge-svg"
+             viewBox="0 0 @Fmt(ViewBoxWidth) @Fmt(ViewBoxHeight)"
+             role="img"
+             aria-label="@EffectiveAriaLabel"
+             data-animate="@AnimateAttr">
+            <title>@EffectiveAriaLabel</title>
+
+            @* Fixed gloss highlight over the row's upper area — only visible under
+               Elevation="Floating" (see the stylesheet). *@
+            <ellipse class="atom-dot-gauge-sheen"
+                     cx="@Fmt(IsVertical ? CrossCenter - MaxRadius * 0.3 : AlongTotal / 2)"
+                     cy="@Fmt(IsVertical ? AlongTotal / 2 : CrossCenter - MaxRadius * 0.3)"
+                     rx="@Fmt(IsVertical ? MaxRadius * 0.6 : AlongTotal * 0.4)"
+                     ry="@Fmt(IsVertical ? AlongTotal * 0.4 : MaxRadius * 0.6)" />
+
+            @foreach (var dot in Dots)
+            {
+                <circle class="atom-dot-gauge-dot" data-active="@(dot.Active ? "true" : null)"
+                        style="--dot-hue:@dot.Color;"
+                        cx="@Fmt(dot.Cx)" cy="@Fmt(dot.Cy)" r="@Fmt(dot.R)" />
+            }
+
+            @if (ShowPointer)
+            {
+                <path class="atom-dot-gauge-pointer" d="@PointerPath" />
+            }
+
+            @RangeLabels
+        </svg>
+
+        @Center
+        @Readout
+        @Banner
+    </div>
+    </Plot>
+</AtomChartFrame>
+</div>

@@ -8,6 +8,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\BlazorAtoms.Branding\BlazorAtoms.Branding.csproj" />
+    <!-- For the shared NavMenu rendered by this host's own MainLayout. -->
+    <ProjectReference Include="..\..\Demos.Shared\Demos.Shared.csproj" />
     <ProjectReference Include="..\BlazorWebAppAutoDemo.Client\BlazorWebAppAutoDemo.Client.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
   </ItemGroup>

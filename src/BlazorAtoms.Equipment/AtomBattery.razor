@@ -1,0 +1,65 @@
+@inherits AtomComponentBase
+
+<svg @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-battery")"
+     style="@StyleAttr(RootStyle)"
+     viewBox="0 0 @Fmt(ViewBoxWidth) @Fmt(ViewBoxHeight)"
+     role="img"
+     aria-label="@AriaLabelValue"
+     data-orientation="@(IsVertical ? "vertical" : "horizontal")"
+     data-level="@LevelAttr(Level)"
+     data-status="@StatusAttr(Status)"
+     data-mono="@(Monochrome ? "true" : null)">
+
+    <rect class="atom-battery-nub"
+          x="@Fmt(NubX)" y="@Fmt(NubY)"
+          width="@Fmt(NubW)" height="@Fmt(NubH)"
+          rx="@Fmt(NubRx)" />
+
+    <rect class="atom-battery-shell"
+          x="@Fmt(BodyX)" y="@Fmt(BodyY)"
+          width="@Fmt(BodyW)" height="@Fmt(BodyH)"
+          rx="@Fmt(Rx)" />
+
+    @if (FillFraction > 0)
+    {
+        <rect class="atom-battery-fill"
+              x="@Fmt(FillX)" y="@Fmt(FillY)"
+              width="@Fmt(FillWidth)" height="@Fmt(FillHeight)"
+              rx="@Fmt(FillRx)" />
+    }
+
+    @if (Status == BatteryStatus.Slash)
+    {
+        <path class="atom-battery-badge-glyph atom-battery-slash" d="@SlashLine" />
+    }
+    else if (HasBadge)
+    {
+        <circle class="atom-battery-badge-bg" cx="@Fmt(BadgeCx)" cy="@Fmt(BadgeCy)" r="@Fmt(BadgeR)" />
+
+        @switch (Status)
+        {
+            case BatteryStatus.Charging:
+                <path class="atom-battery-badge-glyph atom-battery-badge-fill" d="@BoltPath(BadgeCx, BadgeCy)" />
+                break;
+            case BatteryStatus.Warning:
+                <rect class="atom-battery-badge-glyph atom-battery-badge-fill"
+                      x="@Fmt(BadgeCx - 1.5)" y="@Fmt(BadgeCy - 9)" width="3" height="8" rx="1.5" />
+                <circle class="atom-battery-badge-glyph atom-battery-badge-fill"
+                        cx="@Fmt(BadgeCx)" cy="@Fmt(BadgeCy + 4)" r="1.8" />
+                break;
+            case BatteryStatus.Error:
+                <line class="atom-battery-badge-glyph"
+                      x1="@Fmt(BadgeCx - 6)" y1="@Fmt(BadgeCy - 6)" x2="@Fmt(BadgeCx + 6)" y2="@Fmt(BadgeCy + 6)" />
+                <line class="atom-battery-badge-glyph"
+                      x1="@Fmt(BadgeCx - 6)" y1="@Fmt(BadgeCy + 6)" x2="@Fmt(BadgeCx + 6)" y2="@Fmt(BadgeCy - 6)" />
+                break;
+            case BatteryStatus.Check:
+                <path class="atom-battery-badge-glyph" d="@CheckPath(BadgeCx, BadgeCy)" />
+                break;
+            case BatteryStatus.Unknown:
+                @QuestionMark(BadgeCx, BadgeCy)
+                break;
+        }
+    }
+</svg>

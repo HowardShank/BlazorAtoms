@@ -22,6 +22,22 @@
 }
 
 .atom-chart-readout-value {
-    font-size: 1.4em;
+    /* A dial has room for a big badge; a narrow bar/dot track doesn't — a pill sized for the dial
+       ends up as wide as the whole track, reading as if it replaced the track rather than sitting on
+       it. AtomBarGauge/AtomDotGauge set a smaller ambient default on their own wrapper; FontSize/Padding
+       on this element override that (or the base 1.5em) directly, since an inline style on this element
+       always wins over a value inherited from an ancestor. */
+    font-size: var(--chart-readout-font-size, 1.5em);
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
+    line-height: 1;
+    padding: var(--chart-readout-padding, .3em .75em);
+    border-radius: 999px;
+    /* A solid dark badge with light text, not a tint of the surrounding color — every reference "score
+       gauge" reads its number off a fixed dark pill regardless of the page's own theme, so this is a
+       deliberately fixed pair rather than a currentColor mix (unlike the face plate, which only needs to
+       avoid clashing with the page, not match a specific reference exactly). */
+    background: var(--chart-readout-color, #33414d);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .25);
 }

@@ -1,8 +1,9 @@
-@inherits AtomChartBase
+@inherits AtomGaugeBase
 
 <div @attributes="AdditionalAttributes"
      class="@ClassAttr("atom-gauge")"
-     style="@StyleAttr(RootStyle)">
+     style="@StyleAttr(RootStyle)"
+     data-elevation="@ElevationAttr">
 <AtomChartFrame Chart="@ChartCtx"
                 Heading="@Heading"
                 Caption="@Caption"
@@ -19,6 +20,29 @@
              data-animate="@AnimateAttr">
             <title>@EffectiveAriaLabel</title>
 
+            @if (ShowPedestal)
+            {
+                @* Drawn first, unrotated, so the dial's own layers cover most of it and only the flat
+                   base peeks out beneath — a literal platform, not GaugeElevation's drop-shadow. *@
+                <rect class="atom-gauge-pedestal"
+                      x="@N(PedestalX)" y="@N(PedestalY)"
+                      width="@N(PedestalWidth)" height="@N(PedestalHeight)"
+                      rx="@N(PedestalHeight / 2)" />
+            }
+
+            @* A plate behind the ring, so the dial reads as an instrument face rather than a bare arc
+               floating on whatever the page background is. *@
+            <circle class="atom-gauge-face" cx="50" cy="50" r="@N(FaceRadius)" />
+
+            @* A ring just outside the band — the frame every reference gauge is drawn inside.
+               A full circle regardless of SweepAngle, so it sits outside the rotated group untouched by it. *@
+            <circle class="atom-gauge-bezel" cx="50" cy="50" r="@N(BezelRadius)" stroke-width="@N(BezelWidth)" />
+
+            @* Unrotated, drawn once near the top of the box regardless of SweepAngle — a fixed gloss
+               highlight, not a precise reflection, is the accepted approximation here. Only visible
+               under Elevation="Floating" (see the stylesheet). *@
+            <ellipse class="atom-gauge-sheen" cx="42" cy="30" rx="26" ry="14" />
+
             @* Rotated so the sweep is centred on 12 o'clock. Everything inside is drawn as a full circle and
                trimmed by stroke-dasharray, with pathLength="100" making those lengths percentages. *@
             <g transform="rotate(@N(-90 - SweepAngle / 2) 50 50)">
@@ -28,17 +52,51 @@
                         pathLength="100"
                         stroke-dasharray="@N(TrackLength) @N(100 - TrackLength)" />
 
-                @foreach (var band in BandArcs)
+                @if (ShowTickRuler)
                 {
-                    <circle class="atom-gauge-band"
-                            cx="50" cy="50" r="@N(ArcRadius)"
-                            stroke="@band.Color"
-                            stroke-width="@N(ResolvedThickness)"
-                            pathLength="100"
-                            stroke-dasharray="@N(band.Length) @N(100 - band.Length)"
-                            stroke-dashoffset="@N(-band.Offset)">
-                        <title>@band.Title</title>
-                    </circle>
+                    @foreach (var tick in TickRulerMarks)
+                    {
+                        <line class="atom-gauge-tick-ruler-mark" data-major="@(tick.Major ? "true" : null)"
+                              x1="@N(tick.X1)" y1="@N(tick.Y1)" x2="@N(tick.X2)" y2="@N(tick.Y2)" />
+                    }
+                }
+
+                @switch (ArcStyle)
+                {
+                    case GaugeArcStyle.Segmented:
+                        @foreach (var band in BandArcs)
+                        {
+                            <circle class="atom-gauge-band"
+                                    cx="50" cy="50" r="@N(ArcRadius)"
+                                    stroke="@band.Color"
+                                    stroke-width="@N(ResolvedThickness)"
+                                    pathLength="100"
+                                    stroke-dasharray="@N(band.Length) @N(100 - band.Length)"
+                                    stroke-dashoffset="@N(-band.Offset)">
+                                <title>@band.Title</title>
+                            </circle>
+                        }
+                        break;
+                    case GaugeArcStyle.Gradient:
+                        @foreach (var slice in GradientArcs)
+                        {
+                            <circle class="atom-gauge-band"
+                                    cx="50" cy="50" r="@N(ArcRadius)"
+                                    stroke="@slice.Color"
+                                    stroke-width="@N(ResolvedThickness)"
+                                    pathLength="100"
+                                    stroke-dasharray="@N(slice.Length) @N(100 - slice.Length)"
+                                    stroke-dashoffset="@N(-slice.Offset)" />
+                        }
+                        break;
+                    case GaugeArcStyle.Ticks:
+                        @foreach (var tick in ArcTicks)
+                        {
+                            <line class="atom-gauge-arc-tick" data-active="@(tick.Active ? "true" : null)"
+                                  x1="@N(tick.X1)" y1="@N(tick.Y1)" x2="@N(tick.X2)" y2="@N(tick.Y2)"
+                                  stroke="@tick.Color" />
+                        }
+                        break;
                 }
 
                 @if (ShowValueArc)
@@ -50,12 +108,49 @@
                             stroke-dasharray="@N(ValueLength) @N(100 - ValueLength)" />
                 }
 
+                @if (RedlineArc is { } redline)
+                {
+                    @* A slim ring just inside the band's own inner edge, not an overlay on the scale
+                       itself — reads as a separate danger-zone marker rather than a recolored segment. *@
+                    <circle class="atom-gauge-redline"
+                            cx="50" cy="50" r="@N(RedlineRadius)"
+                            stroke="@(RedlineColor ?? "#e5484d")"
+                            stroke-width="@N(RedlineThickness)"
+                            pathLength="100"
+                            stroke-dasharray="@N(redline.Length) @N(100 - redline.Length)"
+                            stroke-dashoffset="@N(-redline.Offset)" />
+                }
+
                 @if (ShowNeedle)
                 {
-                    <line class="atom-gauge-needle"
-                          x1="50" y1="50"
-                          x2="@N(NeedleX)" y2="@N(NeedleY)" />
-                    <circle class="atom-gauge-hub" cx="50" cy="50" r="3" />
+                    @* Every needle style below draws itself at a fixed reference angle (see
+                       NeedleRotationDeg's remarks) — this wrapping group is the only thing that rotates
+                       with Value, which is what lets CSS transition its transform smoothly between
+                       values instead of the needle's own path jumping. *@
+                    <g class="atom-gauge-needle-group" transform="rotate(@N(NeedleRotationDeg) 50 50)">
+                        @switch (NeedleStyle)
+                        {
+                            case GaugeNeedleStyle.Tapered:
+                                <line class="atom-gauge-needle-tail" x1="50" y1="50" x2="@N(TailX)" y2="@N(TailY)" />
+                                <circle class="atom-gauge-needle-tailball" cx="@N(TailX)" cy="@N(TailY)" r="@N(TailBallRadius)" />
+                                <path class="atom-gauge-needle-tapered" d="@TaperedNeedlePath" />
+                                <circle class="atom-gauge-hub-outer" cx="50" cy="50" r="@N(HubOuterRadius)" />
+                                <circle class="atom-gauge-hub-inner" cx="50" cy="50" r="@N(HubInnerRadius)" />
+                                break;
+                            case GaugeNeedleStyle.Triangle:
+                                <path class="atom-gauge-needle-triangle" d="@TriangleNeedlePath" />
+                                break;
+                            case GaugeNeedleStyle.RimTab:
+                                <path class="atom-gauge-rim-tab" d="@RimTabPath" />
+                                break;
+                            default:
+                                <line class="atom-gauge-needle"
+                                      x1="50" y1="50"
+                                      x2="@N(NeedleX)" y2="@N(NeedleY)" />
+                                <circle class="atom-gauge-hub" cx="50" cy="50" r="3" />
+                                break;
+                        }
+                    </g>
                 }
             </g>
 
@@ -68,6 +163,7 @@
            of the needle's hub, while the centre element centres exactly. *@
         @Center
         @Readout
+        @Banner
     </div>
     </Plot>
 </AtomChartFrame>

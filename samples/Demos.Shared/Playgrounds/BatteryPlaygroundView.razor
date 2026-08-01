@@ -1,0 +1,137 @@
+@using System.Globalization
+@using BlazorAtoms.Equipment
+
+<PageTitle>AtomBattery Playground</PageTitle>
+
+<h1>AtomBattery playground</h1>
+<p>Tune <code>&lt;AtomBattery&gt;</code> live. An outline shell + terminal nub with a fill sized to
+   <code>Level</code>, plus an optional <code>Status</code> badge (charging/warning/error/slash/unknown/
+   check) layered on top &mdash; the fill and the badge are independent, the same way a real battery
+   icon composes a bolt over the fill glyph rather than replacing it.</p>
+<p><a href="playground/activityindicators">&larr; Back to demo</a></p>
+
+<div class="bt-stage">
+    <AtomBattery Level="@Level" Status="@Status" Orientation="@Orientation" Width="@WidthV"
+                 OutlineColor="@Nz(OutlineColor)" FillColor="@Nz(FillColor)" Monochrome="@Monochrome"
+                 AriaLabel="@Nz(AriaLabel)"
+                 CssClass="@Nz(HatchClass)" Style="@Nz(HatchStyle)" title="@Nz(HatchTitle)" />
+</div>
+
+<div class="bt-controls">
+    <div class="ctrl">
+        <label>Level</label>
+        <select @bind="Level">
+            @foreach (var l in Levels) { <option value="@l">@l</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Status</label>
+        <select @bind="Status">
+            @foreach (var s in Statuses) { <option value="@s">@s</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Orientation</label>
+        <select @bind="Orientation">
+            @foreach (var o in Orientations) { <option value="@o">@o</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Width (px) <span class="val">@WidthV.ToString(Inv)</span></label>
+        <input type="range" min="32" max="200" step="4" @bind="WidthV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl row-inline">
+        <label>Monochrome</label>
+        <input type="checkbox" @bind="Monochrome" />
+    </div>
+    <div class="ctrl">
+        <label>Outline color (OutlineColor)</label>
+        <div class="row color">
+            <input type="color" @bind="OutlineColor" @bind:event="oninput" aria-label="Outline color picker" />
+            <input type="text" @bind="OutlineColor" @bind:event="oninput" placeholder="(default)" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Fill color (FillColor)</label>
+        <div class="row color">
+            <input type="color" @bind="FillColor" @bind:event="oninput" aria-label="Fill color picker" />
+            <input type="text" @bind="FillColor" @bind:event="oninput" placeholder="(auto by level)" />
+        </div>
+    </div>
+    <div class="ctrl">
+        <label>Aria label (AriaLabel)</label>
+        <input type="text" @bind="AriaLabel" @bind:event="oninput" placeholder="(auto)" />
+    </div>
+    <div class="ctrl">
+        <label>Extra class (CssClass)</label>
+        <input type="text" @bind="HatchClass" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Extra style (Style)</label>
+        <input type="text" @bind="HatchStyle" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>title attr (splat)</label>
+        <input type="text" @bind="HatchTitle" @bind:event="oninput" placeholder="(none)" />
+    </div>
+</div>
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomBatteryExample.razor" />
+
+<style>
+    .bt-stage { display:flex; justify-content:center; background:#0a0a0c; border:1px solid #d0d0d8; border-radius:12px; padding:2.5rem 1.5rem; margin-bottom:1.5rem; }
+    .bt-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem 1.5rem; background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; }
+    .bt-controls .ctrl { display:flex; flex-direction:column; gap:.4rem; }
+    .bt-controls .ctrl.row-inline { flex-direction:row; align-items:center; justify-content:space-between; }
+    .bt-controls label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; gap:.5rem; }
+    .bt-controls label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
+    .bt-controls input[type=range] { width:100%; accent-color:#34c759; }
+    .bt-controls input[type=text], .bt-controls select { padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; }
+    .bt-controls .row.color { display:flex; align-items:center; gap:.4rem; }
+    .bt-controls .row.color input[type=color] { flex:none; width:38px; height:32px; padding:2px; background:#070b10; border:1px solid #1b2330; border-radius:6px; cursor:pointer; }
+    .bt-controls .row.color input[type=text] { flex:1 1 auto; min-width:0; }
+</style>
+
+@code {
+    private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
+    private static readonly BatteryLevel[] Levels = (BatteryLevel[])Enum.GetValues(typeof(BatteryLevel));
+    private static readonly BatteryStatus[] Statuses = (BatteryStatus[])Enum.GetValues(typeof(BatteryStatus));
+    private static readonly BatteryOrientation[] Orientations = (BatteryOrientation[])Enum.GetValues(typeof(BatteryOrientation));
+
+    private BatteryLevel Level = BatteryLevel.Full;
+    private BatteryStatus Status = BatteryStatus.None;
+    private BatteryOrientation Orientation = BatteryOrientation.Horizontal;
+    private double WidthV = 64;
+    private bool Monochrome;
+
+    private string OutlineColor = "";
+    private string FillColor = "";
+    private string AriaLabel = "";
+
+    private string HatchClass = "";
+    private string HatchStyle = "";
+    private string HatchTitle = "";
+
+    private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
+
+    private string Snippet
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder("<AtomBattery");
+            if (Level != BatteryLevel.Full) sb.Append($" Level=\"BatteryLevel.{Level}\"");
+            if (Status != BatteryStatus.None) sb.Append($" Status=\"BatteryStatus.{Status}\"");
+            if (Orientation != BatteryOrientation.Horizontal) sb.Append($" Orientation=\"BatteryOrientation.{Orientation}\"");
+            if (WidthV != 64) sb.Append($" Width=\"{WidthV.ToString(Inv)}\"");
+            if (Monochrome) sb.Append(" Monochrome=\"true\"");
+            if (!string.IsNullOrEmpty(OutlineColor)) sb.Append($" OutlineColor=\"{OutlineColor}\"");
+            if (!string.IsNullOrEmpty(FillColor)) sb.Append($" FillColor=\"{FillColor}\"");
+            if (!string.IsNullOrEmpty(AriaLabel)) sb.Append($" AriaLabel=\"{AriaLabel}\"");
+            if (!string.IsNullOrEmpty(HatchClass)) sb.Append($" CssClass=\"{HatchClass}\"");
+            if (!string.IsNullOrEmpty(HatchStyle)) sb.Append($" Style=\"{HatchStyle}\"");
+            if (!string.IsNullOrEmpty(HatchTitle)) sb.Append($" title=\"{HatchTitle}\"");
+            sb.Append(" />");
+            return sb.ToString();
+        }
+    }
+}

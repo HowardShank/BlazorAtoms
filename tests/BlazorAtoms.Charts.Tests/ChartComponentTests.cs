@@ -390,6 +390,17 @@ public class ChartComponentTests : BunitContext
     }
 
     [Fact]
+    public void AtomChartReadout_FontSize_and_Padding_emit_style_vars_the_pill_reads()
+    {
+        var cut = Render<AtomGauge>(p => p.Add(c => c.Readout, Slot.Of<AtomChartReadout>(
+            ("FontSize", 0.9), ("Padding", ".2em .5em"))));
+
+        var style = cut.Find(".atom-chart-readout").GetAttribute("style")!;
+        Assert.Contains("--chart-readout-font-size:0.9em", style);
+        Assert.Contains("--chart-readout-padding:.2em .5em", style);
+    }
+
+    [Fact]
     public void A_zero_width_range_reads_as_empty_rather_than_dividing_by_zero()
     {
         var cut = Render<AtomGauge>(p => p
@@ -470,15 +481,14 @@ public class ChartComponentTests : BunitContext
     [Fact]
     public void The_needle_moves_with_the_value()
     {
+        // The needle shape itself is drawn at a fixed reference angle now (see NeedleRotationDeg's
+        // remarks) — only the wrapping group's own rotate() changes with Value, which is what makes the
+        // motion CSS-transitionable instead of the path jumping between values.
         var low = Render<AtomGauge>(p => p.Add(c => c.Value, 0d));
         var high = Render<AtomGauge>(p => p.Add(c => c.Value, 100d));
 
-        var lowTip = (low.Find(".atom-gauge-needle").GetAttribute("x2"),
-                      low.Find(".atom-gauge-needle").GetAttribute("y2"));
-        var highTip = (high.Find(".atom-gauge-needle").GetAttribute("x2"),
-                       high.Find(".atom-gauge-needle").GetAttribute("y2"));
-
-        Assert.NotEqual(lowTip, highTip);
+        Assert.NotEqual(low.Find(".atom-gauge-needle-group").GetAttribute("transform"),
+            high.Find(".atom-gauge-needle-group").GetAttribute("transform"));
     }
 
     [Fact]
@@ -500,6 +510,406 @@ public class ChartComponentTests : BunitContext
         var cut = Render<AtomGauge>(p => p.Add(c => c.Value, 1d));
 
         Assert.Equal("img", cut.Find("svg").GetAttribute("role"));
+    }
+
+    [Fact]
+    public void SegmentCount_auto_generates_bands_and_an_explicit_Bands_list_wins_over_it()
+    {
+        var auto = Render<AtomGauge>(p => p.Add(c => c.SegmentCount, 4).Add(c => c.SweepAngle, 360d));
+        Assert.Equal(4, auto.FindAll(".atom-gauge-band").Count);
+
+        var explicitWins = Render<AtomGauge>(p => p
+            .Add(c => c.SegmentCount, 4)
+            .Add(c => c.Bands, new[] { new GaugeBand(100, "purple") })
+            .Add(c => c.SweepAngle, 360d));
+        var bands = explicitWins.FindAll(".atom-gauge-band");
+        Assert.Single(bands);
+        Assert.Equal("purple", bands[0].GetAttribute("stroke"));
+    }
+
+    [Fact]
+    public void Untouched_gauge_is_colored_with_4_bands_by_default()
+    {
+        // Every reference "score gauge" ships colored out of the box — an untouched AtomGauge is not a
+        // plain gray track, it defaults to 4 red→green bands.
+        var cut = Render<AtomGauge>(p => p.Add(c => c.Value, 50d));
+        Assert.Equal(4, cut.FindAll(".atom-gauge-band").Count);
+    }
+
+    [Fact]
+    public void An_explicit_empty_Bands_list_opts_out_of_bands_entirely()
+    {
+        var cut = Render<AtomGauge>(p => p.Add(c => c.Bands, Array.Empty<GaugeBand>()));
+        Assert.Empty(cut.FindAll(".atom-gauge-band"));
+    }
+
+    [Fact]
+    public void SegmentCount_bands_sweep_from_StartColor_to_EndColor()
+    {
+        var cut = Render<AtomGauge>(p => p
+            .Add(c => c.SegmentCount, 3)
+            .Add(c => c.StartColor, "#ff0000")
+            .Add(c => c.EndColor, "#00ff00")
+            .Add(c => c.SweepAngle, 360d));
+
+        var bands = cut.FindAll(".atom-gauge-band");
+        Assert.Equal(3, bands.Count);
+        Assert.Equal("#ff0000", bands[0].GetAttribute("stroke"));
+        Assert.Equal("#00ff00", bands[2].GetAttribute("stroke"));
+        // The middle band is neither endpoint — proof the sweep actually moved, not a flat 2-color split.
+        Assert.NotEqual("#ff0000", bands[1].GetAttribute("stroke"));
+        Assert.NotEqual("#00ff00", bands[1].GetAttribute("stroke"));
+    }
+
+    [Fact]
+    public void Elevation_defaults_to_Floating_and_is_overridable()
+    {
+        var defaulted = Render<AtomGauge>();
+        Assert.Equal("floating", defaulted.Find(".atom-gauge").GetAttribute("data-elevation"));
+
+        var flat = Render<AtomGauge>(p => p.Add(c => c.Elevation, GaugeElevation.Flat));
+        Assert.Equal("flat", flat.Find(".atom-gauge").GetAttribute("data-elevation"));
+    }
+
+    [Fact]
+    public void The_dial_always_has_a_face_plate_and_a_bezel_ring()
+    {
+        var cut = Render<AtomGauge>();
+        var face = cut.Find(".atom-gauge-face");
+        Assert.True(double.Parse(face.GetAttribute("r")!, System.Globalization.CultureInfo.InvariantCulture) > 0);
+        Assert.NotNull(cut.Find(".atom-gauge-bezel"));
+    }
+
+    [Theory]
+    [InlineData(1d)] // default
+    [InlineData(6d)] // max in the playground slider
+    [InlineData(0.5d)]
+    public void The_bezel_ring_never_exceeds_the_100x100_viewBox_regardless_of_BezelWidth(double bezelWidth)
+    {
+        // Regression: ArcRadius used to put the band's own outer edge exactly at radius 50 (the viewBox
+        // boundary) with zero room left outside it, so BezelRadius (+thickness/2 +1) landed at 51 —
+        // always 1 unit past the edge — and the SVG clipped the bezel ring on all four sides. The fix
+        // reserves room for the bezel dynamically, so its outer edge must stay inside 50 for any width.
+        var cut = Render<AtomGauge>(p => p.Add(c => c.BezelWidth, bezelWidth));
+
+        var bezel = cut.Find(".atom-gauge-bezel");
+        var r = double.Parse(bezel.GetAttribute("r")!, System.Globalization.CultureInfo.InvariantCulture);
+        var strokeWidth = double.Parse(bezel.GetAttribute("stroke-width")!, System.Globalization.CultureInfo.InvariantCulture);
+
+        Assert.True(r + strokeWidth / 2 < 50, $"bezel outer edge {r + strokeWidth / 2} reaches/exceeds the viewBox boundary (50)");
+    }
+
+    [Fact]
+    public void FaceColor_maps_to_the_face_color_custom_property()
+    {
+        var cut = Render<AtomGauge>(p => p.Add(c => c.FaceColor, "#112233"));
+        Assert.Contains("--chart-face-color:#112233", cut.Find(".atom-gauge").GetAttribute("style"));
+    }
+
+    [Fact]
+    public void Triangle_needle_style_draws_a_short_bold_path_with_no_tail_or_extra_hub_layer()
+    {
+        var cut = Render<AtomGauge>(p => p.Add(c => c.NeedleStyle, GaugeNeedleStyle.Triangle));
+
+        Assert.Single(cut.FindAll(".atom-gauge-needle-triangle"));
+        Assert.Empty(cut.FindAll(".atom-gauge-needle"));
+        Assert.Empty(cut.FindAll(".atom-gauge-needle-tapered"));
+        Assert.Empty(cut.FindAll(".atom-gauge-hub-outer"));
+        Assert.False(string.IsNullOrWhiteSpace(cut.Find(".atom-gauge-needle-triangle").GetAttribute("d")));
+    }
+
+    [Fact]
+    public void RimTab_needle_style_draws_a_tab_with_no_centre_pivot_hub()
+    {
+        var cut = Render<AtomGauge>(p => p.Add(c => c.NeedleStyle, GaugeNeedleStyle.RimTab));
+
+        Assert.Single(cut.FindAll(".atom-gauge-rim-tab"));
+        Assert.Empty(cut.FindAll(".atom-gauge-hub"));
+        Assert.Empty(cut.FindAll(".atom-gauge-hub-outer"));
+        Assert.False(string.IsNullOrWhiteSpace(cut.Find(".atom-gauge-rim-tab").GetAttribute("d")));
+    }
+
+    [Theory]
+    [InlineData(GaugeNeedleStyle.Triangle)]
+    [InlineData(GaugeNeedleStyle.RimTab)]
+    public void New_needle_styles_move_with_the_value(GaugeNeedleStyle style)
+    {
+        var low = Render<AtomGauge>(p => p.Add(c => c.NeedleStyle, style).Add(c => c.Value, 0d));
+        var high = Render<AtomGauge>(p => p.Add(c => c.NeedleStyle, style).Add(c => c.Value, 100d));
+
+        // Every needle style's own path is fixed now — the wrapping group's rotate() is what moves.
+        Assert.NotEqual(low.Find(".atom-gauge-needle-group").GetAttribute("transform"),
+            high.Find(".atom-gauge-needle-group").GetAttribute("transform"));
+    }
+
+    [Fact]
+    public void Banner_slot_renders_when_filled_and_stays_empty_otherwise()
+    {
+        var empty = Render<AtomGauge>();
+        Assert.Empty(empty.FindAll(".atom-chart-banner"));
+
+        var filled = Render<AtomGauge>(p => p.Add(c => c.Banner,
+            Slot.Of<AtomChartBanner>(("ChildContent", Slot.Text("Score")))));
+        Assert.Equal("Score", filled.Find(".atom-chart-banner").TextContent);
+    }
+
+    [Fact]
+    public void ShowPedestal_defaults_to_false_and_draws_a_platform_when_enabled()
+    {
+        var defaulted = Render<AtomGauge>();
+        Assert.Empty(defaulted.FindAll(".atom-gauge-pedestal"));
+
+        var withPedestal = Render<AtomGauge>(p => p.Add(c => c.ShowPedestal, true));
+        var pedestal = withPedestal.Find(".atom-gauge-pedestal");
+        Assert.True(double.Parse(pedestal.GetAttribute("width")!, System.Globalization.CultureInfo.InvariantCulture) > 0);
+    }
+
+    [Fact]
+    public void BezelColor_and_BezelWidth_reach_the_bezel_ring()
+    {
+        var cut = Render<AtomGauge>(p => p
+            .Add(c => c.BezelColor, "#445566")
+            .Add(c => c.BezelWidth, 4d));
+
+        Assert.Contains("--chart-bezel-color:#445566", cut.Find(".atom-gauge").GetAttribute("style"));
+        Assert.Equal("4", cut.Find(".atom-gauge-bezel").GetAttribute("stroke-width"));
+    }
+
+    [Fact]
+    public void Line_is_the_default_needle_style()
+    {
+        var cut = Render<AtomGauge>();
+        Assert.Single(cut.FindAll(".atom-gauge-needle"));
+        Assert.Empty(cut.FindAll(".atom-gauge-needle-tapered"));
+    }
+
+    [Fact]
+    public void Tapered_needle_style_draws_a_dart_a_tail_and_a_two_layer_hub_instead_of_the_plain_line()
+    {
+        var cut = Render<AtomGauge>(p => p.Add(c => c.NeedleStyle, GaugeNeedleStyle.Tapered));
+
+        Assert.Empty(cut.FindAll(".atom-gauge-needle"));
+        Assert.Empty(cut.FindAll(".atom-gauge-hub"));
+        Assert.Single(cut.FindAll(".atom-gauge-needle-tapered"));
+        Assert.Single(cut.FindAll(".atom-gauge-needle-tail"));
+        Assert.Single(cut.FindAll(".atom-gauge-hub-outer"));
+        Assert.Single(cut.FindAll(".atom-gauge-hub-inner"));
+        Assert.False(string.IsNullOrWhiteSpace(cut.Find(".atom-gauge-needle-tapered").GetAttribute("d")));
+    }
+
+    [Fact]
+    public void Tapered_needle_moves_with_the_value()
+    {
+        var low = Render<AtomGauge>(p => p.Add(c => c.NeedleStyle, GaugeNeedleStyle.Tapered).Add(c => c.Value, 0d));
+        var high = Render<AtomGauge>(p => p.Add(c => c.NeedleStyle, GaugeNeedleStyle.Tapered).Add(c => c.Value, 100d));
+
+        Assert.NotEqual(low.Find(".atom-gauge-needle-group").GetAttribute("transform"),
+            high.Find(".atom-gauge-needle-group").GetAttribute("transform"));
+    }
+
+    [Fact]
+    public void Needle_own_shape_stays_constant_across_values_only_the_wrapping_group_rotates()
+    {
+        // The point of the refactor: a needle's own path/endpoint is a fixed reference shape now, so CSS
+        // can transition the wrapping group's transform instead of the shape jumping between values.
+        var low = Render<AtomGauge>(p => p.Add(c => c.Value, 0d));
+        var high = Render<AtomGauge>(p => p.Add(c => c.Value, 100d));
+
+        Assert.Equal(low.Find(".atom-gauge-needle").GetAttribute("x2"), high.Find(".atom-gauge-needle").GetAttribute("x2"));
+        Assert.Equal(low.Find(".atom-gauge-needle").GetAttribute("y2"), high.Find(".atom-gauge-needle").GetAttribute("y2"));
+    }
+
+    [Fact]
+    public void RedlineFrom_null_draws_no_redline_and_a_value_draws_one_ending_at_Max()
+    {
+        var none = Render<AtomGauge>();
+        Assert.Empty(none.FindAll(".atom-gauge-redline"));
+
+        var cut = Render<AtomGauge>(p => p.Add(c => c.Min, 0d).Add(c => c.Max, 100d).Add(c => c.RedlineFrom, 80d));
+        var redline = cut.Find(".atom-gauge-redline");
+        var length = double.Parse(redline.GetAttribute("stroke-dasharray")!.Split(' ')[0], System.Globalization.CultureInfo.InvariantCulture);
+        // 80..100 is a fifth of the 0..100 range, so the redline's own dash length should be ~1/5 of TrackLength.
+        var trackLength = double.Parse(cut.Find(".atom-gauge-track").GetAttribute("stroke-dasharray")!.Split(' ')[0], System.Globalization.CultureInfo.InvariantCulture);
+        Assert.InRange(length, trackLength * 0.15, trackLength * 0.25);
+    }
+
+    [Fact]
+    public void RedlineFrom_at_or_past_Max_draws_nothing()
+    {
+        var cut = Render<AtomGauge>(p => p.Add(c => c.Min, 0d).Add(c => c.Max, 100d).Add(c => c.RedlineFrom, 150d));
+        Assert.Empty(cut.FindAll(".atom-gauge-redline"));
+    }
+
+    [Fact]
+    public void ShowTickRuler_off_by_default_draws_no_ruler_marks()
+    {
+        var cut = Render<AtomGauge>();
+        Assert.Empty(cut.FindAll(".atom-gauge-tick-ruler-mark"));
+    }
+
+    [Fact]
+    public void ShowTickRuler_draws_major_and_minor_marks_and_major_numbers_via_RangeLabels()
+    {
+        var cut = Render<AtomGauge>(p => p
+            .Add(c => c.ShowTickRuler, true)
+            .Add(c => c.MajorTickCount, 6)
+            .Add(c => c.MinorTicksPerMajor, 4)
+            .Add(c => c.RangeLabels, Slot.Of<AtomChartRangeLabels>()));
+
+        var marks = cut.FindAll(".atom-gauge-tick-ruler-mark");
+        // (6 - 1) major intervals * (4 minor + 1 major) each = 25 endpoints total, +1 for the very last one.
+        Assert.Equal(26, marks.Count);
+        Assert.Equal(6, marks.Count(m => m.GetAttribute("data-major") == "true"));
+
+        var labels = cut.FindAll(".atom-chart-range-label").Select(e => e.TextContent).ToArray();
+        Assert.Equal(["0", "20", "40", "60", "80", "100"], labels);
+    }
+
+    [Fact]
+    public void SegmentLabels_takes_precedence_over_ShowTickRuler_when_both_are_set()
+    {
+        var cut = Render<AtomGauge>(p => p
+            .Add(c => c.ShowTickRuler, true)
+            .Add(c => c.SegmentLabels, new[] { "Low", "High" })
+            .Add(c => c.RangeLabels, Slot.Of<AtomChartRangeLabels>()));
+
+        var labels = cut.FindAll(".atom-chart-range-label").Select(e => e.TextContent).ToArray();
+        Assert.Equal(["Low", "High"], labels);
+    }
+
+    [Fact]
+    public void ArcStyle_Segmented_is_the_default_and_draws_bands_not_gradient_slices_or_ticks()
+    {
+        var cut = Render<AtomGauge>();
+
+        Assert.NotEmpty(cut.FindAll(".atom-gauge-band"));
+        Assert.Empty(cut.FindAll(".atom-gauge-arc-tick"));
+    }
+
+    [Fact]
+    public void ArcStyle_Gradient_draws_many_slices_and_ignores_EffectiveBands_shape()
+    {
+        var cut = Render<AtomGauge>(p => p.Add(c => c.ArcStyle, GaugeArcStyle.Gradient));
+
+        // Same element class as Segmented bands (a colored arc slice), just far more of them, and not
+        // clamped to the small band count SegmentCount/EffectiveBands would produce.
+        Assert.True(cut.FindAll(".atom-gauge-band").Count > 10);
+    }
+
+    [Fact]
+    public void ArcStyle_Ticks_draws_radial_marks_with_one_active_near_the_value()
+    {
+        var cut = Render<AtomGauge>(p => p.Add(c => c.ArcStyle, GaugeArcStyle.Ticks).Add(c => c.Value, 100d));
+
+        var ticks = cut.FindAll(".atom-gauge-arc-tick");
+        Assert.NotEmpty(ticks);
+        Assert.Single(ticks, t => t.GetAttribute("data-active") == "true");
+        // At Value == Max, the active tick is the last one — not some mid-scale tick.
+        Assert.Equal("true", ticks[^1].GetAttribute("data-active"));
+    }
+
+    [Fact]
+    public void SegmentLabels_renders_one_label_per_entry_instead_of_just_Min_Max()
+    {
+        var cut = Render<AtomGauge>(p => p
+            .Add(c => c.SegmentLabels, new[] { "Poor", "Fair", "Good", "Excellent" })
+            .Add(c => c.RangeLabels, Slot.Of<AtomChartRangeLabels>()));
+
+        var texts = cut.FindAll(".atom-chart-range-label").Select(e => e.TextContent).ToArray();
+        Assert.Equal(["Poor", "Fair", "Good", "Excellent"], texts);
+    }
+
+    [Fact]
+    public void No_SegmentLabels_keeps_the_original_Min_Max_range_labels()
+    {
+        var cut = Render<AtomGauge>(p => p
+            .Add(c => c.Min, 10d).Add(c => c.Max, 50d)
+            .Add(c => c.RangeLabels, Slot.Of<AtomChartRangeLabels>()));
+
+        var texts = cut.FindAll(".atom-chart-range-label").Select(e => e.TextContent).ToArray();
+        Assert.Equal(["10", "50"], texts);
+    }
+
+    [Theory]
+    [InlineData(true, 20d)]
+    [InlineData(false, 20d)]
+    [InlineData(true, 60d)]
+    [InlineData(false, 8d)]
+    public void AtomDotGauge_range_labels_never_exceed_the_viewBox_regardless_of_pointer_or_dot_size(
+        bool showPointer, double dotSize)
+    {
+        var cut = Render<AtomDotGauge>(p => p
+            .Add(c => c.ShowPointer, showPointer)
+            .Add(c => c.DotSize, dotSize)
+            .Add(c => c.RangeLabels, Slot.Of<AtomChartRangeLabels>()));
+
+        var viewBox = cut.Find(".atom-dot-gauge-svg").GetAttribute("viewBox")!
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Select(v => double.Parse(v, System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+        var viewBoxHeight = viewBox[3];
+
+        foreach (var label in cut.FindAll(".atom-chart-range-label"))
+        {
+            var y = double.Parse(label.GetAttribute("y")!, System.Globalization.CultureInfo.InvariantCulture);
+            Assert.True(y < viewBoxHeight, $"label y {y} reaches/exceeds the viewBox height ({viewBoxHeight})");
+        }
+    }
+
+    [Fact]
+    public void AtomBarGauge_range_labels_never_exceed_the_viewBox()
+    {
+        var cut = Render<AtomBarGauge>(p => p.Add(c => c.RangeLabels, Slot.Of<AtomChartRangeLabels>()));
+
+        var viewBox = cut.Find(".atom-bar-gauge-svg").GetAttribute("viewBox")!
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Select(v => double.Parse(v, System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+        var viewBoxHeight = viewBox[3];
+
+        foreach (var label in cut.FindAll(".atom-chart-range-label"))
+        {
+            var y = double.Parse(label.GetAttribute("y")!, System.Globalization.CultureInfo.InvariantCulture);
+            Assert.True(y < viewBoxHeight, $"label y {y} reaches/exceeds the viewBox height ({viewBoxHeight})");
+        }
+    }
+
+    [Theory]
+    [InlineData(BarGaugeStyle.Segmented, ChartOrientation.Horizontal)]
+    [InlineData(BarGaugeStyle.Gradient, ChartOrientation.Horizontal)]
+    [InlineData(BarGaugeStyle.Ticks, ChartOrientation.Horizontal)]
+    [InlineData(BarGaugeStyle.Segmented, ChartOrientation.Vertical)]
+    [InlineData(BarGaugeStyle.Gradient, ChartOrientation.Vertical)]
+    [InlineData(BarGaugeStyle.Ticks, ChartOrientation.Vertical)]
+    public void AtomBarGauge_band_fill_is_clipped_inside_the_track_not_drawn_over_its_full_bounds(
+        BarGaugeStyle style, ChartOrientation orientation)
+    {
+        var cut = Render<AtomBarGauge>(p => p.Add(c => c.BarStyle, style).Add(c => c.Orientation, orientation));
+
+        var track = cut.Find(".atom-bar-gauge-track");
+        var trackX = double.Parse(track.GetAttribute("x")!, System.Globalization.CultureInfo.InvariantCulture);
+        var trackY = double.Parse(track.GetAttribute("y")!, System.Globalization.CultureInfo.InvariantCulture);
+        var trackW = double.Parse(track.GetAttribute("width")!, System.Globalization.CultureInfo.InvariantCulture);
+        var trackH = double.Parse(track.GetAttribute("height")!, System.Globalization.CultureInfo.InvariantCulture);
+
+        var group = track.NextElementSibling;
+        Assert.NotNull(group);
+        var clipAttr = group!.GetAttribute("clip-path");
+        Assert.False(string.IsNullOrEmpty(clipAttr));
+
+        var clipId = clipAttr!.Replace("url(#", "").TrimEnd(')');
+        var clipRect = cut.Find($"clipPath#{clipId} > rect");
+        var clipX = double.Parse(clipRect.GetAttribute("x")!, System.Globalization.CultureInfo.InvariantCulture);
+        var clipY = double.Parse(clipRect.GetAttribute("y")!, System.Globalization.CultureInfo.InvariantCulture);
+        var clipW = double.Parse(clipRect.GetAttribute("width")!, System.Globalization.CultureInfo.InvariantCulture);
+        var clipH = double.Parse(clipRect.GetAttribute("height")!, System.Globalization.CultureInfo.InvariantCulture);
+
+        // The inset applies on both axes regardless of orientation — assert both, not just the one that
+        // happens to be the track's "long" axis, so a Vertical-only regression can't slip through.
+        Assert.True(clipX > trackX, $"clip x {clipX} is not inset from the track's own x {trackX}");
+        Assert.True(clipX + clipW < trackX + trackW,
+            $"clip's far edge (x) {clipX + clipW} is not inset from the track's own far edge {trackX + trackW}");
+        Assert.True(clipY > trackY, $"clip y {clipY} is not inset from the track's own y {trackY}");
+        Assert.True(clipY + clipH < trackY + trackH,
+            $"clip's far edge (y) {clipY + clipH} is not inset from the track's own far edge {trackY + trackH}");
     }
 
     // ---- helpers --------------------------------------------------------------------------------

@@ -1,0 +1,87 @@
+.atom-battery {
+    display: inline-block;
+    width: var(--battery-width, 64px);
+    height: auto;
+}
+
+.atom-battery-shell {
+    fill: none;
+    stroke: var(--battery-outline, #808080);
+    stroke-width: 3;
+}
+
+.atom-battery-nub {
+    fill: var(--battery-outline, #808080);
+    stroke: none;
+}
+
+/* Per-level hue, overridable wholesale by --battery-fill (set from FillColor) so a host that wants
+   one fixed fill color doesn't have to fight the level-based default. */
+.atom-battery-fill {
+    stroke: none;
+    fill: var(--battery-fill, #34c759);
+}
+
+[data-level="empty"] .atom-battery-fill,
+[data-level="quarter"] .atom-battery-fill {
+    fill: var(--battery-fill, #ff3b30);
+}
+
+[data-level="half"] .atom-battery-fill {
+    fill: var(--battery-fill, #ffcc00);
+}
+
+[data-level="threequarter"] .atom-battery-fill,
+[data-level="full"] .atom-battery-fill {
+    fill: var(--battery-fill, #34c759);
+}
+
+.atom-battery-badge-bg {
+    fill: #fff;
+    stroke: var(--battery-outline, #1c1c1e);
+    stroke-width: 2;
+}
+
+.atom-battery-badge-glyph {
+    fill: none;
+    stroke: var(--battery-outline, #1c1c1e);
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Filled (not stroked) glyphs — bolt and the exclamation stem/dot read better solid. */
+.atom-battery-badge-fill {
+    stroke: none;
+}
+
+.atom-battery-badge-text {
+    stroke: none;
+    fill: var(--battery-outline, #1c1c1e);
+    font: 700 13px ui-monospace, Consolas, monospace;
+}
+
+[data-status="charging"] .atom-battery-badge-fill { fill: #0a84ff; }
+[data-status="warning"] .atom-battery-badge-fill { fill: #ff9500; }
+[data-status="error"] .atom-battery-badge-glyph { stroke: #ff3b30; }
+[data-status="check"] .atom-battery-badge-glyph { stroke: #34c759; }
+[data-status="unknown"] .atom-battery-badge-text { fill: #8e8e93; }
+
+.atom-battery-slash {
+    stroke: var(--battery-outline, #808080);
+    stroke-width: 4;
+    stroke-linecap: round;
+}
+
+/* Monochrome collapses every level/status hue to the outline color, in a single higher-specificity
+   pass rather than threading a "use hue?" flag through each rule above. */
+[data-mono="true"] .atom-battery-fill,
+[data-mono="true"] .atom-battery-badge-fill,
+[data-mono="true"] .atom-battery-badge-text {
+    fill: var(--battery-outline, #808080);
+}
+
+[data-mono="true"] .atom-battery-badge-glyph,
+[data-mono="true"] .atom-battery-slash {
+    stroke: var(--battery-outline, #808080);
+}

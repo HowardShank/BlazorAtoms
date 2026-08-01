@@ -27,6 +27,18 @@ public partial class AtomChartReadout : AtomChartElementBase
     /// </remarks>
     [Parameter] public double? Offset { get; set; }
 
+    /// <summary>
+    /// The pill's font size, in <c>em</c> (relative to the surrounding page text, same as the CSS default).
+    /// Null keeps whatever the shape's own wrapper sets — AtomGauge leaves the base 1.5em alone, while
+    /// AtomBarGauge/AtomDotGauge set a smaller ambient default so the pill doesn't outgrow a narrow track.
+    /// </summary>
+    [Parameter] public double? FontSize { get; set; }
+
+    /// <summary>
+    /// Raw CSS <c>padding</c> override for the pill (e.g. <c>".2em .5em"</c>). Null keeps the ambient default.
+    /// </summary>
+    [Parameter] public string? Padding { get; set; }
+
     private double EffectiveOffset => Offset ?? Chart?.ReadoutOffset ?? 0;
 
     /// <summary>
@@ -38,5 +50,9 @@ public partial class AtomChartReadout : AtomChartElementBase
     /// element emits it rather than the chart precisely so <see cref="Offset"/> can live here.
     /// </remarks>
     private string? RootStyle =>
-        new StyleVars("chart").Add("readout-offset", N(EffectiveOffset * 100) + "%").ToString();
+        new StyleVars("chart")
+            .Add("readout-offset", N(EffectiveOffset * 100) + "%")
+            .Add("readout-font-size", FontSize is double fs ? N(fs) + "em" : null)
+            .Add("readout-padding", Padding)
+            .ToString();
 }

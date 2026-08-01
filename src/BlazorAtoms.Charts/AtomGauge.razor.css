@@ -21,18 +21,72 @@
     height: 100%;
 }
 
+/* A literal drawn platform, not GaugeElevation's drop-shadow — opt in via ShowPedestal for the
+   reference dials that sit on a physical base rather than merely floating above one. */
+.atom-gauge-pedestal {
+    fill: var(--chart-face-color, #e3e7ec);
+    stroke: var(--chart-bezel-color, rgba(0, 0, 0, .18));
+    stroke-width: 1;
+}
+
 .atom-gauge-track,
 .atom-gauge-band,
-.atom-gauge-value-arc {
+.atom-gauge-value-arc,
+.atom-gauge-redline {
     fill: none;
     /* Butt caps: rounded ends would make each band overlap its neighbour by half a stroke width, so the
        colour boundaries would no longer sit at the values they claim. */
     stroke-linecap: butt;
 }
 
+/* A tachometer-style danger zone — thicker than the scale it overlays so it reads as a distinct band
+   rather than just its final segment recoloured. */
+.atom-gauge-redline {
+    filter: drop-shadow(0 0 2px rgba(0, 0, 0, .3));
+}
+
+.atom-gauge-tick-ruler-mark {
+    stroke: var(--chart-track-color, currentColor);
+    stroke-opacity: .55;
+    stroke-width: 1;
+    stroke-linecap: round;
+}
+
+.atom-gauge-tick-ruler-mark[data-major="true"] {
+    stroke-opacity: .8;
+    stroke-width: 1.5;
+}
+
 .atom-gauge-track {
     stroke: var(--chart-track-color, currentColor);
     stroke-opacity: 0.15;
+    /* The track itself (drawn full-length, under the bands) gets rounded ends — only the two outer tips
+       of the whole sweep show it, since the bands sitting on top keep their butt caps at every internal
+       seam. Reads as a soft rounded stroke rather than a hard-cut one at the two extremes, without
+       disturbing where each band's colour boundary actually falls. */
+    stroke-linecap: round;
+}
+
+.atom-gauge-arc-tick {
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
+.atom-gauge-arc-tick[data-active="true"] {
+    stroke-width: 3;
+}
+
+[data-elevation]:not([data-elevation="flat"]) .atom-gauge-arc-tick[data-active="true"] {
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .35));
+}
+
+/* An outer ring just past the coloured band — the "bezel" every reference gauge frames its dial with.
+   Width comes from the BezelWidth-> stroke-width presentation attribute on the element itself, not
+   from here: CSS always wins over a presentation attribute, so a fixed stroke-width in this rule would
+   silently override every BezelWidth the caller sets. */
+.atom-gauge-bezel {
+    fill: none;
+    stroke: var(--chart-bezel-color, rgba(0, 0, 0, .18));
 }
 
 .atom-gauge-value-arc {
@@ -49,15 +103,121 @@
     fill: var(--chart-needle-color, var(--chart-series-color, currentColor));
 }
 
+/* The dial's face: a solid plate just inside the ring — every reference "score gauge" fills this area
+   with an opaque light gray/blue disc, not a hint of tint, so that's the default here too.
+   FaceColor overrides --chart-face-color directly; unset, it's a fixed neutral, deliberately NOT
+   theme-adaptive (no dark-mode media query) — the reference icons are a fixed light plate no matter
+   what page they sit on, the same reasoning behind AtomChartReadout's fixed dark pill below. */
+.atom-gauge-face {
+    fill: var(--chart-face-color, #e3e7ec);
+}
+
+/* --- GaugeNeedleStyle.Tapered --------------------------------------------------------------------- */
+
+.atom-gauge-needle-tapered {
+    fill: var(--chart-needle-color, var(--chart-series-color, currentColor));
+    stroke: none;
+}
+
+.atom-gauge-needle-tail {
+    stroke: var(--chart-needle-color, var(--chart-series-color, currentColor));
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    opacity: .6;
+}
+
+.atom-gauge-needle-tailball {
+    fill: var(--chart-needle-color, var(--chart-series-color, currentColor));
+    opacity: .6;
+}
+
+.atom-gauge-hub-outer {
+    fill: var(--chart-needle-color, var(--chart-series-color, currentColor));
+}
+
+/* A lighter inner disc reads as a rivet rather than a flat dot. Fixed, like the face plate — Canvas
+   resolves to the OS/browser color scheme, which made this go dark on a dark-mode browser regardless
+   of the page's own theme; a light mix is what every reference hub actually shows. */
+.atom-gauge-hub-inner {
+    fill: color-mix(in srgb, currentColor 45%, #fff);
+}
+
+[data-elevation]:not([data-elevation="flat"]) .atom-gauge-needle-tapered,
+[data-elevation]:not([data-elevation="flat"]) .atom-gauge-hub-outer {
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .35));
+}
+
+/* --- GaugeNeedleStyle.Triangle --------------------------------------------------------------------- */
+
+.atom-gauge-needle-triangle {
+    fill: var(--chart-needle-color, var(--chart-series-color, currentColor));
+    stroke: none;
+}
+
+[data-elevation]:not([data-elevation="flat"]) .atom-gauge-needle-triangle {
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .35));
+}
+
+/* --- GaugeNeedleStyle.RimTab ------------------------------------------------------------------------ */
+
+.atom-gauge-rim-tab {
+    fill: var(--chart-needle-color, var(--chart-series-color, #4a5568));
+    stroke: #fff;
+    stroke-width: .75;
+}
+
+[data-elevation]:not([data-elevation="flat"]) .atom-gauge-rim-tab {
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .3));
+}
+
+/* --- elevation -----------------------------------------------------------------------------------
+   Filter-based only (drop-shadow + a blurred sheen shape), never a 3D/perspective transform — see
+   AtomStoplight.razor.css for the only other polish precedent in this repo, which uses the same
+   currentColor/filter approach rather than CSS transforms. */
+
+.atom-gauge-sheen {
+    fill: #fff;
+    opacity: 0;
+    pointer-events: none;
+}
+
+[data-elevation="raised"] .atom-gauge-svg {
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .25));
+}
+
+[data-elevation="floating"] .atom-gauge-svg {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .18)) drop-shadow(0 14px 26px rgba(0, 0, 0, .22));
+}
+
+[data-elevation="floating"] .atom-gauge-sheen {
+    opacity: .22;
+    filter: blur(4px);
+}
+
 /* The readout, the centre content and the range labels belong to element components now, each with its own
    stylesheet — scoped CSS could not reach them from here anyway, since an element rendered into a slot
    carries the element's scope and not the chart's. */
+
+/* --- damped needle sweep ---------------------------------------------------------------------------
+   Every needle style's own shape is a fixed reference angle (see NeedleRotationDeg's remarks on the
+   component) — only this wrapping group's rotate() changes with Value, so transitioning its transform is
+   what makes the needle ease into position on a value change rather than snapping. The overshoot
+   cubic-bezier is what gives it a damped, springy feel instead of a linear glide — a real needle has
+   mass and settles past its resting point before easing back, a plain ease-out never does that. */
+.atom-gauge-svg[data-animate] .atom-gauge-needle-group {
+    transition: transform var(--chart-duration, 600ms) cubic-bezier(.34, 1.56, .64, 1);
+}
 
 /* --- draw-in ------------------------------------------------------------------------------------
    The needle swings up from the dial's start, and the value arc grows with it. Both animate transform
    or dash only, so neither triggers layout. */
 
 .atom-gauge-svg[data-animate] .atom-gauge-needle,
+.atom-gauge-svg[data-animate] .atom-gauge-needle-tapered,
+.atom-gauge-svg[data-animate] .atom-gauge-needle-tail,
+.atom-gauge-svg[data-animate] .atom-gauge-needle-tailball,
+.atom-gauge-svg[data-animate] .atom-gauge-needle-triangle,
+.atom-gauge-svg[data-animate] .atom-gauge-rim-tab,
 .atom-gauge-svg[data-animate] .atom-gauge-value-arc {
     animation: atom-gauge-swing var(--chart-duration, 700ms) ease-out backwards;
     transform-origin: 50px 50px;
@@ -70,9 +230,21 @@
 
 @media (prefers-reduced-motion: reduce) {
     .atom-gauge-svg[data-animate] .atom-gauge-needle,
+    .atom-gauge-svg[data-animate] .atom-gauge-needle-tapered,
+    .atom-gauge-svg[data-animate] .atom-gauge-needle-tail,
+    .atom-gauge-svg[data-animate] .atom-gauge-needle-tailball,
+    .atom-gauge-svg[data-animate] .atom-gauge-needle-triangle,
+    .atom-gauge-svg[data-animate] .atom-gauge-rim-tab,
     .atom-gauge-svg[data-animate] .atom-gauge-value-arc {
         animation: none;
         transform: none;
         opacity: 1;
+    }
+
+    /* Not transform: none here, unlike the block above — this group's transform IS the needle's actual
+       position (rotate to Value's angle), so removing it would snap the needle to the dial's start
+       regardless of Value. Only the easing itself is what reduced motion should turn off. */
+    .atom-gauge-svg[data-animate] .atom-gauge-needle-group {
+        transition: none;
     }
 }

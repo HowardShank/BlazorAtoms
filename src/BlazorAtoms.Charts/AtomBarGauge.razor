@@ -1,0 +1,105 @@
+@inherits AtomGaugeBase
+
+<div @attributes="AdditionalAttributes"
+     class="@ClassAttr("atom-bar-gauge")"
+     style="@StyleAttr(RootStyle)"
+     data-elevation="@ElevationAttr">
+<AtomChartFrame Chart="@ChartCtx"
+                Heading="@Heading"
+                Caption="@Caption"
+                Legend="@Legend"
+                EmptyState="@EmptyState"
+                Placement="@EffectiveLegendPlacement">
+    <Plot>
+    <div class="atom-bar-gauge-wrap" data-orientation="@(IsVertical ? "vertical" : "horizontal")">
+        <svg class="atom-bar-gauge-svg"
+             viewBox="0 0 @Fmt(ViewBoxWidth) @Fmt(ViewBoxHeight)"
+             role="img"
+             aria-label="@EffectiveAriaLabel"
+             data-animate="@AnimateAttr">
+            <title>@EffectiveAriaLabel</title>
+
+            @* Fixed gloss highlight over the track's near-top/near-left quarter — only visible under
+               Elevation="Floating" (see the stylesheet). *@
+            <ellipse class="atom-bar-gauge-sheen"
+                     cx="@Fmt(IsVertical ? TrackX + TrackW * 0.5 : TrackX + TrackLength * 0.28)"
+                     cy="@Fmt(IsVertical ? TrackY + TrackH * 0.22 : TrackY + TrackH * 0.3)"
+                     rx="@Fmt(IsVertical ? TrackW * 0.7 : TrackLength * 0.22)"
+                     ry="@Fmt(IsVertical ? TrackH * 0.14 : TrackH * 0.35)" />
+
+            <defs>
+                <clipPath id="@_clipId">
+                    <rect x="@Fmt(TrackX + TrackInset)" y="@Fmt(TrackY + TrackInset)"
+                          width="@Fmt(TrackW - TrackInset * 2)" height="@Fmt(TrackH - TrackInset * 2)"
+                          rx="@Fmt(TrackThickness / 2 - TrackInset)" />
+                </clipPath>
+                @if (BarStyle == BarGaugeStyle.Gradient)
+                {
+                    <linearGradient id="@_gradientId"
+                                     x1="@(IsVertical ? "0%" : "0%")" y1="@(IsVertical ? "100%" : "0%")"
+                                     x2="@(IsVertical ? "0%" : "100%")" y2="@(IsVertical ? "0%" : "0%")">
+                        @foreach (var stop in GradientStops)
+                        {
+                            <stop offset="@Fmt(stop.OffsetPercent)%" stop-color="@stop.Color" />
+                        }
+                    </linearGradient>
+                }
+            </defs>
+
+            <rect class="atom-bar-gauge-track"
+                  x="@Fmt(TrackX)" y="@Fmt(TrackY)"
+                  width="@Fmt(TrackW)" height="@Fmt(TrackH)"
+                  rx="@Fmt(TrackThickness / 2)" />
+
+            <g clip-path="url(#@_clipId)">
+                @switch (BarStyle)
+                {
+                    case BarGaugeStyle.Segmented:
+                        @foreach (var band in BandRects)
+                        {
+                            <rect class="atom-bar-gauge-band"
+                                  x="@Fmt(IsVertical ? TrackX : TrackX + band.Offset)"
+                                  y="@Fmt(IsVertical ? TrackY + TrackH - band.Offset - band.Length : TrackY)"
+                                  width="@Fmt(IsVertical ? TrackW : band.Length)"
+                                  height="@Fmt(IsVertical ? band.Length : TrackH)"
+                                  fill="@band.Color">
+                                <title>@band.Title</title>
+                            </rect>
+                        }
+                        break;
+                    case BarGaugeStyle.Gradient:
+                        <rect class="atom-bar-gauge-band"
+                              x="@Fmt(TrackX)" y="@Fmt(TrackY)"
+                              width="@Fmt(TrackW)" height="@Fmt(TrackH)"
+                              fill="url(#@_gradientId)" />
+                        break;
+                    case BarGaugeStyle.Ticks:
+                        @foreach (var tick in Ticks)
+                        {
+                            <rect class="atom-bar-gauge-tick" data-active="@(tick.Active ? "true" : null)"
+                                  x="@Fmt(IsVertical ? TrackX + 1 : tick.Along - 2)"
+                                  y="@Fmt(IsVertical ? tick.Along - 2 : TrackY + 1)"
+                                  width="@Fmt(IsVertical ? TrackW - 2 : 4)"
+                                  height="@Fmt(IsVertical ? 4 : TrackH - 2)"
+                                  rx="2"
+                                  fill="@tick.Color" />
+                        }
+                        break;
+                }
+            </g>
+
+            @if (ShowPointer)
+            {
+                <path class="atom-bar-gauge-pointer" d="@PointerPath" />
+            }
+
+            @RangeLabels
+        </svg>
+
+        @Center
+        @Readout
+        @Banner
+    </div>
+    </Plot>
+</AtomChartFrame>
+</div>

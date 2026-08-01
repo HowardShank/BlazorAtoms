@@ -4,7 +4,7 @@
 
 <h1>Charts playground</h1>
 <p>
-    Five small data visuals drawn as inline SVG &mdash; no charting library, no JavaScript. Edit the
+    Four small data visuals drawn as inline SVG &mdash; no charting library, no JavaScript. Edit the
     dataset below and every chart re-plots. Hover any bar, point or slice: the tooltip is an SVG
     <code>&lt;title&gt;</code>, so it comes from the browser rather than from interop.
 </p>
@@ -17,7 +17,7 @@
     Turn on &ldquo;reduce motion&rdquo; in your OS settings and the draw-in animations are skipped &mdash;
     the charts appear complete rather than half-drawn.
 </p>
-<p><a href="playground/skeletons">&larr; Skeletons playground</a></p>
+<p><a href="playground/skeletons">&larr; Skeletons playground</a> &middot; <a href="playground/gauges">Gauges playground &rarr;</a></p>
 
 <div class="ch-stage">
     <div class="ch-pane">
@@ -242,49 +242,6 @@
             dropping a label changes no geometry.
         </p>
 
-        <h2>Gauge</h2>
-        <div class="ch-ctrl">
-            <label>Value <span class="val">@GaugeValue</span></label>
-            <input type="range" min="-20" max="120" step="1" @bind="GaugeValue" @bind:event="oninput" />
-        </div>
-        <div class="ch-ctrl">
-            <label>Min / Max</label>
-            <input type="number" class="ch-narrow" @bind="GaugeMin" @bind:event="oninput" />
-            <input type="number" class="ch-narrow" @bind="GaugeMax" @bind:event="oninput" />
-        </div>
-        <div class="ch-ctrl">
-            <label>Sweep angle <span class="val">@GaugeSweep</span></label>
-            <input type="range" min="30" max="360" step="10" @bind="GaugeSweep" @bind:event="oninput" />
-        </div>
-        <div class="ch-ctrl">
-            <label>Thickness <span class="val">@GaugeThickness</span></label>
-            <input type="range" min="2" max="40" step="1" @bind="GaugeThickness" @bind:event="oninput" />
-        </div>
-        <div class="ch-ctrl">
-            <label><input type="checkbox" @bind="ShowNeedle" /> Needle</label>
-            <label><input type="checkbox" @bind="ShowValueArc" /> Value arc</label>
-            <label><input type="checkbox" @bind="UseBands" /> Bands</label>
-        </div>
-        <div class="ch-ctrl">
-            <label><input type="checkbox" @bind="UseReadout" /> Readout</label>
-            <label><input type="checkbox" @bind="UseRangeLabels" /> Range labels</label>
-        </div>
-        <div class="ch-ctrl">
-            <label>Readout offset <span class="val">@(ReadoutOffset is null ? "auto" : Inv(ReadoutOffset.Value))</span></label>
-            <input type="range" min="-0.2" max="0.4" step="0.02" value="@Inv(ReadoutOffset ?? 0.16)"
-                   @oninput="@(e => ReadoutOffset = double.Parse(e.Value?.ToString() ?? "0", System.Globalization.CultureInfo.InvariantCulture))" />
-            <button class="clr-btn" type="button" @onclick="@(() => ReadoutOffset = null)">auto</button>
-        </div>
-        <div class="ch-ctrl">
-            <label>Needle color</label>
-            <input type="text" placeholder="(series)" @bind="NeedleColor" @bind:event="oninput" />
-        </div>
-        <p class="note">
-            The readout sits below centre on a partial dial because the needle pivots at the centre &mdash;
-            centred, it renders under the hub. A full 360&deg; sweep has no gap to move into, so it stays put.
-            The readout and the centre content are separate slots now, so both can be shown at once.
-        </p>
-
         <h2>Element styling</h2>
         <p class="note">
             The reason all of this became components. Pick an element and give it a class or an inline style;
@@ -379,46 +336,21 @@
                   Orientation="@Orientation" BarGap="@BarGap" Radius="@BarRadius" />
 </div>
 
-<div class="ch-round">
-    <div>
-        <h2>AtomDonut</h2>
-        <div class="ch-preview">
-            <AtomDonut Values="@Values" Labels="@Labels"
-                       SeriesColor="@Nz(SeriesColor)" Width="@Nz(Width)" Height="@Nz(Height)"
-                       Duration="@Nz(Duration)" AriaLabel="@Nz(AriaLabel)"
-                       Animate="@Animate" Visible="@Visible"
-                       Heading="@Slot(UseHeading, HeadingEl)"
-                       Caption="@Slot(UseCaption, CaptionEl)"
-                       Legend="@Slot(UseLegend, LegendEl)"
-                       EmptyState="@Slot(UseEmptyState, EmptyStateEl)"
-                       LegendPlacement="@LegendPlacement"
-                       Thickness="@DonutThickness" StartAngle="@DonutStart" PadAngle="@DonutPad"
-                       Palette="@Palette" TrackColor="@Nz(TrackColor)"
-                       SliceLabels="@Slot(UseSliceLabels, SliceLabelsEl)"
-                       Center="@Slot(UseCenter, DonutCenterEl)" />
-        </div>
-    </div>
-
-    <div>
-        <h2>AtomGauge</h2>
-        <div class="ch-preview">
-            <AtomGauge Value="@GaugeValue" Min="@GaugeMin" Max="@GaugeMax"
-                       SeriesColor="@Nz(SeriesColor)" Width="@Nz(Width)" Height="@Nz(Height)"
-                       Duration="@Nz(Duration)" AriaLabel="@Nz(AriaLabel)"
-                       Animate="@Animate" Visible="@Visible"
-                       Heading="@Slot(UseHeading, HeadingEl)"
-                       Caption="@Slot(UseCaption, CaptionEl)"
-                       Legend="@Slot(UseLegend, LegendEl)"
-                       EmptyState="@Slot(UseEmptyState, EmptyStateEl)"
-                       LegendPlacement="@LegendPlacement"
-                       SweepAngle="@GaugeSweep" Thickness="@GaugeThickness"
-                       Bands="@(UseBands ? Bands : null)"
-                       ShowNeedle="@ShowNeedle" ShowValueArc="@ShowValueArc"
-                       Readout="@Slot(UseReadout, ReadoutEl)"
-                       RangeLabels="@Slot(UseRangeLabels, RangeLabelsEl)"
-                       TrackColor="@Nz(TrackColor)" NeedleColor="@Nz(NeedleColor)" />
-        </div>
-    </div>
+<h2>AtomDonut</h2>
+<div class="ch-preview">
+    <AtomDonut Values="@Values" Labels="@Labels"
+               SeriesColor="@Nz(SeriesColor)" Width="@Nz(Width)" Height="@Nz(Height)"
+               Duration="@Nz(Duration)" AriaLabel="@Nz(AriaLabel)"
+               Animate="@Animate" Visible="@Visible"
+               Heading="@Slot(UseHeading, HeadingEl)"
+               Caption="@Slot(UseCaption, CaptionEl)"
+               Legend="@Slot(UseLegend, LegendEl)"
+               EmptyState="@Slot(UseEmptyState, EmptyStateEl)"
+               LegendPlacement="@LegendPlacement"
+               Thickness="@DonutThickness" StartAngle="@DonutStart" PadAngle="@DonutPad"
+               Palette="@Palette" TrackColor="@Nz(TrackColor)"
+               SliceLabels="@Slot(UseSliceLabels, SliceLabelsEl)"
+               Center="@Slot(UseCenter, DonutCenterEl)" />
 </div>
 
 <CodeSnippetBox Code="@Snippet" FileName="ChartsExample.razor" />
@@ -497,8 +429,6 @@
     private bool UseCategoryAxisTitle { get; set; }
     private bool UseCenter { get; set; } = true;
     private bool UseSliceLabels { get; set; } = true;
-    private bool UseReadout { get; set; } = true;
-    private bool UseRangeLabels { get; set; } = true;
 
     // ---- element parameters -------------------------------------------------------------------
 
@@ -514,7 +444,6 @@
     private string ValueAxisTitleText { get; set; } = "Revenue ($k)";
     private string CategoryAxisTitleText { get; set; } = "Month";
     private double SliceMinPercent { get; set; } = 5;
-    private double? ReadoutOffset { get; set; }
 
     private bool? LegendShowPercent => LegendShowPercentRaw switch
     {
@@ -565,25 +494,6 @@
     private double DonutPad { get; set; } = 0.5;
     private string TrackColor { get; set; } = "";
 
-    // ---- gauge --------------------------------------------------------------------------------
-
-    private double GaugeValue { get; set; } = 72;
-    private double GaugeMin { get; set; }
-    private double GaugeMax { get; set; } = 100;
-    private double GaugeSweep { get; set; } = 240;
-    private double GaugeThickness { get; set; } = 12;
-    private bool ShowNeedle { get; set; } = true;
-    private bool ShowValueArc { get; set; }
-    private bool UseBands { get; set; } = true;
-    private string NeedleColor { get; set; } = "";
-
-    private static readonly GaugeBand[] Bands =
-    [
-        new(60, "#59a14f"),
-        new(85, "#edc948"),
-        new(100, "#e15759"),
-    ];
-
     // ---- per-element CssClass / Style ---------------------------------------------------------
 
     /// <summary>
@@ -591,15 +501,15 @@
     /// </summary>
     /// <remarks>
     /// Keyed by slot name, which is also the element's own name here — <c>ValueAxis</c> holds an
-    /// <c>AtomChartValueAxis</c>. <c>Center</c> is shared by the donut and the gauge, so styling it styles
-    /// both, which is the honest reflection of it being one component.
+    /// <c>AtomChartValueAxis</c>. <c>Center</c> and <c>SliceLabels</c> belong to the donut; the gauge
+    /// family (<c>Readout</c>/<c>RangeLabels</c>) has its own playground now.
     /// </remarks>
     private static readonly string[] ElementNames =
     [
         "Heading", "Caption", "Legend", "EmptyState",
         "ValueAxis", "CategoryAxis", "ValueAxisTitle", "CategoryAxisTitle",
         "ValueLabels", "Gridlines", "Baseline",
-        "Center", "SliceLabels", "Readout", "RangeLabels",
+        "Center", "SliceLabels",
     ];
 
     private readonly Dictionary<string, string> ElementCss = [];
@@ -673,11 +583,6 @@
     private RenderFragment SliceLabelsEl => @<AtomChartSliceLabels CssClass="@Css("SliceLabels")" Style="@Sty("SliceLabels")"
                                                                   MinPercent="@SliceMinPercent" />;
 
-    private RenderFragment ReadoutEl => @<AtomChartReadout CssClass="@Css("Readout")" Style="@Sty("Readout")"
-                                                          Offset="@ReadoutOffset" />;
-
-    private RenderFragment RangeLabelsEl => @<AtomChartRangeLabels CssClass="@Css("RangeLabels")" Style="@Sty("RangeLabels")" />;
-
     private RenderFragment DonutCenterEl => @<AtomChartCenter CssClass="@Css("Center")" Style="@Sty("Center")">
         @* Positives only, matching what the ring actually draws: AtomDonut drops negative values, so
            summing everything would print a total that contradicts its own percentages. *@
@@ -699,7 +604,7 @@
             var values = string.Join(", ", Values.Select(v => Inv(v) + "d"));
             var labels = string.Join(", ", Labels.Select(l => $"\"{l}\""));
 
-            sb.AppendLine("@* one dataset, five ways to draw it — every piece of chrome opted in *@");
+            sb.AppendLine("@* one dataset, four ways to draw it — every piece of chrome opted in *@");
             sb.AppendLine($"@code {{ double[] data = [{values}]; }}");
             sb.AppendLine();
 
@@ -739,24 +644,6 @@
             if (Palette is not null) sb.Append($" Palette=\"@(new[] {{ {string.Join(", ", Palette.Select(c => $"\"{c}\""))} }})\"");
             Common(sb);
             Close(sb, "AtomDonut", Furniture().Concat(DonutSlots()));
-
-            // --- gauge ---
-            sb.Append($"<AtomGauge Value=\"{Inv(GaugeValue)}\"");
-            if (GaugeMin != 0) sb.Append($" Min=\"{Inv(GaugeMin)}\"");
-            if (GaugeMax != 100) sb.Append($" Max=\"{Inv(GaugeMax)}\"");
-            if (GaugeSweep != 240) sb.Append($" SweepAngle=\"{Inv(GaugeSweep)}\"");
-            if (GaugeThickness != 12) sb.Append($" Thickness=\"{Inv(GaugeThickness)}\"");
-            if (!ShowNeedle) sb.Append(" ShowNeedle=\"false\"");
-            if (ShowValueArc) sb.Append(" ShowValueArc=\"true\"");
-            if (UseBands) sb.Append(" Bands=\"@bands\"");
-            Common(sb);
-            Close(sb, "AtomGauge", Furniture().Concat(GaugeSlots()));
-
-            if (UseBands)
-            {
-                sb.AppendLine();
-                sb.Append("@code { GaugeBand[] bands = [new(60, \"#59a14f\"), new(85, \"#edc948\"), new(100, \"#e15759\")]; }");
-            }
 
             return sb.ToString().TrimEnd();
         }
@@ -828,17 +715,6 @@
         }
 
         if (UseCenter) yield return SlotLine("Center", "AtomChartCenter", "", "<strong>@total</strong>");
-    }
-
-    private IEnumerable<string> GaugeSlots()
-    {
-        if (UseReadout)
-        {
-            yield return SlotLine("Readout", "AtomChartReadout",
-                ReadoutOffset is null ? "" : Attr("Offset", Inv(ReadoutOffset.Value)));
-        }
-
-        if (UseRangeLabels) yield return SlotLine("RangeLabels", "AtomChartRangeLabels");
     }
 
     /// <summary>One nested slot, with the element's own styling hooks appended if they are set.</summary>
