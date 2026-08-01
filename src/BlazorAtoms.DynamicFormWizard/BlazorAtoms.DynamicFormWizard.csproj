@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <Import Project="$(RepoRoot)build\Packable.props" />
+  <Import Project="$(RepoRoot)build\Shared.props" />
+
+  <PropertyGroup>
+    <PackageId>BlazorAtoms.DynamicFormWizard</PackageId>
+    <Title>Blazor Dynamic Form Wizard</Title>
+    <Description>Multi-step, schema-driven form wizard for Blazor. Components to follow.</Description>
+    <PackageTags>Blazor;Forms;Wizard;DynamicForms;WebAssembly;Server</PackageTags>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BlazorAtoms.DynamicFormWizard.Tests" />
+  </ItemGroup>
+
+</Project>
