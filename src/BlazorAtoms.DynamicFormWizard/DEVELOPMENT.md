@@ -93,6 +93,15 @@ and already worked with zero engine changes; see H.29):
   is silently overwritten back to `"text"`. Don't try that shortcut again; it was checked and
   doesn't work. Other `DataType` members (`Currency`, `PostalCode`, `CreditCard`, ...) still render
   as plain text — no obvious single-input mapping, left for a real need.
+  **`[DataType]` never validates**, by design — `DataTypeAttribute` (base `ValidationAttribute`)
+  doesn't override `IsValid`, so it always passes; it's a rendering hint only, matching stock .NET
+  behavior. Deliberately not special-cased here: auto-enforcing based on the `DataType` enum value
+  would diverge from the ASP.NET Core/EF convention consumers already know (`DataType` = display,
+  a separate attribute = validation) and would be a heuristic guess for members with no real format
+  (e.g. `DataType.Text`). A consumer wanting real enforcement pairs it with the matching validator —
+  `[DataType(DataType.EmailAddress)] [EmailAddress]`, `[DataType(DataType.PhoneNumber)] [Phone]`,
+  `[DataType(DataType.Url)] [Url]` — which already works with zero engine code, same as every other
+  stock validator in H.29.
 - **`[DisplayFormat(DataFormatString=..., NullDisplayText=...)]`** is read at the two read-only
   render sites (`RenderFallback` for tier 4, `RenderReadOnlyField` for `[Editable(false)]`) and
   applied via the shared static `FormatDisplayValue(value, format)` helper. **Never** applied to an
@@ -123,6 +132,91 @@ mirrors an existing perf trade-off in this codebase, not a new one introduced he
 `[DataType]`/`[Editable]` declared on a `List<string>` property does not reach each repeated row.
 Complex list items are unaffected (their fields are ordinary property-owned targets on the real
 item instance, which does carry its own attributes correctly).
+
+## `[FormLabel]`/`LabelPosition` + `FieldAttributes` splat + `[Display(Prompt)]` (DESIGN-DISCUSSION.md H.31/H.32, #142/#143)
+
+Three features that share one plumbing mechanism, so they shipped as two batches (`FormLabel`/
+`FieldAttributes` together, `Display.Prompt` as a same-day follow-up reusing the same merge point):
+
+- **`[FormLabel(LabelPosition)]`** on a property, falling back to `DynamicWizard.DefaultLabelPosition`
+  (an override-wins-over-default pattern, cached on `WizardPropertySchema.LabelPositionOverride`
+  like every other top-level attribute; resolved against the runtime `DefaultLabelPosition`
+  parameter at render time via `DynamicWizard.razor.cs`'s `EffectiveLabelPosition`, since the
+  wizard-level default is a component parameter, not something the process-lifetime schema cache
+  can bake in). `Above`/`Left` keep the real `<label>` element `DynamicWizard.razor` renders (`Left`
+  only changes `.wizard__field-row`'s layout to put it beside the input via CSS grid, not flex, so
+  the error message can still span the full row width below both). `Inline`/`Hidden` render no
+  `<label>` element at all — dropping it outright for `Hidden` would leave the input with no
+  accessible name, so the label text moves onto the rendered input itself instead
+  (`placeholder`/`aria-label` respectively).
+- **`DynamicWizard.FieldAttributes`** (`IReadOnlyDictionary<string, IReadOnlyDictionary<string, object>>`,
+  keyed by top-level property name) splats arbitrary extra HTML onto one named field's rendered
+  input — `data-testid`, `autocomplete`, a custom `aria-*`, whatever a consumer needs.
+- **`[Display(Prompt = "...")]`** (H.32 follow-up) sets the rendered input's `placeholder` —
+  reused straight from stock DataAnnotations (`WizardModelSchema.Build` already reads `display`
+  for `Label`; `Placeholder` is just `display?.Prompt` off the same call, cached on
+  `WizardPropertySchema.Placeholder`). Applies **regardless of `LabelPosition`** — a visible label
+  above the field and a placeholder hint inside it aren't mutually exclusive, unlike `Inline`'s
+  label-text fallback which only fires when nothing else set one.
+
+**Shared plumbing:** `FieldTarget` (the `Owner`/`Info`/`Label` struct threaded through every render
+helper) gained a fourth field, `ExtraAttributes` (`IReadOnlyDictionary<string, object>?`), computed
+once per top-level field in `RenderField`'s `BuildExtraAttributes` — merges, in this exact
+`Dictionary.TryAdd` order, the consumer's own `FieldAttributes` entry for that property, then
+`Placeholder` (`Display.Prompt`), then an `aria-label`/`placeholder` synthesized from
+`LabelPosition.Hidden`/`Inline`. Each step only adds a key if the previous step didn't already set
+it, so `FieldAttributes` beats `Prompt` beats the `Inline` label-text fallback — same "more
+specific wins" precedence as everywhere else here. The 3-arg `FieldTarget` constructor still exists as a thin wrapper that
+passes `null` for `ExtraAttributes` — every nested-group member (`RenderExpandedGroup`) and list-item
+target (`RenderScalarItemRepeater`/`RenderComplexItemRepeater`) still constructs via that overload,
+so both are automatically out of scope for `FieldAttributes`/label-driven attrs, matching the
+existing top-level-only reach `[DependsOn]`/`[FormSelect]` already have (B.6) — a known, deliberate
+scope limit, not an oversight.
+
+## `[FormOrder]` → `[Display(Order)]` fallback, and `[FormOrder]`'s planned future removal (DESIGN-DISCUSSION.md H.33)
+
+`FormOrderAttribute` duplicates `DisplayAttribute.Order`, which already exists for exactly this
+purpose — an oversight from the original batch (predates the "reuse stock DataAnnotations first"
+pattern H.29+ later established). `WizardModelSchema.Build` now reads
+`formOrder?.Order ?? display?.GetOrder() ?? int.MaxValue` — `[FormOrder]` still wins when present
+(explicit-attribute-wins, same precedence pattern as everywhere else), but a plain
+`[Display(Order = N)]` now works with no `[FormOrder]` at all.
+
+**Gotcha worth remembering:** read `display?.GetOrder()`, never `display?.Order` directly.
+`DisplayAttribute.Order`'s getter throws `InvalidOperationException` ("The Order property has not
+been set. Use the GetOrder method...") when the attribute never explicitly set it — confirmed by a
+throwaway script, not assumed. `GetOrder()` returns `int?` and is null-safe. This is the same
+reason `WizardModelSchema.Build` already reads `Label`/`Placeholder` off `display?.Name`/
+`display?.Prompt` (both plain `string?`, no throw risk) but needed the different `GetOrder()` call
+specifically for `Order`.
+
+`[FormOrder]` itself is being kept for backward compatibility only — its doc comment now states
+it's a candidate for removal in a future major version, once existing consumers (including this
+package's own playgrounds) have had a chance to migrate to `[Display(Order = N)]`. Not removed
+this pass; do not delete it without a deliberate, separately-scoped decision.
+
+**Splat mechanism — read this before adding a new render helper.** Every render helper that ends in
+`builder.CloseComponent()`/`CloseElement()` gets one extra conditional line before the close:
+`if (target.ExtraAttributes is { Count: > 0 }) { ... }`. The call inside differs by what's being
+closed, and mixing them up throws at runtime:
+- **Elements** (`RenderTypedTextInput`'s `<input>`, `RenderTextArea`'s `<textarea>`,
+  `RenderReadOnlyField`/`RenderFallback`'s `<span>`) use `builder.AddMultipleAttributes(seq, target.ExtraAttributes)`.
+- **Built-in `InputBase<TValue>` components** (`RenderInput`, `RenderEnumSelect`,
+  `RenderNullableEnumSelect`, `RenderSelect` in `DynamicWizard.Selects.cs`) and `InputFile`
+  (`RenderFileUpload`) also use `builder.AddMultipleAttributes`, **never**
+  `builder.AddAttribute(seq, "AdditionalAttributes", target.ExtraAttributes)` — that was tried
+  first and throws at runtime: `"The property 'AdditionalAttributes' ... cannot be set explicitly
+  when also used to capture unmatched values."` Every one of these components declares
+  `[Parameter(CaptureUnmatchedValues = true)] AdditionalAttributes`, and Blazor's own parameter
+  binder captures any attribute name that doesn't match a declared `[Parameter]` into that
+  dictionary automatically — `AddMultipleAttributes` splatting each key individually is exactly
+  what triggers that automatic capture; explicitly naming the parameter conflicts with it.
+- **`RenderRegisteredComponent`** (tier 1, a consumer's own `FieldRenderers`-registered component)
+  deliberately does **not** splat `ExtraAttributes` at all — an arbitrary consumer component has no
+  guaranteed `CaptureUnmatchedValues` parameter, so adding any attribute it doesn't declare throws
+  the same "does not have a property matching the name ..." error components without that pattern
+  always throw for an unmatched attribute. A known scope limit for #142/#143, not an oversight —
+  a consumer's custom component (e.g. EXTENSIBILITY.md's `MoneyInput`) is unaffected either way.
 
 ## `RenderTreeBuilder` sequence discipline
 

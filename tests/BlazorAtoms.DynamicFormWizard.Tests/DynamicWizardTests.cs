@@ -869,4 +869,200 @@ public class DynamicWizardTests : BunitContext
 
         Assert.True(nav.ValidateCurrentStep(store));
     }
+
+    // [FormLabel(LabelPosition)] / DynamicWizard.DefaultLabelPosition (README.md/#142) -- Above
+    // (the default) and Left both keep a real, visible <label>; Inline/Hidden render none at all
+    // and move the text onto the input itself instead (placeholder/aria-label respectively).
+    private class LabelPositionModel
+    {
+        [FormStep(1)]
+        public string Above { get; set; } = string.Empty;
+
+        [FormStep(1)]
+        [FormLabel(LabelPosition.Left)]
+        public string Left { get; set; } = string.Empty;
+
+        [FormStep(1)]
+        [FormLabel(LabelPosition.Inline)]
+        public string Inline { get; set; } = string.Empty;
+
+        [FormStep(1)]
+        [FormLabel(LabelPosition.Hidden)]
+        public string Hidden { get; set; } = string.Empty;
+    }
+
+    [Fact]
+    public void LabelPosition_Above_is_the_default_and_renders_a_visible_label()
+    {
+        var cut = Render<DynamicWizard<LabelPositionModel>>(p => p.Add(c => c.Model, new LabelPositionModel()));
+
+        Assert.Contains(cut.FindAll("label.wizard__label"), l => l.TextContent == nameof(LabelPositionModel.Above));
+    }
+
+    [Fact]
+    public void LabelPosition_Left_still_renders_a_visible_label_with_the_left_layout_class()
+    {
+        var cut = Render<DynamicWizard<LabelPositionModel>>(p => p.Add(c => c.Model, new LabelPositionModel()));
+
+        Assert.Contains(cut.FindAll("label.wizard__label"), l => l.TextContent == nameof(LabelPositionModel.Left));
+        Assert.NotEmpty(cut.FindAll("div.wizard__field-row--label-left"));
+    }
+
+    [Fact]
+    public void LabelPosition_Inline_renders_no_visible_label_and_sets_placeholder_instead()
+    {
+        var cut = Render<DynamicWizard<LabelPositionModel>>(p => p.Add(c => c.Model, new LabelPositionModel()));
+
+        Assert.DoesNotContain(cut.FindAll("label.wizard__label"), l => l.TextContent == nameof(LabelPositionModel.Inline));
+        var inputs = cut.FindAll("input.wizard-field--text")
+            .Where(i => i.GetAttribute("placeholder") == nameof(LabelPositionModel.Inline));
+        Assert.Single(inputs);
+    }
+
+    [Fact]
+    public void LabelPosition_Hidden_renders_no_visible_label_and_sets_aria_label_instead()
+    {
+        var cut = Render<DynamicWizard<LabelPositionModel>>(p => p.Add(c => c.Model, new LabelPositionModel()));
+
+        Assert.DoesNotContain(cut.FindAll("label.wizard__label"), l => l.TextContent == nameof(LabelPositionModel.Hidden));
+        var inputs = cut.FindAll("input.wizard-field--text")
+            .Where(i => i.GetAttribute("aria-label") == nameof(LabelPositionModel.Hidden));
+        Assert.Single(inputs);
+    }
+
+    private class PlainTextModel
+    {
+        [FormStep(1)]
+        public string Name { get; set; } = string.Empty;
+    }
+
+    [Fact]
+    public void DefaultLabelPosition_applies_to_every_property_with_no_FormLabel_override()
+    {
+        var cut = Render<DynamicWizard<PlainTextModel>>(p => p
+            .Add(c => c.Model, new PlainTextModel())
+            .Add(c => c.DefaultLabelPosition, LabelPosition.Hidden));
+
+        Assert.Empty(cut.FindAll("label.wizard__label"));
+        Assert.Equal(nameof(PlainTextModel.Name), cut.Find("input.wizard-field--text").GetAttribute("aria-label"));
+    }
+
+    // [FieldAttributes] (README.md/#143) splats arbitrary HTML onto one named field's rendered
+    // input -- and, combined with Hidden, proves a consumer's own explicit aria-label wins over
+    // the one Hidden would otherwise synthesize (same "explicit beats engine default" precedence
+    // as every other override in this engine).
+    [Fact]
+    public void FieldAttributes_splats_extra_html_attributes_onto_the_named_field()
+    {
+        var attrs = new Dictionary<string, IReadOnlyDictionary<string, object>>
+        {
+            [nameof(PlainTextModel.Name)] = new Dictionary<string, object> { ["data-testid"] = "name-field" },
+        };
+        var cut = Render<DynamicWizard<PlainTextModel>>(p => p
+            .Add(c => c.Model, new PlainTextModel())
+            .Add(c => c.FieldAttributes, attrs));
+
+        Assert.Equal("name-field", cut.Find("input.wizard-field--text").GetAttribute("data-testid"));
+    }
+
+    [Fact]
+    public void FieldAttributes_own_aria_label_wins_over_the_one_Hidden_would_synthesize()
+    {
+        var attrs = new Dictionary<string, IReadOnlyDictionary<string, object>>
+        {
+            [nameof(PlainTextModel.Name)] = new Dictionary<string, object> { ["aria-label"] = "Custom label" },
+        };
+        var cut = Render<DynamicWizard<PlainTextModel>>(p => p
+            .Add(c => c.Model, new PlainTextModel())
+            .Add(c => c.DefaultLabelPosition, LabelPosition.Hidden)
+            .Add(c => c.FieldAttributes, attrs));
+
+        Assert.Equal("Custom label", cut.Find("input.wizard-field--text").GetAttribute("aria-label"));
+    }
+
+    // [Display(Prompt=...)] (README.md/#142 follow-up) -- stock DataAnnotations' own placeholder
+    // field, reused rather than inventing a new attribute. Applies regardless of LabelPosition: a
+    // visible label above the field and a placeholder hint inside it aren't mutually exclusive.
+    private class DisplayPromptModel
+    {
+        [FormStep(1)]
+        [Display(Prompt = "e.g. jane@example.com")]
+        public string Email { get; set; } = string.Empty;
+
+        [FormStep(1)]
+        [FormLabel(LabelPosition.Inline)]
+        [Display(Prompt = "Explicit prompt wins")]
+        public string InlineWithPrompt { get; set; } = string.Empty;
+    }
+
+    [Fact]
+    public void DisplayPrompt_sets_the_placeholder_even_with_the_default_Above_label_position()
+    {
+        var cut = Render<DynamicWizard<DisplayPromptModel>>(p => p.Add(c => c.Model, new DisplayPromptModel()));
+
+        var input = cut.FindAll("input.wizard-field--text")
+            .First(i => i.GetAttribute("placeholder") == "e.g. jane@example.com");
+        Assert.NotNull(input);
+        Assert.Contains(cut.FindAll("label.wizard__label"), l => l.TextContent == nameof(DisplayPromptModel.Email));
+    }
+
+    [Fact]
+    public void DisplayPrompt_wins_over_the_LabelPosition_Inline_label_text_fallback()
+    {
+        var cut = Render<DynamicWizard<DisplayPromptModel>>(p => p.Add(c => c.Model, new DisplayPromptModel()));
+
+        var input = cut.FindAll("input.wizard-field--text")
+            .First(i => i.GetAttribute("placeholder") == "Explicit prompt wins");
+        Assert.NotNull(input);
+    }
+
+    // [Display(Order=N)] as a fallback for field order (README.md follow-up) -- reuses stock
+    // DataAnnotations rather than requiring [FormOrder] for every model. Read via GetOrder(),
+    // never the Order property getter directly: DisplayAttribute.Order throws
+    // InvalidOperationException when never explicitly set.
+    private class DisplayOrderModel
+    {
+        [FormStep(1)]
+        [Display(Order = 2)]
+        public string Second { get; set; } = string.Empty;
+
+        [FormStep(1)]
+        [Display(Order = 1)]
+        public string First { get; set; } = string.Empty;
+
+        [FormStep(1)]
+        [Display(Order = 3)]
+        public string Third { get; set; } = string.Empty;
+    }
+
+    [Fact]
+    public void DisplayOrder_alone_orders_fields_with_no_FormOrder_attribute_present()
+    {
+        var cut = Render<DynamicWizard<DisplayOrderModel>>(p => p.Add(c => c.Model, new DisplayOrderModel()));
+
+        var labels = cut.FindAll("label.wizard__label").Select(l => l.TextContent).ToArray();
+        Assert.Equal([nameof(DisplayOrderModel.First), nameof(DisplayOrderModel.Second), nameof(DisplayOrderModel.Third)], labels);
+    }
+
+    private class FormOrderWinsOverDisplayOrderModel
+    {
+        [FormStep(1)]
+        [FormOrder(1)]
+        [Display(Order = 99)] // would sort last if Display.Order were used instead of FormOrder
+        public string A { get; set; } = string.Empty;
+
+        [FormStep(1)]
+        [FormOrder(2)]
+        [Display(Order = 1)] // would sort first if Display.Order were used instead of FormOrder
+        public string B { get; set; } = string.Empty;
+    }
+
+    [Fact]
+    public void FormOrder_wins_over_DisplayOrder_when_both_are_present()
+    {
+        var cut = Render<DynamicWizard<FormOrderWinsOverDisplayOrderModel>>(p => p.Add(c => c.Model, new FormOrderWinsOverDisplayOrderModel()));
+
+        var labels = cut.FindAll("label.wizard__label").Select(l => l.TextContent).ToArray();
+        Assert.Equal([nameof(FormOrderWinsOverDisplayOrderModel.A), nameof(FormOrderWinsOverDisplayOrderModel.B)], labels);
+    }
 }

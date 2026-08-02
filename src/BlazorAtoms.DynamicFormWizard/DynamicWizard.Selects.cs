@@ -74,6 +74,10 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
             }
             childBuilder.CloseRegion();
         }));
+        if (target.ExtraAttributes is { Count: > 0 })
+        {
+            builder.AddMultipleAttributes(6, target.ExtraAttributes);
+        }
         builder.CloseComponent();
     }
 

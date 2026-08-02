@@ -300,7 +300,7 @@ metadata. Section A works through how much of that pitch this package can actual
 *(A hard "force-stop here" override was considered deferred at one point in this doc's history —
 reconsidered and built once a concrete failure mode was raised; see C.8a, no longer deferred.)*
 
-### H. Standard DataAnnotations attribute coverage (#141, shipped)
+### H. Standard DataAnnotations attribute coverage & field-level rendering hooks (#141/#142/#143, shipped)
 
 29. **`[Compare]` — and every other stock `ValidationAttribute` never specifically coded for —
     already worked with *zero* engine changes, proven by test rather than assumed.** D.12/D.13
@@ -352,6 +352,65 @@ reconsidered and built once a concrete failure mode was raised; see C.8a, no lon
       `PropertyInfo` — so `[DataType]`/`[Editable]` declared on a `List<string>` property itself
       does not propagate to each repeated row. Complex list items are unaffected (their fields are
       ordinary property-owned targets on the real item instance).
+31. **`[FormLabel(LabelPosition)]` (label position) and `FieldAttributes` (arbitrary HTML splat) —
+    shipped together as one batch, since they share one plumbing mechanism (#142/#143).**
+    - `LabelPosition` (`Above`/`Left`/`Inline`/`Hidden`), overridable per-property via
+      `[FormLabel]` against a wizard-level `DefaultLabelPosition` default (attribute wins, same
+      pattern as every other per-field override here). `Above`/`Left` keep a real, visible
+      `<label>` — `Left` only changes layout (CSS grid instead of flex, so the row's error message
+      can still span the full width below both). `Inline`/`Hidden` render no `<label>` element at
+      all: dropping it for `Hidden` would leave the input with no accessible name, so the label
+      text moves onto the input itself instead (`placeholder`/`aria-label` respectively).
+    - `FieldAttributes` (`Dictionary<string, IReadOnlyDictionary<string, object>>`, top-level
+      property name → attribute bag) splats arbitrary extra HTML onto one named field — same
+      top-level-only reach `[DependsOn]`/`[FormSelect]` already have (B.6), not an oversight.
+    - Both funnel through one new `FieldTarget.ExtraAttributes` field, merged once per top-level
+      field (a consumer-supplied `aria-label`/`placeholder` always wins over one `LabelPosition`
+      would otherwise synthesize). **Hit and worth remembering:** splatting onto a built-in
+      `InputBase<TValue>`/`InputFile` component must use `builder.AddMultipleAttributes(seq,
+      dict)`, never `builder.AddAttribute(seq, "AdditionalAttributes", dict)` — the latter throws
+      at runtime ("cannot be set explicitly when also used to capture unmatched values") because
+      those components declare `AdditionalAttributes` with `CaptureUnmatchedValues = true`, and
+      Blazor's parameter binder already auto-captures any unmatched attribute name into it; naming
+      the parameter directly conflicts with that auto-capture. **Known scope limit:** does not
+      reach a nested group member, a repeating list row (both construct `FieldTarget` via a 3-arg
+      overload that leaves `ExtraAttributes` null), or a consumer's own `FieldRenderers`-registered
+      component (tier 1) — an arbitrary consumer component has no guaranteed attribute to receive
+      it, and would throw the same way a built-in component throws for an attribute it doesn't
+      declare and doesn't capture.
+32. **`[Display(Prompt = "...")]` sets the placeholder — reused from stock DataAnnotations rather
+    than inventing a new attribute (same-day follow-up to item 31, #142).** `DisplayAttribute`
+    already has a `Prompt` field built for exactly this (HTML placeholder/watermark text) —
+    consistent with this engine's habit of reaching for a stock attribute first (`Display.Name` →
+    label, `DataType` → input type, `DisplayFormat` → read-only format) before inventing a
+    BlazorAtoms-specific one. Cached on `WizardPropertySchema.Placeholder`, read off the same
+    `display` variable `WizardModelSchema.Build` already fetches for `Label` — zero extra
+    reflection. Applies **regardless of `LabelPosition`**, unlike the `Inline`-position label-text
+    fallback: a visible label above a field and a placeholder hint inside it are not mutually
+    exclusive (e.g. label "Email" + placeholder "e.g. jane@example.com"). Precedence, via three
+    `Dictionary.TryAdd` calls in order inside `BuildExtraAttributes`: consumer `FieldAttributes`
+    beats `Prompt` beats the `Inline` label-text fallback. Same known scope limit as item 31 (no
+    reach into nested groups/list rows/tier-1 registered components).
+33. **`[FormOrder(int)]` duplicates `[Display(Order=N)]` — a genuine miss caught by the user, fixed
+    with a non-breaking fallback, `[FormOrder]` marked for future removal.** C.10 explains why field
+    order needs to be an explicit, separate concept from `[FormStep]` at all (reflection property
+    enumeration isn't stable across an inheritance hierarchy) — it does not explain why a *new*
+    attribute was invented instead of reusing `DisplayAttribute.Order`, which already exists for
+    exactly this purpose. This predates the "reuse stock DataAnnotations first" pattern items
+    29–32 above established; it should have followed the same pattern from the start.
+    - Fix: `WizardModelSchema.Build` now reads `formOrder?.Order ?? display?.GetOrder() ??
+      int.MaxValue` — `[FormOrder]` still wins when present, but `[Display(Order=N)]` alone now
+      works with no `[FormOrder]` needed. Non-breaking: every existing `[FormOrder(N)]` usage
+      across this package's own playgrounds is unaffected.
+    - **Gotcha confirmed by a throwaway script before relying on it, not assumed:**
+      `DisplayAttribute.Order`'s getter throws `InvalidOperationException` ("The Order property has
+      not been set. Use the GetOrder method...") when never explicitly set on that attribute
+      instance — `GetOrder()` (a method, returning `int?`) is the null-safe way to read it. `Label`/
+      `Placeholder` don't have this hazard (`display?.Name`/`display?.Prompt` are plain `string?`),
+      which is why `Order` alone needed the different accessor.
+    - `[FormOrder]` is deliberately *not* removed this pass — kept for backward compatibility with
+      existing consumers, its doc comment now states it's a candidate for removal in a future major
+      version. Don't delete it without a separately-scoped decision to do so.
 
 ## Scenarios walked through (reference — the concrete cases that drove the decisions above)
 

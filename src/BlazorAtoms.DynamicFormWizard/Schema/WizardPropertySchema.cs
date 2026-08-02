@@ -23,6 +23,18 @@ public sealed class WizardPropertySchema
     public FormDynamicSelectAttribute? DynamicSelect { get; }
     public FormLayoutAttribute? Layout { get; }
 
+    /// <summary>Null when the property carries no <see cref="FormLabelAttribute"/> -- the
+    /// effective position then falls back to <see cref="DynamicWizard{TModel}.DefaultLabelPosition"/>,
+    /// which is a runtime component parameter, not something this process-lifetime-cached schema
+    /// can bake in.</summary>
+    public LabelPosition? LabelPositionOverride { get; }
+
+    /// <summary>From <c>[Display(Prompt = "...")]</c> -- stock DataAnnotations' own placeholder/
+    /// watermark field, reused rather than inventing a new attribute. Applies regardless of
+    /// <see cref="LabelPositionOverride"/>: a visible label above the field and a placeholder hint
+    /// inside it are not mutually exclusive.</summary>
+    public string? Placeholder { get; }
+
     /// <summary>Reflection encounter order -- the tie-break for properties with no explicit
     /// <see cref="FormOrderAttribute"/> (DESIGN-DISCUSSION.md C.10). Not guaranteed stable across
     /// an inheritance hierarchy on its own, which is exactly why an explicit order wins first.</summary>
@@ -40,6 +52,8 @@ public sealed class WizardPropertySchema
         FormSelectAttribute? select,
         FormDynamicSelectAttribute? dynamicSelect,
         FormLayoutAttribute? layout,
+        LabelPosition? labelPositionOverride,
+        string? placeholder,
         int encounterIndex)
     {
         Property = property;
@@ -53,6 +67,8 @@ public sealed class WizardPropertySchema
         Select = select;
         DynamicSelect = dynamicSelect;
         Layout = layout;
+        LabelPositionOverride = labelPositionOverride;
+        Placeholder = placeholder;
         EncounterIndex = encounterIndex;
     }
 }

@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Rendering;
+using BlazorAtoms.DynamicFormWizard.Attributes;
 using BlazorAtoms.DynamicFormWizard.Files;
 using BlazorAtoms.DynamicFormWizard.Rendering;
 using BlazorAtoms.DynamicFormWizard.Schema;
@@ -30,11 +31,25 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
         public PropertyInfo Info { get; }
         public string Label { get; }
 
+        /// <summary>Extra HTML attributes to splat onto the rendered input (label-position-driven
+        /// aria-label/placeholder, merged with any consumer <see cref="FieldAttributes"/> --
+        /// DESIGN-DISCUSSION.md H.31, #142/#143). Null for every nested-group member and list-item
+        /// target -- both construct a <see cref="FieldTarget"/> via the 3-arg overload below, since
+        /// <see cref="FieldAttributes"/> is deliberately top-level-only (same reach as
+        /// <c>[DependsOn]</c>/<c>[FormSelect]</c>, B.6), a known scope limit, not an oversight.</summary>
+        public IReadOnlyDictionary<string, object>? ExtraAttributes { get; }
+
         public FieldTarget(object owner, PropertyInfo info, string label)
+            : this(owner, info, label, null)
+        {
+        }
+
+        public FieldTarget(object owner, PropertyInfo info, string label, IReadOnlyDictionary<string, object>? extraAttributes)
         {
             Owner = owner;
             Info = info;
             Label = label;
+            ExtraAttributes = extraAttributes;
         }
 
         public object? GetValue() => Info.GetValue(Owner);
@@ -65,7 +80,7 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
     /// sequence this way.</summary>
     private RenderFragment RenderField(WizardPropertySchema property) => builder =>
     {
-        var target = new FieldTarget(Model, property.Property, property.Label);
+        var target = new FieldTarget(Model, property.Property, property.Label, BuildExtraAttributes(property));
         var value = property.Property.GetValue(Model);
 
         if (FieldTemplate is not null)
@@ -101,6 +116,45 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
             target.SetValue(val);
             OnFieldChanged();
         });
+
+    /// <summary>Merges the consumer's own <see cref="FieldAttributes"/> for this property,
+    /// <c>[Display(Prompt=...)]</c>'s placeholder, and an <c>aria-label</c>/<c>placeholder</c>
+    /// synthesized from <see cref="LabelPosition.Hidden"/>/<see cref="LabelPosition.Inline"/>
+    /// (DESIGN-DISCUSSION.md H.31/H.32). Precedence, via <c>Dictionary.TryAdd</c> in this exact
+    /// order -- consumer <see cref="FieldAttributes"/> beats <c>Prompt</c> beats the
+    /// <see cref="LabelPosition.Inline"/> label-text fallback, same "explicit beats engine
+    /// default, more specific beats less specific" rule as everywhere else here. <c>Prompt</c>
+    /// applies regardless of <see cref="LabelPosition"/> -- a visible label above the field and a
+    /// placeholder hint inside it aren't mutually exclusive. Returns null (no allocation) when
+    /// there's nothing to add, so every splat call site below can skip itself on the common case.</summary>
+    private Dictionary<string, object>? BuildExtraAttributes(WizardPropertySchema property)
+    {
+        Dictionary<string, object>? merged = null;
+        if (FieldAttributes is not null && FieldAttributes.TryGetValue(property.Property.Name, out var consumerAttrs))
+        {
+            merged = new Dictionary<string, object>(consumerAttrs);
+        }
+
+        if (!string.IsNullOrEmpty(property.Placeholder))
+        {
+            merged ??= new Dictionary<string, object>();
+            merged.TryAdd("placeholder", property.Placeholder);
+        }
+
+        var position = EffectiveLabelPosition(property);
+        if (position == LabelPosition.Hidden)
+        {
+            merged ??= new Dictionary<string, object>();
+            merged.TryAdd("aria-label", property.Label);
+        }
+        else if (position == LabelPosition.Inline)
+        {
+            merged ??= new Dictionary<string, object>();
+            merged.TryAdd("placeholder", property.Label);
+        }
+
+        return merged;
+    }
 
     /// <summary>Tiers 1, 1b, 2/2b, 3, 4 in priority order (DESIGN-DISCUSSION.md A.4). Assumes the
     /// caller has already opened an isolating region -- this method and everything it calls
@@ -161,6 +215,13 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
         RenderFallback(builder, target, value);
     }
 
+    /// <summary>Tier 1: a consumer's own registered component (EXTENSIBILITY.md's <c>Money</c>/
+    /// <c>MoneyInput</c> example). Deliberately does NOT splat <see cref="FieldTarget.ExtraAttributes"/>
+    /// here, unlike every built-in tier below -- an arbitrary consumer component has no guaranteed
+    /// <c>AdditionalAttributes</c>/<c>CaptureUnmatchedValues</c> parameter to receive it, and adding
+    /// an attribute a component doesn't declare throws at runtime ("does not have a property
+    /// matching the name ..."), unlike a plain HTML element. A known scope limit for #142/#143
+    /// (DESIGN-DISCUSSION.md H.31), not an oversight.</summary>
     private void RenderRegisteredComponent(RenderTreeBuilder builder, Type componentType, FieldTarget target, Type valueType, object? value)
     {
         builder.OpenComponent(0, componentType);
@@ -308,6 +369,10 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
         builder.AddAttribute(2, "class", cssClass);
         builder.AddAttribute(3, "OnChange", EventCallback.Factory.Create<InputFileChangeEventArgs>(
             this, e => HandleFilesSelected(target, e)));
+        if (target.ExtraAttributes is { Count: > 0 })
+        {
+            builder.AddMultipleAttributes(4, target.ExtraAttributes);
+        }
         builder.CloseComponent();
     }
 
@@ -361,6 +426,10 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
             target.SetValue(e.Value?.ToString() ?? string.Empty);
             OnFieldChanged();
         }));
+        if (target.ExtraAttributes is { Count: > 0 })
+        {
+            builder.AddMultipleAttributes(5, target.ExtraAttributes);
+        }
         builder.CloseElement();
     }
 
@@ -384,6 +453,10 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
             target.SetValue(e.Value?.ToString() ?? string.Empty);
             OnFieldChanged();
         }));
+        if (target.ExtraAttributes is { Count: > 0 })
+        {
+            builder.AddMultipleAttributes(4, target.ExtraAttributes);
+        }
         builder.CloseElement();
     }
 
@@ -396,7 +469,11 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
         var format = target.Info.GetCustomAttribute<DisplayFormatAttribute>();
         builder.OpenElement(0, "span");
         builder.AddAttribute(1, "class", "wizard-field wizard-field--readonly");
-        builder.AddContent(2, FormatDisplayValue(value, format));
+        if (target.ExtraAttributes is { Count: > 0 })
+        {
+            builder.AddMultipleAttributes(2, target.ExtraAttributes);
+        }
+        builder.AddContent(3, FormatDisplayValue(value, format));
         builder.CloseElement();
     }
 
@@ -426,6 +503,19 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
         builder.AddAttribute(2, "ValueChanged", CreateTypedValueChanged(target, valueType));
         builder.AddAttribute(3, "ValueExpression", target.BuildValueExpression());
         builder.AddAttribute(4, "class", cssClass);
+        // Every built-in InputBase<TValue> declares [Parameter(CaptureUnmatchedValues = true)]
+        // AdditionalAttributes, so any attribute name added here that ISN'T one of its own declared
+        // parameters (aria-label, placeholder, data-testid, ...) is captured into it automatically
+        // -- adding "AdditionalAttributes" itself BY NAME throws at runtime ("cannot be set
+        // explicitly when also used to capture unmatched values"), which is why this splats each
+        // key individually via AddMultipleAttributes rather than setting that parameter directly.
+        // This is NOT safe on RenderRegisteredComponent (tier 1), whose component type is an
+        // arbitrary consumer type with no guaranteed CaptureUnmatchedValues parameter at all;
+        // adding any unmatched attribute there would throw the same way.
+        if (target.ExtraAttributes is { Count: > 0 })
+        {
+            builder.AddMultipleAttributes(5, target.ExtraAttributes);
+        }
         builder.CloseComponent();
     }
 
@@ -456,6 +546,10 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
             }
             childBuilder.CloseRegion();
         }));
+        if (target.ExtraAttributes is { Count: > 0 })
+        {
+            builder.AddMultipleAttributes(6, target.ExtraAttributes);
+        }
         builder.CloseComponent();
     }
 
@@ -491,6 +585,10 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
             }
             childBuilder.CloseRegion();
         }));
+        if (target.ExtraAttributes is { Count: > 0 })
+        {
+            builder.AddMultipleAttributes(6, target.ExtraAttributes);
+        }
         builder.CloseComponent();
     }
 
@@ -558,7 +656,11 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
         builder.OpenElement(0, "span");
         builder.AddAttribute(1, "class", "wizard-field wizard-field--unhandled");
         builder.AddAttribute(2, "title", $"No renderer registered for type '{target.Info.PropertyType.Name}'.");
-        builder.AddContent(3, FormatDisplayValue(value, format));
+        if (target.ExtraAttributes is { Count: > 0 })
+        {
+            builder.AddMultipleAttributes(3, target.ExtraAttributes);
+        }
+        builder.AddContent(4, FormatDisplayValue(value, format));
         builder.CloseElement();
     }
 

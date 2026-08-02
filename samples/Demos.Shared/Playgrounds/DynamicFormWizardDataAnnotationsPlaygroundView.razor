@@ -14,19 +14,27 @@
    render a formatted, read-only "Account ID" -- no input at all, regardless of its underlying
    type. A <code>[ScaffoldColumn(false)]</code> internal note field is on the model but never
    rendered, never validated, and never counted toward this step's visibility.</p>
+<p><code>[FormLabel(LabelPosition)]</code> (#142) moves a field's label: Email uses
+   <code>Left</code> (label beside the input), Bio uses <code>Inline</code> (label becomes the
+   textarea's placeholder instead of a visible element), and Nickname uses <code>Hidden</code>
+   (no visible label at all -- moved onto the input's <code>aria-label</code> instead, so it stays
+   accessible). The wizard's own <code>FieldAttributes</code> parameter (#143) also splats a
+   <code>data-testid</code> onto Nickname's input, alongside that same synthesized
+   <code>aria-label</code>.</p>
 <p><a href="playground/dynamicformwizard">&larr; Back to the main Dynamic Form Wizard playground</a></p>
 
 <div class="dfw-columns">
     <div class="dfw-wizard">
         @if (_completed is null)
         {
-            <DynamicWizard TModel="AccountModel" Model="_model" OnWizardComplete="HandleComplete" />
+            <DynamicWizard TModel="AccountModel" Model="_model" OnWizardComplete="HandleComplete" FieldAttributes="_fieldAttributes" />
         }
         else
         {
             <p><strong>Submitted!</strong></p>
             <dl class="dfw-summary">
                 <dt>Email</dt><dd>@_completed.Email</dd>
+                <dt>Nickname</dt><dd>@_completed.Nickname</dd>
                 <dt>Bio</dt><dd>@_completed.Bio</dd>
                 <dt>AccountId</dt><dd>@_completed.AccountId</dd>
                 <dt>InternalAuditNote (never shown to the user)</dt><dd>@_completed.InternalAuditNote</dd>
@@ -45,6 +53,13 @@
     private AccountModel _model = new();
     private AccountModel? _completed;
 
+    // FieldAttributes (#143) is a wizard-level parameter, not a model attribute -- it splats extra
+    // HTML onto one named field's rendered input regardless of what tier renders it.
+    private readonly Dictionary<string, IReadOnlyDictionary<string, object>> _fieldAttributes = new()
+    {
+        [nameof(AccountModel.Nickname)] = new Dictionary<string, object> { ["data-testid"] = "nickname-field" },
+    };
+
     private void HandleComplete(AccountModel model) => _completed = model;
 
     private void Reset()
@@ -57,6 +72,7 @@
     {
         [FormStep(1, "Account")]
         [FormOrder(1)]
+        [FormLabel(LabelPosition.Left)]
         [DataType(DataType.EmailAddress)]
         [Required(ErrorMessage = "Email is required.")]
         public string Email { get; set; } = string.Empty;
@@ -75,6 +91,12 @@
 
         [FormStep(1)]
         [FormOrder(4)]
+        [FormLabel(LabelPosition.Hidden)]
+        public string Nickname { get; set; } = string.Empty;
+
+        [FormStep(1)]
+        [FormOrder(5)]
+        [FormLabel(LabelPosition.Inline)]
         [DataType(DataType.MultilineText)]
         public string Bio { get; set; } = string.Empty;
 
@@ -97,6 +119,7 @@
         public class AccountModel
         {
             [FormStep(1, "Account")] [FormOrder(1)]
+            [FormLabel(LabelPosition.Left)]
             [DataType(DataType.EmailAddress)]
             [Required(ErrorMessage = "Email is required.")]
             public string Email { get; set; } = string.Empty;
@@ -111,7 +134,15 @@
             [Compare(nameof(Password), ErrorMessage = "Passwords must match.")]
             public string ConfirmPassword { get; set; } = string.Empty;
 
+            // No visible label at all -- aria-label only. Combined with the wizard's own
+            // FieldAttributes["Nickname"] = { ["data-testid"] = "nickname-field" }.
             [FormStep(1)] [FormOrder(4)]
+            [FormLabel(LabelPosition.Hidden)]
+            public string Nickname { get; set; } = string.Empty;
+
+            // No visible label -- becomes the textarea's placeholder instead.
+            [FormStep(1)] [FormOrder(5)]
+            [FormLabel(LabelPosition.Inline)]
             [DataType(DataType.MultilineText)]
             public string Bio { get; set; } = string.Empty;
 

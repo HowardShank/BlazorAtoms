@@ -51,6 +51,21 @@
     gap: 0.25rem;
 }
 
+/* [FormLabel(LabelPosition.Left)] / DefaultLabelPosition="Left" (DESIGN-DISCUSSION.md H.31) --
+   grid, not flex, so the error message can span the full row width below the label+input pair
+   regardless of how wide either of them is. */
+.wizard__field-row--label-left {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    column-gap: var(--wizard-label-gap, 0.5rem);
+    row-gap: 0.25rem;
+}
+
+.wizard__field-row--label-left .wizard__error {
+    grid-column: 1 / -1;
+}
+
 .wizard__label {
     font-weight: var(--wizard-label-weight, 600);
 }

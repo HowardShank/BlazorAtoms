@@ -80,7 +80,12 @@ model. See the live playground at `/playground/dynamicformwizard` in any of the 
   recomputed from what's *currently* reachable, so two branches through the same model can show
   different totals ("Step 2 of 3" vs. "Step 3 of 4") without any extra configuration.
 - **`[FormOrder(int)]`** — pins render order within a step (reflection property order isn't
-  guaranteed stable across an inheritance hierarchy, so this isn't optional bookkeeping).
+  guaranteed stable across an inheritance hierarchy, so this isn't optional bookkeeping). Falls
+  back to `[Display(Order = N)]` when no `[FormOrder]` is present — stock DataAnnotations already
+  has an `Order` field for this. **Prefer `[Display(Order = N)]` for new code** — pairs naturally
+  with `[Display(Name = ...)]`/`[Display(Prompt = ...)]`, which this engine already reads for
+  label/placeholder. `[FormOrder]` is kept only for existing consumers and may be removed in a
+  future major version.
 - **`[DependsOn(nameof(Other), value, operator?)]`** — stackable (AND-combined), hides a property
   unless a sibling top-level property currently satisfies `operator` (default `Equals`) against
   `value`. Also supports `NotEquals`/`GreaterThan`/`GreaterThanOrEqual`/`LessThan`/
@@ -110,6 +115,12 @@ model. See the live playground at `/playground/dynamicformwizard` in any of the 
   `[AllowedValues]`, `[DeniedValues]`, `[EnumDataType]`, `[Base64String]`, `[CustomValidation]`.
 - **`[DataType(DataType.Password/EmailAddress/PhoneNumber/Url/MultilineText)]`** on a `string`
   property renders a real HTML5 `input type="..."` or a `<textarea>` instead of plain text.
+  **Display only — enforces no format.** `DataTypeAttribute` never overrides `IsValid` (stock
+  .NET behavior), so `[DataType(DataType.EmailAddress)]` alone lets any string through. Pair it
+  with the matching validation attribute for real enforcement:
+  `[DataType(DataType.EmailAddress)] [EmailAddress]`, `[DataType(DataType.PhoneNumber)] [Phone]`,
+  `[DataType(DataType.Url)] [Url]`. Those already work with zero engine code (same
+  `Validator.TryValidateValue` path as every other stock validator above).
 - **`[DisplayFormat(DataFormatString=..., NullDisplayText=...)]`** formats read-only display (the
   fallback for an unhandled type, and any field forced read-only by `[Editable(false)]`) — not
   applied to editable fields, since a display format string isn't an input mask.
@@ -117,6 +128,26 @@ model. See the live playground at `/playground/dynamicformwizard` in any of the 
   registered custom component.
 - **`[ScaffoldColumn(false)]`** excludes a property from the wizard entirely — never rendered,
   never validated, never counted toward a step's visibility.
+- **`[FormLabel(LabelPosition)]`** / **`DynamicWizard.DefaultLabelPosition`** — where a field's
+  label renders. `Above` (default) and `Left` keep a real, visible `<label>` (`Left` just lays it
+  out beside the input instead of above it); `Inline`/`Hidden` render no visible label element at
+  all — the label text moves onto the input's `placeholder`/`aria-label` instead, so `Hidden`
+  never leaves a field without an accessible name. A property's own `[FormLabel]` overrides the
+  wizard-level default. Does not reach a nested group member's own fields, a repeating list row,
+  or a consumer's `FieldRenderers`-registered component (top-level fields only, same reach as
+  `[DependsOn]`).
+- **`[Display(Prompt = "...")]`** sets the rendered input's `placeholder` — stock DataAnnotations'
+  own placeholder/watermark field, reused rather than inventing a new attribute. Applies
+  regardless of `LabelPosition`: a visible label above the field and a placeholder hint inside it
+  aren't mutually exclusive. Wins over the `Inline` label-text fallback above, but a consumer's own
+  `FieldAttributes["placeholder"]` still wins over `Prompt`.
+- **`DynamicWizard.FieldAttributes`** — a `Dictionary<string, IReadOnlyDictionary<string, object>>`
+  keyed by top-level property name, splatting arbitrary extra HTML (`data-testid`, `autocomplete`,
+  a custom `aria-*`, ...) onto that one field's rendered input. A key you supply yourself
+  (`aria-label`, `placeholder`) always wins over one `[FormLabel]` would otherwise synthesize.
+  Same top-level-only reach as `[FormLabel]` above, and for the same reason it can't reach a
+  `FieldRenderers`-registered component: an arbitrary consumer component has no guaranteed
+  attribute to receive it, and adding one it doesn't declare throws at runtime.
 - File properties of type `IReadOnlyList<WizardFileAttachment>` render as a native file input;
   bytes are copied into memory immediately on selection (not a raw `IBrowserFile` handle, whose
   stream can't be held past the current render). Pair with `[MaxFileCount]`, `[MaxFileSize]`, or

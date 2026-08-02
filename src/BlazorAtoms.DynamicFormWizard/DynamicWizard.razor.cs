@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
+using BlazorAtoms.DynamicFormWizard.Attributes;
 using BlazorAtoms.DynamicFormWizard.Navigation;
 using BlazorAtoms.DynamicFormWizard.Rendering;
 using BlazorAtoms.DynamicFormWizard.Schema;
@@ -44,6 +45,20 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
     /// ToString fallback. See EXTENSIBILITY.md for a full worked example.</summary>
     [Parameter]
     public IReadOnlyDictionary<Type, Type>? FieldRenderers { get; set; }
+
+    /// <summary>Whole-form default for where a field's label renders (DESIGN-DISCUSSION.md H.31,
+    /// #142) -- a property's own <c>[FormLabel]</c> attribute overrides this, same
+    /// attribute-wins-over-default pattern as everywhere else in this engine.</summary>
+    [Parameter]
+    public LabelPosition DefaultLabelPosition { get; set; } = LabelPosition.Above;
+
+    /// <summary>Extra HTML attributes to splat onto one field's rendered input, keyed by
+    /// top-level property name (DESIGN-DISCUSSION.md H.31, #143 -- same top-level-only reach as
+    /// <c>[DependsOn]</c>/<c>[FormSelect]</c>, B.6). Does not reach a tier-1 <see cref="FieldRenderers"/>
+    /// component, since an arbitrary consumer component has no guaranteed attribute to receive
+    /// it (see the doc comment on <c>RenderRegisteredComponent</c> in <c>DynamicWizard.Fields.cs</c>).</summary>
+    [Parameter]
+    public IReadOnlyDictionary<string, IReadOnlyDictionary<string, object>>? FieldAttributes { get; set; }
 
     private EditContext _editContext = default!;
     private ValidationMessageStore _messageStore = default!;
@@ -100,6 +115,21 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
     /// uses <c>[FormLayout]</c>.</summary>
     private static string ColumnSpanStyle(WizardPropertySchema property) =>
         property.Layout is { } layout ? $"--wizard-column-span: {layout.Span};" : string.Empty;
+
+    /// <summary>[FormLabel] on the property wins over the wizard-level default (DESIGN-DISCUSSION.md
+    /// H.31).</summary>
+    private LabelPosition EffectiveLabelPosition(WizardPropertySchema property) =>
+        property.LabelPositionOverride ?? DefaultLabelPosition;
+
+    /// <summary>Above/Left keep a real, visible &lt;label&gt; element -- Left just lays it out
+    /// beside the input instead of above it. Inline/Hidden render no visible label element at all;
+    /// the label text moves onto the input itself instead (see <c>BuildExtraAttributes</c> in
+    /// <c>DynamicWizard.Fields.cs</c>).</summary>
+    private static bool ShowsLabelElement(LabelPosition position) =>
+        position is LabelPosition.Above or LabelPosition.Left;
+
+    private static string FieldRowClass(LabelPosition position) =>
+        position == LabelPosition.Left ? "wizard__field-row wizard__field-row--label-left" : "wizard__field-row";
 
     private void HandlePrevious()
     {

@@ -70,7 +70,11 @@ public sealed class WizardModelSchema
                 property,
                 stepNumber: formStep?.StepNumber ?? DefaultStepNumber,
                 stepTitle: formStep?.Title,
-                order: formOrder?.Order ?? int.MaxValue,
+                // [FormOrder] wins if present (explicit-attribute-wins, same pattern as every
+                // other override here); falls back to [Display(Order=N)] -- GetOrder(), never the
+                // `Order` property getter directly, since DisplayAttribute.Order throws
+                // InvalidOperationException when never explicitly set ("Use the GetOrder method").
+                order: formOrder?.Order ?? display?.GetOrder() ?? int.MaxValue,
                 label: display?.Name ?? property.Name,
                 dependencies: property.GetCustomAttributes<DependsOnAttribute>().ToArray(),
                 pathEndConditions: property.GetCustomAttributes<FormPathEndAttribute>().ToArray(),
@@ -78,6 +82,8 @@ public sealed class WizardModelSchema
                 select: property.GetCustomAttribute<FormSelectAttribute>(),
                 dynamicSelect: property.GetCustomAttribute<FormDynamicSelectAttribute>(),
                 layout: property.GetCustomAttribute<FormLayoutAttribute>(),
+                labelPositionOverride: property.GetCustomAttribute<FormLabelAttribute>()?.Position,
+                placeholder: display?.Prompt,
                 encounterIndex: i));
         }
 

@@ -12,8 +12,12 @@
         <div class="wizard__fields">
             @foreach (var property in VisibleFields)
             {
-                <div class="wizard__field-row" @key="property.Property.Name" style="@ColumnSpanStyle(property)">
-                    <label class="wizard__label">@property.Label</label>
+                var labelPosition = EffectiveLabelPosition(property);
+                <div class="@FieldRowClass(labelPosition)" @key="property.Property.Name" style="@ColumnSpanStyle(property)">
+                    @if (ShowsLabelElement(labelPosition))
+                    {
+                        <label class="wizard__label">@property.Label</label>
+                    }
                     @RenderField(property)
                     @foreach (var message in _editContext.GetValidationMessages(new FieldIdentifier(Model, property.Property.Name)))
                     {
