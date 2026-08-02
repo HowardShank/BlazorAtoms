@@ -53,16 +53,59 @@ metadata. Section A works through how much of that pitch this package can actual
    **Why:** `FieldTemplate` is all-or-nothing (whole form). A consumer with 95% ordinary fields and
    one exotic type (e.g. `Money`) shouldn't have to reimplement the whole form just to special-case
    one property. Full worked example (a `Money` struct) in `EXTENSIBILITY.md`.
-4. **Field-render dispatch, four tiers in priority order:**
+4. **Field-render dispatch, five tiers in priority order:**
    1. Consumer's type-registry match for this exact property type (explicit opt-in always wins).
-   2. Built-in scalar types (bool/enum/string/DateTime/int·decimal·double/file).
+   2. Native built-in scalar types — the ones Blazor's own typed `Input*` components handle
+      directly: `bool`, `enum`, `DateTime`/`DateOnly`/`TimeOnly`, `int`/`long`/`short`/`float`/
+      `decimal`/`double`, `string`, file.
+   2b. **Generic `IParsable<T>` tier** — any value type implementing `IParsable<T>` that tier 2
+      didn't already claim: `byte`, `sbyte`, `ushort`, `uint`, `ulong`, `char`, `nint`, `nuint`,
+      `Guid`, `TimeSpan`, or a *consumer's own* custom struct that implements `IParsable<T>`.
+      Rendered by `WizardParsableInput<TValue>` (`Rendering/WizardParsableInput.cs`) — a single
+      generic `InputBase<TValue>` subclass, not one branch per type, so it also auto-covers any
+      future BCL or consumer type that adopts the interface, with no registration needed.
    3. Auto-expand — the property's type is itself a complex class with its own public
       read/write properties, so it recurses and renders *those* as a field group (see B.5).
+      **Collection types are explicitly excluded**, even though they're classes: anything
+      implementing non-generic `IEnumerable` fails this tier by design.
+      `WizardTypeInspection.IsComplexType` checks for it directly, because `List<T>`'s only
+      public read/write, non-indexer property is `Capacity` (an `int`) — without the exclusion, a
+      `List<string>` property would auto-expand into a field group showing only a bogus
+      "Capacity" number input, hiding every actual list item, and nothing about the rendered UI
+      would signal anything was wrong. Real `List<T>`/collection editing support (a scalar-list
+      editor vs. full repeating groups of complex types vs. consumer-registered-only) is a
+      separate, deferred decision — see G.25.
    4. Fallback — read-only `ToString()` rendering plus a dev-time warning, so an unhandled type
-      never silently disappears from the form.
-   **Why:** each tier solves a distinct problem (explicit override, common case, structural
-   grouping, safety net) — collapsing any two would either lose the escape hatch or lose the safe
-   fallback for genuinely unknown types.
+      never silently disappears from the form. Genuinely reached only by a type that is neither a
+      known scalar, `IParsable<T>`, nor a complex class (e.g. a bare struct with public fields but
+      no properties and no `IParsable` implementation, or any collection type per tier 3 above).
+   **Why:** each tier solves a distinct problem (explicit override, common case, exhaustive native
+   coverage, structural grouping, safety net) — collapsing any two would either lose the escape
+   hatch or lose the safe fallback for genuinely unknown types. Tier 2b exists because the goal is
+   an engine that handles anything provided for built-in/native data — custom types go through the
+   type-registry (tier 1) by design, but every native integral/BCL scalar type needs to work out
+   of the box, not just the handful Blazor ships dedicated components for.
+4a. **`Nullable<T>` is dispatched by its underlying type, at every tier that needs it.**
+   `Nullable<T>` can never itself satisfy an interface constraint like `IParsable<T>` — a C#
+   language rule (confirmed by the compiler: "Nullable types can not satisfy any interface
+   constraints"), not a gap fixable by wrapping. So `int?`/`byte?`/`DateTime?`/`Guid?`/`bool?`/
+   nullable-enum/etc. are handled explicitly:
+   - Native numeric (`InputNumber<TValue>`) and date (`InputDate<TValue>`) components already
+     support their `T?` forms directly — the dispatch just needs to route the *full* declared
+     type (nullable wrapper included) to them, not strip it first.
+   - Nullable enums get their own `RenderNullableEnumSelect`, adding a leading `-- none --`
+     option, since an unset nullable enum means "no selection," not "default to the first member."
+   - Everything else that's `IParsable<T>` at tier 2b (including `bool?`, since there's no native
+     tri-state checkbox) routes through `WizardNullableParsableInput<TValue>`
+     (`where TValue : struct, IParsable<TValue>`, deriving `InputBase<TValue?>`) — an empty string
+     parses to `null`, not a validation error, since a cleared field means "no value."
+   **Why:** a prior bug (fixed the same session it was introduced) had `RenderDispatched` already
+   stripping `Nullable<T>` to its underlying type *before* tier 2 ever ran, so every nullable
+   branch inside the dispatch was unreachable dead code — proven by a test that rendered every
+   nullable native type at once and got an `Expression<Func<T>>`/`Expression<Func<T?>>` cast
+   crash. The fix: only tier 1's registry lookup and tier 3's complex-type check use the
+   unwrapped type; tier 2 receives the full declared type so its own nullable-aware branches
+   actually run.
 
 ### B. Data model
 
@@ -141,9 +184,16 @@ metadata. Section A works through how much of that pitch this package can actual
     `FormStep`. **Why:** raw reflection property enumeration is **not** guaranteed stable across an
     inheritance hierarchy — a real, documented .NET gotcha, not hypothetical. Locked as a separate
     attribute (rather than a `FormStep(step, order)` tuple) per explicit user choice.
-11. **`[DependsOn]` stays equality-only, AND-combined, stackable, for v1.** No OR/NotEquals/range
-    yet. **Why:** deliberately deferred (G.28) until the user designs real test scenarios of their
-    own — not a gap in the reasoning, a conscious "not yet."
+11. **`[DependsOn]` gained a `ComparisonOperator` (G.28, shipped).** `Equals` (default, backward
+    compatible), `NotEquals`, `GreaterThan`, `GreaterThanOrEqual`, `LessThan`, `LessThanOrEqual`.
+    Combining stays AND-only, stackable, exactly as before — **no OR was added.** A range condition
+    (e.g. age 18–65) is expressed by stacking two conditions on the *same* property
+    (`GreaterThanOrEqual 18` + `LessThanOrEqual 65`), reusing the existing AND-combine rule rather
+    than inventing a new construct. Ordering operators require the target property's actual value
+    to implement `IComparable` and be comparable against `ExpectedValue`'s runtime type (the same
+    requirement C#'s own comparison operators have) — `WizardNavigator`'s private `Matches` helper
+    throws a clear `InvalidOperationException` naming the offending type if not. OR-combination
+    remains deliberately out of scope; no scenario has needed it yet.
 
 ### D. Validation
 
@@ -215,14 +265,93 @@ metadata. Section A works through how much of that pitch this package can actual
     back later).
 24. **i18n** of labels/messages — currently hardcoded English throughout `Ideas.md` (both
     `[Display(Name=...)]` text and custom-validator error messages).
-25. **Repeating/collection steps** (e.g. "add N beneficiaries," a variable-length list of
-    sub-objects within one step) — no `Ideas.md` iteration touches this at all.
+25. **Repeating/collection steps (shipped) — `List<T>` support, scoped to exactly `List<TItem>`.**
+    See A.4 tier 1b and `DynamicWizard.Lists.cs`. Two shapes depending on `TItem`:
+    - **Scalar item** (`List<string>`, `List<int>`, `List<Guid>`, etc.): a repeating row of
+      single-value inputs, each reusing tier 2/2b's existing dispatch unchanged. Getting a
+      `ValueExpression` for `list[i]` the "obvious" way (an `IndexExpression`) was tried first and
+      failed at runtime — `FieldIdentifier.Create` explicitly rejects index expressions ("only
+      supports simple member accessors"). The fix: a one-property `ListItemBox<TItem>` wrapper
+      whose own `Value` property *is* a simple member accessor and whose setter writes through to
+      the real list slot. Boxes are cached per (list, index) across renders (evicted on any
+      add/remove) because `EditContext` tracks modified/invalid state by `FieldIdentifier`
+      equality, which compares the owner object — a fresh box every render would silently forget
+      that state on the next render.
+    - **Complex item** (`List<Beneficiary>`, the actual "add N beneficiaries" case): every item's
+      own sub-form renders as its own `fieldset`, stacked in one step (not paginated one-per-screen
+      — a deliberate scope choice to avoid inventing a wizard-within-a-wizard navigation concept).
+      Each item's fields are ordinary property-owned targets (owner = the item instance itself,
+      which is already reference-stable since it *is* the real list element) — full validation
+      support within the item, same as an existing nested group.
+    - `[MinItemCount(n)]`/`[MaxItemCountAttribute(n)]` validate the list property itself (mirroring
+      `MaxFileCountAttribute`'s shape); each complex item is *additionally* validated individually
+      via `Validator.TryValidateObject`, with errors stored against the item instance so they
+      resolve to the same `FieldIdentifier` its own rendered fields already use.
+    - **Still out of scope:** `DependsOn` can't target a field inside a list item (same limitation
+      as G.27 for ordinary nested groups), and a list item's own fields can't depend on each other
+      either. Only `List<T>` is supported — not `IList<T>`/`ICollection<T>`/arrays/other
+      collections, kept deliberately narrow (see `WizardTypeInspection.TryGetListItemType`).
 26. **A cancel/close affordance** distinct from Back — no iteration has one.
-27. **Nested-target `DependsOn`** (path-based targeting into a group's own fields — see B.6).
-28. **Richer `DependsOn` operators** (OR, NotEquals, range/comparison — see C.11).
+27. **Nested-target `DependsOn`** (path-based targeting into a group's own fields — see B.6). Also
+    now the reason a repeating list item's own fields can't depend on each other (see G.25).
+28. **Richer `DependsOn` operators — shipped, see C.11.** OR-combination specifically remains
+    deferred; comparison operators beyond equality are done.
 
 *(A hard "force-stop here" override was considered deferred at one point in this doc's history —
 reconsidered and built once a concrete failure mode was raised; see C.8a, no longer deferred.)*
+
+### H. Standard DataAnnotations attribute coverage (#141, shipped)
+
+29. **`[Compare]` — and every other stock `ValidationAttribute` never specifically coded for —
+    already worked with *zero* engine changes, proven by test rather than assumed.** D.12/D.13
+    already explain why validation runs through `Validator.TryValidateValue`/`TryValidateObject`
+    against whatever attributes are actually present; the detail worth stating explicitly is
+    *why* a cross-property attribute like `[Compare(nameof(Other))]` also works: `ValidateCurrentStep`'s
+    scalar branch builds its `ValidationContext` as `new ValidationContext(_model) { MemberName =
+    ... }` — `ObjectInstance` is the *whole model*, not just the one value being checked — so
+    `CompareAttribute`'s own reflection lookup of the sibling property off
+    `ValidationContext.ObjectInstance`/`ObjectType` finds it correctly, with no wizard-specific
+    plumbing at all. Also proven this pass: `CreditCard`/`Phone`/`Url`/`RegularExpression`/
+    `StringLength`/`Length`/`MinLength`/`MaxLength`/`AllowedValues`/`DeniedValues`/`EnumDataType`/
+    `Base64String`/`CustomValidation` — see `WizardNavigatorTests.cs`.
+30. **`[DataType]`/`[DisplayFormat]`/`[Editable]`/`[ScaffoldColumn]` — new rendering-level
+    attribute support (distinct from D.12/D.13's validation-only coverage, since these change what
+    gets *rendered*, not what gets *validated*).**
+    - `[DataType]` on a `string` property maps a small, deliberately-narrow set of well-known
+      shapes (`Password`, `EmailAddress`, `PhoneNumber`, `Url`, `MultilineText`) to a real HTML5
+      `input type="..."` or a `<textarea>`. Native `InputText` can't be reused for this: it
+      hardcodes `type="text"` itself, written to the render tree *after* `AdditionalAttributes`,
+      so a "type" attribute passed through `AdditionalAttributes` can never win. The fix is a raw,
+      manually-bound `<input>`/`<textarea>` (same shape as the file-upload branch's manual
+      binding, E.14) instead of trying to fight `InputText`'s own attribute. Other `DataType`
+      members (`Currency`, `PostalCode`, `CreditCard`, etc.) are left as plain text pending a real
+      formatting/masking need — not every member has an obvious single-input mapping.
+    - `[DisplayFormat(DataFormatString=..., NullDisplayText=...)]` formats *read-only* display only
+      — the tier-4 fallback (an unhandled type) and `[Editable(false)]`'s read-only span both
+      route through one shared `FormatDisplayValue` helper. Deliberately **not** applied to any
+      editable tier: `DataFormatString` is a display-mode format (`string.Format`), not an input
+      mask — applying it to a live input's bound value would need parsing the formatted string
+      back out on every keystroke, which no built-in `Input*` component does.
+    - `[Editable(false)]` forces a read-only render regardless of what tier the type would
+      otherwise dispatch to — checked first in `RenderDispatched`, ahead of even the tier-1
+      consumer type-registry, since an explicit "don't let this be edited" is a stronger signal
+      than any renderer's opinion about how the type would otherwise render.
+    - `[ScaffoldColumn(false)]` excludes a property entirely — never rendered, never validated,
+      never counted toward a step's visibility. Filtered out at the same three points that already
+      enumerate a type's properties (`WizardModelSchema.Build` for top-level, `RenderExpandedGroup`
+      for a nested group, `RenderComplexItemRepeater` for a repeating list's item type), so the
+      property never becomes a `WizardPropertySchema`/render target at all — consistent with its
+      EF/scaffolding intent of "this doesn't exist for generated UI purposes," rather than a
+      render-only hide that would still validate underneath.
+    - All four are read directly off the reflected `PropertyInfo` at the point of use
+      (`target.Info.GetCustomAttribute<...>()`), the same non-cached pattern `RenderExpandedGroup`
+      already uses for a nested group member's `[Display(Name=...)]` label — not threaded through
+      `WizardPropertySchema`'s cache, since that cache only covers *top-level* model properties
+      today. **Known gap, not fixed this pass:** a scalar list row's `FieldTarget` targets its
+      `ListItemBox<TItem>.Value` wrapper property, not the original `List<T>` property's own
+      `PropertyInfo` — so `[DataType]`/`[Editable]` declared on a `List<string>` property itself
+      does not propagate to each repeated row. Complex list items are unaffected (their fields are
+      ordinary property-owned targets on the real item instance).
 
 ## Scenarios walked through (reference — the concrete cases that drove the decisions above)
 
@@ -262,8 +391,6 @@ reconsidered and built once a concrete failure mode was raised; see C.8a, no lon
 
 ## Not yet decided (pick up here in a future session)
 
-- Exact `[DependsOn]` operator set beyond equality (G.28) — waiting on the user's own test
-  scenarios.
 - Whether the future render-adapter package (A.1) is a single package or split further by target
   UI kit (e.g. a `BlazorAtoms.DynamicFormWizard.Atoms` adapter vs. others).
 - Exact shape of the async step-transition action hook (G.22) once it's actually designed — this

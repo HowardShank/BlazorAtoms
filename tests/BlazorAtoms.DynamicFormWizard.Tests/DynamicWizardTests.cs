@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.Extensions.DependencyInjection;
 using BlazorAtoms.DynamicFormWizard.Files;
+using BlazorAtoms.DynamicFormWizard.Navigation;
 using BlazorAtoms.DynamicFormWizard.Services;
 
 namespace BlazorAtoms.DynamicFormWizard.Tests;
@@ -109,6 +110,193 @@ public class DynamicWizardTests : BunitContext
         Assert.Equal("Alice", model.Name); // untouched by the nested edit -- a different owning object
     }
 
+    // A nested group type with a public settable indexer (mirrors System.Text.StringBuilder's
+    // Chars[int]) -- GetProperties() reports indexers as CanRead/CanWrite too, but GetValue()
+    // with no index arguments throws TargetParameterCountException. WizardTypeInspection and the
+    // auto-expand enumeration must both exclude indexers, or this crashes instead of rendering
+    // the type's ordinary properties.
+    private class GroupWithIndexer
+    {
+        private readonly Dictionary<int, string> _byIndex = new();
+
+        public string Label { get; set; } = string.Empty;
+
+        public string this[int index]
+        {
+            get => _byIndex.TryGetValue(index, out var v) ? v : string.Empty;
+            set => _byIndex[index] = value;
+        }
+    }
+
+    private class ModelWithIndexerGroup
+    {
+        [FormStep(1)]
+        public GroupWithIndexer Group { get; set; } = new();
+    }
+
+    [Fact]
+    public void A_nested_type_with_a_public_indexer_renders_its_ordinary_properties_without_crashing()
+    {
+        var model = new ModelWithIndexerGroup();
+
+        var cut = Render<DynamicWizard<ModelWithIndexerGroup>>(p => p.Add(c => c.Model, model));
+
+        cut.Find("fieldset.wizard-field-group input.wizard-field--text").Change("hello");
+
+        Assert.Equal("hello", model.Group.Label);
+        Assert.Empty(cut.FindAll("span.wizard-field--unhandled"));
+    }
+
+    // List<T> repeating support (DESIGN-DISCUSSION.md G.25). List<T>'s only public read/write,
+    // non-indexer property is Capacity (an int) -- WizardTypeInspection.IsComplexType excludes
+    // ALL collection types (so it never misdetects List<T> as a "Capacity" auto-expand group),
+    // and DynamicWizard's own tier 1b gives List<T> real handling instead of falling to the tier-4
+    // fallback: a repeating row of scalar inputs when the item type is a scalar, tested here.
+    private class ModelWithScalarListProperty
+    {
+        [FormStep(1)]
+        public List<string> Tags { get; set; } = new() { "a", "b" };
+    }
+
+    [Fact]
+    public void A_ListT_of_scalar_renders_a_repeating_row_not_a_fallback_or_a_Capacity_field()
+    {
+        var model = new ModelWithScalarListProperty();
+        var cut = Render<DynamicWizard<ModelWithScalarListProperty>>(p => p.Add(c => c.Model, model));
+
+        Assert.Empty(cut.FindAll("span.wizard-field--unhandled"));
+        Assert.Empty(cut.FindAll("fieldset.wizard-field-group"));
+        Assert.Equal(2, cut.FindAll("div.wizard-list-repeater__row input").Count);
+    }
+
+    [Fact]
+    public void Editing_a_scalar_list_row_writes_into_the_correct_list_index()
+    {
+        var model = new ModelWithScalarListProperty();
+        var cut = Render<DynamicWizard<ModelWithScalarListProperty>>(p => p.Add(c => c.Model, model));
+
+        cut.FindAll("div.wizard-list-repeater__row input")[1].Change("bravo");
+
+        Assert.Equal(new[] { "a", "bravo" }, model.Tags);
+    }
+
+    [Fact]
+    public void Clicking_Add_appends_a_new_scalar_list_row()
+    {
+        var model = new ModelWithScalarListProperty();
+        var cut = Render<DynamicWizard<ModelWithScalarListProperty>>(p => p.Add(c => c.Model, model));
+
+        cut.Find("button.wizard-list-repeater__add").Click();
+
+        Assert.Equal(new[] { "a", "b", "" }, model.Tags);
+        Assert.Equal(3, cut.FindAll("div.wizard-list-repeater__row input").Count);
+    }
+
+    [Fact]
+    public void Clicking_Remove_deletes_that_scalar_list_row()
+    {
+        var model = new ModelWithScalarListProperty();
+        var cut = Render<DynamicWizard<ModelWithScalarListProperty>>(p => p.Add(c => c.Model, model));
+
+        cut.FindAll("button.wizard-list-repeater__remove")[0].Click();
+
+        Assert.Equal(new[] { "b" }, model.Tags);
+        Assert.Single(cut.FindAll("div.wizard-list-repeater__row input"));
+    }
+
+    private class Beneficiary
+    {
+        [Required(ErrorMessage = "Name is required.")]
+        public string Name { get; set; } = string.Empty;
+
+        public int SharePercent { get; set; }
+    }
+
+    private class ModelWithComplexListProperty
+    {
+        [FormStep(1, "Beneficiaries")]
+        [MinItemCount(1)]
+        [MaxItemCount(3)]
+        public List<Beneficiary> Beneficiaries { get; set; } = new() { new Beneficiary { Name = "Alice", SharePercent = 100 } };
+    }
+
+    [Fact]
+    public void A_ListT_of_complex_type_renders_one_fieldset_group_per_item()
+    {
+        var model = new ModelWithComplexListProperty();
+        var cut = Render<DynamicWizard<ModelWithComplexListProperty>>(p => p.Add(c => c.Model, model));
+
+        var groups = cut.FindAll("fieldset.wizard-list-repeater__item");
+        Assert.Single(groups);
+        Assert.Equal("Alice", groups[0].QuerySelector("input.wizard-field--text")!.GetAttribute("value"));
+    }
+
+    [Fact]
+    public void Editing_a_complex_list_items_own_field_writes_into_that_item_not_a_sibling()
+    {
+        var model = new ModelWithComplexListProperty();
+        model.Beneficiaries.Add(new Beneficiary { Name = "Bob", SharePercent = 0 });
+        var cut = Render<DynamicWizard<ModelWithComplexListProperty>>(p => p.Add(c => c.Model, model));
+
+        cut.FindAll("fieldset.wizard-list-repeater__item input.wizard-field--text")[1].Change("Robert");
+
+        Assert.Equal("Alice", model.Beneficiaries[0].Name);
+        Assert.Equal("Robert", model.Beneficiaries[1].Name);
+    }
+
+    [Fact]
+    public void Clicking_Add_on_a_complex_list_appends_a_blank_item()
+    {
+        var model = new ModelWithComplexListProperty();
+        var cut = Render<DynamicWizard<ModelWithComplexListProperty>>(p => p.Add(c => c.Model, model));
+
+        cut.Find("button.wizard-list-repeater__add").Click();
+
+        Assert.Equal(2, model.Beneficiaries.Count);
+        Assert.Equal(string.Empty, model.Beneficiaries[1].Name);
+    }
+
+    [Fact]
+    public void Clicking_Remove_on_a_complex_list_deletes_that_item()
+    {
+        var model = new ModelWithComplexListProperty();
+        model.Beneficiaries.Add(new Beneficiary { Name = "Bob" });
+        var cut = Render<DynamicWizard<ModelWithComplexListProperty>>(p => p.Add(c => c.Model, model));
+
+        cut.FindAll("button.wizard-list-repeater__remove")[0].Click();
+
+        Assert.Single(model.Beneficiaries);
+        Assert.Equal("Bob", model.Beneficiaries[0].Name);
+    }
+
+    [Fact]
+    public void MaxItemCount_and_MinItemCount_validate_the_whole_list_property()
+    {
+        var model = new ModelWithComplexListProperty();
+        model.Beneficiaries.Clear(); // violates MinItemCount(1)
+        var editContext = new EditContext(model);
+        var store = new ValidationMessageStore(editContext);
+        var nav = new WizardNavigator(WizardModelSchema.For<ModelWithComplexListProperty>(), model);
+
+        Assert.False(nav.ValidateCurrentStep(store));
+        var messages = editContext.GetValidationMessages(new FieldIdentifier(model, nameof(ModelWithComplexListProperty.Beneficiaries)));
+        Assert.Contains("At least 1 item(s) required.", messages);
+    }
+
+    [Fact]
+    public void Each_complex_list_items_own_Required_field_is_validated_individually()
+    {
+        var model = new ModelWithComplexListProperty();
+        model.Beneficiaries[0].Name = string.Empty; // violates [Required] on Beneficiary.Name
+        var editContext = new EditContext(model);
+        var store = new ValidationMessageStore(editContext);
+        var nav = new WizardNavigator(WizardModelSchema.For<ModelWithComplexListProperty>(), model);
+
+        Assert.False(nav.ValidateCurrentStep(store));
+        var messages = editContext.GetValidationMessages(new FieldIdentifier(model.Beneficiaries[0], nameof(Beneficiary.Name)));
+        Assert.Contains("Name is required.", messages);
+    }
+
     [Fact]
     public void Final_step_shows_Submit_and_invokes_OnWizardComplete()
     {
@@ -176,21 +364,228 @@ public class DynamicWizardTests : BunitContext
         Assert.Equal(42.50m, model.Amount.Amount);
     }
 
-    // Tier 4 (fallback) -- a type that is neither a known scalar nor a complex class (Guid is a
-    // struct, so WizardTypeInspection.IsComplexType's IsClass check correctly excludes it too).
+    // Tier 4 (fallback) -- a type that is neither a known scalar, IParsable<T> (tier 2b), nor a
+    // complex class (a bare struct with a public field but no properties and no IParsable
+    // implementation is genuinely unhandled).
+    private struct UnparsableStruct
+    {
+        public int Value;
+    }
+
     private class FallbackModel
     {
         [FormStep(1)]
-        public Guid Id { get; set; } = Guid.Empty;
+        public UnparsableStruct Id { get; set; }
     }
 
     [Fact]
     public void An_unhandled_type_renders_a_read_only_fallback_instead_of_disappearing()
     {
-        var cut = Render<DynamicWizard<FallbackModel>>(p => p.Add(c => c.Model, new FallbackModel { Id = Guid.Empty }));
+        var value = new UnparsableStruct { Value = 7 };
+        var cut = Render<DynamicWizard<FallbackModel>>(p => p.Add(c => c.Model, new FallbackModel { Id = value }));
 
         var span = cut.Find("span.wizard-field--unhandled");
-        Assert.Equal(Guid.Empty.ToString(), span.TextContent);
+        Assert.Equal(value.ToString(), span.TextContent);
+    }
+
+    // Tier 2b -- any IParsable<T> not already covered by a native Blazor Input* component.
+    private class ParsableTypesModel
+    {
+        [FormStep(1)]
+        public byte SmallCount { get; set; }
+
+        [FormStep(1)]
+        public Guid ExternalId { get; set; } = Guid.Empty;
+
+        [FormStep(1)]
+        public TimeSpan Duration { get; set; }
+    }
+
+    [Fact]
+    public void A_byte_property_renders_via_WizardParsableInput_and_round_trips_edits()
+    {
+        var model = new ParsableTypesModel();
+        var cut = Render<DynamicWizard<ParsableTypesModel>>(p => p.Add(c => c.Model, model));
+
+        cut.Find("input.wizard-field--parsable").Change("200");
+
+        Assert.Equal((byte)200, model.SmallCount);
+    }
+
+    [Fact]
+    public void A_Guid_property_renders_via_WizardParsableInput_and_round_trips_edits()
+    {
+        var model = new ParsableTypesModel();
+        var newId = Guid.NewGuid();
+        var cut = Render<DynamicWizard<ParsableTypesModel>>(p => p.Add(c => c.Model, model));
+
+        cut.FindAll("input.wizard-field--parsable")[1].Change(newId.ToString());
+
+        Assert.Equal(newId, model.ExternalId);
+    }
+
+    [Fact]
+    public void An_invalid_value_for_a_parsable_type_surfaces_a_validation_error_instead_of_throwing()
+    {
+        var model = new ParsableTypesModel();
+        var cut = Render<DynamicWizard<ParsableTypesModel>>(p => p.Add(c => c.Model, model));
+
+        cut.Find("input.wizard-field--parsable").Change("not-a-byte");
+
+        Assert.Equal((byte)0, model.SmallCount);
+        cut.Find("input.wizard-field--parsable.wizard-field--invalid");
+    }
+
+    // Exhaustive proof for every C# native/BCL scalar type claimed as "handled" -- every property
+    // here must render as an editable input (native Input* or WizardParsableInput), never fall
+    // through to the tier-4 read-only fallback, and every edit must round-trip into the model.
+    private class EveryNativeTypeModel
+    {
+        [FormStep(1)] public bool BoolValue { get; set; }
+        [FormStep(1)] public Priority EnumValue { get; set; } = Priority.Low;
+        [FormStep(1)] public string StringValue { get; set; } = string.Empty;
+        [FormStep(1)] public sbyte SByteValue { get; set; }
+        [FormStep(1)] public byte ByteValue { get; set; }
+        [FormStep(1)] public short ShortValue { get; set; }
+        [FormStep(1)] public ushort UShortValue { get; set; }
+        [FormStep(1)] public int IntValue { get; set; }
+        [FormStep(1)] public uint UIntValue { get; set; }
+        [FormStep(1)] public long LongValue { get; set; }
+        [FormStep(1)] public ulong ULongValue { get; set; }
+        [FormStep(1)] public nint NIntValue { get; set; }
+        [FormStep(1)] public nuint NUIntValue { get; set; }
+        [FormStep(1)] public char CharValue { get; set; }
+        [FormStep(1)] public float FloatValue { get; set; }
+        [FormStep(1)] public double DoubleValue { get; set; }
+        [FormStep(1)] public decimal DecimalValue { get; set; }
+        [FormStep(1)] public DateTime DateTimeValue { get; set; }
+        [FormStep(1)] public DateOnly DateOnlyValue { get; set; }
+        [FormStep(1)] public TimeOnly TimeOnlyValue { get; set; }
+        [FormStep(1)] public TimeSpan TimeSpanValue { get; set; }
+        [FormStep(1)] public Guid GuidValue { get; set; }
+        [FormStep(1)] public DateTimeOffset DateTimeOffsetValue { get; set; }
+    }
+
+    [Fact]
+    public void Every_native_CSharp_scalar_type_renders_as_an_editable_input_not_a_fallback()
+    {
+        var cut = Render<DynamicWizard<EveryNativeTypeModel>>(p => p.Add(c => c.Model, new EveryNativeTypeModel()));
+
+        Assert.Empty(cut.FindAll("span.wizard-field--unhandled"));
+
+        var propertyCount = typeof(EveryNativeTypeModel).GetProperties().Length;
+        var renderedFieldCount = cut.FindAll("input, select").Count;
+        Assert.Equal(propertyCount, renderedFieldCount);
+    }
+
+    [Fact]
+    public void A_ulong_and_a_char_property_both_round_trip_edits_via_WizardParsableInput()
+    {
+        var model = new EveryNativeTypeModel();
+        var cut = Render<DynamicWizard<EveryNativeTypeModel>>(p => p.Add(c => c.Model, model));
+
+        // Only non-native-Blazor-Input types land in this list, in declaration order: SByte(0),
+        // Byte(1), UShort(2), UInt(3), ULong(4), NInt(5), NUInt(6), Char(7), TimeSpan(8), Guid(9),
+        // DateTimeOffset(10) -- Short/Int/Long/Float/Double/Decimal/DateTime/DateOnly/TimeOnly all
+        // have native components instead and don't appear here. Re-query after each edit -- a
+        // change re-renders the tree and invalidates prior element/event-handler references.
+        cut.FindAll("input.wizard-field--parsable")[3].Change("4000000000");
+        cut.FindAll("input.wizard-field--parsable")[7].Change("Z");
+
+        Assert.Equal(4000000000u, model.UIntValue);
+        Assert.Equal('Z', model.CharValue);
+    }
+
+    // Nullable<T> proof (DESIGN-DISCUSSION.md A.4 tier 2b, nullable form) -- Nullable<T> can never
+    // itself satisfy an IParsable<T> constraint (a C# language rule), so every nullable branch of
+    // the dispatch checks Nullable.GetUnderlyingType instead. Covers every nullable native/BCL
+    // scalar: the native Input*<TValue> types already support T? directly, bool? and every tier-2b
+    // IParsable<T> type route through WizardNullableParsableInput<T>, and a nullable enum gets its
+    // own "-- none --" option instead of defaulting to the first member.
+    private class NullableTypesModel
+    {
+        [FormStep(1)] public bool? BoolValue { get; set; }
+        [FormStep(1)] public Priority? EnumValue { get; set; }
+        [FormStep(1)] public sbyte? SByteValue { get; set; }
+        [FormStep(1)] public byte? ByteValue { get; set; }
+        [FormStep(1)] public short? ShortValue { get; set; }
+        [FormStep(1)] public ushort? UShortValue { get; set; }
+        [FormStep(1)] public int? IntValue { get; set; }
+        [FormStep(1)] public uint? UIntValue { get; set; }
+        [FormStep(1)] public long? LongValue { get; set; }
+        [FormStep(1)] public ulong? ULongValue { get; set; }
+        [FormStep(1)] public nint? NIntValue { get; set; }
+        [FormStep(1)] public nuint? NUIntValue { get; set; }
+        [FormStep(1)] public char? CharValue { get; set; }
+        [FormStep(1)] public float? FloatValue { get; set; }
+        [FormStep(1)] public double? DoubleValue { get; set; }
+        [FormStep(1)] public decimal? DecimalValue { get; set; }
+        [FormStep(1)] public DateTime? DateTimeValue { get; set; }
+        [FormStep(1)] public DateOnly? DateOnlyValue { get; set; }
+        [FormStep(1)] public TimeOnly? TimeOnlyValue { get; set; }
+        [FormStep(1)] public TimeSpan? TimeSpanValue { get; set; }
+        [FormStep(1)] public Guid? GuidValue { get; set; }
+        [FormStep(1)] public DateTimeOffset? DateTimeOffsetValue { get; set; }
+    }
+
+    [Fact]
+    public void Every_nullable_CSharp_scalar_type_renders_as_an_editable_input_not_a_fallback()
+    {
+        var cut = Render<DynamicWizard<NullableTypesModel>>(p => p.Add(c => c.Model, new NullableTypesModel()));
+
+        Assert.Empty(cut.FindAll("span.wizard-field--unhandled"));
+
+        var propertyCount = typeof(NullableTypesModel).GetProperties().Length;
+        var renderedFieldCount = cut.FindAll("input, select").Count;
+        Assert.Equal(propertyCount, renderedFieldCount);
+    }
+
+    [Fact]
+    public void A_nullable_byte_property_starts_empty_accepts_a_value_and_clears_back_to_null()
+    {
+        var model = new NullableTypesModel();
+        var cut = Render<DynamicWizard<NullableTypesModel>>(p => p.Add(c => c.Model, model));
+
+        // Parsable-tier declaration order: BoolValue(0), SByteValue(1), ByteValue(2), UShortValue(3),
+        // UIntValue(4), ULongValue(5), NIntValue(6), NUIntValue(7), CharValue(8), TimeSpanValue(9),
+        // GuidValue(10), DateTimeOffsetValue(11) -- Enum uses <select>; Short/Int/Long/Float/Double/
+        // Decimal/DateTime/DateOnly/TimeOnly all have native nullable-aware components instead.
+        Assert.Null(model.ByteValue);
+
+        cut.FindAll("input.wizard-field--parsable")[2].Change("9");
+        Assert.Equal((byte)9, model.ByteValue);
+
+        cut.FindAll("input.wizard-field--parsable")[2].Change("");
+        Assert.Null(model.ByteValue);
+    }
+
+    [Fact]
+    public void An_invalid_value_for_a_nullable_parsable_type_surfaces_a_validation_error()
+    {
+        var model = new NullableTypesModel();
+        var cut = Render<DynamicWizard<NullableTypesModel>>(p => p.Add(c => c.Model, model));
+
+        cut.FindAll("input.wizard-field--parsable")[2].Change("not-a-byte");
+
+        Assert.Null(model.ByteValue);
+        cut.Find("input.wizard-field--parsable.wizard-field--invalid");
+    }
+
+    [Fact]
+    public void A_nullable_enum_offers_a_none_option_and_round_trips_between_null_and_a_value()
+    {
+        var model = new NullableTypesModel();
+        var cut = Render<DynamicWizard<NullableTypesModel>>(p => p.Add(c => c.Model, model));
+
+        var select = cut.Find("select.wizard-field--select");
+        var options = select.QuerySelectorAll("option").Select(o => o.GetAttribute("value")).ToArray();
+        Assert.Equal(new string?[] { "", "Low", "High" }, options);
+
+        select.Change("High");
+        Assert.Equal(Priority.High, model.EnumValue);
+
+        cut.Find("select.wizard-field--select").Change("");
+        Assert.Null(model.EnumValue);
     }
 
     // File uploads (DESIGN-DISCUSSION.md E.14-16): own render branch, bytes copied into a
@@ -317,5 +712,161 @@ public class DynamicWizardTests : BunitContext
         var laidOutRow = cut.FindAll("div.wizard__field-row").Single(r => (r.GetAttribute("style") ?? "").Contains("--wizard-column-span"));
 
         Assert.Contains("--wizard-column-span: 6;", laidOutRow.GetAttribute("style"));
+    }
+
+    // [DataType] rendering (README.md/#141) -- a handful of well-known string shapes get a real
+    // HTML5 input type or a <textarea> instead of native InputText's hardcoded type="text".
+    private class DataTypeModel
+    {
+        [FormStep(1)]
+        [DataType(DataType.Password)]
+        public string Secret { get; set; } = string.Empty;
+
+        [FormStep(1)]
+        [DataType(DataType.EmailAddress)]
+        public string Email { get; set; } = string.Empty;
+
+        [FormStep(1)]
+        [DataType(DataType.MultilineText)]
+        public string Notes { get; set; } = string.Empty;
+    }
+
+    [Fact]
+    public void DataType_Password_renders_an_input_type_password()
+    {
+        var cut = Render<DynamicWizard<DataTypeModel>>(p => p.Add(c => c.Model, new DataTypeModel()));
+
+        Assert.NotEmpty(cut.FindAll("input[type=password]"));
+    }
+
+    [Fact]
+    public void DataType_EmailAddress_renders_an_input_type_email_and_round_trips_edits()
+    {
+        var model = new DataTypeModel();
+        var cut = Render<DynamicWizard<DataTypeModel>>(p => p.Add(c => c.Model, model));
+
+        cut.Find("input[type=email]").Change("a@b.com");
+
+        Assert.Equal("a@b.com", model.Email);
+    }
+
+    [Fact]
+    public void DataType_MultilineText_renders_a_textarea_and_round_trips_edits()
+    {
+        var model = new DataTypeModel();
+        var cut = Render<DynamicWizard<DataTypeModel>>(p => p.Add(c => c.Model, model));
+
+        cut.Find("textarea.wizard-field--textarea").Change("line one");
+
+        Assert.Equal("line one", model.Notes);
+    }
+
+    // [Editable(false)] renders a read-only span regardless of what tier the type would otherwise
+    // dispatch to -- proven here on a plain string that would normally render an editable InputText.
+    private class EditableModel
+    {
+        [FormStep(1)]
+        [Editable(false)]
+        public string ComputedId { get; set; } = "ABC-123";
+
+        [FormStep(1)]
+        public string Name { get; set; } = string.Empty;
+    }
+
+    [Fact]
+    public void EditableFalse_renders_a_read_only_span_not_an_editable_input()
+    {
+        var cut = Render<DynamicWizard<EditableModel>>(p => p.Add(c => c.Model, new EditableModel()));
+
+        var span = cut.Find("span.wizard-field--readonly");
+        Assert.Equal("ABC-123", span.TextContent);
+        Assert.Single(cut.FindAll("input.wizard-field--text")); // only Name renders one; ComputedId doesn't
+    }
+
+    // [Editable(false)] + [DisplayFormat(DataFormatString=...)] together -- the read-only span
+    // formats the value instead of a bare ToString().
+    private class EditableWithFormatModel
+    {
+        [FormStep(1)]
+        [Editable(false)]
+        [DisplayFormat(DataFormatString = "{0:C}")]
+        public decimal Amount { get; set; } = 1234.5m;
+    }
+
+    [Fact]
+    public void EditableFalse_combined_with_DisplayFormat_formats_the_read_only_value()
+    {
+        var cut = Render<DynamicWizard<EditableWithFormatModel>>(p => p.Add(c => c.Model, new EditableWithFormatModel()));
+
+        var span = cut.Find("span.wizard-field--readonly");
+        Assert.Equal(string.Format("{0:C}", 1234.5m), span.TextContent);
+    }
+
+    // [DisplayFormat] on the tier-4 fallback (an unhandled type, reusing UnparsableStruct/Nullable
+    // form of it) -- NullDisplayText for a null value, DataFormatString for a non-null one.
+    private class FallbackWithNullDisplayTextModel
+    {
+        [FormStep(1)]
+        [DisplayFormat(NullDisplayText = "(none)")]
+        public UnparsableStruct? Id { get; set; }
+    }
+
+    [Fact]
+    public void RenderFallback_honors_DisplayFormat_NullDisplayText_for_a_null_unhandled_value()
+    {
+        var cut = Render<DynamicWizard<FallbackWithNullDisplayTextModel>>(p => p.Add(c => c.Model, new FallbackWithNullDisplayTextModel()));
+
+        var span = cut.Find("span.wizard-field--unhandled");
+        Assert.Equal("(none)", span.TextContent);
+    }
+
+    private class FallbackWithFormatStringModel
+    {
+        [FormStep(1)]
+        [DisplayFormat(DataFormatString = "ID:{0}")]
+        public UnparsableStruct Id { get; set; } = new UnparsableStruct { Value = 42 };
+    }
+
+    [Fact]
+    public void RenderFallback_honors_DisplayFormat_DataFormatString_for_a_non_null_unhandled_value()
+    {
+        var value = new UnparsableStruct { Value = 42 };
+        var cut = Render<DynamicWizard<FallbackWithFormatStringModel>>(p => p.Add(c => c.Model, new FallbackWithFormatStringModel()));
+
+        var span = cut.Find("span.wizard-field--unhandled");
+        Assert.Equal($"ID:{value}", span.TextContent);
+    }
+
+    // [ScaffoldColumn(false)] excludes a property entirely -- never rendered, never validated,
+    // never counted toward step visibility (WizardModelSchema.Build filters it out before it ever
+    // becomes a WizardPropertySchema).
+    private class ScaffoldColumnModel
+    {
+        [FormStep(1)]
+        public string Visible { get; set; } = string.Empty;
+
+        [FormStep(1)]
+        [ScaffoldColumn(false)]
+        [Required(ErrorMessage = "Should never be checked.")]
+        public string Hidden { get; set; } = string.Empty;
+    }
+
+    [Fact]
+    public void ScaffoldColumnFalse_excludes_the_property_from_rendering_entirely()
+    {
+        var cut = Render<DynamicWizard<ScaffoldColumnModel>>(p => p.Add(c => c.Model, new ScaffoldColumnModel()));
+
+        Assert.Single(cut.FindAll("input.wizard-field--text")); // only Visible, not Hidden
+    }
+
+    [Fact]
+    public void ScaffoldColumnFalse_excludes_the_property_from_validation_too()
+    {
+        var model = new ScaffoldColumnModel(); // Hidden's [Required] would fail if it were still validated
+        var editContext = new EditContext(model);
+        var store = new ValidationMessageStore(editContext);
+        var nav = new WizardNavigator(WizardModelSchema.For<ScaffoldColumnModel>(), model);
+
+        Assert.True(nav.ValidateCurrentStep(store));
     }
 }

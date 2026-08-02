@@ -88,6 +88,57 @@
     color: var(--wizard-muted-color, #6b7280);
 }
 
+::deep .wizard-field--readonly {
+    color: var(--wizard-muted-color, #6b7280);
+}
+
+::deep .wizard-field--textarea {
+    min-height: 4.5rem;
+    resize: vertical;
+    font: inherit;
+}
+
+::deep .wizard-list-repeater {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+::deep .wizard-list-repeater__label {
+    font-weight: var(--wizard-label-weight, 600);
+}
+
+::deep .wizard-list-repeater__row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+::deep .wizard-list-repeater__row > * {
+    flex: 1 1 auto;
+}
+
+::deep .wizard-list-repeater__item {
+    /* One item's own fieldset within a complex-item repeater (RenderComplexItemRepeater) --
+       same visual language as an ordinary nested wizard-field-group, so a repeating group of
+       sub-forms doesn't look like a different kind of thing from a single nested object. */
+    margin: 0;
+}
+
+::deep .wizard-list-repeater__remove,
+::deep .wizard-list-repeater__add {
+    flex: 0 0 auto;
+    padding: var(--wizard-button-padding, 0.4rem 0.85rem);
+    border-radius: var(--wizard-button-radius, 0.375rem);
+    border: 1px solid var(--wizard-button-border, #d1d5db);
+    background: var(--wizard-button-bg, transparent);
+    cursor: pointer;
+}
+
+::deep .wizard-list-repeater__add {
+    align-self: flex-start;
+}
+
 .wizard__nav {
     display: flex;
     justify-content: space-between;

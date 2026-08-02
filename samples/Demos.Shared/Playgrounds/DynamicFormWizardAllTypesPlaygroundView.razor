@@ -4,12 +4,22 @@
 
 <PageTitle>Dynamic Form Wizard — All Data Types Playground</PageTitle>
 
-<h1>Dynamic Form Wizard — every standard data type, one step</h1>
-<p>Every built-in scalar type the field-render dispatch's tier 2 understands, all on a single
-   <code>[FormStep(1)]</code>: <code>string</code>, <code>bool</code>, an <code>enum</code>,
-   <code>DateTime</code>, <code>int</code>, <code>decimal</code>, and <code>double</code>. No
-   custom renderer, no branching -- just the built-in dispatch handling every scalar shape it
-   ships with.</p>
+<h1>Dynamic Form Wizard — every native C# data type, two steps</h1>
+<p>Step 1: every built-in scalar type the field-render dispatch understands, non-nullable --
+   every integral type (<code>sbyte</code>, <code>byte</code>, <code>short</code>,
+   <code>ushort</code>, <code>int</code>, <code>uint</code>, <code>long</code>, <code>ulong</code>,
+   <code>nint</code>, <code>nuint</code>, <code>char</code>), every floating-point type
+   (<code>float</code>, <code>double</code>, <code>decimal</code>), <code>bool</code>,
+   <code>string</code>, an <code>enum</code>, and the common BCL structs (<code>DateTime</code>,
+   <code>DateOnly</code>, <code>TimeOnly</code>, <code>TimeSpan</code>, <code>Guid</code>).</p>
+<p>Step 2: the same set again, all as <code>Nullable&lt;T&gt;</code> (<code>int?</code>,
+   <code>Guid?</code>, a nullable enum, etc.), starting unset. <code>Nullable&lt;T&gt;</code> can
+   never itself implement <code>IParsable&lt;T&gt;</code> (a C# language rule), so the dispatch
+   detects the underlying type instead: native <code>InputNumber</code>/<code>InputDate</code>
+   already support their <code>T?</code> forms directly, a nullable enum gets a leading
+   "-- none --" option, and everything else routes through
+   <code>WizardNullableParsableInput&lt;T&gt;</code>, where an empty field means <code>null</code>,
+   not a validation error.</p>
 <p><a href="playground/dynamicformwizard">&larr; Back to the main Dynamic Form Wizard playground</a></p>
 
 <div class="dfw-columns">
@@ -20,11 +30,53 @@
         }
         else
         {
-            <p>
-                <strong>Submitted!</strong> Name=@_completed.Name, Active=@_completed.IsActive,
-                Level=@_completed.Level, StartDate=@_completed.StartDate.ToShortDateString(),
-                Quantity=@_completed.Quantity, Price=@_completed.Price, Rating=@_completed.Rating
-            </p>
+            <p><strong>Submitted!</strong></p>
+            <dl class="dfw-summary">
+                <dt>Name</dt><dd>@_completed.Name</dd>
+                <dt>IsActive</dt><dd>@_completed.IsActive</dd>
+                <dt>Level</dt><dd>@_completed.Level</dd>
+                <dt>Initial (char)</dt><dd>@_completed.Initial</dd>
+                <dt>SignedByte (sbyte)</dt><dd>@_completed.SignedByte</dd>
+                <dt>UnsignedByte (byte)</dt><dd>@_completed.UnsignedByte</dd>
+                <dt>ShortValue (short)</dt><dd>@_completed.ShortValue</dd>
+                <dt>UnsignedShort (ushort)</dt><dd>@_completed.UnsignedShort</dd>
+                <dt>Quantity (int)</dt><dd>@_completed.Quantity</dd>
+                <dt>UnsignedQuantity (uint)</dt><dd>@_completed.UnsignedQuantity</dd>
+                <dt>LongValue (long)</dt><dd>@_completed.LongValue</dd>
+                <dt>UnsignedLongValue (ulong)</dt><dd>@_completed.UnsignedLongValue</dd>
+                <dt>NativeInt (nint)</dt><dd>@_completed.NativeInt</dd>
+                <dt>NativeUnsignedInt (nuint)</dt><dd>@_completed.NativeUnsignedInt</dd>
+                <dt>FloatValue (float)</dt><dd>@_completed.FloatValue</dd>
+                <dt>Rating (double)</dt><dd>@_completed.Rating</dd>
+                <dt>Price (decimal)</dt><dd>@_completed.Price</dd>
+                <dt>StartDate (DateTime)</dt><dd>@_completed.StartDate.ToShortDateString()</dd>
+                <dt>EventDate (DateOnly)</dt><dd>@_completed.EventDate</dd>
+                <dt>ReminderTime (TimeOnly)</dt><dd>@_completed.ReminderTime</dd>
+                <dt>Duration (TimeSpan)</dt><dd>@_completed.Duration</dd>
+                <dt>TrackingId (Guid)</dt><dd>@_completed.TrackingId</dd>
+                <dt class="dfw-summary-heading">Nullable variants (step 2)</dt>
+                <dt>IsActiveN (bool?)</dt><dd>@Show(_completed.IsActiveN)</dd>
+                <dt>LevelN (Priority?)</dt><dd>@Show(_completed.LevelN)</dd>
+                <dt>InitialN (char?)</dt><dd>@Show(_completed.InitialN)</dd>
+                <dt>SignedByteN (sbyte?)</dt><dd>@Show(_completed.SignedByteN)</dd>
+                <dt>UnsignedByteN (byte?)</dt><dd>@Show(_completed.UnsignedByteN)</dd>
+                <dt>ShortValueN (short?)</dt><dd>@Show(_completed.ShortValueN)</dd>
+                <dt>UnsignedShortN (ushort?)</dt><dd>@Show(_completed.UnsignedShortN)</dd>
+                <dt>QuantityN (int?)</dt><dd>@Show(_completed.QuantityN)</dd>
+                <dt>UnsignedQuantityN (uint?)</dt><dd>@Show(_completed.UnsignedQuantityN)</dd>
+                <dt>LongValueN (long?)</dt><dd>@Show(_completed.LongValueN)</dd>
+                <dt>UnsignedLongValueN (ulong?)</dt><dd>@Show(_completed.UnsignedLongValueN)</dd>
+                <dt>NativeIntN (nint?)</dt><dd>@Show(_completed.NativeIntN)</dd>
+                <dt>NativeUnsignedIntN (nuint?)</dt><dd>@Show(_completed.NativeUnsignedIntN)</dd>
+                <dt>FloatValueN (float?)</dt><dd>@Show(_completed.FloatValueN)</dd>
+                <dt>RatingN (double?)</dt><dd>@Show(_completed.RatingN)</dd>
+                <dt>PriceN (decimal?)</dt><dd>@Show(_completed.PriceN)</dd>
+                <dt>StartDateN (DateTime?)</dt><dd>@Show(_completed.StartDateN)</dd>
+                <dt>EventDateN (DateOnly?)</dt><dd>@Show(_completed.EventDateN)</dd>
+                <dt>ReminderTimeN (TimeOnly?)</dt><dd>@Show(_completed.ReminderTimeN)</dd>
+                <dt>DurationN (TimeSpan?)</dt><dd>@Show(_completed.DurationN)</dd>
+                <dt>TrackingIdN (Guid?)</dt><dd>@Show(_completed.TrackingIdN)</dd>
+            </dl>
             <button type="button" @onclick="Reset">Start over</button>
         }
     </div>
@@ -47,38 +99,143 @@
         _completed = null;
     }
 
+    private static string Show<T>(T? value) => value is null ? "(null)" : value.ToString() ?? "(null)";
+
     public enum Priority { Low, Medium, High }
 
     public class AllDataTypesModel
     {
-        [FormStep(1, "Every Standard Data Type")]
+        [FormStep(1, "Every Native Data Type")]
         [FormOrder(1)]
         [Required(ErrorMessage = "Name is required.")]
         public string Name { get; set; } = string.Empty;
 
-        [FormStep(1)]
-        [FormOrder(2)]
+        [FormStep(1)] [FormOrder(2)]
         public bool IsActive { get; set; }
 
-        [FormStep(1)]
-        [FormOrder(3)]
+        [FormStep(1)] [FormOrder(3)]
         public Priority Level { get; set; } = Priority.Medium;
 
-        [FormStep(1)]
-        [FormOrder(4)]
-        public DateTime StartDate { get; set; } = DateTime.Today;
+        [FormStep(1)] [FormOrder(4)]
+        public char Initial { get; set; } = 'A';
 
-        [FormStep(1)]
-        [FormOrder(5)]
+        [FormStep(1)] [FormOrder(5)]
+        public sbyte SignedByte { get; set; }
+
+        [FormStep(1)] [FormOrder(6)]
+        public byte UnsignedByte { get; set; }
+
+        [FormStep(1)] [FormOrder(7)]
+        public short ShortValue { get; set; }
+
+        [FormStep(1)] [FormOrder(8)]
+        public ushort UnsignedShort { get; set; }
+
+        [FormStep(1)] [FormOrder(9)]
         public int Quantity { get; set; }
 
-        [FormStep(1)]
-        [FormOrder(6)]
+        [FormStep(1)] [FormOrder(10)]
+        public uint UnsignedQuantity { get; set; }
+
+        [FormStep(1)] [FormOrder(11)]
+        public long LongValue { get; set; }
+
+        [FormStep(1)] [FormOrder(12)]
+        public ulong UnsignedLongValue { get; set; }
+
+        [FormStep(1)] [FormOrder(13)]
+        public nint NativeInt { get; set; }
+
+        [FormStep(1)] [FormOrder(14)]
+        public nuint NativeUnsignedInt { get; set; }
+
+        [FormStep(1)] [FormOrder(15)]
+        public float FloatValue { get; set; }
+
+        [FormStep(1)] [FormOrder(16)]
+        public double Rating { get; set; }
+
+        [FormStep(1)] [FormOrder(17)]
         public decimal Price { get; set; }
 
-        [FormStep(1)]
-        [FormOrder(7)]
-        public double Rating { get; set; }
+        [FormStep(1)] [FormOrder(18)]
+        public DateTime StartDate { get; set; } = DateTime.Today;
+
+        [FormStep(1)] [FormOrder(19)]
+        public DateOnly EventDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+
+        [FormStep(1)] [FormOrder(20)]
+        public TimeOnly ReminderTime { get; set; } = new TimeOnly(9, 0);
+
+        [FormStep(1)] [FormOrder(21)]
+        public TimeSpan Duration { get; set; } = TimeSpan.FromHours(1);
+
+        [FormStep(1)] [FormOrder(22)]
+        public Guid TrackingId { get; set; } = Guid.NewGuid();
+
+        // Step 2: the same set again as Nullable<T>, all starting unset (null).
+        [FormStep(2, "Nullable Variants")] [FormOrder(1)]
+        public bool? IsActiveN { get; set; }
+
+        [FormStep(2)] [FormOrder(2)]
+        public Priority? LevelN { get; set; }
+
+        [FormStep(2)] [FormOrder(3)]
+        public char? InitialN { get; set; }
+
+        [FormStep(2)] [FormOrder(4)]
+        public sbyte? SignedByteN { get; set; }
+
+        [FormStep(2)] [FormOrder(5)]
+        public byte? UnsignedByteN { get; set; }
+
+        [FormStep(2)] [FormOrder(6)]
+        public short? ShortValueN { get; set; }
+
+        [FormStep(2)] [FormOrder(7)]
+        public ushort? UnsignedShortN { get; set; }
+
+        [FormStep(2)] [FormOrder(8)]
+        public int? QuantityN { get; set; }
+
+        [FormStep(2)] [FormOrder(9)]
+        public uint? UnsignedQuantityN { get; set; }
+
+        [FormStep(2)] [FormOrder(10)]
+        public long? LongValueN { get; set; }
+
+        [FormStep(2)] [FormOrder(11)]
+        public ulong? UnsignedLongValueN { get; set; }
+
+        [FormStep(2)] [FormOrder(12)]
+        public nint? NativeIntN { get; set; }
+
+        [FormStep(2)] [FormOrder(13)]
+        public nuint? NativeUnsignedIntN { get; set; }
+
+        [FormStep(2)] [FormOrder(14)]
+        public float? FloatValueN { get; set; }
+
+        [FormStep(2)] [FormOrder(15)]
+        public double? RatingN { get; set; }
+
+        [FormStep(2)] [FormOrder(16)]
+        public decimal? PriceN { get; set; }
+
+        [FormStep(2)] [FormOrder(17)]
+        public DateTime? StartDateN { get; set; }
+
+        [FormStep(2)] [FormOrder(18)]
+        public DateOnly? EventDateN { get; set; }
+
+        [FormStep(2)] [FormOrder(19)]
+        public TimeOnly? ReminderTimeN { get; set; }
+
+        [FormStep(2)] [FormOrder(20)]
+        public TimeSpan? DurationN { get; set; }
+
+        [FormStep(2)] [FormOrder(21)]
+        public Guid? TrackingIdN { get; set; }
     }
 
     private const string PocoSource = """
@@ -86,28 +243,54 @@
 
         public class AllDataTypesModel
         {
-            [FormStep(1, "Every Standard Data Type")]
-            [FormOrder(1)]
+            [FormStep(1, "Every Native Data Type")] [FormOrder(1)]
             [Required(ErrorMessage = "Name is required.")]
             public string Name { get; set; } = string.Empty;
 
-            [FormStep(1)] [FormOrder(2)]
-            public bool IsActive { get; set; }
+            [FormStep(1)] [FormOrder(2)]  public bool IsActive { get; set; }
+            [FormStep(1)] [FormOrder(3)]  public Priority Level { get; set; } = Priority.Medium;
+            [FormStep(1)] [FormOrder(4)]  public char Initial { get; set; } = 'A';
+            [FormStep(1)] [FormOrder(5)]  public sbyte SignedByte { get; set; }
+            [FormStep(1)] [FormOrder(6)]  public byte UnsignedByte { get; set; }
+            [FormStep(1)] [FormOrder(7)]  public short ShortValue { get; set; }
+            [FormStep(1)] [FormOrder(8)]  public ushort UnsignedShort { get; set; }
+            [FormStep(1)] [FormOrder(9)]  public int Quantity { get; set; }
+            [FormStep(1)] [FormOrder(10)] public uint UnsignedQuantity { get; set; }
+            [FormStep(1)] [FormOrder(11)] public long LongValue { get; set; }
+            [FormStep(1)] [FormOrder(12)] public ulong UnsignedLongValue { get; set; }
+            [FormStep(1)] [FormOrder(13)] public nint NativeInt { get; set; }
+            [FormStep(1)] [FormOrder(14)] public nuint NativeUnsignedInt { get; set; }
+            [FormStep(1)] [FormOrder(15)] public float FloatValue { get; set; }
+            [FormStep(1)] [FormOrder(16)] public double Rating { get; set; }
+            [FormStep(1)] [FormOrder(17)] public decimal Price { get; set; }
+            [FormStep(1)] [FormOrder(18)] public DateTime StartDate { get; set; } = DateTime.Today;
+            [FormStep(1)] [FormOrder(19)] public DateOnly EventDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+            [FormStep(1)] [FormOrder(20)] public TimeOnly ReminderTime { get; set; } = new TimeOnly(9, 0);
+            [FormStep(1)] [FormOrder(21)] public TimeSpan Duration { get; set; } = TimeSpan.FromHours(1);
+            [FormStep(1)] [FormOrder(22)] public Guid TrackingId { get; set; } = Guid.NewGuid();
 
-            [FormStep(1)] [FormOrder(3)]
-            public Priority Level { get; set; } = Priority.Medium;
-
-            [FormStep(1)] [FormOrder(4)]
-            public DateTime StartDate { get; set; } = DateTime.Today;
-
-            [FormStep(1)] [FormOrder(5)]
-            public int Quantity { get; set; }
-
-            [FormStep(1)] [FormOrder(6)]
-            public decimal Price { get; set; }
-
-            [FormStep(1)] [FormOrder(7)]
-            public double Rating { get; set; }
+            // Step 2: the same set again as Nullable<T>, all starting unset (null).
+            [FormStep(2, "Nullable Variants")] [FormOrder(1)]  public bool? IsActiveN { get; set; }
+            [FormStep(2)] [FormOrder(2)]  public Priority? LevelN { get; set; }
+            [FormStep(2)] [FormOrder(3)]  public char? InitialN { get; set; }
+            [FormStep(2)] [FormOrder(4)]  public sbyte? SignedByteN { get; set; }
+            [FormStep(2)] [FormOrder(5)]  public byte? UnsignedByteN { get; set; }
+            [FormStep(2)] [FormOrder(6)]  public short? ShortValueN { get; set; }
+            [FormStep(2)] [FormOrder(7)]  public ushort? UnsignedShortN { get; set; }
+            [FormStep(2)] [FormOrder(8)]  public int? QuantityN { get; set; }
+            [FormStep(2)] [FormOrder(9)]  public uint? UnsignedQuantityN { get; set; }
+            [FormStep(2)] [FormOrder(10)] public long? LongValueN { get; set; }
+            [FormStep(2)] [FormOrder(11)] public ulong? UnsignedLongValueN { get; set; }
+            [FormStep(2)] [FormOrder(12)] public nint? NativeIntN { get; set; }
+            [FormStep(2)] [FormOrder(13)] public nuint? NativeUnsignedIntN { get; set; }
+            [FormStep(2)] [FormOrder(14)] public float? FloatValueN { get; set; }
+            [FormStep(2)] [FormOrder(15)] public double? RatingN { get; set; }
+            [FormStep(2)] [FormOrder(16)] public decimal? PriceN { get; set; }
+            [FormStep(2)] [FormOrder(17)] public DateTime? StartDateN { get; set; }
+            [FormStep(2)] [FormOrder(18)] public DateOnly? EventDateN { get; set; }
+            [FormStep(2)] [FormOrder(19)] public TimeOnly? ReminderTimeN { get; set; }
+            [FormStep(2)] [FormOrder(20)] public TimeSpan? DurationN { get; set; }
+            [FormStep(2)] [FormOrder(21)] public Guid? TrackingIdN { get; set; }
         }
         """;
 }
@@ -130,10 +313,31 @@
         line-height: 1.5;
     }
 
+    .dfw-summary {
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        gap: 0.25rem 1rem;
+    }
+
+    .dfw-summary dt {
+        font-weight: 600;
+    }
+
+    .dfw-summary dd {
+        margin: 0;
+    }
+
+    .dfw-summary-heading {
+        grid-column: 1 / -1;
+        margin-top: 0.75rem;
+        font-weight: 700;
+        border-top: 1px solid currentColor;
+        padding-top: 0.5rem;
+    }
+
     @@media (max-width: 900px) {
         .dfw-columns {
             grid-template-columns: 1fr;
         }
     }
 </style>
-

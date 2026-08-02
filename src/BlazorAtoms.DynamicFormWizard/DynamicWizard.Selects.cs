@@ -51,7 +51,7 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
         builder.OpenComponent(0, typeof(InputSelect<string>));
         builder.AddAttribute(1, "Value", value ?? string.Empty);
         builder.AddAttribute(2, "ValueChanged", CreateTypedValueChanged(target, typeof(string)));
-        builder.AddAttribute(3, "ValueExpression", BuildValueExpression(target.Owner, target.Info));
+        builder.AddAttribute(3, "ValueExpression", target.BuildValueExpression());
         builder.AddAttribute(4, "class", "wizard-field wizard-field--select");
         builder.AddAttribute(5, "ChildContent", (RenderFragment)(childBuilder =>
         {

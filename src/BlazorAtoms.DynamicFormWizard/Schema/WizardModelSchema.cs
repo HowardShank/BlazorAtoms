@@ -48,7 +48,14 @@ public sealed class WizardModelSchema
     {
         var properties = modelType
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => p.CanRead && p.CanWrite)
+            // GetIndexParameters().Length == 0 excludes indexers -- they report CanRead/CanWrite
+            // too but aren't renderable fields (see WizardTypeInspection.IsComplexType, which
+            // must agree on the same definition). [ScaffoldColumn(false)] is excluded entirely --
+            // it never becomes a step property at all, so it's never rendered, never validated,
+            // and never counted toward a step's visibility, matching its EF/scaffolding intent of
+            // "this doesn't exist for generated UI purposes."
+            .Where(p => p.CanRead && p.CanWrite && p.GetIndexParameters().Length == 0
+                && p.GetCustomAttribute<ScaffoldColumnAttribute>()?.Scaffold != false)
             .ToArray();
 
         var schemas = new List<WizardPropertySchema>(properties.Length);

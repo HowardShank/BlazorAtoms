@@ -1,0 +1,162 @@
+@using System.ComponentModel.DataAnnotations
+@using BlazorAtoms.DynamicFormWizard
+@using BlazorAtoms.DynamicFormWizard.Attributes
+@using BlazorAtoms.DynamicFormWizard.Validators
+
+<PageTitle>Dynamic Form Wizard — Repeating Lists &amp; DependsOn Operators Playground</PageTitle>
+
+<h1>Dynamic Form Wizard — repeating <code>List&lt;T&gt;</code> + richer <code>DependsOn</code></h1>
+<p>Step 1: an age field gates a "Working-age discount" field using two stacked
+   <code>[DependsOn]</code> conditions -- <code>GreaterThanOrEqual 18</code> AND
+   <code>LessThanOrEqual 65</code> -- a range expressed by reusing the existing AND-combine rule,
+   no new construct needed.</p>
+<p>Step 2: <code>List&lt;string&gt;</code> renders as a repeatable row of single inputs (tier 1b,
+   scalar item shape) with Add/Remove.</p>
+<p>Step 3: <code>List&lt;Beneficiary&gt;</code> renders one <code>&lt;fieldset&gt;</code> sub-form
+   per item (tier 1b, complex item shape), each validated on its own
+   (<code>[Required]</code> on <code>Name</code>), plus <code>[MinItemCount]</code>/
+   <code>[MaxItemCount]</code> on the list itself.</p>
+<p><a href="playground/dynamicformwizard">&larr; Back to the main Dynamic Form Wizard playground</a></p>
+
+<div class="dfw-columns">
+    <div class="dfw-wizard">
+        @if (_completed is null)
+        {
+            <DynamicWizard TModel="ApplicationModel" Model="_model" OnWizardComplete="HandleComplete" />
+        }
+        else
+        {
+            <p><strong>Submitted!</strong></p>
+            <dl class="dfw-summary">
+                <dt>Age</dt><dd>@_completed.Age</dd>
+                <dt>WorkingAgeDiscount</dt><dd>@_completed.WorkingAgeDiscount</dd>
+                <dt>Tags</dt><dd>@string.Join(", ", _completed.Tags)</dd>
+                <dt>Beneficiaries</dt>
+                <dd>
+                    @foreach (var b in _completed.Beneficiaries)
+                    {
+                        <div>@b.Name -- @b.SharePercent%</div>
+                    }
+                </dd>
+            </dl>
+            <button type="button" @onclick="Reset">Start over</button>
+        }
+    </div>
+
+    <div class="dfw-source">
+        <h2>The POCO</h2>
+        <pre><code>@PocoSource</code></pre>
+    </div>
+</div>
+
+@code {
+    private ApplicationModel _model = new();
+    private ApplicationModel? _completed;
+
+    private void HandleComplete(ApplicationModel model) => _completed = model;
+
+    private void Reset()
+    {
+        _model = new();
+        _completed = null;
+    }
+
+    public class Beneficiary
+    {
+        [Required(ErrorMessage = "Name is required.")]
+        public string Name { get; set; } = string.Empty;
+
+        public int SharePercent { get; set; }
+    }
+
+    public class ApplicationModel
+    {
+        [FormStep(1, "Eligibility")]
+        [FormOrder(1)]
+        [Range(0, 120, ErrorMessage = "Enter a real age.")]
+        public int Age { get; set; } = 30;
+
+        [FormStep(1)]
+        [FormOrder(2)]
+        [DependsOn(nameof(Age), 18, ComparisonOperator.GreaterThanOrEqual)]
+        [DependsOn(nameof(Age), 65, ComparisonOperator.LessThanOrEqual)]
+        public bool WorkingAgeDiscount { get; set; }
+
+        [FormStep(2, "Tags")]
+        public List<string> Tags { get; set; } = new() { "priority" };
+
+        [FormStep(3, "Beneficiaries")]
+        [MinItemCount(1, ErrorMessage = "At least one beneficiary is required.")]
+        [MaxItemCount(4, ErrorMessage = "No more than 4 beneficiaries.")]
+        public List<Beneficiary> Beneficiaries { get; set; } = new() { new Beneficiary { Name = "Alice", SharePercent = 100 } };
+    }
+
+    private const string PocoSource = """
+        public class Beneficiary
+        {
+            [Required(ErrorMessage = "Name is required.")]
+            public string Name { get; set; } = string.Empty;
+
+            public int SharePercent { get; set; }
+        }
+
+        public class ApplicationModel
+        {
+            [FormStep(1, "Eligibility")] [FormOrder(1)]
+            [Range(0, 120, ErrorMessage = "Enter a real age.")]
+            public int Age { get; set; } = 30;
+
+            [FormStep(1)] [FormOrder(2)]
+            [DependsOn(nameof(Age), 18, ComparisonOperator.GreaterThanOrEqual)]
+            [DependsOn(nameof(Age), 65, ComparisonOperator.LessThanOrEqual)]
+            public bool WorkingAgeDiscount { get; set; }
+
+            [FormStep(2, "Tags")]
+            public List<string> Tags { get; set; } = new() { "priority" };
+
+            [FormStep(3, "Beneficiaries")]
+            [MinItemCount(1, ErrorMessage = "At least one beneficiary is required.")]
+            [MaxItemCount(4, ErrorMessage = "No more than 4 beneficiaries.")]
+            public List<Beneficiary> Beneficiaries { get; set; } = new() { new Beneficiary { Name = "Alice", SharePercent = 100 } };
+        }
+        """;
+}
+
+<style>
+    .dfw-columns {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 2rem;
+        align-items: start;
+    }
+
+    .dfw-source pre {
+        background: #1e1e2e;
+        color: #cdd6f4;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        font-size: 0.85rem;
+        line-height: 1.5;
+    }
+
+    .dfw-summary {
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        gap: 0.25rem 1rem;
+    }
+
+    .dfw-summary dt {
+        font-weight: 600;
+    }
+
+    .dfw-summary dd {
+        margin: 0;
+    }
+
+    @@media (max-width: 900px) {
+        .dfw-columns {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

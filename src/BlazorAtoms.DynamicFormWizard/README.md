@@ -81,10 +81,13 @@ model. See the live playground at `/playground/dynamicformwizard` in any of the 
   different totals ("Step 2 of 3" vs. "Step 3 of 4") without any extra configuration.
 - **`[FormOrder(int)]`** — pins render order within a step (reflection property order isn't
   guaranteed stable across an inheritance hierarchy, so this isn't optional bookkeeping).
-- **`[DependsOn(nameof(Other), value)]`** — stackable (AND-combined), hides a property unless a
-  sibling top-level property currently equals `value`. A step with none of these on any of its
-  properties is visible to every branch — that's how "rejoining" after a fork works, no separate
-  merge construct.
+- **`[DependsOn(nameof(Other), value, operator?)]`** — stackable (AND-combined), hides a property
+  unless a sibling top-level property currently satisfies `operator` (default `Equals`) against
+  `value`. Also supports `NotEquals`/`GreaterThan`/`GreaterThanOrEqual`/`LessThan`/
+  `LessThanOrEqual` — a range condition (e.g. age 18–65) is just two stacked conditions on the same
+  property (`GreaterThanOrEqual 18` + `LessThanOrEqual 65`), no separate range construct. A step
+  with none of these on any of its properties is visible to every branch — that's how "rejoining"
+  after a fork works, no separate merge construct.
 - **`[FormPathEnd(nameof(Other), value)]`** — stackable, an *authoritative* end for one branch:
   stops navigation there regardless of what's declared on later steps, even if a later property is
   (perhaps mistakenly) left unconditional. Fewer attributes than gating every later field
@@ -99,11 +102,51 @@ model. See the live playground at `/playground/dynamicformwizard` in any of the 
   (`--wizard-column-span`), no framework classes.
 - Any `ValidationAttribute` (built-in or custom, e.g. a regex or date-range check) just works —
   validation runs through `Validator.TryValidateValue`/`TryValidateObject`, so nothing needs to be
-  registered with the engine to add a new rule.
+  registered with the engine to add a new rule. This includes cross-property attributes like
+  `[Compare(nameof(Other))]` — the engine's own `ValidationContext` already wraps the whole model,
+  not just the one value being checked, so `[Compare]`'s reflection lookup of the sibling property
+  finds it correctly with no extra wiring. Also proven to work as-is: `[CreditCard]`, `[Phone]`,
+  `[Url]`, `[RegularExpression]`, `[StringLength]`, `[Length]`, `[MinLength]`, `[MaxLength]`,
+  `[AllowedValues]`, `[DeniedValues]`, `[EnumDataType]`, `[Base64String]`, `[CustomValidation]`.
+- **`[DataType(DataType.Password/EmailAddress/PhoneNumber/Url/MultilineText)]`** on a `string`
+  property renders a real HTML5 `input type="..."` or a `<textarea>` instead of plain text.
+- **`[DisplayFormat(DataFormatString=..., NullDisplayText=...)]`** formats read-only display (the
+  fallback for an unhandled type, and any field forced read-only by `[Editable(false)]`) — not
+  applied to editable fields, since a display format string isn't an input mask.
+- **`[Editable(false)]`** renders a field read-only regardless of its type, overriding even a
+  registered custom component.
+- **`[ScaffoldColumn(false)]`** excludes a property from the wizard entirely — never rendered,
+  never validated, never counted toward a step's visibility.
 - File properties of type `IReadOnlyList<WizardFileAttachment>` render as a native file input;
   bytes are copied into memory immediately on selection (not a raw `IBrowserFile` handle, whose
   stream can't be held past the current render). Pair with `[MaxFileCount]`, `[MaxFileSize]`, or
   `[AllowedExtensions]` for constraints.
+- **`List<TItem>` properties repeat.** A scalar item type (`List<string>`, `List<int>`, etc.)
+  renders a repeatable row of single-value inputs; a complex item type (`List<Beneficiary>`)
+  renders one sub-form `<fieldset>` per item — both with Add/Remove. Each complex item validates
+  its own `ValidationAttribute`s independently. Pair with `[MinItemCount(n)]`/`[MaxItemCount(n)]`
+  to constrain how many items the list may hold. Only `List<T>` itself is supported — not
+  `IList<T>`/arrays/other collection types.
+
+  ```csharp
+  public class Beneficiary
+  {
+      [Required(ErrorMessage = "Name is required.")]
+      public string Name { get; set; } = string.Empty;
+      public int SharePercent { get; set; }
+  }
+
+  public class ApplicationModel
+  {
+      [FormStep(1)]
+      public List<string> Tags { get; set; } = new();
+
+      [FormStep(2, "Beneficiaries")]
+      [MinItemCount(1)]
+      [MaxItemCount(4)]
+      public List<Beneficiary> Beneficiaries { get; set; } = new() { new Beneficiary() };
+  }
+  ```
 
 ## Extensibility
 

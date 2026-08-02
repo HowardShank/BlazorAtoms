@@ -1,8 +1,10 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using Microsoft.AspNetCore.Components.Forms;
+using BlazorAtoms.DynamicFormWizard.Attributes;
 using BlazorAtoms.DynamicFormWizard.Schema;
 
 namespace BlazorAtoms.DynamicFormWizard.Navigation;
@@ -39,12 +41,52 @@ public sealed class WizardNavigator
         {
             var target = _schema.TryGetByName(dep.TargetProperty);
             var actual = target?.Property.GetValue(_model);
-            if (actual is null || !actual.Equals(dep.ExpectedValue))
+            if (!Matches(actual, dep.ExpectedValue, dep.Operator))
             {
                 return false;
             }
         }
         return true;
+    }
+
+    /// <summary>Evaluates one <see cref="Attributes.DependsOnAttribute"/> condition
+    /// (DESIGN-DISCUSSION.md G.28). <paramref name="actual"/> is never treated as matching a
+    /// condition when <c>null</c>, regardless of operator -- an unset target property means the
+    /// condition can't yet be evaluated, not that it's satisfied.</summary>
+    private static bool Matches(object? actual, object expected, ComparisonOperator op)
+    {
+        if (actual is null)
+        {
+            return false;
+        }
+
+        switch (op)
+        {
+            case ComparisonOperator.Equals:
+                return actual.Equals(expected);
+            case ComparisonOperator.NotEquals:
+                return !actual.Equals(expected);
+            case ComparisonOperator.GreaterThan:
+            case ComparisonOperator.GreaterThanOrEqual:
+            case ComparisonOperator.LessThan:
+            case ComparisonOperator.LessThanOrEqual:
+                if (actual is not IComparable comparable)
+                {
+                    throw new InvalidOperationException(
+                        $"[DependsOn] operator '{op}' requires the target property's value to implement IComparable; '{actual.GetType().Name}' does not.");
+                }
+                var comparison = comparable.CompareTo(expected);
+                return op switch
+                {
+                    ComparisonOperator.GreaterThan => comparison > 0,
+                    ComparisonOperator.GreaterThanOrEqual => comparison >= 0,
+                    ComparisonOperator.LessThan => comparison < 0,
+                    ComparisonOperator.LessThanOrEqual => comparison <= 0,
+                    _ => false,
+                };
+            default:
+                return false;
+        }
     }
 
     /// <summary>True when any property in <paramref name="stepNumber"/>'s step carries a
@@ -73,7 +115,7 @@ public sealed class WizardNavigator
             {
                 var target = _schema.TryGetByName(end.TargetProperty);
                 var actual = target?.Property.GetValue(_model);
-                if (actual is null || !actual.Equals(end.ExpectedValue))
+                if (!Matches(actual, end.ExpectedValue, ComparisonOperator.Equals))
                 {
                     allMatch = false;
                     break;
@@ -232,6 +274,38 @@ public sealed class WizardNavigator
             {
                 var context = new ValidationContext(_model) { MemberName = property.Property.Name };
                 ok = Validator.TryValidateValue(value!, context, results, property.Validators);
+
+                // List<TItem> properties where TItem is complex (DESIGN-DISCUSSION.md G.25) also
+                // need each item validated on its own -- the check above only covers attributes
+                // declared on the LIST property itself (e.g. MinItemCount/MaxItemCount), not each
+                // item's own [Required]/etc. Errors are stored against the item instance itself
+                // (not the list), matching the FieldIdentifier every list-item field's
+                // ValueExpression already resolves to (DynamicWizard.Lists.cs's
+                // RenderComplexItemRepeater targets the item instance directly, not a wrapper).
+                if (ok && WizardTypeInspection.TryGetListItemType(propertyType, out var itemType)
+                    && WizardTypeInspection.IsComplexType(itemType) && value is IList list)
+                {
+                    foreach (var item in list)
+                    {
+                        if (item is null)
+                        {
+                            continue;
+                        }
+
+                        var itemResults = new List<ValidationResult>();
+                        if (!Validator.TryValidateObject(item, new ValidationContext(item), itemResults, validateAllProperties: true))
+                        {
+                            ok = false;
+                            foreach (var itemResult in itemResults)
+                            {
+                                foreach (var memberName in itemResult.MemberNames.DefaultIfEmpty(string.Empty))
+                                {
+                                    store.Add(new FieldIdentifier(item, memberName), itemResult.ErrorMessage ?? "Invalid value.");
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             if (!ok)

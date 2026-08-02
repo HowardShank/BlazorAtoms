@@ -384,4 +384,337 @@ public class WizardNavigatorTests
 
         Assert.True(nav.ValidateCurrentStep(store));
     }
+
+    // ComparisonOperator (DESIGN-DISCUSSION.md G.28) -- range is expressed by stacking two
+    // conditions on the same property (GreaterThanOrEqual + LessThanOrEqual), reusing the
+    // existing AND-combine rule rather than a new construct.
+    private class ComparisonOperatorModel
+    {
+        [FormStep(1)]
+        public int Age { get; set; }
+
+        [FormStep(1)]
+        public string Status { get; set; } = "Active";
+
+        [FormStep(2)]
+        [DependsOn(nameof(Age), 18, ComparisonOperator.GreaterThanOrEqual)]
+        [DependsOn(nameof(Age), 65, ComparisonOperator.LessThanOrEqual)]
+        public string WorkingAgeField { get; set; } = string.Empty;
+
+        [FormStep(2)]
+        [DependsOn(nameof(Status), "Active", ComparisonOperator.NotEquals)]
+        public string InactiveOnlyField { get; set; } = string.Empty;
+    }
+
+    [Theory]
+    [InlineData(17, false)]
+    [InlineData(18, true)]
+    [InlineData(65, true)]
+    [InlineData(66, false)]
+    public void GreaterThanOrEqual_and_LessThanOrEqual_stacked_express_a_range(int age, bool expectedVisible)
+    {
+        var model = new ComparisonOperatorModel { Age = age };
+        var nav = new WizardNavigator(WizardModelSchema.For<ComparisonOperatorModel>(), model);
+
+        var property = WizardModelSchema.For<ComparisonOperatorModel>().TryGetByName(nameof(ComparisonOperatorModel.WorkingAgeField))!;
+
+        Assert.Equal(expectedVisible, nav.IsVisible(property));
+    }
+
+    [Theory]
+    [InlineData("Active", false)]
+    [InlineData("Inactive", true)]
+    public void NotEquals_hides_the_field_when_the_target_currently_matches(string status, bool expectedVisible)
+    {
+        var model = new ComparisonOperatorModel { Status = status };
+        var nav = new WizardNavigator(WizardModelSchema.For<ComparisonOperatorModel>(), model);
+
+        var property = WizardModelSchema.For<ComparisonOperatorModel>().TryGetByName(nameof(ComparisonOperatorModel.InactiveOnlyField))!;
+
+        Assert.Equal(expectedVisible, nav.IsVisible(property));
+    }
+
+    private class NonComparableTarget
+    {
+        public string Name { get; set; } = string.Empty;
+    }
+
+    private class NonComparableConditionModel
+    {
+        [FormStep(1)]
+        public NonComparableTarget Target { get; set; } = new();
+
+        [FormStep(2)]
+        [DependsOn(nameof(Target), 5, ComparisonOperator.GreaterThan)]
+        public string Gated { get; set; } = string.Empty;
+    }
+
+    [Fact]
+    public void An_ordering_operator_against_a_non_IComparable_target_throws_a_clear_error()
+    {
+        var model = new NonComparableConditionModel();
+        var nav = new WizardNavigator(WizardModelSchema.For<NonComparableConditionModel>(), model);
+        var property = WizardModelSchema.For<NonComparableConditionModel>().TryGetByName(nameof(NonComparableConditionModel.Gated))!;
+
+        var ex = Assert.Throws<InvalidOperationException>(() => nav.IsVisible(property));
+        Assert.Contains("IComparable", ex.Message);
+    }
+
+    // [Compare] (a stock DataAnnotations attribute, not something this engine wrote) already
+    // works with zero engine code: ValidateCurrentStep's scalar branch builds its ValidationContext
+    // as `new ValidationContext(_model) { MemberName = ... }` -- ObjectInstance is the *whole
+    // model*, not just the one value being checked -- so CompareAttribute's own reflection lookup
+    // of the other property off ValidationContext.ObjectInstance/ObjectType finds it correctly.
+    // Proven here rather than assumed, per the same "don't infer, verify" standard as every other
+    // edge case in this suite.
+    private class PasswordModel
+    {
+        [FormStep(1)]
+        public string Password { get; set; } = string.Empty;
+
+        [FormStep(1)]
+        [Compare(nameof(Password), ErrorMessage = "Passwords must match.")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+
+    [Fact]
+    public void CompareAttribute_already_works_via_the_full_model_ValidationContext_no_engine_change_needed()
+    {
+        var model = new PasswordModel { Password = "secret", ConfirmPassword = "different" };
+        var editContext = new EditContext(model);
+        var store = new ValidationMessageStore(editContext);
+        var nav = new WizardNavigator(WizardModelSchema.For<PasswordModel>(), model);
+
+        Assert.False(nav.ValidateCurrentStep(store));
+        var messages = editContext.GetValidationMessages(new FieldIdentifier(model, nameof(PasswordModel.ConfirmPassword)));
+        Assert.Contains("Passwords must match.", messages);
+    }
+
+    [Fact]
+    public void CompareAttribute_passes_once_the_two_properties_match()
+    {
+        var model = new PasswordModel { Password = "secret", ConfirmPassword = "secret" };
+        var editContext = new EditContext(model);
+        var store = new ValidationMessageStore(editContext);
+        var nav = new WizardNavigator(WizardModelSchema.For<PasswordModel>(), model);
+
+        Assert.True(nav.ValidateCurrentStep(store));
+    }
+
+    // A broad proof pass for stock DataAnnotations validators that were never special-cased by
+    // this engine -- they run through the exact same Validator.TryValidateValue(value, context,
+    // property.Validators) call as [Required]/[DateRange]/etc. always have, so "any ValidationAttribute
+    // just works" (README.md) covers these too. Each attribute gets its own single-property model
+    // (rather than one shared model with 12 properties on one step) -- ValidateCurrentStep
+    // validates every *visible* property of the current step together, so a shared model's other
+    // default-empty properties would fail their own unrelated attributes and corrupt the result.
+    private static bool Validates<TModel>(TModel model) where TModel : class, new()
+    {
+        var editContext = new EditContext(model);
+        var store = new ValidationMessageStore(editContext);
+        var nav = new WizardNavigator(WizardModelSchema.For<TModel>(), model);
+        return nav.ValidateCurrentStep(store);
+    }
+
+    private class CreditCardModel
+    {
+        [FormStep(1)]
+        [CreditCard(ErrorMessage = "Not a valid card number.")]
+        public string Card { get; set; } = string.Empty;
+    }
+
+    [Theory]
+    [InlineData("not-a-card", false)]
+    [InlineData("4111111111111111", true)]
+    public void CreditCardAttribute_validates_through_the_existing_engine_path(string value, bool expectedValid)
+    {
+        Assert.Equal(expectedValid, Validates(new CreditCardModel { Card = value }));
+    }
+
+    private class PhoneModel
+    {
+        [FormStep(1)]
+        [Phone(ErrorMessage = "Not a valid phone number.")]
+        public string Number { get; set; } = string.Empty;
+    }
+
+    [Theory]
+    [InlineData("not-a-phone!!!", false)]
+    [InlineData("+1 555-123-4567", true)]
+    public void PhoneAttribute_validates_through_the_existing_engine_path(string value, bool expectedValid)
+    {
+        Assert.Equal(expectedValid, Validates(new PhoneModel { Number = value }));
+    }
+
+    private class UrlModel
+    {
+        [FormStep(1)]
+        [Url(ErrorMessage = "Not a valid URL.")]
+        public string Website { get; set; } = string.Empty;
+    }
+
+    [Theory]
+    [InlineData("not a url", false)]
+    [InlineData("https://example.com", true)]
+    public void UrlAttribute_validates_through_the_existing_engine_path(string value, bool expectedValid)
+    {
+        Assert.Equal(expectedValid, Validates(new UrlModel { Website = value }));
+    }
+
+    private class RegularExpressionModel
+    {
+        [FormStep(1)]
+        [RegularExpression(@"^\d{5}$", ErrorMessage = "Must be 5 digits.")]
+        public string ZipCode { get; set; } = string.Empty;
+    }
+
+    [Theory]
+    [InlineData("abc", false)]
+    [InlineData("12345", true)]
+    public void RegularExpressionAttribute_validates_through_the_existing_engine_path(string value, bool expectedValid)
+    {
+        Assert.Equal(expectedValid, Validates(new RegularExpressionModel { ZipCode = value }));
+    }
+
+    private class StringLengthModel
+    {
+        [FormStep(1)]
+        [StringLength(5, MinimumLength = 2, ErrorMessage = "Must be 2-5 characters.")]
+        public string ShortCode { get; set; } = string.Empty;
+    }
+
+    [Theory]
+    [InlineData("x", false)]
+    [InlineData("toolongvalue", false)]
+    [InlineData("ok", true)]
+    public void StringLengthAttribute_validates_through_the_existing_engine_path(string value, bool expectedValid)
+    {
+        Assert.Equal(expectedValid, Validates(new StringLengthModel { ShortCode = value }));
+    }
+
+    private class LengthModel
+    {
+        [FormStep(1)]
+        [Length(1, 3, ErrorMessage = "Must have 1-3 items.")]
+        public List<string> LimitedTags { get; set; } = new();
+    }
+
+    [Fact]
+    public void LengthAttribute_on_a_ListT_property_validates_through_the_existing_engine_path()
+    {
+        Assert.False(Validates(new LengthModel { LimitedTags = new List<string> { "a", "b", "c", "d" } }));
+        Assert.True(Validates(new LengthModel { LimitedTags = new List<string> { "a", "b" } }));
+    }
+
+    private class MinLengthModel
+    {
+        [FormStep(1)]
+        [MinLength(2, ErrorMessage = "Too short.")]
+        public string AtLeastTwo { get; set; } = string.Empty;
+    }
+
+    [Theory]
+    [InlineData("a", false)]
+    [InlineData("ab", true)]
+    public void MinLengthAttribute_validates_through_the_existing_engine_path(string value, bool expectedValid)
+    {
+        Assert.Equal(expectedValid, Validates(new MinLengthModel { AtLeastTwo = value }));
+    }
+
+    private class MaxLengthModel
+    {
+        [FormStep(1)]
+        [MaxLength(3, ErrorMessage = "Too long.")]
+        public string AtMostThree { get; set; } = string.Empty;
+    }
+
+    [Theory]
+    [InlineData("toolong", false)]
+    [InlineData("ok", true)]
+    public void MaxLengthAttribute_validates_through_the_existing_engine_path(string value, bool expectedValid)
+    {
+        Assert.Equal(expectedValid, Validates(new MaxLengthModel { AtMostThree = value }));
+    }
+
+    private class AllowedValuesModel
+    {
+        [FormStep(1)]
+        [AllowedValues("Red", "Green", "Blue", ErrorMessage = "Not an allowed color.")]
+        public string Color { get; set; } = "Red";
+    }
+
+    [Theory]
+    [InlineData("Purple", false)]
+    [InlineData("Green", true)]
+    public void AllowedValuesAttribute_validates_through_the_existing_engine_path(string value, bool expectedValid)
+    {
+        Assert.Equal(expectedValid, Validates(new AllowedValuesModel { Color = value }));
+    }
+
+    private class DeniedValuesModel
+    {
+        [FormStep(1)]
+        [DeniedValues("Admin", ErrorMessage = "That value is reserved.")]
+        public string Name { get; set; } = string.Empty;
+    }
+
+    [Theory]
+    [InlineData("Admin", false)]
+    [InlineData("Alice", true)]
+    public void DeniedValuesAttribute_validates_through_the_existing_engine_path(string value, bool expectedValid)
+    {
+        Assert.Equal(expectedValid, Validates(new DeniedValuesModel { Name = value }));
+    }
+
+    private class EnumDataTypeModel
+    {
+        [FormStep(1)]
+        [EnumDataType(typeof(Choice), ErrorMessage = "Not a valid choice.")]
+        public string Value { get; set; } = string.Empty;
+    }
+
+    [Theory]
+    [InlineData("NotAMember", false)]
+    [InlineData("A", true)]
+    public void EnumDataTypeAttribute_validates_through_the_existing_engine_path(string value, bool expectedValid)
+    {
+        Assert.Equal(expectedValid, Validates(new EnumDataTypeModel { Value = value }));
+    }
+
+    private class Base64StringModel
+    {
+        [FormStep(1)]
+        [Base64String(ErrorMessage = "Not valid Base64.")]
+        public string Encoded { get; set; } = string.Empty;
+    }
+
+    [Theory]
+    [InlineData("not valid base64!", false)]
+    [InlineData("aGVsbG8=", true)]
+    public void Base64StringAttribute_validates_through_the_existing_engine_path(string value, bool expectedValid)
+    {
+        Assert.Equal(expectedValid, Validates(new Base64StringModel { Encoded = value }));
+    }
+
+    // [CustomValidation] -- the extension point README.md points to for any rule with no
+    // off-the-shelf attribute; proven here rather than just asserted to work. Must be a *public*
+    // nested class -- CustomValidationAttribute reflects the validator type by name and throws
+    // "must be public" for a private one, regardless of InternalsVisibleTo.
+    public class CustomValidationModel
+    {
+        [FormStep(1)]
+        [CustomValidation(typeof(CustomValidationModel), nameof(ValidateEven))]
+        public int EvenNumber { get; set; }
+
+        public static ValidationResult? ValidateEven(int value, ValidationContext context) =>
+            value % 2 == 0 ? ValidationResult.Success : new ValidationResult("Must be even.");
+    }
+
+    [Theory]
+    [InlineData(3, false)]
+    [InlineData(4, true)]
+    public void CustomValidationAttribute_validates_through_the_existing_engine_path(int value, bool expectedValid)
+    {
+        Assert.Equal(expectedValid, Validates(new CustomValidationModel { EvenNumber = value }));
+    }
 }
