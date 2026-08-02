@@ -1,0 +1,113 @@
+@using System.ComponentModel.DataAnnotations
+@using System.Linq
+@using BlazorAtoms.DynamicFormWizard
+@using BlazorAtoms.DynamicFormWizard.Attributes
+@using BlazorAtoms.DynamicFormWizard.Files
+@using BlazorAtoms.DynamicFormWizard.Validators
+
+<PageTitle>Dynamic Form Wizard — File Upload Playground</PageTitle>
+
+<h1>Dynamic Form Wizard — file upload inside a multi-step POCO</h1>
+<p>A 3-step model with a <code>IReadOnlyList&lt;WizardFileAttachment&gt;</code> property on the
+   middle step, constrained with <code>[MaxFileCount]</code>/<code>[MaxFileSize]</code>/
+   <code>[AllowedExtensions]</code>. Bytes are copied into memory immediately on selection -- not a
+   raw <code>IBrowserFile</code> handle (DESIGN-DISCUSSION.md E.15).</p>
+<p><a href="playground/dynamicformwizard">&larr; Back to the main Dynamic Form Wizard playground</a></p>
+
+<div class="dfw-columns">
+    <div class="dfw-wizard">
+        @if (_completed is null)
+        {
+            <DynamicWizard TModel="ApplicationModel" Model="_model" OnWizardComplete="HandleComplete" />
+        }
+        else
+        {
+            <p>
+                <strong>Submitted!</strong> Name=@_completed.Name,
+                Files=@(_completed.Attachments?.Count ?? 0)
+                @if (_completed.Attachments is { Count: > 0 })
+                {
+                    <text> (@string.Join(", ", _completed.Attachments.Select(f => $"{f.FileName} ({f.Size:N0} bytes)")))</text>
+                }
+            </p>
+            <button type="button" @onclick="Reset">Start over</button>
+        }
+    </div>
+
+    <div class="dfw-source">
+        <h2>The POCO</h2>
+        <pre><code>@PocoSource</code></pre>
+    </div>
+</div>
+
+@code {
+    private ApplicationModel _model = new();
+    private ApplicationModel? _completed;
+
+    private void HandleComplete(ApplicationModel model) => _completed = model;
+
+    private void Reset()
+    {
+        _model = new();
+        _completed = null;
+    }
+
+    public class ApplicationModel
+    {
+        [FormStep(1, "Applicant Info")]
+        [Required(ErrorMessage = "Name is required.")]
+        public string Name { get; set; } = string.Empty;
+
+        [FormStep(2, "Attachments")]
+        [MaxFileCount(3)]
+        [MaxFileSize(5_000_000)]
+        [AllowedExtensions("pdf", "png", "jpg", "jpeg")]
+        public IReadOnlyList<WizardFileAttachment>? Attachments { get; set; }
+
+        [FormStep(3, "Confirm")]
+        public bool AcceptTerms { get; set; }
+    }
+
+    private const string PocoSource = """
+        public class ApplicationModel
+        {
+            [FormStep(1, "Applicant Info")]
+            [Required(ErrorMessage = "Name is required.")]
+            public string Name { get; set; } = string.Empty;
+
+            [FormStep(2, "Attachments")]
+            [MaxFileCount(3)]
+            [MaxFileSize(5_000_000)]
+            [AllowedExtensions("pdf", "png", "jpg", "jpeg")]
+            public IReadOnlyList<WizardFileAttachment>? Attachments { get; set; }
+
+            [FormStep(3, "Confirm")]
+            public bool AcceptTerms { get; set; }
+        }
+        """;
+}
+
+<style>
+    .dfw-columns {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 2rem;
+        align-items: start;
+    }
+
+    .dfw-source pre {
+        background: #1e1e2e;
+        color: #cdd6f4;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        font-size: 0.85rem;
+        line-height: 1.5;
+    }
+
+    @@media (max-width: 900px) {
+        .dfw-columns {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

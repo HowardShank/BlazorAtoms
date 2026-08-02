@@ -3,3 +3,7 @@ global using Microsoft.AspNetCore.Components;
 global using Microsoft.AspNetCore.Components.Rendering;
 global using Xunit;
 global using BlazorAtoms.DynamicFormWizard;
+global using BlazorAtoms.DynamicFormWizard.Attributes;
+global using BlazorAtoms.DynamicFormWizard.Services;
+global using BlazorAtoms.DynamicFormWizard.Validators;
+global using BlazorAtoms.DynamicFormWizard.Schema;

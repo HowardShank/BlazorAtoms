@@ -1,0 +1,115 @@
+.wizard {
+    display: flex;
+    flex-direction: column;
+    gap: var(--wizard-gap, 1rem);
+    max-width: var(--wizard-max-width, 40rem);
+}
+
+.wizard__announcer {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.wizard__step-heading {
+    margin: 0;
+    font-size: var(--wizard-heading-size, 1.25rem);
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.wizard__step-heading:focus-visible {
+    outline: var(--wizard-focus-outline, 2px solid currentColor);
+    outline-offset: 2px;
+}
+
+.wizard__step-position {
+    font-size: var(--wizard-step-position-size, 0.85rem);
+    color: var(--wizard-muted-color, #6b7280);
+    font-weight: 400;
+}
+
+.wizard__fields {
+    /* Grid, not flex -- lets [FormLayout] fields sit side by side (DESIGN-DISCUSSION.md F.21).
+       An untagged field defaults to `span 12` (the field-row rule below), i.e. its own full row,
+       so a model that never uses [FormLayout] looks exactly like the old one-per-row stack. */
+    display: grid;
+    grid-template-columns: repeat(var(--wizard-total-columns, 12), 1fr);
+    gap: var(--wizard-field-gap, 0.85rem);
+}
+
+.wizard__field-row {
+    /* Position within .wizard__fields' grid -- [FormLayout] sets --wizard-column-span inline. */
+    grid-column: span var(--wizard-column-span, 12);
+    /* Layout of this cell's own children (label/input/error) -- unrelated to the grid above. */
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.wizard__label {
+    font-weight: var(--wizard-label-weight, 600);
+}
+
+.wizard__error {
+    color: var(--wizard-error-color, #b91c1c);
+    font-size: 0.85rem;
+}
+
+::deep .wizard-field--invalid {
+    outline: 1px solid var(--wizard-error-color, #b91c1c);
+}
+
+::deep .wizard-field--valid {
+    outline: 1px solid var(--wizard-valid-color, #15803d);
+}
+
+::deep .wizard-field-group {
+    border: 1px solid var(--wizard-group-border, #d1d5db);
+    border-radius: var(--wizard-group-radius, 0.375rem);
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+::deep .wizard-field-group__item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+::deep .wizard-field--unhandled {
+    font-style: italic;
+    color: var(--wizard-muted-color, #6b7280);
+}
+
+.wizard__nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: var(--wizard-nav-gap, 0.5rem);
+}
+
+.wizard__button {
+    padding: var(--wizard-button-padding, 0.5rem 1.25rem);
+    border-radius: var(--wizard-button-radius, 0.375rem);
+    border: 1px solid var(--wizard-button-border, #d1d5db);
+    background: var(--wizard-button-bg, transparent);
+    cursor: pointer;
+}
+
+.wizard__button--submit {
+    background: var(--wizard-submit-bg, #15803d);
+    color: var(--wizard-submit-color, #fff);
+    border-color: transparent;
+}
+
+.wizard__button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

@@ -1,0 +1,45 @@
+@typeparam TModel where TModel : class, new()
+
+<EditForm EditContext="@_editContext" OnSubmit="HandleSubmit">
+    <div class="wizard" data-final-step="@IsFinalStep">
+        <div class="wizard__announcer" aria-live="polite">@StepAnnouncement</div>
+
+        <h2 class="wizard__step-heading" tabindex="-1" @ref="_stepHeadingRef">
+            @_navigator.DisplayTitle()
+            <span class="wizard__step-position">Step @_navigator.DisplayPosition().Position of @_navigator.DisplayPosition().Count</span>
+        </h2>
+
+        <div class="wizard__fields">
+            @foreach (var property in VisibleFields)
+            {
+                <div class="wizard__field-row" @key="property.Property.Name" style="@ColumnSpanStyle(property)">
+                    <label class="wizard__label">@property.Label</label>
+                    @RenderField(property)
+                    @foreach (var message in _editContext.GetValidationMessages(new FieldIdentifier(Model, property.Property.Name)))
+                    {
+                        <span class="wizard__error">@message</span>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="wizard__nav">
+            <button type="button" class="wizard__button wizard__button--back" @onclick="HandlePrevious" disabled="@(_navigator.DisplayPosition().Position <= 1)">
+                Back
+            </button>
+
+            @if (IsFinalStep)
+            {
+                <button type="submit" class="wizard__button wizard__button--submit">
+                    Submit
+                </button>
+            }
+            else
+            {
+                <button type="button" class="wizard__button wizard__button--next" @onclick="HandleNext">
+                    Next
+                </button>
+            }
+        </div>
+    </div>
+</EditForm>

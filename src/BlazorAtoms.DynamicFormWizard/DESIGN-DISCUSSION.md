@@ -100,12 +100,35 @@ metadata. Section A works through how much of that pitch this package can actual
    both a true A/B fork converging on a shared step, and a simpler "unconditional → optional
    middle step → unconditional" flow. Both worked with zero extra mechanism beyond "omit
    `DependsOn` on the shared step."
+8a. **`[FormPathEnd(targetProperty, expectedValue)]` — an authoritative end marker, stackable
+    (AND-combined, same shape as `[DependsOn]`).** When every stacked condition on a property
+    currently matches, the step it belongs to is treated as final — navigation stops there and
+    every later declared step is excluded from `EffectiveStepNumbers()`/`DisplayPosition()`,
+    *regardless* of whether a later property happens to be (perhaps mistakenly) visible.
+    **Why — reversed from an earlier call in this doc:** derived-only "final" (C.8, "nothing
+    declared after this step is currently visible") works *only* if every later-branch field is
+    correctly gated. It fails silently the moment one isn't: a missing `[DependsOn]` on a later
+    field means "no condition," which already means "always visible," so a branch meant to end
+    earlier walks straight into it. As branch count grows, so does the number of `[DependsOn]`s a
+    consumer must get right on every later step — multiplying the odds of exactly this mistake.
+    One `[FormPathEnd]` per branch's true termination point is authoritative regardless of how
+    later steps are (mis)configured — **fewer** attributes overall, not more, and safe by
+    construction rather than by careful bookkeeping. Verified: a model with an intentionally
+    unguarded "accidentally unconditional" later step still correctly excludes it for the marked
+    branch, while an *unrelated* branch with no marker of its own still surfaces the original
+    mistake — the fix is targeted, not a blanket safety net masking real authoring errors.
 9. **Step display always computed, never raw — two independent fixes, both required together:**
-   - *Label* → `FormStepAttribute(int stepNumber, int order, string? title = null)` (order per
-     C.10). The int is the internal key only (`DependsOn` targets, nav, skip-logic) — never shown
-     to the user. Title-resolution rule: first non-null `Title` among that step's *currently
-     visible* properties wins; if none set anywhere, fall back to `"Step {position}"` using the
-     recomputed ordinal below — never the raw attribute int.
+   - *Label* → `FormStepAttribute(int stepNumber, string? title = null)`. Order-within-step is a
+     *separate* `[FormOrder(int)]` attribute (C.10), not a parameter on `FormStep` — the two stack
+     independently. The `stepNumber` int is the internal key only (`DependsOn` targets, nav,
+     skip-logic) — never shown to the user. Title-resolution rule: first non-null `Title` among
+     that step's *currently visible* properties wins; if none set anywhere, fall back to
+     `"Step {position}"` using the recomputed ordinal below — never the raw attribute int.
+     **Collision rule, resolved (not left undefined):** "first" means first in the *same*
+     `(FormOrder, encounter-order)` sort already used for field render order (C.10) — i.e.
+     whichever titled property would render first in that step wins, silently, no error. Two
+     properties in one step declaring different non-null titles is deterministic by construction,
+     not a special case needing its own tie-break rule.
    - *Count/position* → recomputed live from the currently-visible step-number list (distinct
      `[FormStep(N)]` values with ≥1 visible property right now), not a static
      `properties.Max(step)` snapshot taken once at init.
@@ -198,6 +221,9 @@ metadata. Section A works through how much of that pitch this package can actual
 27. **Nested-target `DependsOn`** (path-based targeting into a group's own fields — see B.6).
 28. **Richer `DependsOn` operators** (OR, NotEquals, range/comparison — see C.11).
 
+*(A hard "force-stop here" override was considered deferred at one point in this doc's history —
+reconsidered and built once a concrete failure mode was raised; see C.8a, no longer deferred.)*
+
 ## Scenarios walked through (reference — the concrete cases that drove the decisions above)
 
 1. **Two-branch fork converging on a shared step.** Step 1 = choice A/B; step 2 fields depend on
@@ -216,15 +242,28 @@ metadata. Section A works through how much of that pitch this package can actual
 5. **`Money` custom-type registry.** A value type needing one specialized widget, not
    auto-expansion into two fields. Drove the A.3/A.4 registry design; full worked example lives in
    `EXTENSIBILITY.md`.
+6. **A branch missing a `DependsOn` by mistake.** Model: step 1 picks Branch A/B; step 2 is Branch
+   A's field (also marked `[FormPathEnd]`); step 3 is Branch B's field; step 4 has **no
+   `DependsOn` at all** — simulating a consumer forgetting to gate a field meant only for Branch B.
+   Without a marker, Branch A would silently walk into step 4 (no condition = always visible).
+   With `[FormPathEnd(nameof(Selection), Branch.A)]` on step 2, Branch A correctly stops there —
+   `EffectiveStepNumbers()` returns `[1, 2]`, never `[1, 2, 4]` — while Branch B (which declares no
+   marker of its own) still reaches the accidentally-unconditional step 4, proving the fix is
+   targeted at the branch that declares it, not a blanket patch over every mistake. Drove C.8a.
+7. **A skipped `[FormStep]` number.** A model declaring only `[FormStep(1)]` and `[FormStep(3)]`
+   (no property anywhere uses `2`). Confirmed inert: `schema.Steps` simply never contains an entry
+   for `2`; navigation walks the *declared* numbers directly rather than incrementing blindly, so
+   it lands on step 3 straight from step 1; display position/count never references the gap
+   ("Step 2 of 2," never "3 of 2"). No different from renumbering to be contiguous.
+8. **Two properties sharing one `[FormStep]` number with conflicting titles.** Confirmed this is
+   the normal multi-field-step mechanism (not an error case), and that a title collision resolves
+   deterministically via the same `(FormOrder, encounter-order)` tie-break as field render order —
+   see decision 9's collision-rule note.
 
 ## Not yet decided (pick up here in a future session)
 
 - Exact `[DependsOn]` operator set beyond equality (G.28) — waiting on the user's own test
   scenarios.
-- Step-title collision rule: if two properties share a `[FormStep]` number and *both* set
-  different, non-null `Title` values, which wins? (Current rule only specifies "first non-null
-  wins" — doesn't yet say what "first" means precisely, e.g. by `[FormOrder]` or by reflection
-  encounter order.)
 - Whether the future render-adapter package (A.1) is a single package or split further by target
   UI kit (e.g. a `BlazorAtoms.DynamicFormWizard.Atoms` adapter vs. others).
 - Exact shape of the async step-transition action hook (G.22) once it's actually designed — this

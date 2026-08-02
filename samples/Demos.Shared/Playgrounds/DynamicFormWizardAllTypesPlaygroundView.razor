@@ -1,0 +1,139 @@
+@using System.ComponentModel.DataAnnotations
+@using BlazorAtoms.DynamicFormWizard
+@using BlazorAtoms.DynamicFormWizard.Attributes
+
+<PageTitle>Dynamic Form Wizard — All Data Types Playground</PageTitle>
+
+<h1>Dynamic Form Wizard — every standard data type, one step</h1>
+<p>Every built-in scalar type the field-render dispatch's tier 2 understands, all on a single
+   <code>[FormStep(1)]</code>: <code>string</code>, <code>bool</code>, an <code>enum</code>,
+   <code>DateTime</code>, <code>int</code>, <code>decimal</code>, and <code>double</code>. No
+   custom renderer, no branching -- just the built-in dispatch handling every scalar shape it
+   ships with.</p>
+<p><a href="playground/dynamicformwizard">&larr; Back to the main Dynamic Form Wizard playground</a></p>
+
+<div class="dfw-columns">
+    <div class="dfw-wizard">
+        @if (_completed is null)
+        {
+            <DynamicWizard TModel="AllDataTypesModel" Model="_model" OnWizardComplete="HandleComplete" />
+        }
+        else
+        {
+            <p>
+                <strong>Submitted!</strong> Name=@_completed.Name, Active=@_completed.IsActive,
+                Level=@_completed.Level, StartDate=@_completed.StartDate.ToShortDateString(),
+                Quantity=@_completed.Quantity, Price=@_completed.Price, Rating=@_completed.Rating
+            </p>
+            <button type="button" @onclick="Reset">Start over</button>
+        }
+    </div>
+
+    <div class="dfw-source">
+        <h2>The POCO</h2>
+        <pre><code>@PocoSource</code></pre>
+    </div>
+</div>
+
+@code {
+    private AllDataTypesModel _model = new();
+    private AllDataTypesModel? _completed;
+
+    private void HandleComplete(AllDataTypesModel model) => _completed = model;
+
+    private void Reset()
+    {
+        _model = new();
+        _completed = null;
+    }
+
+    public enum Priority { Low, Medium, High }
+
+    public class AllDataTypesModel
+    {
+        [FormStep(1, "Every Standard Data Type")]
+        [FormOrder(1)]
+        [Required(ErrorMessage = "Name is required.")]
+        public string Name { get; set; } = string.Empty;
+
+        [FormStep(1)]
+        [FormOrder(2)]
+        public bool IsActive { get; set; }
+
+        [FormStep(1)]
+        [FormOrder(3)]
+        public Priority Level { get; set; } = Priority.Medium;
+
+        [FormStep(1)]
+        [FormOrder(4)]
+        public DateTime StartDate { get; set; } = DateTime.Today;
+
+        [FormStep(1)]
+        [FormOrder(5)]
+        public int Quantity { get; set; }
+
+        [FormStep(1)]
+        [FormOrder(6)]
+        public decimal Price { get; set; }
+
+        [FormStep(1)]
+        [FormOrder(7)]
+        public double Rating { get; set; }
+    }
+
+    private const string PocoSource = """
+        public enum Priority { Low, Medium, High }
+
+        public class AllDataTypesModel
+        {
+            [FormStep(1, "Every Standard Data Type")]
+            [FormOrder(1)]
+            [Required(ErrorMessage = "Name is required.")]
+            public string Name { get; set; } = string.Empty;
+
+            [FormStep(1)] [FormOrder(2)]
+            public bool IsActive { get; set; }
+
+            [FormStep(1)] [FormOrder(3)]
+            public Priority Level { get; set; } = Priority.Medium;
+
+            [FormStep(1)] [FormOrder(4)]
+            public DateTime StartDate { get; set; } = DateTime.Today;
+
+            [FormStep(1)] [FormOrder(5)]
+            public int Quantity { get; set; }
+
+            [FormStep(1)] [FormOrder(6)]
+            public decimal Price { get; set; }
+
+            [FormStep(1)] [FormOrder(7)]
+            public double Rating { get; set; }
+        }
+        """;
+}
+
+<style>
+    .dfw-columns {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 2rem;
+        align-items: start;
+    }
+
+    .dfw-source pre {
+        background: #1e1e2e;
+        color: #cdd6f4;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        font-size: 0.85rem;
+        line-height: 1.5;
+    }
+
+    @@media (max-width: 900px) {
+        .dfw-columns {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+

@@ -1,0 +1,79 @@
+@using System.ComponentModel.DataAnnotations
+@using BlazorAtoms.DynamicFormWizard
+@using BlazorAtoms.DynamicFormWizard.Attributes
+
+<PageTitle>Dynamic Form Wizard Playground</PageTitle>
+
+<h1>Dynamic Form Wizard playground</h1>
+<p>Reflection/attribute-driven multi-step wizard. Decorate a POCO with <code>[FormStep]</code>/
+   <code>[DependsOn]</code>/<code>[FormPathEnd]</code> and the engine generates the whole flow --
+   branching, rejoining, dynamic step count/position, and per-step validation, with zero hand-written
+   markup for the fields themselves. See
+   <code>src/BlazorAtoms.DynamicFormWizard/DESIGN-DISCUSSION.md</code> for the full design log and
+   <code>FLOW.md</code> for diagrams.</p>
+<p>Try it: pick <strong>Manager</strong> on step 1 to see a third step (Manager Details) appear.
+   Pick <strong>Personal</strong> and the wizard ends right after Contact Info -- the
+   <code>[FormPathEnd]</code> marker on that step stops navigation there even though a Manager
+   Details step exists later in the model.</p>
+
+@if (_completed is null)
+{
+    <DynamicWizard TModel="AccountSetupModel" Model="_model" OnWizardComplete="HandleComplete" />
+}
+else
+{
+    <p>
+        <strong>Submitted!</strong> Kind=@_completed.Kind, Street=@_completed.Contact.Street,
+        City=@_completed.Contact.City
+        @if (_completed.Kind == AccountKind.Manager)
+        {
+            <text>, Company=@_completed.Manager.CompanyName</text>
+        }
+    </p>
+    <button type="button" @onclick="Reset">Start over</button>
+}
+
+@code {
+    private AccountSetupModel _model = new();
+    private AccountSetupModel? _completed;
+
+    private void HandleComplete(AccountSetupModel model) => _completed = model;
+
+    private void Reset()
+    {
+        _model = new();
+        _completed = null;
+    }
+
+    public enum AccountKind { Personal, Manager }
+
+    public class ContactInfo
+    {
+        [Required(ErrorMessage = "Street is required.")]
+        public string Street { get; set; } = string.Empty;
+
+        public string City { get; set; } = string.Empty;
+    }
+
+    public class ManagerInfo
+    {
+        [Required(ErrorMessage = "Company name is required.")]
+        public string CompanyName { get; set; } = string.Empty;
+
+        public string TaxId { get; set; } = string.Empty;
+    }
+
+    public class AccountSetupModel
+    {
+        [FormStep(1, "Account Type")]
+        public AccountKind Kind { get; set; } = AccountKind.Personal;
+
+        [FormStep(2, "Contact Info")]
+        [FormPathEnd(nameof(Kind), AccountKind.Personal)]
+        public ContactInfo Contact { get; set; } = new();
+
+        [FormStep(3, "Manager Details")]
+        [DependsOn(nameof(Kind), AccountKind.Manager)]
+        public ManagerInfo Manager { get; set; } = new();
+    }
+}

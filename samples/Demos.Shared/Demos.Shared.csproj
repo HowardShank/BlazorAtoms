@@ -43,6 +43,7 @@
     <ProjectReference Include="..\..\src\BlazorAtoms.Skeletons\BlazorAtoms.Skeletons.csproj" />
     <ProjectReference Include="..\..\src\BlazorAtoms.Charts\BlazorAtoms.Charts.csproj" />
     <ProjectReference Include="..\..\src\BlazorAtoms.Equipment\BlazorAtoms.Equipment.csproj" />
+    <ProjectReference Include="..\..\src\BlazorAtoms.DynamicFormWizard\BlazorAtoms.DynamicFormWizard.csproj" />
     <!-- For the shared NavMenu's AtomMark family. -->
     <ProjectReference Include="..\BlazorAtoms.Branding\BlazorAtoms.Branding.csproj" />
   </ItemGroup>
