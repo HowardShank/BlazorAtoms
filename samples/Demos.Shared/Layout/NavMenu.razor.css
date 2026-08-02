@@ -127,7 +127,6 @@
         min-height: 0px;
         /* Allow sidebar to scroll for tall menus */
         height: calc(100vh - 3.5rem);
-        width:305px;
         overflow-y: auto;
     }
 }
