@@ -218,6 +218,53 @@ closed, and mixing them up throws at runtime:
   always throw for an unmatched attribute. A known scope limit for #142/#143, not an oversight —
   a consumer's custom component (e.g. EXTENSIBILITY.md's `MoneyInput`) is unaffected either way.
 
+## Cancel/close affordance (DESIGN-DISCUSSION.md G.26, #137)
+
+`ShowCancelButton` (bool, default `false`) + `OnWizardCancel` (`EventCallback<TModel>`), both on
+`DynamicWizard<TModel>`. `HandleCancel` in `DynamicWizard.razor.cs` just invokes the callback with
+`Model` — no call into `_navigator`/`ValidateCurrentStep`, unlike `HandleNext`/`HandleSubmit`, since
+Cancel is meant to abandon the flow, not complete it: it must work from an invalid current step.
+No built-in confirmation dialog — this engine doesn't own any modal UI elsewhere either (e.g.
+`[FormDynamicSelect]`'s pending-fetch state is a disabled placeholder, not a spinner overlay), so a
+consumer wanting "are you sure?" wraps their own confirm around the callback.
+
+Markup-wise, the button sits in a new `.wizard__nav-group` wrapper alongside Back (not as a third
+flex child of `.wizard__nav` directly) — `.wizard__nav`'s `justify-content: space-between` expects
+exactly two things to space apart (a "back-ish" group and the forward action); a bare third child
+would get pushed to a middle position instead of sitting next to Back. `ShowCancelButton` guards
+only the button, not the wrapper div, so the wrapper renders unconditionally and Back's position is
+identical whether or not Cancel is showing.
+
+## Draft-save/resume (DESIGN-DISCUSSION.md G.23, #134) — no storage owned by this engine
+
+Three additions, all reused across `WizardNavigator`/`DynamicWizard<TModel>`:
+
+- **`WizardNavigator`'s 3rd ctor param, `int? initialStep = null`.** Sets `CurrentStep` to it if
+  it's a real declared step number for this schema (`schema.Steps.Any(s => s.StepNumber ==
+  initialStep.Value)`), else falls back to the existing default (the first declared step) —
+  handles a stale snapshot from a since-changed schema without crashing or landing on a
+  nonexistent step. Optional with a default, so every existing 2-arg call site (tests included)
+  is unaffected.
+- **`DynamicWizard<TModel>.InitialStep`** (`int?`) is read once in `OnInitialized` and threaded
+  straight into the `WizardNavigator` constructor above.
+- **`DynamicWizard<TModel>.CurrentStep`** (`int`, get-only, NOT a `[Parameter]`) just proxies
+  `_navigator.CurrentStep` — a consumer reads it via `@ref` any time they want to build a save
+  snapshot (paired with `Model`, which they already own a reference to).
+- **`DynamicWizard<TModel>.OnStepChanged`** (`EventCallback<int>`) fires from `HandleNext`/
+  `HandlePrevious` — both are now `async Task` (they weren't before; `@onclick` binds to either
+  shape transparently, no razor change needed) — but **only when `_navigator.CurrentStep` actually
+  changed**, not on every call. `GoNext`/`GoPrevious` are no-ops at the boundaries (already-last
+  step, already-first step) and `HandleNext` returns early when validation fails — none of those
+  should fire a spurious "step changed" event.
+
+**Deliberately not built:** any actual storage I/O (localStorage, an API call, IndexedDB) and any
+field-level/keystroke autosave hook. This engine stays a 0-dep leaf (A.1) — it hands a consumer
+everything they need to snapshot/restore state themselves (`Model` is already the consumer's own
+object and is plain-JSON-serializable, right down to `WizardFileAttachment`'s `byte[]`; `CurrentStep`
+is now readable too) without ever touching browser storage or an HTTP client itself. A consumer
+wanting autosave-on-every-keystroke already owns `Model` and can serialize it on whatever cadence
+they like (a timer, page-unload) without a per-edit callback from this engine.
+
 ## `RenderTreeBuilder` sequence discipline
 
 Every render helper that opens more than one element/component wraps its own body in

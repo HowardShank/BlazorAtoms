@@ -1065,4 +1065,95 @@ public class DynamicWizardTests : BunitContext
         var labels = cut.FindAll("label.wizard__label").Select(l => l.TextContent).ToArray();
         Assert.Equal([nameof(FormOrderWinsOverDisplayOrderModel.A), nameof(FormOrderWinsOverDisplayOrderModel.B)], labels);
     }
+
+    // Cancel/close affordance (README.md/#137, DESIGN-DISCUSSION.md G.26) -- opt-in, no validation.
+    [Fact]
+    public void ShowCancelButton_false_by_default_renders_no_cancel_button()
+    {
+        var cut = Render<DynamicWizard<WizardTestModel>>(p => p.Add(c => c.Model, new WizardTestModel()));
+
+        Assert.Empty(cut.FindAll("button.wizard__button--cancel"));
+    }
+
+    [Fact]
+    public void ShowCancelButton_true_renders_a_cancel_button()
+    {
+        var cut = Render<DynamicWizard<WizardTestModel>>(p => p
+            .Add(c => c.Model, new WizardTestModel())
+            .Add(c => c.ShowCancelButton, true));
+
+        Assert.Single(cut.FindAll("button.wizard__button--cancel"));
+    }
+
+    [Fact]
+    public void Cancel_invokes_OnWizardCancel_with_the_current_model_without_validating()
+    {
+        var model = new WizardTestModel(); // Name left empty -- [Required] would normally block Next
+        WizardTestModel? cancelled = null;
+        var cut = Render<DynamicWizard<WizardTestModel>>(p => p
+            .Add(c => c.Model, model)
+            .Add(c => c.ShowCancelButton, true)
+            .Add(c => c.OnWizardCancel, EventCallback.Factory.Create<WizardTestModel>(this, m => cancelled = m)));
+
+        cut.Find("button.wizard__button--cancel").Click();
+
+        Assert.Same(model, cancelled);
+        Assert.Empty(cut.FindAll("span.wizard__error")); // no validation ran
+        Assert.Contains("Step 1 of 3", cut.Markup); // no step/state mutation either
+    }
+
+    // Draft-save/resume (README.md/#134, DESIGN-DISCUSSION.md G.23) -- InitialStep resumes
+    // straight at a saved step; CurrentStep + OnStepChanged let a consumer build their own
+    // save snapshot without this engine owning any storage itself.
+    [Fact]
+    public void InitialStep_resumes_the_wizard_at_the_given_step_on_first_render()
+    {
+        var cut = Render<DynamicWizard<WizardTestModel>>(p => p
+            .Add(c => c.Model, new WizardTestModel())
+            .Add(c => c.InitialStep, 2));
+
+        Assert.Contains("Step 2 of 3", cut.Markup);
+        Assert.NotNull(cut.Find("fieldset.wizard-field-group"));
+        Assert.Equal(2, cut.Instance.CurrentStep);
+    }
+
+    [Fact]
+    public void CurrentStep_reflects_the_navigators_position_after_advancing()
+    {
+        var cut = Render<DynamicWizard<WizardTestModel>>(p => p.Add(c => c.Model, new WizardTestModel()));
+        Assert.Equal(1, cut.Instance.CurrentStep);
+
+        cut.Find("input.wizard-field--text").Change("Alice");
+        cut.Find("button.wizard__button--next").Click();
+
+        Assert.Equal(2, cut.Instance.CurrentStep);
+    }
+
+    [Fact]
+    public void OnStepChanged_fires_with_the_new_step_number_after_Next_and_Back()
+    {
+        var stepChanges = new List<int>();
+        var cut = Render<DynamicWizard<WizardTestModel>>(p => p
+            .Add(c => c.Model, new WizardTestModel())
+            .Add(c => c.OnStepChanged, EventCallback.Factory.Create<int>(this, s => stepChanges.Add(s))));
+
+        cut.Find("input.wizard-field--text").Change("Alice");
+        cut.Find("button.wizard__button--next").Click();
+        cut.Find("button.wizard__button--back").Click();
+
+        Assert.Equal([2, 1], stepChanges);
+    }
+
+    [Fact]
+    public void OnStepChanged_does_not_fire_when_Next_is_blocked_by_validation()
+    {
+        var stepChanges = new List<int>();
+        var cut = Render<DynamicWizard<WizardTestModel>>(p => p
+            .Add(c => c.Model, new WizardTestModel())
+            .Add(c => c.OnStepChanged, EventCallback.Factory.Create<int>(this, s => stepChanges.Add(s))));
+
+        cut.Find("button.wizard__button--next").Click(); // Name left empty -- blocked
+
+        Assert.Empty(stepChanges);
+    }
 }

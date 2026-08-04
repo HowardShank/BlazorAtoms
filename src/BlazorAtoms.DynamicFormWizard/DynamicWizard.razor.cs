@@ -33,6 +33,19 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
     [Parameter]
     public EventCallback<TModel> OnWizardComplete { get; set; }
 
+    /// <summary>Raised when Cancel is clicked (DESIGN-DISCUSSION.md G.26, #137). Fires immediately
+    /// with no validation and no step/state mutation -- Cancel is meant to abandon the flow, not
+    /// complete it, so unlike Next/Submit it never blocks on an invalid current step. No built-in
+    /// confirmation dialog; a consumer wanting "are you sure?" implements that themselves before
+    /// acting on this callback (this engine doesn't own any modal UI elsewhere either).</summary>
+    [Parameter]
+    public EventCallback<TModel> OnWizardCancel { get; set; }
+
+    /// <summary>Shows the Cancel button in the nav row when true. Defaults to <c>false</c> --
+    /// opt-in, so every existing consumer's nav row is unchanged unless they ask for this.</summary>
+    [Parameter]
+    public bool ShowCancelButton { get; set; }
+
     /// <summary>Whole-form render override (DESIGN-DISCUSSION.md A.2) -- when set, called instead
     /// of this component's own dispatch for *every* field. Leave null for the native/bare-CSS
     /// fallback rendering.</summary>
@@ -60,6 +73,30 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
     [Parameter]
     public IReadOnlyDictionary<string, IReadOnlyDictionary<string, object>>? FieldAttributes { get; set; }
 
+    /// <summary>Resumes at a previously-saved step instead of always starting at the first
+    /// declared step (DESIGN-DISCUSSION.md G.23, #134) -- pairs with <see cref="CurrentStep"/> and
+    /// <see cref="OnStepChanged"/> for a consumer's own draft-save/resume: <c>Model</c> and the
+    /// step number are both plain JSON-serializable state (including any
+    /// <see cref="Files.WizardFileAttachment"/> already held as <c>byte[]</c>), so this engine
+    /// doesn't need to own any storage itself -- save them wherever, restore into a fresh
+    /// component instance later via <c>Model</c> + this parameter. Falls back to the first
+    /// declared step if it isn't a real one for this schema (see <see cref="WizardNavigator"/>'s
+    /// constructor).</summary>
+    [Parameter]
+    public int? InitialStep { get; set; }
+
+    /// <summary>Raised after Next/Back actually moves to a different step (DESIGN-DISCUSSION.md
+    /// G.23, #134) -- not on every field edit, which is deliberately out of scope: a consumer
+    /// wanting keystroke-level autosave already owns <c>Model</c> and can serialize it on their
+    /// own cadence (a timer, page-unload, etc.) without needing a callback for every edit.</summary>
+    [Parameter]
+    public EventCallback<int> OnStepChanged { get; set; }
+
+    /// <summary>The wizard's current raw declared step number -- read via <c>@ref</c> any time to
+    /// build a draft-save snapshot together with <c>Model</c> (DESIGN-DISCUSSION.md G.23,
+    /// #134).</summary>
+    public int CurrentStep => _navigator.CurrentStep;
+
     private EditContext _editContext = default!;
     private ValidationMessageStore _messageStore = default!;
     private WizardNavigator _navigator = default!;
@@ -71,7 +108,7 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
         _editContext = new EditContext(Model);
         _editContext.SetFieldCssClassProvider(new WizardFieldCssClassProvider());
         _messageStore = new ValidationMessageStore(_editContext);
-        _navigator = new WizardNavigator(WizardModelSchema.For<TModel>(), Model);
+        _navigator = new WizardNavigator(WizardModelSchema.For<TModel>(), Model, InitialStep);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -131,21 +168,36 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
     private static string FieldRowClass(LabelPosition position) =>
         position == LabelPosition.Left ? "wizard__field-row wizard__field-row--label-left" : "wizard__field-row";
 
-    private void HandlePrevious()
+    private async Task HandlePrevious()
     {
+        var before = _navigator.CurrentStep;
         _navigator.GoPrevious();
         _editContext.NotifyValidationStateChanged();
+        if (_navigator.CurrentStep != before)
+        {
+            await OnStepChanged.InvokeAsync(_navigator.CurrentStep);
+        }
     }
 
-    private void HandleNext()
+    private async Task HandleNext()
     {
         if (!_navigator.ValidateCurrentStep(_messageStore))
         {
             _editContext.NotifyValidationStateChanged();
             return;
         }
+        var before = _navigator.CurrentStep;
         _navigator.GoNext();
         _editContext.NotifyValidationStateChanged();
+        if (_navigator.CurrentStep != before)
+        {
+            await OnStepChanged.InvokeAsync(_navigator.CurrentStep);
+        }
+    }
+
+    private async Task HandleCancel()
+    {
+        await OnWizardCancel.InvokeAsync(Model);
     }
 
     private async Task HandleSubmit()

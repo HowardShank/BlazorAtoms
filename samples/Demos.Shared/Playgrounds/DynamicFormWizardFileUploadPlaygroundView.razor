@@ -1,5 +1,6 @@
 @using System.ComponentModel.DataAnnotations
 @using System.Linq
+@using System.Text.Json
 @using BlazorAtoms.DynamicFormWizard
 @using BlazorAtoms.DynamicFormWizard.Attributes
 @using BlazorAtoms.DynamicFormWizard.Files
@@ -13,14 +14,14 @@
    <code>[AllowedExtensions]</code>. Bytes are copied into memory immediately on selection -- not a
    raw <code>IBrowserFile</code> handle (DESIGN-DISCUSSION.md E.15).</p>
 <p><a href="playground/dynamicformwizard">&larr; Back to the main Dynamic Form Wizard playground</a></p>
+<p><code>ShowCancelButton</code>/<code>OnWizardCancel</code> (#137) and Save/Load draft (#134) work
+   here too -- including <code>Attachments</code>: <code>WizardFileAttachment</code>'s <code>byte[]
+   Content</code> round-trips through <code>System.Text.Json</code> as base64 with no extra
+   converters needed, so a draft saved after attaching files restores them too.</p>
 
 <div class="dfw-columns">
     <div class="dfw-wizard">
-        @if (_completed is null)
-        {
-            <DynamicWizard TModel="ApplicationModel" Model="_model" OnWizardComplete="HandleComplete" />
-        }
-        else
+        @if (_completed is not null)
         {
             <p>
                 <strong>Submitted!</strong> Name=@_completed.Name,
@@ -31,6 +32,29 @@
                 }
             </p>
             <button type="button" @onclick="Reset">Start over</button>
+        }
+        else if (_cancelled)
+        {
+            <p><strong>Cancelled.</strong> Nothing was submitted.</p>
+            <button type="button" @onclick="Reset">Start over</button>
+        }
+        else
+        {
+            <div class="dfw-draft-controls">
+                <button type="button" @onclick="SaveDraft">Save draft</button>
+                <button type="button" @onclick="LoadDraft" disabled="@(_savedDraftJson is null)">Resume saved draft</button>
+            </div>
+            @if (_draftStatus is not null)
+            {
+                <p><em>@_draftStatus</em></p>
+            }
+            @if (_savedDraftJson is not null)
+            {
+                <pre class="dfw-draft-json"><code>@_savedDraftJson</code></pre>
+            }
+            <DynamicWizard @ref="_wizardRef" @key="_wizardInstanceKey" TModel="ApplicationModel" Model="_model"
+                           OnWizardComplete="HandleComplete" OnWizardCancel="HandleCancel" ShowCancelButton="true"
+                           InitialStep="_initialStep" />
         }
     </div>
 
@@ -43,13 +67,49 @@
 @code {
     private ApplicationModel _model = new();
     private ApplicationModel? _completed;
+    private bool _cancelled;
+
+    private DynamicWizard<ApplicationModel>? _wizardRef;
+    private int? _initialStep;
+    private int _wizardInstanceKey;
+    private string? _savedDraftJson;
+    private string? _draftStatus;
+
+    private record DraftSnapshot(ApplicationModel Model, int Step);
 
     private void HandleComplete(ApplicationModel model) => _completed = model;
+
+    private void HandleCancel(ApplicationModel model) => _cancelled = true;
 
     private void Reset()
     {
         _model = new();
         _completed = null;
+        _cancelled = false;
+        _initialStep = null;
+        _savedDraftJson = null;
+        _draftStatus = null;
+    }
+
+    private void SaveDraft()
+    {
+        var step = _wizardRef?.CurrentStep ?? 1;
+        _savedDraftJson = JsonSerializer.Serialize(new DraftSnapshot(_model, step));
+        _draftStatus = $"Draft saved at step {step}.";
+    }
+
+    private void LoadDraft()
+    {
+        if (_savedDraftJson is null)
+        {
+            return;
+        }
+
+        var snapshot = JsonSerializer.Deserialize<DraftSnapshot>(_savedDraftJson)!;
+        _model = snapshot.Model;
+        _initialStep = snapshot.Step;
+        _wizardInstanceKey++;
+        _draftStatus = $"Draft loaded -- resumed at step {snapshot.Step}.";
     }
 
     public class ApplicationModel
@@ -103,6 +163,24 @@
         overflow-x: auto;
         font-size: 0.85rem;
         line-height: 1.5;
+    }
+
+    .dfw-draft-controls {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .dfw-draft-json {
+        background: #1e1e2e;
+        color: #cdd6f4;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        font-size: 0.8rem;
+        line-height: 1.5;
+        max-height: 12rem;
+        overflow-y: auto;
     }
 
     @@media (max-width: 900px) {

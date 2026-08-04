@@ -1,4 +1,6 @@
 @using System.ComponentModel.DataAnnotations
+@using System.Text.Json
+@using System.Text.Json.Serialization
 @using BlazorAtoms.DynamicFormWizard
 @using BlazorAtoms.DynamicFormWizard.Attributes
 
@@ -21,14 +23,14 @@
    <code>WizardNullableParsableInput&lt;T&gt;</code>, where an empty field means <code>null</code>,
    not a validation error.</p>
 <p><a href="playground/dynamicformwizard">&larr; Back to the main Dynamic Form Wizard playground</a></p>
+<p><code>ShowCancelButton</code>/<code>OnWizardCancel</code> (#137) and Save/Load draft (#134, via
+   <code>CurrentStep</code>/<code>InitialStep</code>) work here too -- including the
+   <code>nint</code>/<code>nuint</code> fields, which <code>System.Text.Json</code> doesn't support
+   natively, hence the two small converters below.</p>
 
 <div class="dfw-columns">
     <div class="dfw-wizard">
-        @if (_completed is null)
-        {
-            <DynamicWizard TModel="AllDataTypesModel" Model="_model" OnWizardComplete="HandleComplete" />
-        }
-        else
+        @if (_completed is not null)
         {
             <p><strong>Submitted!</strong></p>
             <dl class="dfw-summary">
@@ -79,6 +81,29 @@
             </dl>
             <button type="button" @onclick="Reset">Start over</button>
         }
+        else if (_cancelled)
+        {
+            <p><strong>Cancelled.</strong> Nothing was submitted.</p>
+            <button type="button" @onclick="Reset">Start over</button>
+        }
+        else
+        {
+            <div class="dfw-draft-controls">
+                <button type="button" @onclick="SaveDraft">Save draft</button>
+                <button type="button" @onclick="LoadDraft" disabled="@(_savedDraftJson is null)">Resume saved draft</button>
+            </div>
+            @if (_draftStatus is not null)
+            {
+                <p><em>@_draftStatus</em></p>
+            }
+            @if (_savedDraftJson is not null)
+            {
+                <pre class="dfw-draft-json"><code>@_savedDraftJson</code></pre>
+            }
+            <DynamicWizard @ref="_wizardRef" @key="_wizardInstanceKey" TModel="AllDataTypesModel" Model="_model"
+                           OnWizardComplete="HandleComplete" OnWizardCancel="HandleCancel" ShowCancelButton="true"
+                           InitialStep="_initialStep" />
+        }
     </div>
 
     <div class="dfw-source">
@@ -90,13 +115,71 @@
 @code {
     private AllDataTypesModel _model = new();
     private AllDataTypesModel? _completed;
+    private bool _cancelled;
+
+    private DynamicWizard<AllDataTypesModel>? _wizardRef;
+    private int? _initialStep;
+    private int _wizardInstanceKey;
+    private string? _savedDraftJson;
+    private string? _draftStatus;
+
+    // System.Text.Json has no built-in converter for nint/nuint (throws NotSupportedException) --
+    // these two make the draft-save round-trip work for AllDataTypesModel's NativeInt(N)/
+    // NativeUnsignedInt(N) fields; System.Text.Json wraps a registered converter for the
+    // underlying type automatically for its Nullable<T> form too, so registering just these two
+    // covers both the non-nullable (step 1) and nullable (step 2) variants.
+    private sealed class NIntJsonConverter : JsonConverter<nint>
+    {
+        public override nint Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) => (nint)reader.GetInt64();
+        public override void Write(Utf8JsonWriter writer, nint value, JsonSerializerOptions options) => writer.WriteNumberValue((long)value);
+    }
+
+    private sealed class NUIntJsonConverter : JsonConverter<nuint>
+    {
+        public override nuint Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) => (nuint)reader.GetUInt64();
+        public override void Write(Utf8JsonWriter writer, nuint value, JsonSerializerOptions options) => writer.WriteNumberValue((ulong)value);
+    }
+
+    private static readonly JsonSerializerOptions DraftJsonOptions = new()
+    {
+        Converters = { new NIntJsonConverter(), new NUIntJsonConverter() },
+    };
+
+    private record DraftSnapshot(AllDataTypesModel Model, int Step);
 
     private void HandleComplete(AllDataTypesModel model) => _completed = model;
+
+    private void HandleCancel(AllDataTypesModel model) => _cancelled = true;
 
     private void Reset()
     {
         _model = new();
         _completed = null;
+        _cancelled = false;
+        _initialStep = null;
+        _savedDraftJson = null;
+        _draftStatus = null;
+    }
+
+    private void SaveDraft()
+    {
+        var step = _wizardRef?.CurrentStep ?? 1;
+        _savedDraftJson = JsonSerializer.Serialize(new DraftSnapshot(_model, step), DraftJsonOptions);
+        _draftStatus = $"Draft saved at step {step}.";
+    }
+
+    private void LoadDraft()
+    {
+        if (_savedDraftJson is null)
+        {
+            return;
+        }
+
+        var snapshot = JsonSerializer.Deserialize<DraftSnapshot>(_savedDraftJson, DraftJsonOptions)!;
+        _model = snapshot.Model;
+        _initialStep = snapshot.Step;
+        _wizardInstanceKey++;
+        _draftStatus = $"Draft loaded -- resumed at step {snapshot.Step}.";
     }
 
     private static string Show<T>(T? value) => value is null ? "(null)" : value.ToString() ?? "(null)";
@@ -325,6 +408,24 @@
 
     .dfw-summary dd {
         margin: 0;
+    }
+
+    .dfw-draft-controls {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .dfw-draft-json {
+        background: #1e1e2e;
+        color: #cdd6f4;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        font-size: 0.8rem;
+        line-height: 1.5;
+        max-height: 12rem;
+        overflow-y: auto;
     }
 
     .dfw-summary-heading {

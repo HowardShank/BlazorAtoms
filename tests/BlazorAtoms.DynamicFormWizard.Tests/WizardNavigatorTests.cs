@@ -39,6 +39,26 @@ public class WizardNavigatorTests
         Assert.Equal(4, nav.CurrentStep);
     }
 
+    // initialStep (README.md/#134, draft-save/resume) -- resumes at a saved step instead of
+    // always starting at the first declared one.
+    [Fact]
+    public void InitialStep_resumes_at_the_given_step_when_it_is_a_real_declared_step()
+    {
+        var model = new ForkRejoinModel { Selection = Choice.A };
+        var nav = new WizardNavigator(WizardModelSchema.For<ForkRejoinModel>(), model, initialStep: 4);
+
+        Assert.Equal(4, nav.CurrentStep);
+    }
+
+    [Fact]
+    public void InitialStep_falls_back_to_the_first_declared_step_when_it_is_not_a_real_one()
+    {
+        var model = new ForkRejoinModel { Selection = Choice.A };
+        var nav = new WizardNavigator(WizardModelSchema.For<ForkRejoinModel>(), model, initialStep: 99);
+
+        Assert.Equal(1, nav.CurrentStep);
+    }
+
     [Fact]
     public void Choosing_B_walks_1_then_3_then_skips_2_and_lands_on_the_shared_step_4()
     {

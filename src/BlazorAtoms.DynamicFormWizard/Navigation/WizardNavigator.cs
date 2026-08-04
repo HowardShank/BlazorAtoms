@@ -21,11 +21,20 @@ public sealed class WizardNavigator
     private readonly WizardModelSchema _schema;
     private readonly object _model;
 
-    public WizardNavigator(WizardModelSchema schema, object model)
+    /// <summary><paramref name="initialStep"/> resumes at a previously-saved step (DESIGN-DISCUSSION.md
+    /// G.23, #134) instead of always starting at the first declared step -- e.g. a consumer's own
+    /// draft-save snapshot (<c>Model</c> + a step number, both already JSON-serializable) restored
+    /// later into a fresh <see cref="DynamicWizard{TModel}"/>. Falls back to the default first step
+    /// when it isn't a real declared step number (a stale snapshot from a schema that's since
+    /// changed) rather than landing on a step that doesn't exist.</summary>
+    public WizardNavigator(WizardModelSchema schema, object model, int? initialStep = null)
     {
         _schema = schema;
         _model = model;
-        CurrentStep = schema.Steps.Count > 0 ? schema.Steps[0].StepNumber : 0;
+        var defaultStep = schema.Steps.Count > 0 ? schema.Steps[0].StepNumber : 0;
+        CurrentStep = initialStep.HasValue && schema.Steps.Any(s => s.StepNumber == initialStep.Value)
+            ? initialStep.Value
+            : defaultStep;
     }
 
     /// <summary>The raw declared step number the wizard is currently on -- an internal key, never

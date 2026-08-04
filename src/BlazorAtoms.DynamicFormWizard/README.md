@@ -179,6 +179,22 @@ model. See the live playground at `/playground/dynamicformwizard` in any of the 
   }
   ```
 
+## Navigation
+
+- **`OnWizardComplete`** — raised once the final step's validation passes and Submit is pressed.
+- **`ShowCancelButton`** (default `false`) / **`OnWizardCancel`** — opts a Cancel button into the
+  nav row (rendered leftmost, next to Back). Clicking it fires `OnWizardCancel` immediately with no
+  validation and no step/state mutation — Cancel abandons the flow rather than completing it, so
+  unlike Next/Submit it never blocks on an invalid current step. No built-in confirmation dialog;
+  show your own before acting on the callback if you want one.
+- **`InitialStep`** / **`CurrentStep`** / **`OnStepChanged`** — draft-save/resume, with no storage
+  owned by this engine. `Model` and a step number are both plain JSON-serializable state (including
+  any `WizardFileAttachment`, already a `byte[]`) — read `CurrentStep` (via `@ref`) or handle
+  `OnStepChanged` (fires after Next/Back actually moves, not on every field edit) to grab a snapshot
+  whenever you want to save one yourself (localStorage, an API call, wherever); pass it back in as
+  `Model` + `InitialStep` later to resume where you left off. `InitialStep` falls back to the first
+  declared step if it isn't a real one for the model's schema.
+
 ## Extensibility
 
 - **`FieldTemplate`** — override rendering for the *whole* form at once (e.g. to swap in

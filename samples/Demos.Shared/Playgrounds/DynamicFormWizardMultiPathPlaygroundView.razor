@@ -1,4 +1,5 @@
 @using System.ComponentModel.DataAnnotations
+@using System.Text.Json
 @using BlazorAtoms.DynamicFormWizard
 @using BlazorAtoms.DynamicFormWizard.Attributes
 
@@ -14,17 +15,40 @@
     <li><strong>Guided</strong> and <strong>Complete</strong> -- diverge with their own content on steps 2-3, then merge back onto the same shared step 5 (no <code>[DependsOn]</code> there at all -- Guided gets there by skipping the empty step 4; Complete gets there by walking every single step from start to end).</li>
 </ul>
 <p><a href="playground/dynamicformwizard">&larr; Back to the main Dynamic Form Wizard playground</a></p>
+<p><code>ShowCancelButton</code>/<code>OnWizardCancel</code> (#137) and Save/Load draft (#134) work
+   here too -- try saving mid-way through the <strong>Detailed</strong> or <strong>Complete</strong>
+   path, then loading the draft back: <code>InitialStep</code> resumes at the exact declared step
+   number saved, regardless of which path got you there.</p>
 
 <div class="dfw-columns">
     <div class="dfw-wizard">
-        @if (_completed is null)
-        {
-            <DynamicWizard TModel="MultiPathModel" Model="_model" OnWizardComplete="HandleComplete" />
-        }
-        else
+        @if (_completed is not null)
         {
             <p><strong>Submitted!</strong> Journey=@_completed.Path</p>
             <button type="button" @onclick="Reset">Start over</button>
+        }
+        else if (_cancelled)
+        {
+            <p><strong>Cancelled.</strong> Nothing was submitted.</p>
+            <button type="button" @onclick="Reset">Start over</button>
+        }
+        else
+        {
+            <div class="dfw-draft-controls">
+                <button type="button" @onclick="SaveDraft">Save draft</button>
+                <button type="button" @onclick="LoadDraft" disabled="@(_savedDraftJson is null)">Resume saved draft</button>
+            </div>
+            @if (_draftStatus is not null)
+            {
+                <p><em>@_draftStatus</em></p>
+            }
+            @if (_savedDraftJson is not null)
+            {
+                <pre class="dfw-draft-json"><code>@_savedDraftJson</code></pre>
+            }
+            <DynamicWizard @ref="_wizardRef" @key="_wizardInstanceKey" TModel="MultiPathModel" Model="_model"
+                           OnWizardComplete="HandleComplete" OnWizardCancel="HandleCancel" ShowCancelButton="true"
+                           InitialStep="_initialStep" />
         }
     </div>
 
@@ -37,13 +61,49 @@
 @code {
     private MultiPathModel _model = new();
     private MultiPathModel? _completed;
+    private bool _cancelled;
+
+    private DynamicWizard<MultiPathModel>? _wizardRef;
+    private int? _initialStep;
+    private int _wizardInstanceKey;
+    private string? _savedDraftJson;
+    private string? _draftStatus;
+
+    private record DraftSnapshot(MultiPathModel Model, int Step);
 
     private void HandleComplete(MultiPathModel model) => _completed = model;
+
+    private void HandleCancel(MultiPathModel model) => _cancelled = true;
 
     private void Reset()
     {
         _model = new();
         _completed = null;
+        _cancelled = false;
+        _initialStep = null;
+        _savedDraftJson = null;
+        _draftStatus = null;
+    }
+
+    private void SaveDraft()
+    {
+        var step = _wizardRef?.CurrentStep ?? 1;
+        _savedDraftJson = JsonSerializer.Serialize(new DraftSnapshot(_model, step));
+        _draftStatus = $"Draft saved at step {step}.";
+    }
+
+    private void LoadDraft()
+    {
+        if (_savedDraftJson is null)
+        {
+            return;
+        }
+
+        var snapshot = JsonSerializer.Deserialize<DraftSnapshot>(_savedDraftJson)!;
+        _model = snapshot.Model;
+        _initialStep = snapshot.Step;
+        _wizardInstanceKey++;
+        _draftStatus = $"Draft loaded -- resumed at step {snapshot.Step}.";
     }
 
     public enum Journey { Quick, Detailed, Guided, Complete }
@@ -164,6 +224,24 @@
         overflow-x: auto;
         font-size: 0.85rem;
         line-height: 1.5;
+    }
+
+    .dfw-draft-controls {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .dfw-draft-json {
+        background: #1e1e2e;
+        color: #cdd6f4;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        font-size: 0.8rem;
+        line-height: 1.5;
+        max-height: 12rem;
+        overflow-y: auto;
     }
 
     @@media (max-width: 900px) {

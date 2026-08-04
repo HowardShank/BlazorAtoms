@@ -28,9 +28,18 @@
         </div>
 
         <div class="wizard__nav">
-            <button type="button" class="wizard__button wizard__button--back" @onclick="HandlePrevious" disabled="@(_navigator.DisplayPosition().Position <= 1)">
-                Back
-            </button>
+            <div class="wizard__nav-group">
+                @if (ShowCancelButton)
+                {
+                    <button type="button" class="wizard__button wizard__button--cancel" @onclick="HandleCancel">
+                        Cancel
+                    </button>
+                }
+
+                <button type="button" class="wizard__button wizard__button--back" @onclick="HandlePrevious" disabled="@(_navigator.DisplayPosition().Position <= 1)">
+                    Back
+                </button>
+            </div>
 
             @if (IsFinalStep)
             {

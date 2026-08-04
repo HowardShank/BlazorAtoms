@@ -261,8 +261,9 @@ metadata. Section A works through how much of that pitch this package can actual
     pending/error UI states and a "mid-flow submission" distinct from "final wizard completion" —
     genuinely new primitive, none of which exists in any `Ideas.md` iteration. Explicitly deferred
     by the user as a future enhancement.
-23. **Draft-save/resume** (serializing `Model` + file DTOs mid-wizard, so a user can leave and come
-    back later).
+23. **Draft-save/resume — shipped, see H.35 (#134).** `Model` + file DTOs mid-wizard were already
+    plain-JSON-serializable; the missing piece was resuming at a saved step, now `InitialStep`/
+    `CurrentStep`/`OnStepChanged`.
 24. **i18n** of labels/messages — currently hardcoded English throughout `Ideas.md` (both
     `[Display(Name=...)]` text and custom-validator error messages).
 25. **Repeating/collection steps (shipped) — `List<T>` support, scoped to exactly `List<TItem>`.**
@@ -291,7 +292,7 @@ metadata. Section A works through how much of that pitch this package can actual
       as G.27 for ordinary nested groups), and a list item's own fields can't depend on each other
       either. Only `List<T>` is supported — not `IList<T>`/`ICollection<T>`/arrays/other
       collections, kept deliberately narrow (see `WizardTypeInspection.TryGetListItemType`).
-26. **A cancel/close affordance** distinct from Back — no iteration has one.
+26. **A cancel/close affordance distinct from Back — shipped, see H.34.**
 27. **Nested-target `DependsOn`** (path-based targeting into a group's own fields — see B.6). Also
     now the reason a repeating list item's own fields can't depend on each other (see G.25).
 28. **Richer `DependsOn` operators — shipped, see C.11.** OR-combination specifically remains
@@ -411,6 +412,34 @@ reconsidered and built once a concrete failure mode was raised; see C.8a, no lon
     - `[FormOrder]` is deliberately *not* removed this pass — kept for backward compatibility with
       existing consumers, its doc comment now states it's a candidate for removal in a future major
       version. Don't delete it without a separately-scoped decision to do so.
+34. **Cancel/close affordance — shipped (G.26, #137): `ShowCancelButton` + `OnWizardCancel`.**
+    `ShowCancelButton` (bool, default `false`, opt-in — no existing consumer's nav row changes) and
+    `OnWizardCancel` (`EventCallback<TModel>`), both plain component parameters on
+    `DynamicWizard<TModel>`, not attributes (there's no per-property meaning for "cancel"). Clicking
+    Cancel invokes the callback with `Model` immediately — **no call into
+    `WizardNavigator.ValidateCurrentStep`**, unlike Next/Submit, since Cancel is meant to abandon
+    the flow rather than complete it: it must work even when the current step is invalid. No
+    built-in confirmation dialog, consistent with this engine never owning modal UI elsewhere
+    (`[FormDynamicSelect]`'s pending state is a disabled placeholder, not a spinner/dialog) — a
+    consumer wanting "are you sure?" wraps their own confirm around the callback. Rendered inside a
+    new `.wizard__nav-group` wrapper alongside Back (not as a bare third child of `.wizard__nav`),
+    since that container's `justify-content: space-between` is built for exactly two things to space
+    apart; a bare third child would land in a visually wrong middle position instead of beside Back.
+35. **Draft-save/resume — shipped (G.23, #134): `InitialStep`/`CurrentStep`/`OnStepChanged`, no
+    storage owned by this engine.** `Model` was already the consumer's own object reference and
+    plain-JSON-serializable end to end (`WizardFileAttachment` holds `byte[]`, not a stream) — the
+    only state missing to resume mid-flow was *which step to land on*, since
+    `WizardNavigator`'s constructor always started at the first declared step. Fix: a 3rd,
+    optional ctor param `int? initialStep` — used when it's a real declared step number for the
+    schema, falling back to the existing default otherwise (a stale snapshot from a since-changed
+    schema degrades to "start over," not a crash or a nonexistent step). `DynamicWizard<TModel>`
+    exposes this as `InitialStep` (a `[Parameter]`), plus a get-only `CurrentStep` property (not a
+    parameter — a consumer reads it via `@ref`) and an `OnStepChanged` callback (`EventCallback<int>`,
+    fires only when `HandleNext`/`HandlePrevious` actually change the step, not on every call —
+    both boundary no-ops and validation-blocked `Next` must not fire it).
+    **Deliberately not built:** any actual storage I/O, and any field-level/keystroke autosave
+    hook — this engine stays a 0-dep leaf (A.1); a consumer wanting that granularity already owns
+    `Model` and can serialize it on their own cadence without a per-edit callback from here.
 
 ## Scenarios walked through (reference — the concrete cases that drove the decisions above)
 
