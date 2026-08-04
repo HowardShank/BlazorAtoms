@@ -297,6 +297,20 @@ metadata. Section A works through how much of that pitch this package can actual
     now the reason a repeating list item's own fields can't depend on each other (see G.25).
 28. **Richer `DependsOn` operators — shipped, see C.11.** OR-combination specifically remains
     deferred; comparison operators beyond equality are done.
+29. **Survey/Likert matrix fields — planned, not yet implemented, see section I below.** A grid of
+    statements (rows) rated against a shared fixed scale (columns) — e.g. "Strongly disagree" ..
+    "Strongly agree" across several statements. Raised by the user with a reference screenshot;
+    scoped and written up in full in section I, deliberately *not* coded yet (design-first, per
+    this doc's own stated practice of settling the shape before writing engine code).
+30. **Numbered rating-scale fields — planned, not yet implemented, see section J below.** A single
+    question with an N-point numbered scale (e.g. 1–5) between two endpoint labels ("Not
+    satisfied" .. "Completely satisfied") — one scalar property, not a list. Also raised with a
+    reference screenshot, same session as G.29; deliberately not coded yet either.
+31. **Vertical radio-list enum rendering — planned, not yet implemented, see section K below.** A
+    single-choice question ("Compared to our competitors, do you feel the product is: Less
+    expensive / Priced about the same / More expensive / Not sure") rendered as a stacked native
+    radio group instead of the existing `<select>` dropdown every enum property gets today. Third
+    reference screenshot, same session as G.29/G.30; deliberately not coded yet either.
 
 *(A hard "force-stop here" override was considered deferred at one point in this doc's history —
 reconsidered and built once a concrete failure mode was raised; see C.8a, no longer deferred.)*
@@ -440,6 +454,243 @@ reconsidered and built once a concrete failure mode was raised; see C.8a, no lon
     **Deliberately not built:** any actual storage I/O, and any field-level/keystroke autosave
     hook — this engine stays a 0-dep leaf (A.1); a consumer wanting that granularity already owns
     `Model` and can serialize it on their own cadence without a per-edit callback from here.
+
+### I. Survey/Likert matrix fields (planned, G.29 — design only, not yet implemented)
+
+A grid of statements (rows) rated against one shared fixed scale (columns), rendered as a native
+`<table>` with a radio-button group per row — the classic Likert-scale survey question:
+
+```
+                          Strongly disagree  Disagree  Neutral  Agree  Strongly agree
+Product is affordable            ○              ●         ○       ○         ○
+Product does what it claims      ○              ○         ●       ○         ○
+...
+```
+
+1. **Why this doesn't fit any existing render tier.** Every existing field-render path assumes a
+   property's *label* comes from type-level metadata (`[Display(Name=...)]`, or the property name
+   itself) — one label per property, fixed at compile time. A matrix row's label (the statement
+   text, "Product is affordable") is **instance data**: it varies per list item, not per property.
+   Nothing in the current schema model (`WizardPropertySchema`, cached once per `TModel` — F.19)
+   has a slot for "a label that comes from the data, not the type." This is the one genuinely new
+   concept this feature needs; everything else below reuses existing machinery.
+2. **Shape: `List<TItem>` + a new `[FormMatrix(answerProperty, labelProperty)]` attribute on the
+   list property**, naming which of `TItem`'s own properties is the per-row label (instance data)
+   and which is the per-row answer (a nullable enum — nullable so "not yet answered" is
+   representable; a non-nullable enum would silently pre-select its first member per
+   `RenderEnumSelect`'s existing default-to-first-member behavior, which is actively wrong for
+   survey data — an unanswered statement must not look like a real answer).
+   ```csharp
+   public enum LikertRating
+   {
+       [Display(Name = "Strongly disagree")] StronglyDisagree,
+       [Display(Name = "Disagree")] Disagree,
+       [Display(Name = "Neutral")] Neutral,
+       [Display(Name = "Agree")] Agree,
+       [Display(Name = "Strongly agree")] StronglyAgree,
+   }
+
+   public class SurveyStatementModel
+   {
+       public string Statement { get; set; } = string.Empty;
+
+       [Required(ErrorMessage = "Please answer this statement.")]
+       public LikertRating? Answer { get; set; }
+   }
+
+   public class SurveyModel
+   {
+       [FormStep(1, "Survey")]
+       [FormMatrix(nameof(SurveyStatementModel.Answer), nameof(SurveyStatementModel.Statement))]
+       public List<SurveyStatementModel> Statements { get; set; } = new()
+       {
+           new() { Statement = "Product is affordable" },
+           new() { Statement = "Product does what it claims" },
+           new() { Statement = "Product is better than other products on the market" },
+           new() { Statement = "Product is easy to use" },
+       };
+   }
+   ```
+   Column headers are the answer enum's members, in declared order, via each member's
+   `[Display(Name=...)]` if present else the bare member name — the exact same "read
+   `[Display(Name=...)]` off an enum member" logic `RenderEnumSelect`/`RenderNullableEnumSelect`
+   already have, reused rather than re-invented.
+3. **Dispatch placement:** a new check in `RenderDispatched` (`DynamicWizard.Fields.cs`), inside
+   the existing tier 1b `TryGetListItemType` branch, ahead of the plain `RenderListProperty` call —
+   a `List<T>` carrying `[FormMatrix]` routes to a new `RenderMatrixGrid` instead of the ordinary
+   scalar-row/complex-fieldset repeater. Exactly the same "attribute short-circuits before the
+   generic path" shape `[FormSelect]` already uses ahead of plain-string rendering in `RenderField`
+   — no new dispatch *mechanism*, just one more attribute check.
+4. **Markup: a real `<table>`, not a CSS grid of `<div>`s.** `<th scope="col">` for the answer
+   headers and `<th scope="row">` for each statement give screen readers correct row/column
+   association for free — this package states accessibility as a first-class, non-optional
+   requirement (F.17), and a semantic table is the accessible-by-default choice here, not an
+   afterthought bolted on. Each row's radios share a `name` unique to that row (e.g.
+   `$"{target.Info.Name}-{index}"`) so exactly one can be selected per statement using plain native
+   HTML radio-group semantics, no extra JS. `onchange` writes the selected member onto
+   `item.Answer` via `PropertyInfo.SetValue` (same pattern every other field-write goes through),
+   then calls `OnFieldChanged()`.
+5. **Validation needs zero new code.** A matrix's `List<SurveyStatementModel>` is, underneath the
+   new rendering, the *exact same data shape* `WizardNavigator.ValidateCurrentStep` already
+   validates for G.25's ordinary complex-item lists: `TryGetListItemType` + `IsComplexType` +
+   `Validator.TryValidateObject` per item, errors stored against the item instance. Validation is
+   render-agnostic — it never asks *how* an item was rendered, only what type it is — so
+   `[Required]` on `Answer` blocking `Next` when a statement is left unanswered should already work
+   unchanged. Confirm with a test rather than assume (this doc's own stated practice), but expect
+   no navigator changes.
+6. **Known v1 scope limits, stated up front rather than discovered late:**
+   - **No Add/Remove for matrix rows**, unlike an ordinary complex-item list (G.25) — a survey's
+     statement set is normally fixed at design time (seeded in the model's own default), not
+     user-extensible mid-flow. A dynamically-growable matrix is a distinct, deferred ask if one
+     ever surfaces.
+   - **Enum-only answer scale** — no `[FormSelect]`-style fixed-string column set. Enums give type
+     safety and reuse the column-header logic already built for `RenderEnumSelect`; a string-based
+     scale would need its own header-labeling story.
+   - **Same nested-`DependsOn` limits as every other list item** (G.25/G.27) — a row's `Answer`
+     can't depend on a sibling top-level property differently per row, and rows can't depend on
+     each other.
+   - **All enum members become columns, in declared order** — no per-instance column subset or
+     reordering.
+7. **New files/touch points anticipated** (for whoever implements this): `Attributes/
+   FormMatrixAttribute.cs` (new); `WizardPropertySchema`/`WizardModelSchema.Build` (new `Matrix`
+   field, read alongside every other per-property attribute); a new `DynamicWizard.Matrix.cs`
+   partial (matching the one-file-per-concern convention `Fields.cs`/`Lists.cs`/`Selects.cs`
+   already establish) holding `RenderMatrixGrid`; `DynamicWizard.razor.css` (a `.wizard-matrix`
+   table style); README/DEVELOPMENT.md bullets; a new playground reproducing the reference
+   screenshot; tests (render structure — correct row/column counts and header text; interaction —
+   selecting a radio writes the right item's `Answer` and doesn't cross-affect other rows;
+   validation — an unanswered required statement blocks `Next`).
+
+### J. Numbered rating-scale fields (planned, G.30 — design only, not yet implemented)
+
+A single question with an N-point numbered scale between two endpoint labels — e.g. "How satisfied
+are you with the product?" with circles `1 2 3 4 5` between "Not satisfied" and "Completely
+satisfied." Same session as section I, same "reference screenshot, design now, code later" ask —
+but a much smaller feature: **one scalar property, not a list.**
+
+1. **How this differs from I (survey matrix).** The matrix (I) is fundamentally a `List<TItem>`
+   problem — its label text is per-*instance* data (a different statement per row) and needed a
+   whole new list-render tier. A rating scale is an ordinary scalar property (an `int?`) that
+   already has a rendering home in tier 2 (`TryRenderBuiltInScalar`'s int branch) — this feature
+   only changes *how that one property renders*, the same shape `[DataType]` already uses to swap
+   `InputText` for a typed `<input>`/`<textarea>` (H.30). No new list machinery, no new schema
+   collection field, no new validation path — this is the smaller of the two asks, and can likely
+   ship well ahead of I.
+2. **Shape: `[FormRatingScale(min, max, minLabel, maxLabel)]` on an `int?` property.** Nullable for
+   the same reason G.29's `Answer` is nullable — an unrated question must not silently look
+   answered (a plain non-nullable `int` defaulting to `0` — or worse, `min` — would misrecord "no
+   opinion" as a real rating). All four constructor args are compile-time constants (unlike
+   `[FormMatrix]`'s property-name strings), so this is a simpler attribute than `[FormMatrix]` —
+   no reflection lookup into a second property needed.
+   ```csharp
+   public class SatisfactionSurveyModel
+   {
+       [FormStep(1)]
+       [FormRatingScale(1, 5, "Not satisfied", "Completely satisfied")]
+       [Required(ErrorMessage = "Please rate your satisfaction.")]
+       public int? Satisfaction { get; set; }
+   }
+   ```
+3. **Dispatch placement:** inside `TryRenderBuiltInScalar`'s existing int/nullable-int branch
+   (`NativeNumberTypes.Contains(effectiveType)`), check for `[FormRatingScale]` *before* falling
+   through to `InputNumber<TValue>` — the exact same "attribute wins over the tier's own default"
+   shape `[DataType]` already established for the string branch in the same method (H.30). No new
+   dispatch tier, no new file-level concern — likely lands as one more branch inside
+   `DynamicWizard.Fields.cs`, not a new partial class the way `[FormMatrix]` needs.
+4. **Markup:** a row of `min..max` native `<input type="radio">` elements sharing one `name`
+   (styled as circles via CSS, not custom `<button>` + ARIA reinvention — same "prefer the native
+   primitive" principle just established for I.4's table), flanked by the two endpoint labels as
+   plain text. Clicking a point writes that integer onto the property and calls `OnFieldChanged()`
+   — the same manual-binding shape `RenderTypedTextInput`/`RenderTextArea` already use for
+   raw, non-`InputBase`-derived elements.
+5. **Validation needs zero new code.** `Satisfaction` is a plain `int?` property — `[Required]`/
+   `[Range(min, max)]` already validate through the existing zero-engine-code stock-attribute path
+   (H.29) regardless of how the property is *rendered*. Nothing to build here either.
+6. **Known v1 scope limits:**
+   - **Numeric points only, no enum-based scale** — unlike G.29's enum-driven columns, a rating
+     scale's points are the `min..max` integers themselves, labeled only at the two endpoints (not
+     one label per point) — matching the reference screenshot exactly. An enum-driven variant (each
+     point carrying its own label, not just the two endpoints) is a distinct, deferred idea if it
+     ever comes up — don't build it speculatively.
+   - **Fixed two-endpoint labeling** — no per-point label option in v1 (see above).
+7. **New files/touch points anticipated:** `Attributes/FormRatingScaleAttribute.cs` (new); one new
+   branch inside `TryRenderBuiltInScalar` + one new `RenderRatingScale` method in
+   `DynamicWizard.Fields.cs` (no new partial file expected, unlike I); `DynamicWizard.razor.css` (a
+   `.wizard-rating` style, circular points via `border-radius: 50%` + a selected-state class);
+   README/DEVELOPMENT.md bullets; extend the same matrix playground (or its own) with the
+   satisfaction-scale example from the reference screenshot; tests (render structure — correct
+   point count `max - min + 1`, endpoint label text; interaction — clicking a point sets the
+   property and doesn't affect other points; validation — an unrated `[Required]` field blocks
+   `Next`).
+
+### K. Vertical radio-list enum rendering (planned, G.31 — design only, not yet implemented)
+
+A single-choice question rendered as a stacked native radio group — e.g. "Compared to our
+competitors, do you feel the product is: Less expensive / Priced about the same / More expensive /
+Not sure" — instead of the `<select>` dropdown every enum property gets today via
+`RenderEnumSelect`/`RenderNullableEnumSelect`. Third reference screenshot, same session as I/J.
+
+1. **The simplest of the three new asks this session.** Unlike J's rating scale (still needs a
+   hand-rolled radio row with manually-shared `name`), this one can lean on Blazor's *own* built-in
+   `InputRadioGroup<TValue>`/`InputRadio<TValue>` components — the framework's native primitive for
+   exactly "one value, N mutually-exclusive choices." `InputRadioGroup<TValue>` is itself an
+   `InputBase<TValue>` descendant, so it gets the same automatic `EditContext`/CSS-invalid-state
+   wiring every other tier-2 built-in component already gets via `RenderInput` — no manual
+   `onchange`/`name`-sharing code to write at all, unlike G.29's matrix rows or G.30's rating
+   points, both of which render raw elements by hand. This is render-tree wiring only: no new
+   validation path, no new list machinery, no new manual event handler.
+2. **Shape: a bare marker attribute, `[FormRadioList]`, on an enum (or nullable-enum) property.**
+   No constructor args needed — it doesn't configure anything, it just swaps which built-in
+   component tier 2 opens for this one property.
+   ```csharp
+   public enum PriceComparison
+   {
+       [Display(Name = "Less expensive")] LessExpensive,
+       [Display(Name = "Priced about the same")] AboutTheSame,
+       [Display(Name = "More expensive")] MoreExpensive,
+       [Display(Name = "Not sure")] NotSure,
+   }
+
+   public class CompetitorSurveyModel
+   {
+       [FormStep(1)]
+       [FormRadioList]
+       public PriceComparison PriceFeeling { get; set; }
+   }
+   ```
+   Note "Not sure" here is a **real, meaningful enum member**, not an unanswered/null state — unlike
+   I/J's nullable-for-"unanswered" reasoning, this question is fully answered by any of its four
+   members, so the property can stay a plain non-nullable enum. `[FormRadioList]` should still work
+   on a *nullable* enum too (mirroring `RenderNullableEnumSelect`'s existing nullable-enum handling)
+   for the cases where "no answer yet" is genuinely distinct from every listed choice.
+3. **Dispatch placement:** inside `TryRenderBuiltInScalar`'s existing enum branch
+   (`effectiveType.IsEnum`), check for `[FormRadioList]` before choosing `RenderEnumSelect`/
+   `RenderNullableEnumSelect` — same "attribute short-circuits the tier's own default" shape now
+   common to H.30 (`[DataType]`), J (`[FormRatingScale]`), and this. Two new methods,
+   `RenderEnumRadioList`/`RenderNullableEnumRadioList`, mirroring the existing
+   `RenderEnumSelect`/`RenderNullableEnumSelect` pair one-for-one.
+4. **Markup:** `OpenComponent(InputRadioGroup<TEnum>)` with one child `InputRadio<TEnum>` per enum
+   member (each member's `[Display(Name=...)]` if present else the bare name, as visible label
+   text) as `ChildContent` — the exact same "nest a variable-length set of children inside one
+   component via `ChildContent`" shape `RenderEnumSelect` already uses for `<option>` elements, just
+   swapping what's nested. Stacked vertically via bare CSS (`display:flex; flex-direction:column;
+   gap`), matching the reference screenshot; no horizontal-layout variant in v1.
+5. **Validation needs zero new code** — same reasoning as every other tier-2 attribute-driven
+   rendering swap in this doc (H.30, J.5): the property's *type* doesn't change, only how it's
+   rendered, so whatever already validates a plain enum/nullable-enum property keeps validating it
+   unchanged.
+6. **Related idea, explicitly not scoped here:** `[FormSelect]` (a fixed *string* option list, not
+   an enum) currently also only renders as a `<select>` — the same "radio list instead of dropdown"
+   want could apply there too. Not building that now; flagged so it isn't mistaken for already
+   covered by this section if raised later.
+7. **New files/touch points anticipated:** `Attributes/FormRadioListAttribute.cs` (new, bare marker
+   — `[AttributeUsage(AttributeTargets.Property)]`, no properties/ctor args); two new methods in
+   `DynamicWizard.Fields.cs` (`RenderEnumRadioList`/`RenderNullableEnumRadioList`); `DynamicWizard.
+   razor.css` (a `.wizard-radio-list` vertical-stack style); README/DEVELOPMENT.md bullets; add the
+   competitor-comparison example from the reference screenshot to whichever survey-themed
+   playground exists by then; tests (render structure — one radio per enum member, correct visible
+   labels via `[Display(Name=...)]`; interaction — selecting one option sets the property and
+   deselects any previous choice; validation — unaffected, prove with one test rather than assert).
 
 ## Scenarios walked through (reference — the concrete cases that drove the decisions above)
 
