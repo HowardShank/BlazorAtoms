@@ -84,6 +84,7 @@ public sealed class WizardModelSchema
                 layout: property.GetCustomAttribute<FormLayoutAttribute>(),
                 labelPositionOverride: property.GetCustomAttribute<FormLabelAttribute>()?.Position,
                 placeholder: display?.Prompt,
+                matrix: property.GetCustomAttribute<FormMatrixAttribute>(),
                 encounterIndex: i));
         }
 

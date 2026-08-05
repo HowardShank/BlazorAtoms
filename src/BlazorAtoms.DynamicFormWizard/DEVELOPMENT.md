@@ -2,13 +2,14 @@
 
 Internal architecture notes for maintainers. See `README.md` for consumer-facing usage,
 `DESIGN-DISCUSSION.md` for the full decision log and rationale behind everything below, `FLOW.md`
-for diagrams, and `EXTENSIBILITY.md` for the two override seams.
+for diagrams, `EXTENSIBILITY.md` for the two override seams, and `TASKS.md` for the pending/
+deferred-work list mapped to the design sections that explain each one.
 
 ## File layout
 
 ```
 Attributes/     FormStep, FormOrder, DependsOn, ComparisonOperator, FormPathEnd, FormSelect,
-                FormDynamicSelect, FormLayout
+                FormDynamicSelect, FormLayout, FormMatrix, FormRatingScale, FormRadioList
 Validators/     FormRegex, DateRange, MaxFileCount, MaxFileSize, AllowedExtensions,
                 MinItemCount, MaxItemCount
 Services/       IWizardLookupService (FormDynamicSelect's DI contract)
@@ -21,6 +22,7 @@ Rendering/      WizardFieldContext, WizardFieldCssClassProvider, WizardParsableI
 DynamicWizard.razor(.cs)     component shell: EditContext, nav chrome, accessibility
 DynamicWizard.Fields.cs      the 5-tier field-render dispatch (scalar/nullable/group/fallback)
 DynamicWizard.Lists.cs       tier 1b: List<T> repeating groups (see its own section below)
+DynamicWizard.Matrix.cs      tier 1b: [FormMatrix] survey/Likert table (see its own section below)
 DynamicWizard.Selects.cs     FormSelect/FormDynamicSelect rendering + lookup-service fetch
 ```
 
@@ -358,6 +360,118 @@ was needed. If a future scenario genuinely needs OR, it's a bigger change (group
 not a flat list) — don't bolt it onto the existing flat `Dependencies` list without redesigning the
 evaluation shape.
 
+## Nested-target `DependsOn` (DESIGN-DISCUSSION.md section M, #138)
+
+Two previously-separate gaps, fixed together since both are "a `[DependsOn]` target that isn't a
+flat top-level property name":
+
+- **Dotted-path targeting into a nested group.** `WizardNavigator.ResolvePath(object? root, string
+  path)` (private, static) walks a `.`-split chain via `GetProperty`/`GetValue`, returning `null` on
+  any missing segment (never throws — a null-along-the-path is just "not yet satisfied," same as
+  any other null actual value `Matches` already treats that way). `ResolveTarget` chooses the fast
+  path for a plain (undotted) name — the existing `_schema.TryGetByName` cached lookup, unchanged
+  from before this feature — and only falls through to `ResolvePath(_model, ...)` when a dot is
+  present, so every pre-existing flat `[DependsOn]` usage pays zero extra cost.
+- **List-item sibling targeting.** `WizardNavigator.IsItemPropertyVisible(object itemInstance,
+  IReadOnlyList<DependsOnAttribute> dependencies)` is `static` (no schema, no `Model` involved at
+  all) — it resolves purely against the item instance passed in. Called from
+  `DynamicWizard.Lists.cs`'s `RenderComplexItemRepeater`, once per item property, reading that
+  property's `[DependsOn]`s directly via `GetCustomAttributes` (un-cached, matching how that method
+  already reads `[Display(Name=...)]` per item property with no schema involved).
+
+**The asymmetry to remember:** a nested group member's own `[DependsOn]` still resolves from
+`Model` (via the new public `AreDependenciesSatisfied(IReadOnlyList<DependsOnAttribute>)` — the same
+method `IsVisible` now delegates to), so even a sibling *within the same group* needs the full
+dotted path (`"Contact.IsPrimary"`, not bare `nameof(IsPrimary)`) — a nested group has a
+deterministic property chain from `Model`, so there's no reason to special-case it. A list item has
+no such chain (rows are runtime instances at a variable index), which is why `IsItemPropertyVisible`
+is the one place a bare `nameof` resolves against something other than `Model`. Get this backwards
+and a nested-group sibling `[DependsOn]` will silently always evaluate to hidden (a plain name looks
+up the *top-level* schema, finds nothing, `Matches(null, ...)` is always `false`) — there's no
+exception to catch, so this is easy to author wrong and not notice without a render test.
+
+Both `RenderExpandedGroup` and `RenderComplexItemRepeater` now `continue` the property loop when a
+nested/item field's dependencies aren't satisfied, instead of unconditionally rendering every
+property — previously neither method looked at `[DependsOn]` at all for a nested/item member (not
+merely "top-level only," genuinely never checked), so this also fixes a latent bug that predates
+G.27: a nested group member carrying `[DependsOn]` before this fix was rendered regardless, silently
+ignoring the attribute. Step-level visibility (`EffectiveStepNumbers`/`DisplayPosition`, C.9) is
+untouched — both fixes are purely inside the field-render dispatch, the same tier `[DataType]`
+already operates at.
+
+## `[FormMatrix]`/`[FormRatingScale]`/`[FormRadioList]` — the three G.29/30/31 field types (fully shipped end to end, #163-172)
+
+Deliberately split into attribute+wiring vs. tests vs. docs+playground per feature (own tracker
+tasks each) — read `TASKS.md` for exactly which sub-task covers what. `[FormMatrix]`'s own
+attribute+schema/dispatch+markup/tests/docs+playground split (#163/#164/#165/#166) happened across
+two separate work sessions; J/K (rating scale/radio list) shipped their full render path in one
+pass each (#167/#170), with tests (#168/#171) as a later, separate pass.
+
+**A real bug was caught only by writing #171's radio-list tests, not by re-reading the #170 code:**
+`InputRadioGroup<TValue>` renders no wrapping DOM element of its own — it only supplies a cascading
+value to its `ChildContent`. The original #170 pass had passed `class="wizard-radio-list"` straight
+to the component (the same pattern every other tier-2 component uses, since they *do* render their
+own element), which meant the class was silently dropped — no exception, no visible symptom short
+of a missing element in the rendered markup. Confirmed by a temporary `throw new
+Exception(cut.Markup)` in the failing test, not by reading Blazor's source and assuming. Fixed by
+having `RenderEnumRadioList`/`RenderNullableEnumRadioList` open an explicit `<div
+class="wizard-radio-list">` themselves, around the component. **Second finding from the same
+debugging pass:** a real `onchange` on `InputRadio<TValue>` carries the radio's own `value`
+attribute (the enum member name, a string) as the event payload — not a boolean "checked" flag the
+way a native checkbox's change event does. A bUnit test must call `.Change("EnumMemberName")`, not
+`.Change(true)`, or the click silently no-ops. This does not affect `RenderRatingScale`'s or
+`RenderMatrixGrid`'s own radios, both of which are hand-rolled raw `<input>` elements whose
+`onchange` handlers ignore the event payload entirely and close over the target value directly.
+
+- **`[FormMatrix]` (#163/#164) — attribute+schema, then dispatch+markup, in that order.**
+  `WizardPropertySchema.Matrix`/`WizardModelSchema.Build` read the attribute like every other
+  per-property one (#163). `RenderDispatched`'s tier 1b (`TryGetListItemType`) checks for it ahead
+  of the ordinary `RenderListProperty` call, routing to `RenderMatrixGrid` in the new
+  `DynamicWizard.Matrix.cs` partial instead (#164) — a real `<table>`, `<th scope="col">`/
+  `<th scope="row">` for accessible row/column association, one radio group per row (`name` =
+  `$"{target.Info.Name}-{index}"`, unique per row so exactly one selection sticks per statement with
+  no manual bookkeeping). `AnswerProperty`/`LabelProperty` are resolved via plain `Type.GetProperty`
+  on `TItem` — no caching, matching the same un-cached pattern `RenderComplexItemRepeater` already
+  uses for a list item's own `[Display(Name=...)]`. Validation needed zero changes, confirmed by
+  test (#165) rather than just predicted: a matrix's `List<TItem>` is the identical data shape
+  G.25's ordinary complex-item lists already validate.
+- **Matrix "fails silently" fix + `[RequiredUnless]` (DESIGN-DISCUSSION.md section I items 8-9,
+  shipped same day as #166) — a required-but-unanswered row blocked `Next`/Submit with zero visual
+  signal as to which row.** `RenderMatrixGrid` now computes, per row: `isInvalid` from
+  `_editContext.GetValidationMessages(new FieldIdentifier(item, matrix.AnswerProperty)).Any()` —
+  the same check every built-in field already makes for its own invalid CSS class, applied to the
+  `<tr>` (`wizard-matrix__row--invalid`) since a row has no single element to outline — and
+  `isRequired`, which is no longer a fixed per-type fact: it's `true` unconditionally if
+  `AnswerProperty` carries `[Required]`, or conditionally if it carries the new
+  `Validators/RequiredUnlessAttribute.cs` (`[RequiredUnless(nameof(SkipFlag))]`) AND that specific
+  row's own skip-flag property is currently `false`. `RequiredUnlessAttribute.IsValid` reflects
+  `ValidationContext.ObjectInstance` for the named skip property — the exact mechanism `[Compare]`
+  already uses to reach a sibling property off the whole model (H.29), here reaching a sibling off
+  the *item* instead, since `Validator.TryValidateObject`'s per-item pass (G.25/section I item 5)
+  already sets `ObjectInstance` to that item. Zero `WizardNavigator` changes — this is a new
+  `ValidationAttribute`, not new validation plumbing, so it flows through the exact same
+  zero-engine-code reuse path H.29's batch established for every other stock/custom attribute.
+- **`[FormRatingScale]` (#167) is fully wired — attribute, dispatch, markup, and CSS all shipped.**
+  Lands inside `TryRenderBuiltInScalar`'s existing `NativeNumberTypes` branch, restricted to
+  `effectiveType == typeof(int)` specifically (not `long`/`decimal`/etc. — the attribute's shape
+  only makes sense for a whole-number scale). `RenderRatingScale` builds a manually-bound radio
+  row the same shape `RenderTypedTextInput`/`RenderTextArea` use (raw elements, not an
+  `InputBase<TValue>` subclass) — clicking a point calls `target.SetValue(point)` directly (an
+  `int`, no parsing needed) then `OnFieldChanged()`. The group `name` is synthesized from
+  `target.Info.Name` + `target.Owner.GetHashCode()` so two different rating-scale fields (or two
+  different list-item rows, if ever nested that way) never collide.
+- **`[FormRadioList]` (#170) is fully wired — attribute, dispatch, markup, and CSS all shipped.**
+  `RenderEnumRadioList`/`RenderNullableEnumRadioList` mirror `RenderEnumSelect`/
+  `RenderNullableEnumSelect` one-for-one, just opening `InputRadioGroup<TEnum>` +
+  `InputRadio<TEnum>` per member instead of `<option>` elements. Needs no manual `onchange`/`name`
+  wiring at all — `InputRadioGroup<TValue>` is itself an `InputBase<TValue>` descendant and
+  provides the shared grouping/selection state to its `InputRadio<TValue>` children via its own
+  cascading value, the same reason this section-K feature was the simplest of the three to build.
+  **Compiler gotcha hit while wiring the nullable variant's leading "-- none --" option:**
+  `builder.AddAttribute(seq, "Value", null)` is ambiguous — `RenderTreeBuilder.AddAttribute` has
+  overloads for `string?` and `MulticastDelegate?`, and a bare `null` literal can't pick between
+  them. Fixed by casting explicitly: `AddAttribute(seq, "Value", (object?)null)`.
+
 ## Typed `EventCallback` construction across a reflected type
 
 Native `InputBase<TValue>`-derived components (and any consumer component registered via
@@ -382,9 +496,9 @@ works without an explicit generic instantiation. See `BuildValueExpression`.
 Both are schema-level metadata captured only for **top-level** properties (`WizardModelSchema`
 reflects them the same way as everything else) — not evaluated for properties discovered while
 auto-expanding a nested group (tier 3's recursion walks raw `PropertyInfo`, not
-`WizardPropertySchema`). This mirrors `DependsOn`'s own top-level-only reach (see
-DESIGN-DISCUSSION.md B.6) — extending either to nested groups is a possible future enhancement, not
-attempted in v1.
+`WizardPropertySchema`). `[DependsOn]` itself gained nested/list-item reach (section M, #138) — this
+top-level-only limit still applies to `[FormSelect]`/`[FormDynamicSelect]` specifically; extending
+either of those to nested groups is a possible future enhancement, not attempted in v1.
 
 `IWizardLookupService` is resolved lazily via `IServiceProvider.GetService(Type)` in
 `OnParametersSetAsync`, not a required `[Inject]` — a model that never uses
@@ -430,3 +544,10 @@ to a later step never stalls mid-fetch.
   rendering + registry-override precedence for `Editable(false)`, `NullDisplayText`/
   `DataFormatString` formatting for both the tier-4 fallback and the `Editable(false)` read-only
   span, and full exclusion (from both render and `ValidateCurrentStep`) for `ScaffoldColumn(false)`.
+- Nested-target `DependsOn` (section M, #138): `WizardNavigatorTests.cs` covers dotted-path
+  resolution directly against `IsVisible` (matching, non-matching, and a `null` nested segment along
+  the path — proving it degrades to "not visible" rather than throwing). `DynamicWizardTests.cs`
+  covers the two render-level fixes end to end: a nested group member's own `[DependsOn]`
+  hidden/shown via a full `Render<T>` + checkbox `.Change(true)`, and — the one that would actually
+  catch a resolution-root regression — two list rows' sibling `[DependsOn]` toggled independently,
+  asserting row 1's field count and `IsPrimary` value are both untouched by row 0's toggle.

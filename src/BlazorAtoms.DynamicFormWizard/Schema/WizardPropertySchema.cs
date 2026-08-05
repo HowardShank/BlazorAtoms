@@ -23,6 +23,12 @@ public sealed class WizardPropertySchema
     public FormDynamicSelectAttribute? DynamicSelect { get; }
     public FormLayoutAttribute? Layout { get; }
 
+    /// <summary>From <c>[FormMatrix(answerProperty, labelProperty)]</c> (DESIGN-DISCUSSION.md
+    /// section I, #163) -- present only on a <c>List&lt;TItem&gt;</c> property meant to render as a
+    /// survey/Likert matrix. Reading this alone does not yet change rendering; that dispatch lands
+    /// separately (#164).</summary>
+    public FormMatrixAttribute? Matrix { get; }
+
     /// <summary>Null when the property carries no <see cref="FormLabelAttribute"/> -- the
     /// effective position then falls back to <see cref="DynamicWizard{TModel}.DefaultLabelPosition"/>,
     /// which is a runtime component parameter, not something this process-lifetime-cached schema
@@ -54,6 +60,7 @@ public sealed class WizardPropertySchema
         FormLayoutAttribute? layout,
         LabelPosition? labelPositionOverride,
         string? placeholder,
+        FormMatrixAttribute? matrix,
         int encounterIndex)
     {
         Property = property;
@@ -69,6 +76,7 @@ public sealed class WizardPropertySchema
         Layout = layout;
         LabelPositionOverride = labelPositionOverride;
         Placeholder = placeholder;
+        Matrix = matrix;
         EncounterIndex = encounterIndex;
     }
 }

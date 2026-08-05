@@ -184,3 +184,103 @@
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+/* [FormRatingScale] (DESIGN-DISCUSSION.md section J, #167) -- a row of numbered points between two
+   endpoint labels, styled as circles rather than plain native radio squares. */
+::deep .wizard-rating {
+    display: flex;
+    align-items: center;
+    gap: var(--wizard-rating-gap, 0.75rem);
+}
+
+::deep .wizard-rating__endpoint {
+    font-size: 0.85rem;
+    color: var(--wizard-muted-color, #6b7280);
+}
+
+::deep .wizard-rating__points {
+    display: flex;
+    gap: var(--wizard-rating-point-gap, 0.5rem);
+}
+
+::deep .wizard-rating__point {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+::deep .wizard-rating__point input[type="radio"] {
+    appearance: none;
+    width: var(--wizard-rating-point-size, 1.75rem);
+    height: var(--wizard-rating-point-size, 1.75rem);
+    border-radius: 50%;
+    border: 1px solid var(--wizard-button-border, #d1d5db);
+    cursor: pointer;
+    margin: 0;
+}
+
+::deep .wizard-rating__point input[type="radio"]:checked {
+    border-color: var(--wizard-submit-bg, #15803d);
+    background: var(--wizard-submit-bg, #15803d);
+}
+
+/* [FormRadioList] (DESIGN-DISCUSSION.md section K, #170) -- a vertical stack, replacing the
+   default <select> dropdown every enum property gets otherwise. */
+::deep .wizard-radio-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--wizard-radio-list-gap, 0.4rem);
+}
+
+::deep .wizard-radio-list__option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+/* [FormMatrix] (DESIGN-DISCUSSION.md section I, #164) -- a real <table>, not a CSS grid of <div>s,
+   so <th scope="col">/<th scope="row"> give screen readers correct row/column association for free. */
+::deep .wizard-matrix {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+::deep .wizard-matrix th,
+::deep .wizard-matrix td {
+    padding: var(--wizard-matrix-cell-padding, 0.5rem 0.75rem);
+    text-align: center;
+    border-bottom: 1px solid var(--wizard-group-border, #d1d5db);
+}
+
+::deep .wizard-matrix th[scope="row"] {
+    text-align: left;
+    font-weight: 400;
+}
+
+::deep .wizard-matrix thead th {
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+::deep .wizard-matrix input[type="radio"] {
+    cursor: pointer;
+}
+
+/* An unanswered-but-required row (previously "fails silently" -- Next was blocked with zero
+   visual signal as to which row). Same red-outline language wizard-field--invalid already uses
+   elsewhere, applied to the whole row since a matrix row has no single input to outline. */
+::deep .wizard-matrix__row--invalid {
+    outline: 1px solid var(--wizard-error-color, #b91c1c);
+}
+
+::deep .wizard-matrix__row--invalid th[scope="row"] {
+    color: var(--wizard-error-color, #b91c1c);
+}
+
+::deep .wizard-matrix__required {
+    color: var(--wizard-error-color, #b91c1c);
+}

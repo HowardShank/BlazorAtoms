@@ -6,6 +6,8 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
+using BlazorAtoms.DynamicFormWizard.Attributes;
+using BlazorAtoms.DynamicFormWizard.Navigation;
 using BlazorAtoms.DynamicFormWizard.Schema;
 
 namespace BlazorAtoms.DynamicFormWizard;
@@ -180,9 +182,11 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
     /// -- a list item's fields are ordinary property-owned <see cref="FieldTarget"/>s (owner =
     /// the item instance itself, which is reference-stable across renders since it's the actual
     /// list element, not a wrapper), so they get full validation support *within* the item exactly
-    /// like today's nested groups do. What a list item's fields can't do is depend on a *sibling*
-    /// top-level property outside the list (DESIGN-DISCUSSION.md B.6/G.27 -- the same
-    /// nested-DependsOn limitation nested groups already have).</summary>
+    /// like today's nested groups do. A list item's own field CAN now depend on a *sibling* field
+    /// within the *same* item (DESIGN-DISCUSSION.md M.2, e.g. <c>SharePercent</c> depending on
+    /// <c>IsPrimary</c>) via <see cref="Navigation.WizardNavigator.IsItemPropertyVisible"/>, resolved
+    /// against that item instance -- but still cannot depend on a top-level property outside the
+    /// list, or on a sibling in a *different* row (DESIGN-DISCUSSION.md M.4, deliberately deferred).</summary>
     private void RenderComplexItemRepeater(RenderTreeBuilder builder, FieldTarget target, Type itemType, IList list)
     {
         builder.OpenElement(0, "div");
@@ -212,6 +216,12 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
             var propSeq = 0;
             foreach (var itemProperty in itemProperties)
             {
+                var itemDependencies = itemProperty.GetCustomAttributes<DependsOnAttribute>().ToArray();
+                if (itemDependencies.Length > 0 && !WizardNavigator.IsItemPropertyVisible(itemInstance, itemDependencies))
+                {
+                    continue;
+                }
+
                 var propLabel = itemProperty.GetCustomAttribute<DisplayAttribute>()?.Name ?? itemProperty.Name;
                 var propTarget = new FieldTarget(itemInstance, itemProperty, propLabel);
                 var propValue = itemProperty.GetValue(itemInstance);

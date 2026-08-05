@@ -11,8 +11,9 @@ and file upload all require an interactive render mode (`InteractiveServer` or
 `InteractiveWebAssembly`) — unlike most BlazorAtoms components, this one does not work under
 static SSR.
 
-See `DESIGN-DISCUSSION.md` for the full design log and rationale, `FLOW.md` for diagrams, and
-`EXTENSIBILITY.md` for the `FieldTemplate`/type-registry seams.
+See `DESIGN-DISCUSSION.md` for the full design log and rationale, `FLOW.md` for diagrams,
+`EXTENSIBILITY.md` for the `FieldTemplate`/type-registry seams, and `TASKS.md` for the pending/
+deferred-work list mapped to the design sections that explain each one.
 
 ## Install
 
@@ -92,7 +93,14 @@ model. See the live playground at `/playground/dynamicformwizard` in any of the 
   `LessThanOrEqual` — a range condition (e.g. age 18–65) is just two stacked conditions on the same
   property (`GreaterThanOrEqual 18` + `LessThanOrEqual 65`), no separate range construct. A step
   with none of these on any of its properties is visible to every branch — that's how "rejoining"
-  after a fork works, no separate merge construct.
+  after a fork works, no separate merge construct. A dotted target string (e.g.
+  `[DependsOn("CustomerInfo.Country", "USA")]`) reaches into a nested group's own field, always
+  resolved from `Model` — even when declared *on* a member of that same group, the full dotted
+  path is still required (a bare `nameof` there would look for a top-level sibling and find none).
+  The one exception is a repeating list item's own field depending on a sibling within that *same*
+  item — there, a plain `nameof(SiblingProperty)` resolves against the item instance itself, since
+  a list row has no static path from `Model` to write a dotted target against (see
+  `DESIGN-DISCUSSION.md` section M for the full split).
 - **`[FormPathEnd(nameof(Other), value)]`** — stackable, an *authoritative* end for one branch:
   stops navigation there regardless of what's declared on later steps, even if a later property is
   (perhaps mistakenly) left unconditional. Fewer attributes than gating every later field
@@ -178,6 +186,32 @@ model. See the live playground at `/playground/dynamicformwizard` in any of the 
       public List<Beneficiary> Beneficiaries { get; set; } = new() { new Beneficiary() };
   }
   ```
+
+- **`[FormMatrix(answerProperty, labelProperty)]`** on a `List<TItem>` property renders a
+  survey/Likert-style `<table>` instead of the ordinary repeating list — one row per item (its
+  `labelProperty` as the row label, instance data rather than `[Display(Name=...)]`) rated against
+  a shared column scale (its `answerProperty`, a nullable enum — nullable so an unanswered
+  statement isn't recorded as a real answer). `<th scope="col">`/`<th scope="row">` give screen
+  readers correct row/column association for free. Validation needs no special handling — it's the
+  same `List<TItem>` complex-item shape ordinary repeating lists already validate. An unanswered
+  required row gets a visible `wizard-matrix__row--invalid` outline once Submit/Next is blocked
+  (never silent), and a row currently required shows a `*` marker next to its label.
+- **`[RequiredUnless(nameof(SkipProperty))]`** — the per-*row* counterpart to `[Required]`, for a
+  `[FormMatrix]` item type where most statements are mandatory but a specific one (flagged by its
+  own `bool` property) is allowed to stay unanswered. Stock `[Required]` can't express this since
+  it's type-level, applying uniformly to every row; `[RequiredUnless]` reflects the named `bool`
+  sibling off that same item instance instead, so "required" becomes a per-row fact. Works
+  identically outside `[FormMatrix]` too — anywhere a sibling flag should conditionally waive a
+  required check.
+- **`[FormRatingScale(min, max, minLabel, maxLabel)]`** on an `int?` property renders a row of
+  numbered points (styled as circles) between two endpoint labels instead of a plain number input
+  — e.g. `[FormRatingScale(1, 5, "Not satisfied", "Completely satisfied")]`. Nullable so an unrated
+  question isn't silently recorded as a real answer. Pair with `[Required]`/`[Range(min, max)]` for
+  enforcement — this attribute only changes rendering, validation already works unchanged.
+- **`[FormRadioList]`** on an enum (or nullable-enum) property swaps its default `<select>`
+  dropdown for a stacked native radio group. A bare marker, no constructor args. Works via
+  Blazor's own `InputRadioGroup<TValue>`/`InputRadio<TValue>`, so it gets the same automatic
+  `EditContext`/CSS-invalid-state wiring every other built-in field does.
 
 ## Navigation
 

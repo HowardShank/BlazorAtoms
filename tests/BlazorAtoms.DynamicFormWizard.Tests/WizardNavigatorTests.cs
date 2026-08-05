@@ -737,4 +737,58 @@ public class WizardNavigatorTests
     {
         Assert.Equal(expectedValid, Validates(new CustomValidationModel { EvenNumber = value }));
     }
+
+    // Nested-target DependsOn (DESIGN-DISCUSSION.md M.1) -- a top-level property's [DependsOn]
+    // reaching INTO a single-instance nested group's own field via a dotted path, resolved from
+    // Model. CustomerInfo auto-expands (tier 3); StateTaxId only cares about its Country member.
+    public class NestedTargetCustomerInfo
+    {
+        public string Country { get; set; } = "USA";
+    }
+
+    private class NestedTargetModel
+    {
+        [FormStep(1)]
+        public NestedTargetCustomerInfo CustomerInfo { get; set; } = new();
+
+        [FormStep(1)]
+        [DependsOn("CustomerInfo.Country", "USA")]
+        public string StateTaxId { get; set; } = string.Empty;
+    }
+
+    [Fact]
+    public void Dotted_path_DependsOn_is_visible_when_the_nested_field_matches()
+    {
+        var model = new NestedTargetModel { CustomerInfo = new() { Country = "USA" } };
+        var nav = new WizardNavigator(WizardModelSchema.For<NestedTargetModel>(), model);
+
+        var property = WizardModelSchema.For<NestedTargetModel>().Steps[0].Properties
+            .Single(p => p.Property.Name == nameof(NestedTargetModel.StateTaxId));
+
+        Assert.True(nav.IsVisible(property));
+    }
+
+    [Fact]
+    public void Dotted_path_DependsOn_is_hidden_when_the_nested_field_does_not_match()
+    {
+        var model = new NestedTargetModel { CustomerInfo = new() { Country = "Canada" } };
+        var nav = new WizardNavigator(WizardModelSchema.For<NestedTargetModel>(), model);
+
+        var property = WizardModelSchema.For<NestedTargetModel>().Steps[0].Properties
+            .Single(p => p.Property.Name == nameof(NestedTargetModel.StateTaxId));
+
+        Assert.False(nav.IsVisible(property));
+    }
+
+    [Fact]
+    public void Dotted_path_DependsOn_treats_a_null_nested_segment_as_not_matching()
+    {
+        var model = new NestedTargetModel { CustomerInfo = null! };
+        var nav = new WizardNavigator(WizardModelSchema.For<NestedTargetModel>(), model);
+
+        var property = WizardModelSchema.For<NestedTargetModel>().Steps[0].Properties
+            .Single(p => p.Property.Name == nameof(NestedTargetModel.StateTaxId));
+
+        Assert.False(nav.IsVisible(property)); // no exception -- null along the path, not a match
+    }
 }

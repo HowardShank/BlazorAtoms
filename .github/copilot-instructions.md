@@ -19,6 +19,7 @@
 - Each package references only `Microsoft.AspNetCore.Components.Web` (plus framework packages).
 - Public component names are `Atom<Name>`; library root namespace is `BlazorAtoms.<Area>`.
 - Shared base classes live in `BlazorAtoms.Shared`: `AtomComponentBase` (adds `CssClass`/`Style`), `StyleVars` (fluent CSS custom-property builder).
+- For larger, complex components beyond `BlazorAtoms`, use the project naming direction `BlazorComposites`.
 
 ## Component Patterns
 - Inputs: `[Parameter]`s only. Default theming through CSS custom properties exposed via `StyleVars`/inline `style`; use `ClassAttr()`/`StyleAttr()` helpers.

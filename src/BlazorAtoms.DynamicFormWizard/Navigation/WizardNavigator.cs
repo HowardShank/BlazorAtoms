@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Reflection;
 using Microsoft.AspNetCore.Components.Forms;
 using BlazorAtoms.DynamicFormWizard.Attributes;
 using BlazorAtoms.DynamicFormWizard.Schema;
@@ -44,18 +45,82 @@ public sealed class WizardNavigator
     /// <summary>Whether a property is currently visible: true when it has no
     /// <see cref="Attributes.DependsOnAttribute"/>s, or when every one of its stacked
     /// dependencies currently matches (AND-combined -- DESIGN-DISCUSSION.md C.11).</summary>
-    public bool IsVisible(WizardPropertySchema property)
+    public bool IsVisible(WizardPropertySchema property) => AreDependenciesSatisfied(property.Dependencies);
+
+    /// <summary>Evaluates an arbitrary list of <see cref="Attributes.DependsOnAttribute"/>
+    /// conditions against <see cref="_model"/> as the resolution root (DESIGN-DISCUSSION.md M.1) --
+    /// used both for a top-level property's own visibility (<see cref="IsVisible"/>) and for a
+    /// nested-group member's own <c>[DependsOn]</c> (<c>DynamicWizard.Fields.cs</c>'s
+    /// <c>RenderExpandedGroup</c>). A nested group member's target always resolves relative to
+    /// Model, never the group instance itself, since the group has a deterministic property path
+    /// FROM Model -- unlike a repeating list item, which doesn't (see the static
+    /// <see cref="IsItemPropertyVisible"/> below).</summary>
+    public bool AreDependenciesSatisfied(IReadOnlyList<DependsOnAttribute> dependencies)
     {
-        foreach (var dep in property.Dependencies)
+        foreach (var dep in dependencies)
         {
-            var target = _schema.TryGetByName(dep.TargetProperty);
-            var actual = target?.Property.GetValue(_model);
+            var actual = ResolveTarget(dep.TargetProperty);
             if (!Matches(actual, dep.ExpectedValue, dep.Operator))
             {
                 return false;
             }
         }
         return true;
+    }
+
+    /// <summary>Evaluates a repeating list item's own <c>[DependsOn]</c>s against that item
+    /// instance itself as the resolution root (DESIGN-DISCUSSION.md M.2) -- e.g. a
+    /// <c>Beneficiary</c>'s <c>SharePercent</c> depending on its own <c>IsPrimary</c>. Unlike
+    /// <see cref="AreDependenciesSatisfied"/>, there is no fallback to <see cref="_model"/>: a list
+    /// row is a runtime instance with no static property path from Model, so its own fields' targets
+    /// must resolve relative to the row itself. Static (not an instance member) since it needs no
+    /// schema -- a list item's own <c>PropertyInfo</c> attributes are read directly by the caller,
+    /// the same un-cached way <c>RenderComplexItemRepeater</c> already reads
+    /// <c>[Display(Name=...)]</c> off each item property.</summary>
+    public static bool IsItemPropertyVisible(object itemInstance, IReadOnlyList<DependsOnAttribute> dependencies)
+    {
+        foreach (var dep in dependencies)
+        {
+            var actual = ResolvePath(itemInstance, dep.TargetProperty);
+            if (!Matches(actual, dep.ExpectedValue, dep.Operator))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /// <summary>Resolves a <c>[DependsOn]</c>/<c>[FormPathEnd]</c> target against <see cref="_model"/>.
+    /// A plain name resolves exactly as it always has, via the cached schema lookup (a sibling
+    /// top-level property). A dotted path (DESIGN-DISCUSSION.md M.1) walks from Model instead, one
+    /// property-name segment at a time -- e.g. <c>"CustomerInfo.Country"</c> reads
+    /// <c>Model.CustomerInfo</c>, then that instance's <c>Country</c>.</summary>
+    private object? ResolveTarget(string targetPath)
+    {
+        if (!targetPath.Contains('.'))
+        {
+            return _schema.TryGetByName(targetPath)?.Property.GetValue(_model);
+        }
+        return ResolvePath(_model, targetPath);
+    }
+
+    /// <summary>Walks a dotted (or plain, single-segment) property-name path from <paramref
+    /// name="root"/> via reflection, returning <c>null</c> if any segment along the way is null or
+    /// doesn't resolve to a real property -- treated the same as any other null actual value
+    /// (<see cref="Matches"/> never treats null as matching, regardless of operator).</summary>
+    private static object? ResolvePath(object? root, string path)
+    {
+        object? current = root;
+        foreach (var segment in path.Split('.'))
+        {
+            if (current is null)
+            {
+                return null;
+            }
+            var property = current.GetType().GetProperty(segment, BindingFlags.Public | BindingFlags.Instance);
+            current = property?.GetValue(current);
+        }
+        return current;
     }
 
     /// <summary>Evaluates one <see cref="Attributes.DependsOnAttribute"/> condition

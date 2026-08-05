@@ -1,0 +1,285 @@
+@using System.ComponentModel.DataAnnotations
+@using System.Text.Json
+@using BlazorAtoms.DynamicFormWizard
+@using BlazorAtoms.DynamicFormWizard.Attributes
+@using BlazorAtoms.DynamicFormWizard.Validators
+
+<PageTitle>Dynamic Form Wizard — Survey Fields Playground</PageTitle>
+
+<h1>Dynamic Form Wizard — survey-style field types (G.29/G.30/G.31)</h1>
+<p>Step 1: <code>[FormRatingScale(1, 5, "Not satisfied", "Completely satisfied")]</code> on an
+   <code>int?</code> property renders a row of numbered points between two endpoint labels instead
+   of a plain number input -- one scalar property, not a list (DESIGN-DISCUSSION.md section J,
+   #167). Nullable so an unrated question isn't silently recorded as a real answer.</p>
+<p>Step 2: <code>[FormRadioList]</code> on the <code>PriceComparison</code> enum swaps the usual
+   <code>&lt;select&gt;</code> dropdown for a stacked native radio group -- via Blazor's own
+   <code>InputRadioGroup&lt;TValue&gt;</code>/<code>InputRadio&lt;TValue&gt;</code>, so it gets the
+   same automatic validation-state wiring every other built-in field does, with no manual
+   <code>onchange</code>/<code>name</code>-sharing code needed (DESIGN-DISCUSSION.md section K,
+   #170). "Not sure" here is a real, meaningful enum member -- this question has no "unanswered"
+   state, unlike the rating scale above.</p>
+<p>Step 3: <code>[FormMatrix(nameof(SurveyStatementModel.Answer), nameof(SurveyStatementModel.Statement))]</code>
+   on a <code>List&lt;SurveyStatementModel&gt;</code> renders a real <code>&lt;table&gt;</code> --
+   one row per statement (its <code>Statement</code> text as instance-data row label, not
+   <code>[Display(Name=...)]</code>) rated against a shared <code>LikertRating</code> column scale
+   (DESIGN-DISCUSSION.md section I, #163-166). Leaving a required statement unanswered blocks
+   Submit and marks that row red with no need to guess which one -- the last statement's
+   <code>[RequiredUnless(nameof(AllowSkip))]</code> makes it the one exception: it can stay
+   unanswered because its <code>AllowSkip</code> is seeded <code>true</code>, and it never shows
+   the red "*" the other three do, since "required" is now a per-row fact, not a per-type one.</p>
+<p><a href="playground/dynamicformwizard/basic">&larr; Back to the main Dynamic Form Wizard playground</a></p>
+<p><code>ShowCancelButton</code>/<code>OnWizardCancel</code> (#137) and Save/Load draft (#134) work
+   here too.</p>
+
+<div class="dfw-columns">
+    <div class="dfw-wizard">
+        @if (_completed is not null)
+        {
+            <p><strong>Submitted!</strong></p>
+            <dl class="dfw-summary">
+                <dt>Satisfaction</dt><dd>@_completed.Satisfaction</dd>
+                <dt>PriceFeeling</dt><dd>@_completed.PriceFeeling</dd>
+                <dt>Statements</dt>
+                <dd>
+                    @foreach (var s in _completed.Statements)
+                    {
+                        <div>@s.Statement -- @s.Answer</div>
+                    }
+                </dd>
+            </dl>
+            <button type="button" @onclick="Reset">Start over</button>
+        }
+        else if (_cancelled)
+        {
+            <p><strong>Cancelled.</strong> Nothing was submitted.</p>
+            <button type="button" @onclick="Reset">Start over</button>
+        }
+        else
+        {
+            <div class="dfw-draft-controls">
+                <button type="button" @onclick="SaveDraft">Save draft</button>
+                <button type="button" @onclick="LoadDraft" disabled="@(_savedDraftJson is null)">Resume saved draft</button>
+            </div>
+            @if (_draftStatus is not null)
+            {
+                <p><em>@_draftStatus</em></p>
+            }
+            @if (_savedDraftJson is not null)
+            {
+                <pre class="dfw-draft-json"><code>@_savedDraftJson</code></pre>
+            }
+            <DynamicWizard @ref="_wizardRef" @key="_wizardInstanceKey" TModel="SurveyModel" Model="_model"
+                           OnWizardComplete="HandleComplete" OnWizardCancel="HandleCancel" ShowCancelButton="true"
+                           InitialStep="_initialStep" />
+        }
+    </div>
+
+    <div class="dfw-source">
+        <h2>The POCO</h2>
+        <pre><code>@PocoSource</code></pre>
+    </div>
+</div>
+
+@code {
+    private SurveyModel _model = new();
+    private SurveyModel? _completed;
+    private bool _cancelled;
+
+    private DynamicWizard<SurveyModel>? _wizardRef;
+    private int? _initialStep;
+    private int _wizardInstanceKey;
+    private string? _savedDraftJson;
+    private string? _draftStatus;
+
+    private record DraftSnapshot(SurveyModel Model, int Step);
+
+    private void HandleComplete(SurveyModel model) => _completed = model;
+
+    private void HandleCancel(SurveyModel model) => _cancelled = true;
+
+    private void Reset()
+    {
+        _model = new();
+        _completed = null;
+        _cancelled = false;
+        _initialStep = null;
+        _savedDraftJson = null;
+        _draftStatus = null;
+    }
+
+    private void SaveDraft()
+    {
+        var step = _wizardRef?.CurrentStep ?? 1;
+        _savedDraftJson = JsonSerializer.Serialize(new DraftSnapshot(_model, step));
+        _draftStatus = $"Draft saved at step {step}.";
+    }
+
+    private void LoadDraft()
+    {
+        if (_savedDraftJson is null)
+        {
+            return;
+        }
+
+        var snapshot = JsonSerializer.Deserialize<DraftSnapshot>(_savedDraftJson)!;
+        _model = snapshot.Model;
+        _initialStep = snapshot.Step;
+        _wizardInstanceKey++;
+        _draftStatus = $"Draft loaded -- resumed at step {snapshot.Step}.";
+    }
+
+    public enum PriceComparison
+    {
+        [Display(Name = "Less expensive")] LessExpensive,
+        [Display(Name = "Priced about the same")] AboutTheSame,
+        [Display(Name = "More expensive")] MoreExpensive,
+        [Display(Name = "Not sure")] NotSure,
+    }
+
+    public enum LikertRating
+    {
+        [Display(Name = "Strongly disagree")] StronglyDisagree,
+        [Display(Name = "Disagree")] Disagree,
+        [Display(Name = "Neutral")] Neutral,
+        [Display(Name = "Agree")] Agree,
+        [Display(Name = "Strongly agree")] StronglyAgree,
+    }
+
+    public class SurveyStatementModel
+    {
+        public string Statement { get; set; } = string.Empty;
+        public bool AllowSkip { get; set; }
+
+        [RequiredUnless(nameof(AllowSkip), ErrorMessage = "Please answer this statement.")]
+        public LikertRating? Answer { get; set; }
+    }
+
+    public class SurveyModel
+    {
+        [FormStep(1, "Satisfaction")]
+        [FormRatingScale(1, 5, "Not satisfied", "Completely satisfied")]
+        [Required(ErrorMessage = "Please rate your satisfaction.")]
+        public int? Satisfaction { get; set; }
+
+        [FormStep(2, "Comparison")]
+        [FormRadioList]
+        public PriceComparison PriceFeeling { get; set; }
+
+        [FormStep(3, "Statements")]
+        [FormMatrix(nameof(SurveyStatementModel.Answer), nameof(SurveyStatementModel.Statement))]
+        public List<SurveyStatementModel> Statements { get; set; } = new()
+        {
+            new() { Statement = "Product is affordable" },
+            new() { Statement = "Product does what it claims" },
+            new() { Statement = "Product is better than other products on the market" },
+            new() { Statement = "Product is easy to use", AllowSkip = true },
+        };
+    }
+
+    private const string PocoSource = """
+        public enum PriceComparison
+        {
+            [Display(Name = "Less expensive")] LessExpensive,
+            [Display(Name = "Priced about the same")] AboutTheSame,
+            [Display(Name = "More expensive")] MoreExpensive,
+            [Display(Name = "Not sure")] NotSure,
+        }
+
+        public enum LikertRating
+        {
+            [Display(Name = "Strongly disagree")] StronglyDisagree,
+            [Display(Name = "Disagree")] Disagree,
+            [Display(Name = "Neutral")] Neutral,
+            [Display(Name = "Agree")] Agree,
+            [Display(Name = "Strongly agree")] StronglyAgree,
+        }
+
+        public class SurveyStatementModel
+        {
+            public string Statement { get; set; } = string.Empty;
+            public bool AllowSkip { get; set; }
+
+            [RequiredUnless(nameof(AllowSkip), ErrorMessage = "Please answer this statement.")]
+            public LikertRating? Answer { get; set; }
+        }
+
+        public class SurveyModel
+        {
+            [FormStep(1, "Satisfaction")]
+            [FormRatingScale(1, 5, "Not satisfied", "Completely satisfied")]
+            [Required(ErrorMessage = "Please rate your satisfaction.")]
+            public int? Satisfaction { get; set; }
+
+            [FormStep(2, "Comparison")]
+            [FormRadioList]
+            public PriceComparison PriceFeeling { get; set; }
+
+            [FormStep(3, "Statements")]
+            [FormMatrix(nameof(SurveyStatementModel.Answer), nameof(SurveyStatementModel.Statement))]
+            public List<SurveyStatementModel> Statements { get; set; } = new()
+            {
+                new() { Statement = "Product is affordable" },
+                new() { Statement = "Product does what it claims" },
+                new() { Statement = "Product is better than other products on the market" },
+                new() { Statement = "Product is easy to use", AllowSkip = true },
+            };
+        }
+        """;
+}
+
+<style>
+    .dfw-columns {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 2rem;
+        align-items: start;
+    }
+
+    .dfw-source pre {
+        background: #1e1e2e;
+        color: #cdd6f4;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        font-size: 0.85rem;
+        line-height: 1.5;
+    }
+
+    .dfw-draft-controls {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .dfw-draft-json {
+        background: #1e1e2e;
+        color: #cdd6f4;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        font-size: 0.8rem;
+        line-height: 1.5;
+        max-height: 12rem;
+        overflow-y: auto;
+    }
+
+    .dfw-summary {
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        gap: 0.25rem 1rem;
+    }
+
+    .dfw-summary dt {
+        font-weight: 600;
+    }
+
+    .dfw-summary dd {
+        margin: 0;
+    }
+
+    @@media (max-width: 900px) {
+        .dfw-columns {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

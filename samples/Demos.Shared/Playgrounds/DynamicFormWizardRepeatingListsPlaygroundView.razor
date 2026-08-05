@@ -16,7 +16,11 @@
 <p>Step 3: <code>List&lt;Beneficiary&gt;</code> renders one <code>&lt;fieldset&gt;</code> sub-form
    per item (tier 1b, complex item shape), each validated on its own
    (<code>[Required]</code> on <code>Name</code>), plus <code>[MinItemCount]</code>/
-   <code>[MaxItemCount]</code> on the list itself.</p>
+   <code>[MaxItemCount]</code> on the list itself. Check a beneficiary's <strong>Primary</strong>
+   checkbox to reveal that <em>same row's</em> Note field -- <code>Note</code>'s
+   <code>[DependsOn(nameof(IsPrimary), true)]</code> resolves against that item instance itself, not
+   the top-level model, so toggling one row never affects any other row (DESIGN-DISCUSSION.md
+   section M.2, #138).</p>
 <p><a href="playground/dynamicformwizard">&larr; Back to the main Dynamic Form Wizard playground</a></p>
 <p><code>ShowCancelButton</code>/<code>OnWizardCancel</code> (#137) and Save/Load draft (#134) work
    here too -- including <code>Tags</code>/<code>Beneficiaries</code>, both plain
@@ -36,7 +40,13 @@
                 <dd>
                     @foreach (var b in _completed.Beneficiaries)
                     {
-                        <div>@b.Name -- @b.SharePercent%</div>
+                        <div>
+                            @b.Name -- @b.SharePercent%
+                            @if (b.IsPrimary)
+                            {
+                                <text> (Primary@(string.IsNullOrEmpty(b.Note) ? "" : $": {b.Note}"))</text>
+                            }
+                        </div>
                     }
                 </dd>
             </dl>
@@ -127,6 +137,14 @@
         public string Name { get; set; } = string.Empty;
 
         public int SharePercent { get; set; }
+
+        public bool IsPrimary { get; set; }
+
+        // List-item sibling [DependsOn] (DESIGN-DISCUSSION.md section M.2, #138) -- resolves
+        // against THIS item instance, not the top-level model. A plain nameof works here (no
+        // dotted path needed) because both properties live on the same TItem.
+        [DependsOn(nameof(IsPrimary), true)]
+        public string Note { get; set; } = string.Empty;
     }
 
     public class ApplicationModel
@@ -158,6 +176,11 @@
             public string Name { get; set; } = string.Empty;
 
             public int SharePercent { get; set; }
+
+            public bool IsPrimary { get; set; }
+
+            [DependsOn(nameof(IsPrimary), true)]
+            public string Note { get; set; } = string.Empty;
         }
 
         public class ApplicationModel

@@ -194,7 +194,19 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
         // gets its own real handling instead.
         if (WizardTypeInspection.TryGetListItemType(declaredType, out var itemType))
         {
-            RenderListProperty(builder, target, declaredType, itemType, value);
+            // [FormMatrix] (DESIGN-DISCUSSION.md section I, #164) routes to a survey/Likert table
+            // instead of the ordinary scalar-row/complex-fieldset repeater -- same "attribute
+            // short-circuits before the generic path" shape [FormSelect] already uses ahead of
+            // plain-string rendering in RenderField.
+            var matrix = target.Info.GetCustomAttribute<FormMatrixAttribute>();
+            if (matrix is not null)
+            {
+                RenderMatrixGrid(builder, target, declaredType, itemType, matrix, value);
+            }
+            else
+            {
+                RenderListProperty(builder, target, declaredType, itemType, value);
+            }
             return;
         }
 
@@ -267,13 +279,31 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
         }
         if (effectiveType.IsEnum)
         {
+            // [FormRadioList] (DESIGN-DISCUSSION.md section K, #170) swaps the dropdown for a
+            // vertical native radio group -- same "attribute short-circuits the tier's own
+            // default" shape as [DataType] and [FormRatingScale] above.
+            var radioList = target.Info.GetCustomAttribute<FormRadioListAttribute>() is not null;
             if (underlyingType is null)
             {
-                RenderEnumSelect(builder, valueType, value, target);
+                if (radioList)
+                {
+                    RenderEnumRadioList(builder, valueType, value, target);
+                }
+                else
+                {
+                    RenderEnumSelect(builder, valueType, value, target);
+                }
             }
             else
             {
-                RenderNullableEnumSelect(builder, underlyingType, valueType, value, target);
+                if (radioList)
+                {
+                    RenderNullableEnumRadioList(builder, underlyingType, valueType, value, target);
+                }
+                else
+                {
+                    RenderNullableEnumSelect(builder, underlyingType, valueType, value, target);
+                }
             }
             return true;
         }
@@ -285,6 +315,14 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
         }
         if (NativeNumberTypes.Contains(effectiveType))
         {
+            // [FormRatingScale] (DESIGN-DISCUSSION.md section J, #167) picks a numbered-points
+            // rendering for an int/int? property -- same "attribute wins over the tier's own
+            // default" shape [DataType] already established for the string branch above.
+            if (effectiveType == typeof(int) && target.Info.GetCustomAttribute<FormRatingScaleAttribute>() is { } ratingScale)
+            {
+                RenderRatingScale(builder, target, ratingScale, (int?)value);
+                return true;
+            }
             // Blazor's own InputNumber<TValue> only supports these six (and their nullable forms)
             // -- byte/sbyte/ushort/uint/ulong fall through to the generic IParsable tier below.
             var componentType = typeof(InputNumber<>).MakeGenericType(valueType);
@@ -460,6 +498,73 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
         builder.CloseElement();
     }
 
+    /// <summary><c>[FormRatingScale(min, max, minLabel, maxLabel)]</c>'s rendering
+    /// (DESIGN-DISCUSSION.md section J, #167) -- a row of native radio points sharing one
+    /// <c>name</c>, styled as circles via CSS rather than a hand-rolled <c>&lt;button&gt;</c> +
+    /// ARIA reinvention (the same "prefer the native primitive" call section I makes for its
+    /// table). Manually bound, same shape as <see cref="RenderTypedTextInput"/>/<see cref="RenderTextArea"/>,
+    /// since a raw radio row isn't an <c>InputBase&lt;TValue&gt;</c>-derived component either.
+    /// Clicking a point writes that integer onto the property directly -- no parsing needed, the
+    /// value *is* the point.</summary>
+    private void RenderRatingScale(RenderTreeBuilder builder, FieldTarget target, FormRatingScaleAttribute scale, int? value)
+    {
+        var field = new FieldIdentifier(target.Owner, target.Info.Name);
+        var cssClass = "wizard-rating";
+        if (_editContext.GetValidationMessages(field).Any())
+        {
+            cssClass += " wizard-field--invalid";
+        }
+        var groupName = $"{target.Info.Name}-{target.Owner.GetHashCode()}";
+
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "class", cssClass);
+        if (target.ExtraAttributes is { Count: > 0 })
+        {
+            builder.AddMultipleAttributes(2, target.ExtraAttributes);
+        }
+
+        builder.OpenElement(3, "span");
+        builder.AddAttribute(4, "class", "wizard-rating__endpoint wizard-rating__endpoint--min");
+        builder.AddContent(5, scale.MinLabel);
+        builder.CloseElement();
+
+        builder.OpenElement(6, "div");
+        builder.AddAttribute(7, "class", "wizard-rating__points");
+        builder.OpenRegion(8);
+        var seq = 0;
+        for (var point = scale.Min; point <= scale.Max; point++)
+        {
+            var selectedPoint = point;
+            builder.OpenRegion(seq++);
+            builder.OpenElement(0, "label");
+            builder.AddAttribute(1, "class", "wizard-rating__point");
+            builder.OpenElement(2, "input");
+            builder.AddAttribute(3, "type", "radio");
+            builder.AddAttribute(4, "name", groupName);
+            builder.AddAttribute(5, "checked", value == selectedPoint);
+            builder.AddAttribute(6, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e =>
+            {
+                target.SetValue(selectedPoint);
+                OnFieldChanged();
+            }));
+            builder.CloseElement(); // input
+            builder.OpenElement(7, "span");
+            builder.AddContent(8, selectedPoint);
+            builder.CloseElement(); // span
+            builder.CloseElement(); // label
+            builder.CloseRegion();
+        }
+        builder.CloseRegion();
+        builder.CloseElement(); // points div
+
+        builder.OpenElement(9, "span");
+        builder.AddAttribute(10, "class", "wizard-rating__endpoint wizard-rating__endpoint--max");
+        builder.AddContent(11, scale.MaxLabel);
+        builder.CloseElement();
+
+        builder.CloseElement(); // outer div
+    }
+
     /// <summary><c>[Editable(false)]</c>'s rendering -- a read-only span, same shape as
     /// <see cref="RenderFallback"/> but for a deliberately-read-only *known* type rather than an
     /// unhandled one, so it gets its own CSS hook (<c>wizard-field--readonly</c>, not
@@ -592,10 +697,130 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
         builder.CloseComponent();
     }
 
+    /// <summary><c>[FormRadioList]</c>'s rendering (DESIGN-DISCUSSION.md section K, #170) -- the
+    /// simplest of the three new field-type asks, since Blazor's own
+    /// <c>InputRadioGroup&lt;TValue&gt;</c>/<c>InputRadio&lt;TValue&gt;</c> are the framework's
+    /// native primitive for "one value, N mutually-exclusive choices": nesting an
+    /// <c>InputRadio&lt;TValue&gt;</c> per option needs no manual <c>name</c>-sharing or
+    /// <c>onchange</c> wiring at all -- the group's own cascading context handles it. Mirrors
+    /// <see cref="RenderEnumSelect"/>'s "one child per enum member, `[Display(Name=...)]` if
+    /// present else the bare name" shape one-for-one, just nesting radios instead of options.
+    /// <c>InputRadioGroup&lt;TValue&gt;</c> itself renders **no wrapping DOM element** -- confirmed
+    /// by inspecting rendered markup, not assumed from its being an <c>InputBase&lt;TValue&gt;</c>
+    /// descendant -- so a `class`/<c>AdditionalAttributes</c> passed directly to it has nothing to
+    /// attach to and is silently dropped. The `.wizard-radio-list` wrapper is therefore an explicit
+    /// `&lt;div&gt;` this method opens itself, around the component, not a parameter on it.</summary>
+    private void RenderEnumRadioList(RenderTreeBuilder builder, Type enumType, object? value, FieldTarget target)
+    {
+        var current = value ?? Enum.GetValues(enumType).GetValue(0)!;
+        var groupComponentType = typeof(InputRadioGroup<>).MakeGenericType(enumType);
+        var radioComponentType = typeof(InputRadio<>).MakeGenericType(enumType);
+
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "class", "wizard-radio-list");
+        if (target.ExtraAttributes is { Count: > 0 })
+        {
+            builder.AddMultipleAttributes(2, target.ExtraAttributes);
+        }
+
+        builder.OpenComponent(3, groupComponentType);
+        builder.AddAttribute(4, "Value", current);
+        builder.AddAttribute(5, "ValueChanged", CreateTypedValueChanged(target, enumType));
+        builder.AddAttribute(6, "ValueExpression", target.BuildValueExpression());
+        builder.AddAttribute(7, "ChildContent", (RenderFragment)(childBuilder =>
+        {
+            childBuilder.OpenRegion(0);
+            var seq = 0;
+            foreach (var name in Enum.GetNames(enumType))
+            {
+                var field = enumType.GetField(name);
+                var display = field?.GetCustomAttribute<DisplayAttribute>();
+                var memberValue = Enum.Parse(enumType, name);
+
+                childBuilder.OpenElement(seq++, "label");
+                childBuilder.AddAttribute(seq++, "class", "wizard-radio-list__option");
+                childBuilder.OpenComponent(seq++, radioComponentType);
+                childBuilder.AddAttribute(seq++, "Value", memberValue);
+                childBuilder.CloseComponent();
+                childBuilder.OpenElement(seq++, "span");
+                childBuilder.AddContent(seq++, display?.Name ?? name);
+                childBuilder.CloseElement();
+                childBuilder.CloseElement(); // label
+            }
+            childBuilder.CloseRegion();
+        }));
+        builder.CloseComponent();
+        builder.CloseElement(); // div
+    }
+
+    /// <summary>Nullable-enum counterpart to <see cref="RenderEnumRadioList"/> -- adds a leading
+    /// "-- none --" radio option, mirroring <see cref="RenderNullableEnumSelect"/>'s own leading
+    /// blank <c>&lt;option&gt;</c>, since an unset nullable enum means "no selection yet."</summary>
+    private void RenderNullableEnumRadioList(RenderTreeBuilder builder, Type enumType, Type nullableEnumType, object? value, FieldTarget target)
+    {
+        var groupComponentType = typeof(InputRadioGroup<>).MakeGenericType(nullableEnumType);
+        var radioComponentType = typeof(InputRadio<>).MakeGenericType(nullableEnumType);
+
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "class", "wizard-radio-list");
+        if (target.ExtraAttributes is { Count: > 0 })
+        {
+            builder.AddMultipleAttributes(2, target.ExtraAttributes);
+        }
+
+        builder.OpenComponent(3, groupComponentType);
+        builder.AddAttribute(4, "Value", value);
+        builder.AddAttribute(5, "ValueChanged", CreateTypedValueChanged(target, nullableEnumType));
+        builder.AddAttribute(6, "ValueExpression", target.BuildValueExpression());
+        builder.AddAttribute(7, "ChildContent", (RenderFragment)(childBuilder =>
+        {
+            childBuilder.OpenRegion(0);
+            var seq = 0;
+
+            childBuilder.OpenElement(seq++, "label");
+            childBuilder.AddAttribute(seq++, "class", "wizard-radio-list__option");
+            childBuilder.OpenComponent(seq++, radioComponentType);
+            childBuilder.AddAttribute(seq++, "Value", (object?)null);
+            childBuilder.CloseComponent();
+            childBuilder.OpenElement(seq++, "span");
+            childBuilder.AddContent(seq++, "-- none --");
+            childBuilder.CloseElement();
+            childBuilder.CloseElement(); // label
+
+            foreach (var name in Enum.GetNames(enumType))
+            {
+                var field = enumType.GetField(name);
+                var display = field?.GetCustomAttribute<DisplayAttribute>();
+                var memberValue = Enum.Parse(enumType, name);
+
+                childBuilder.OpenElement(seq++, "label");
+                childBuilder.AddAttribute(seq++, "class", "wizard-radio-list__option");
+                childBuilder.OpenComponent(seq++, radioComponentType);
+                childBuilder.AddAttribute(seq++, "Value", memberValue);
+                childBuilder.CloseComponent();
+                childBuilder.OpenElement(seq++, "span");
+                childBuilder.AddContent(seq++, display?.Name ?? name);
+                childBuilder.CloseElement();
+                childBuilder.CloseElement(); // label
+            }
+            childBuilder.CloseRegion();
+        }));
+        if (target.ExtraAttributes is { Count: > 0 })
+        {
+            builder.AddMultipleAttributes(6, target.ExtraAttributes);
+        }
+        builder.CloseComponent();
+    }
+
     /// <summary>Tier 3: recurses into a complex type's own public read/write properties, rendering
     /// them as a field group inside the owning step (DESIGN-DISCUSSION.md B.5) -- the
-    /// `CustomerInfo`/`ManagerAccount` intuition from the account-type scenario, with no path-based
-    /// `DependsOn` targeting or recursive step-graph needed.</summary>
+    /// `CustomerInfo`/`ManagerAccount` intuition from the account-type scenario. A nested member's
+    /// own <c>[DependsOn]</c> (DESIGN-DISCUSSION.md M.1) is evaluated via
+    /// <see cref="Navigation.WizardNavigator.AreDependenciesSatisfied"/> -- always resolved relative
+    /// to <c>Model</c>, never the group instance, since the group has a deterministic property path
+    /// from Model regardless of nesting depth. Hiding a nested member here is purely a
+    /// render-dispatch concern, same as everywhere else `[DependsOn]` is checked -- it never removes
+    /// a step or changes step visibility.</summary>
     private void RenderExpandedGroup(RenderTreeBuilder builder, FieldTarget target, Type groupType, object? groupInstance)
     {
         if (groupInstance is null)
@@ -626,6 +851,12 @@ public partial class DynamicWizard<TModel> where TModel : class, new()
         var seq = 0;
         foreach (var nested in nestedProperties)
         {
+            var nestedDependencies = nested.GetCustomAttributes<DependsOnAttribute>().ToArray();
+            if (nestedDependencies.Length > 0 && !_navigator.AreDependenciesSatisfied(nestedDependencies))
+            {
+                continue;
+            }
+
             var nestedLabel = nested.GetCustomAttribute<DisplayAttribute>()?.Name ?? nested.Name;
             var nestedTarget = new FieldTarget(groupInstance, nested, nestedLabel);
             var nestedValue = nested.GetValue(groupInstance);

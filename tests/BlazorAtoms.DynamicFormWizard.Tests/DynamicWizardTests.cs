@@ -1156,4 +1156,354 @@ public class DynamicWizardTests : BunitContext
 
         Assert.Empty(stepChanges);
     }
+
+    // Nested-target DependsOn (DESIGN-DISCUSSION.md M) -- previously a nested group's own member
+    // was ALWAYS rendered, since RenderExpandedGroup never checked [DependsOn] at all. A nested
+    // member's target still resolves relative to Model (M.1), not the group instance, so even a
+    // "sibling within the same group" needs the group's own top-level property name as the first
+    // path segment -- "Contact.IsPrimary", not a bare nameof(IsPrimary).
+    private class ContactWithConditionalBackup
+    {
+        public bool IsPrimary { get; set; }
+
+        [DependsOn("Contact.IsPrimary", true)]
+        public string BackupContact { get; set; } = string.Empty;
+    }
+
+    private class NestedSiblingDependsOnModel
+    {
+        [FormStep(1)]
+        public ContactWithConditionalBackup Contact { get; set; } = new();
+    }
+
+    [Fact]
+    public void A_nested_group_members_own_DependsOn_is_hidden_until_its_dotted_path_target_matches()
+    {
+        var model = new NestedSiblingDependsOnModel();
+        var cut = Render<DynamicWizard<NestedSiblingDependsOnModel>>(p => p.Add(c => c.Model, model));
+
+        Assert.Empty(cut.FindAll("input.wizard-field--text")); // BackupContact hidden -- IsPrimary is false
+    }
+
+    [Fact]
+    public void A_nested_group_members_own_DependsOn_appears_once_its_dotted_path_target_matches()
+    {
+        var model = new NestedSiblingDependsOnModel();
+        var cut = Render<DynamicWizard<NestedSiblingDependsOnModel>>(p => p.Add(c => c.Model, model));
+
+        cut.Find("input.wizard-field--checkbox").Change(true);
+
+        Assert.NotNull(cut.Find("input.wizard-field--text"));
+    }
+
+    // List-item sibling DependsOn (DESIGN-DISCUSSION.md M.2) -- a repeating item's own field can
+    // now depend on a SIBLING within that same item (a plain nameof, resolved against the item
+    // instance itself, no dotted path needed) -- but two different rows must never cross-affect
+    // each other, since each row's DependsOn resolves against its OWN instance, not any other row's.
+    private class BeneficiaryWithConditionalNote
+    {
+        [Required(ErrorMessage = "Name is required.")]
+        public string Name { get; set; } = string.Empty;
+
+        public bool IsPrimary { get; set; }
+
+        [DependsOn(nameof(IsPrimary), true)]
+        public string Note { get; set; } = string.Empty;
+    }
+
+    private class ModelWithListItemSiblingDependency
+    {
+        [FormStep(1)]
+        public List<BeneficiaryWithConditionalNote> Beneficiaries { get; set; } = new()
+        {
+            new() { Name = "Alice" },
+            new() { Name = "Bob" },
+        };
+    }
+
+    [Fact]
+    public void A_list_items_own_field_is_hidden_until_its_sibling_in_the_SAME_item_matches()
+    {
+        var model = new ModelWithListItemSiblingDependency();
+        var cut = Render<DynamicWizard<ModelWithListItemSiblingDependency>>(p => p.Add(c => c.Model, model));
+
+        Assert.Equal(2, cut.FindAll("fieldset.wizard-list-repeater__item input.wizard-field--text").Count); // just Name x2, no Note yet
+    }
+
+    [Fact]
+    public void Toggling_one_items_sibling_reveals_only_that_items_own_field_not_another_rows()
+    {
+        var model = new ModelWithListItemSiblingDependency();
+        var cut = Render<DynamicWizard<ModelWithListItemSiblingDependency>>(p => p.Add(c => c.Model, model));
+
+        cut.FindAll("fieldset.wizard-list-repeater__item input.wizard-field--checkbox")[0].Change(true);
+
+        var groups = cut.FindAll("fieldset.wizard-list-repeater__item");
+        Assert.Equal(2, groups[0].QuerySelectorAll("input.wizard-field--text").Length); // Name + Note
+        Assert.Equal(1, groups[1].QuerySelectorAll("input.wizard-field--text").Length); // Name only -- untouched
+        Assert.True(model.Beneficiaries[0].IsPrimary);
+        Assert.False(model.Beneficiaries[1].IsPrimary);
+    }
+
+    // Survey/Likert matrix fields (DESIGN-DISCUSSION.md section I, #163/#164/#165) -- a
+    // List<TItem> carrying [FormMatrix] renders a real <table> instead of the ordinary
+    // scalar-row/complex-fieldset repeater.
+    public enum LikertRating
+    {
+        [Display(Name = "Strongly disagree")] StronglyDisagree,
+        [Display(Name = "Disagree")] Disagree,
+        [Display(Name = "Neutral")] Neutral,
+        [Display(Name = "Agree")] Agree,
+        [Display(Name = "Strongly agree")] StronglyAgree,
+    }
+
+    public class SurveyStatementModel
+    {
+        public string Statement { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Please answer this statement.")]
+        public LikertRating? Answer { get; set; }
+    }
+
+    private class SurveyMatrixModel
+    {
+        [FormStep(1, "Survey")]
+        [FormMatrix(nameof(SurveyStatementModel.Answer), nameof(SurveyStatementModel.Statement))]
+        public List<SurveyStatementModel> Statements { get; set; } = new()
+        {
+            new() { Statement = "Product is affordable" },
+            new() { Statement = "Product does what it claims" },
+        };
+    }
+
+    [Fact]
+    public void FormMatrix_renders_a_table_with_one_column_per_enum_member_and_one_row_per_item()
+    {
+        var cut = Render<DynamicWizard<SurveyMatrixModel>>(p => p.Add(c => c.Model, new SurveyMatrixModel()));
+
+        var table = cut.Find("table.wizard-matrix");
+        var columnHeaders = table.QuerySelectorAll("thead th[scope='col']");
+        var rowHeaders = table.QuerySelectorAll("tbody th[scope='row']");
+
+        Assert.Equal(5, columnHeaders.Length); // one per LikertRating member
+        Assert.Equal("Strongly disagree", columnHeaders[0].TextContent);
+        Assert.Equal("Strongly agree", columnHeaders[4].TextContent);
+        Assert.Equal(2, rowHeaders.Length); // one per Statements item
+        // Each row includes a trailing required marker -- SurveyStatementModel.Answer is [Required].
+        Assert.Equal("Product is affordable *", rowHeaders[0].TextContent);
+        Assert.Equal("Product does what it claims *", rowHeaders[1].TextContent);
+        Assert.Empty(cut.FindAll("fieldset.wizard-list-repeater__item")); // NOT the ordinary repeater
+    }
+
+    [Fact]
+    public void FormMatrix_selecting_a_radio_writes_the_right_items_Answer_and_does_not_affect_other_rows()
+    {
+        var model = new SurveyMatrixModel();
+        var cut = Render<DynamicWizard<SurveyMatrixModel>>(p => p.Add(c => c.Model, model));
+
+        var rows = cut.FindAll("tbody tr");
+        var row0Radios = rows[0].QuerySelectorAll("input[type='radio']");
+        row0Radios[3].Change(true); // "Agree" -- 4th column, index 3
+
+        Assert.Equal(LikertRating.Agree, model.Statements[0].Answer);
+        Assert.Null(model.Statements[1].Answer); // untouched
+    }
+
+    [Fact]
+    public void FormMatrix_validation_needs_zero_navigator_changes_and_blocks_Next_when_a_statement_is_unanswered()
+    {
+        var model = new SurveyMatrixModel();
+        var editContext = new EditContext(model);
+        var store = new ValidationMessageStore(editContext);
+        var nav = new WizardNavigator(WizardModelSchema.For<SurveyMatrixModel>(), model);
+
+        Assert.False(nav.ValidateCurrentStep(store)); // both statements start unanswered
+
+        model.Statements[0].Answer = LikertRating.Neutral;
+        model.Statements[1].Answer = LikertRating.Agree;
+        Assert.True(nav.ValidateCurrentStep(store));
+    }
+
+    // Numbered rating-scale fields (DESIGN-DISCUSSION.md section J, #167/#168).
+    private class RatingScaleModel
+    {
+        [FormStep(1)]
+        [FormRatingScale(1, 5, "Not satisfied", "Completely satisfied")]
+        [Required(ErrorMessage = "Please rate your satisfaction.")]
+        public int? Satisfaction { get; set; }
+    }
+
+    [Fact]
+    public void FormRatingScale_renders_max_minus_min_plus_1_points_with_endpoint_labels()
+    {
+        var cut = Render<DynamicWizard<RatingScaleModel>>(p => p.Add(c => c.Model, new RatingScaleModel()));
+
+        var scale = cut.Find("div.wizard-rating");
+        Assert.Equal(5, scale.QuerySelectorAll("input[type='radio']").Length); // 1..5 inclusive
+        Assert.Equal("Not satisfied", scale.QuerySelector("span.wizard-rating__endpoint--min")!.TextContent);
+        Assert.Equal("Completely satisfied", scale.QuerySelector("span.wizard-rating__endpoint--max")!.TextContent);
+    }
+
+    [Fact]
+    public void FormRatingScale_clicking_a_point_sets_that_exact_value()
+    {
+        var model = new RatingScaleModel();
+        var cut = Render<DynamicWizard<RatingScaleModel>>(p => p.Add(c => c.Model, model));
+
+        cut.FindAll("div.wizard-rating__points input[type='radio']")[2].Change(true); // 3rd point -- value 3 (Min=1)
+
+        Assert.Equal(3, model.Satisfaction);
+
+        // Re-query after the first click -- OnFieldChanged triggers a re-render, which replaces the
+        // render tree and invalidates any previously captured element references.
+        cut.FindAll("div.wizard-rating__points input[type='radio']")[4].Change(true); // 5th point -- value 5, not additive/stuck on the prior click
+        Assert.Equal(5, model.Satisfaction);
+    }
+
+    [Fact]
+    public void FormRatingScale_validation_blocks_Next_when_unrated()
+    {
+        var model = new RatingScaleModel();
+        var editContext = new EditContext(model);
+        var store = new ValidationMessageStore(editContext);
+        var nav = new WizardNavigator(WizardModelSchema.For<RatingScaleModel>(), model);
+
+        Assert.False(nav.ValidateCurrentStep(store));
+
+        model.Satisfaction = 4;
+        Assert.True(nav.ValidateCurrentStep(store));
+    }
+
+    // Vertical radio-list enum rendering (DESIGN-DISCUSSION.md section K, #170/#171).
+    public enum RadioListChoice
+    {
+        [Display(Name = "Less expensive")] LessExpensive,
+        [Display(Name = "Priced about the same")] AboutTheSame,
+        MoreExpensive,
+        [Display(Name = "Not sure")] NotSure,
+    }
+
+    private class RadioListModel
+    {
+        [FormStep(1)]
+        [FormRadioList]
+        public RadioListChoice PriceFeeling { get; set; }
+    }
+
+    [Fact]
+    public void FormRadioList_renders_one_radio_per_enum_member_with_DisplayName_labels()
+    {
+        var cut = Render<DynamicWizard<RadioListModel>>(p => p.Add(c => c.Model, new RadioListModel()));
+
+        var options = cut.FindAll("div.wizard-radio-list label.wizard-radio-list__option");
+        Assert.Equal(4, options.Count);
+        Assert.Equal("Less expensive", options[0].QuerySelector("span")!.TextContent);
+        Assert.Equal("Priced about the same", options[1].QuerySelector("span")!.TextContent);
+        Assert.Equal("MoreExpensive", options[2].QuerySelector("span")!.TextContent); // no [Display] -- bare name
+        Assert.Equal("Not sure", options[3].QuerySelector("span")!.TextContent);
+    }
+
+    [Fact]
+    public void FormRadioList_selecting_an_option_sets_the_property_and_a_later_selection_replaces_it()
+    {
+        var model = new RadioListModel();
+        var cut = Render<DynamicWizard<RadioListModel>>(p => p.Add(c => c.Model, model));
+
+        // InputRadio's onchange binds a string (the radio's own "value" attribute -- the enum
+        // member name), not a bool -- unlike the hand-rolled rating-scale/matrix radios above,
+        // whose onchange handlers ignore the event args entirely and close over the target value
+        // directly. Confirmed by inspecting rendered markup rather than assumed.
+        cut.FindAll("div.wizard-radio-list input[type='radio']")[1].Change(nameof(RadioListChoice.AboutTheSame));
+
+        Assert.Equal(RadioListChoice.AboutTheSame, model.PriceFeeling);
+
+        // Re-query after the first click -- see the identical comment in the rating-scale test above.
+        cut.FindAll("div.wizard-radio-list input[type='radio']")[3].Change(nameof(RadioListChoice.NotSure)); // replaces the prior selection, doesn't add to it
+        Assert.Equal(RadioListChoice.NotSure, model.PriceFeeling);
+    }
+
+    private class NullableRadioListModel
+    {
+        [FormStep(1)]
+        [FormRadioList]
+        [Required(ErrorMessage = "Please choose an option.")]
+        public RadioListChoice? PriceFeeling { get; set; }
+    }
+
+    [Fact]
+    public void FormRadioList_validation_is_unaffected_by_the_rendering_swap()
+    {
+        var model = new NullableRadioListModel();
+        var editContext = new EditContext(model);
+        var store = new ValidationMessageStore(editContext);
+        var nav = new WizardNavigator(WizardModelSchema.For<NullableRadioListModel>(), model);
+
+        Assert.False(nav.ValidateCurrentStep(store)); // unset nullable enum -- [Required] still fires
+
+        model.PriceFeeling = RadioListChoice.NotSure;
+        Assert.True(nav.ValidateCurrentStep(store));
+    }
+
+    // FormMatrix per-row "user can skip" + required/invalid indicators (DESIGN-DISCUSSION.md
+    // section I addendum) -- [RequiredUnless] makes "required" an instance fact (some statements
+    // mandatory, some optional, on the SAME model), and an unanswered required row must now be
+    // visibly flagged rather than silently blocking Next with no indication of which row failed.
+    private class SkippableSurveyStatementModel
+    {
+        public string Statement { get; set; } = string.Empty;
+        public bool AllowSkip { get; set; }
+
+        [RequiredUnless(nameof(AllowSkip))]
+        public LikertRating? Answer { get; set; }
+    }
+
+    private class SkippableSurveyMatrixModel
+    {
+        [FormStep(1, "Survey")]
+        [FormMatrix(nameof(SkippableSurveyStatementModel.Answer), nameof(SkippableSurveyStatementModel.Statement))]
+        public List<SkippableSurveyStatementModel> Statements { get; set; } = new()
+        {
+            new() { Statement = "Required statement" },
+            new() { Statement = "Optional statement", AllowSkip = true },
+        };
+    }
+
+    [Fact]
+    public void RequiredUnless_allows_null_when_the_skip_flag_is_true_but_still_requires_it_otherwise()
+    {
+        var model = new SkippableSurveyMatrixModel();
+        var editContext = new EditContext(model);
+        var store = new ValidationMessageStore(editContext);
+        var nav = new WizardNavigator(WizardModelSchema.For<SkippableSurveyMatrixModel>(), model);
+
+        Assert.False(nav.ValidateCurrentStep(store)); // required statement still unanswered
+
+        model.Statements[0].Answer = LikertRating.Agree;
+        Assert.True(nav.ValidateCurrentStep(store)); // optional statement stays null throughout -- allowed
+        Assert.Null(model.Statements[1].Answer);
+    }
+
+    [Fact]
+    public void FormMatrix_shows_a_required_marker_only_on_rows_that_are_actually_required()
+    {
+        var cut = Render<DynamicWizard<SkippableSurveyMatrixModel>>(p => p.Add(c => c.Model, new SkippableSurveyMatrixModel()));
+
+        var rows = cut.FindAll("tbody tr");
+        Assert.NotNull(rows[0].QuerySelector("span.wizard-matrix__required")); // required statement
+        Assert.Null(rows[1].QuerySelector("span.wizard-matrix__required")); // skippable statement
+    }
+
+    [Fact]
+    public void FormMatrix_flags_only_the_unanswered_required_row_as_invalid_after_a_blocked_Next()
+    {
+        var cut = Render<DynamicWizard<SkippableSurveyMatrixModel>>(p => p.Add(c => c.Model, new SkippableSurveyMatrixModel()));
+
+        // The model has only one step, so it's the final step -- Submit, not Next -- but Submit
+        // still runs ValidateCurrentStep first and blocks the same way.
+        cut.Find("button.wizard__button--submit").Click(); // blocked -- required statement unanswered
+
+        var rows = cut.FindAll("tbody tr");
+        Assert.Contains("wizard-matrix__row--invalid", rows[0].GetAttribute("class"));
+        Assert.DoesNotContain("wizard-matrix__row--invalid", rows[1].GetAttribute("class") ?? string.Empty); // skippable, also unanswered, but never invalid
+    }
 }

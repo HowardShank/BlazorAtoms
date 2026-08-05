@@ -123,10 +123,11 @@ metadata. Section A works through how much of that pitch this package can actual
    than a fully nested/grouped model would need (no path-based `DependsOn` targeting, no recursive
    step-graph), while still giving natural grouping (the `CustomerInfo`/`ManagerAccount` intuition
    from the account-type scenario) for free.
-6. **Known limitation, explicit, deferred (G.27):** `DependsOn` only targets top-level property
-   names — it cannot reach into a nested group's own fields (e.g. "hide something based on
-   `CustomerInfo.Country`"). No scenario traced this session needed that; every `DependsOn` so far
-   only ever depended on a top-level answer (account type, chosen strategy).
+6. **Former limitation, now shipped (G.27/#138, section M):** `DependsOn` originally only targeted
+   top-level property names — it couldn't reach into a nested group's own fields (e.g. "hide
+   something based on `CustomerInfo.Country`"). A dotted-path target string now supports exactly
+   this, resolved from `Model` — see section M for the shape and the sibling-repeating-list-item
+   counterpart.
 7. **Mutability constraint, stated explicitly:** `TModel : class, new()`; only properties with
    both `CanRead` and `CanWrite` participate. Records and init-only properties are **not**
    supported in v1 — reflection `SetValue` requires a settable property. A known limitation, not a
@@ -288,29 +289,31 @@ metadata. Section A works through how much of that pitch this package can actual
       `MaxFileCountAttribute`'s shape); each complex item is *additionally* validated individually
       via `Validator.TryValidateObject`, with errors stored against the item instance so they
       resolve to the same `FieldIdentifier` its own rendered fields already use.
-    - **Still out of scope:** `DependsOn` can't target a field inside a list item (same limitation
-      as G.27 for ordinary nested groups), and a list item's own fields can't depend on each other
-      either. Only `List<T>` is supported — not `IList<T>`/`ICollection<T>`/arrays/other
+    - **Formerly out of scope, now shipped (G.27/#138, section M.2):** a list item's own field can
+      depend on a sibling field within that *same* item. Still out of scope: a list item's field
+      cannot depend on a top-level property outside the list, or on a sibling in a *different* row
+      (M.4). Only `List<T>` is supported — not `IList<T>`/`ICollection<T>`/arrays/other
       collections, kept deliberately narrow (see `WizardTypeInspection.TryGetListItemType`).
 26. **A cancel/close affordance distinct from Back — shipped, see H.34.**
-27. **Nested-target `DependsOn`** (path-based targeting into a group's own fields — see B.6). Also
-    now the reason a repeating list item's own fields can't depend on each other (see G.25).
+27. **Nested-target `DependsOn` — shipped, see section M below/#138.** Path-based targeting into a
+    group's own fields (B.6), and letting a repeating list item's own fields depend on each other
+    (G.25) — was split into two distinct sub-problems, both now implemented per M.
 28. **Richer `DependsOn` operators — shipped, see C.11.** OR-combination specifically remains
     deferred; comparison operators beyond equality are done.
-29. **Survey/Likert matrix fields — planned, not yet implemented, see section I below.** A grid of
-    statements (rows) rated against a shared fixed scale (columns) — e.g. "Strongly disagree" ..
-    "Strongly agree" across several statements. Raised by the user with a reference screenshot;
-    scoped and written up in full in section I, deliberately *not* coded yet (design-first, per
-    this doc's own stated practice of settling the shape before writing engine code).
-30. **Numbered rating-scale fields — planned, not yet implemented, see section J below.** A single
-    question with an N-point numbered scale (e.g. 1–5) between two endpoint labels ("Not
-    satisfied" .. "Completely satisfied") — one scalar property, not a list. Also raised with a
-    reference screenshot, same session as G.29; deliberately not coded yet either.
-31. **Vertical radio-list enum rendering — planned, not yet implemented, see section K below.** A
-    single-choice question ("Compared to our competitors, do you feel the product is: Less
-    expensive / Priced about the same / More expensive / Not sure") rendered as a stacked native
-    radio group instead of the existing `<select>` dropdown every enum property gets today. Third
-    reference screenshot, same session as G.29/G.30; deliberately not coded yet either.
+29. **Survey/Likert matrix fields — shipped, see section I below.** A grid of statements (rows)
+    rated against a shared fixed scale (columns) — e.g. "Strongly disagree" .. "Strongly agree"
+    across several statements. Raised by the user with a reference screenshot; scoped in section I,
+    initially deliberately not coded (design-first), later fully implemented across #163–166.
+30. **Numbered rating-scale fields — shipped, see section J below.** A single question with an
+    N-point numbered scale (e.g. 1–5) between two endpoint labels ("Not satisfied" ..
+    "Completely satisfied") — one scalar property, not a list. Also raised with a reference
+    screenshot, same session as G.29; implemented across #167-169.
+31. **Vertical radio-list enum rendering — shipped, see section K below.** A single-choice question
+    ("Compared to our competitors, do you feel the product is: Less expensive / Priced about the
+    same / More expensive / Not sure") rendered as a stacked native radio group instead of the
+    existing `<select>` dropdown every enum property gets today. Third reference screenshot, same
+    session as G.29/G.30; implemented across #170-172 — caught and fixed a real rendering bug along
+    the way (section K.5a: `InputRadioGroup` renders no wrapping element of its own).
 
 *(A hard "force-stop here" override was considered deferred at one point in this doc's history —
 reconsidered and built once a concrete failure mode was raised; see C.8a, no longer deferred.)*
@@ -455,7 +458,7 @@ reconsidered and built once a concrete failure mode was raised; see C.8a, no lon
     hook — this engine stays a 0-dep leaf (A.1); a consumer wanting that granularity already owns
     `Model` and can serialize it on their own cadence without a per-edit callback from here.
 
-### I. Survey/Likert matrix fields (planned, G.29 — design only, not yet implemented)
+### I. Survey/Likert matrix fields (shipped, G.29/#163/#164/#165/#166)
 
 A grid of statements (rows) rated against one shared fixed scale (columns), rendered as a native
 `<table>` with a radio-button group per row — the classic Likert-scale survey question:
@@ -474,7 +477,7 @@ Product does what it claims      ○              ○         ●       ○     
    Nothing in the current schema model (`WizardPropertySchema`, cached once per `TModel` — F.19)
    has a slot for "a label that comes from the data, not the type." This is the one genuinely new
    concept this feature needs; everything else below reuses existing machinery.
-2. **Shape: `List<TItem>` + a new `[FormMatrix(answerProperty, labelProperty)]` attribute on the
+2. **Shipped (#163): `List<TItem>` + a new `[FormMatrix(answerProperty, labelProperty)]` attribute on the
    list property**, naming which of `TItem`'s own properties is the per-row label (instance data)
    and which is the per-row answer (a nullable enum — nullable so "not yet answered" is
    representable; a non-nullable enum would silently pre-select its first member per
@@ -515,13 +518,13 @@ Product does what it claims      ○              ○         ●       ○     
    `[Display(Name=...)]` if present else the bare member name — the exact same "read
    `[Display(Name=...)]` off an enum member" logic `RenderEnumSelect`/`RenderNullableEnumSelect`
    already have, reused rather than re-invented.
-3. **Dispatch placement:** a new check in `RenderDispatched` (`DynamicWizard.Fields.cs`), inside
+3. **Shipped (#164) — dispatch placement:** a new check in `RenderDispatched` (`DynamicWizard.Fields.cs`), inside
    the existing tier 1b `TryGetListItemType` branch, ahead of the plain `RenderListProperty` call —
    a `List<T>` carrying `[FormMatrix]` routes to a new `RenderMatrixGrid` instead of the ordinary
    scalar-row/complex-fieldset repeater. Exactly the same "attribute short-circuits before the
    generic path" shape `[FormSelect]` already uses ahead of plain-string rendering in `RenderField`
    — no new dispatch *mechanism*, just one more attribute check.
-4. **Markup: a real `<table>`, not a CSS grid of `<div>`s.** `<th scope="col">` for the answer
+4. **Shipped (#164) — markup: a real `<table>`, not a CSS grid of `<div>`s.** `<th scope="col">` for the answer
    headers and `<th scope="row">` for each statement give screen readers correct row/column
    association for free — this package states accessibility as a first-class, non-optional
    requirement (F.17), and a semantic table is the accessible-by-default choice here, not an
@@ -530,14 +533,14 @@ Product does what it claims      ○              ○         ●       ○     
    HTML radio-group semantics, no extra JS. `onchange` writes the selected member onto
    `item.Answer` via `PropertyInfo.SetValue` (same pattern every other field-write goes through),
    then calls `OnFieldChanged()`.
-5. **Validation needs zero new code.** A matrix's `List<SurveyStatementModel>` is, underneath the
-   new rendering, the *exact same data shape* `WizardNavigator.ValidateCurrentStep` already
-   validates for G.25's ordinary complex-item lists: `TryGetListItemType` + `IsComplexType` +
-   `Validator.TryValidateObject` per item, errors stored against the item instance. Validation is
-   render-agnostic — it never asks *how* an item was rendered, only what type it is — so
-   `[Required]` on `Answer` blocking `Next` when a statement is left unanswered should already work
-   unchanged. Confirm with a test rather than assume (this doc's own stated practice), but expect
-   no navigator changes.
+5. **Validation needed zero new code — confirmed by test, not just predicted (#165).** A matrix's
+   `List<SurveyStatementModel>` is, underneath the rendering, the *exact same data shape*
+   `WizardNavigator.ValidateCurrentStep` already validates for G.25's ordinary complex-item lists:
+   `TryGetListItemType` + `IsComplexType` + `Validator.TryValidateObject` per item, errors stored
+   against the item instance. Validation is render-agnostic — it never asks *how* an item was
+   rendered, only what type it is — so `[Required]` on `Answer` blocking `Next` when a statement is
+   left unanswered works unchanged, with zero `WizardNavigator` changes, exactly as predicted here
+   before #164 was written.
 6. **Known v1 scope limits, stated up front rather than discovered late:**
    - **No Add/Remove for matrix rows**, unlike an ordinary complex-item list (G.25) — a survey's
      statement set is normally fixed at design time (seeded in the model's own default), not
@@ -546,22 +549,47 @@ Product does what it claims      ○              ○         ●       ○     
    - **Enum-only answer scale** — no `[FormSelect]`-style fixed-string column set. Enums give type
      safety and reuse the column-header logic already built for `RenderEnumSelect`; a string-based
      scale would need its own header-labeling story.
-   - **Same nested-`DependsOn` limits as every other list item** (G.25/G.27) — a row's `Answer`
-     can't depend on a sibling top-level property differently per row, and rows can't depend on
-     each other.
+   - **Nested-`DependsOn` limits, updated post-M:** a row's `Answer` CAN now depend on a sibling
+     within the *same* item (section M.2 shipped after this section was written), but still can't
+     depend on a top-level property outside the list, or on a sibling in a *different* row (M.4).
    - **All enum members become columns, in declared order** — no per-instance column subset or
      reordering.
-7. **New files/touch points anticipated** (for whoever implements this): `Attributes/
-   FormMatrixAttribute.cs` (new); `WizardPropertySchema`/`WizardModelSchema.Build` (new `Matrix`
-   field, read alongside every other per-property attribute); a new `DynamicWizard.Matrix.cs`
-   partial (matching the one-file-per-concern convention `Fields.cs`/`Lists.cs`/`Selects.cs`
-   already establish) holding `RenderMatrixGrid`; `DynamicWizard.razor.css` (a `.wizard-matrix`
-   table style); README/DEVELOPMENT.md bullets; a new playground reproducing the reference
-   screenshot; tests (render structure — correct row/column counts and header text; interaction —
-   selecting a radio writes the right item's `Answer` and doesn't cross-affect other rows;
-   validation — an unanswered required statement blocks `Next`).
+7. **Touch points — all shipped:**
+   - **#163:** `Attributes/FormMatrixAttribute.cs`; `WizardPropertySchema`/`WizardModelSchema.Build`'s
+     `Matrix` field, read alongside every other per-property attribute.
+   - **#164:** a new `DynamicWizard.Matrix.cs` partial (matching the one-file-per-concern convention
+     `Fields.cs`/`Lists.cs`/`Selects.cs` already establish) holding `RenderMatrixGrid`, plus the
+     dispatch check in `RenderDispatched`'s tier 1b; `DynamicWizard.razor.css`'s `.wizard-matrix`
+     table style.
+   - **#165:** tests in `DynamicWizardTests.cs` (render structure — correct row/column counts and
+     header text; interaction — selecting a radio writes the right item's `Answer` and doesn't
+     cross-affect other rows; validation — an unanswered required statement blocks `Next`).
+   - **#166:** README/DEVELOPMENT.md bullets; `DynamicFormWizardSurveyFieldsPlaygroundView` extended
+     with the matrix example from the reference screenshot, alongside J/K's rating-scale/radio-list
+     examples already there.
+8. **"Fails silently" bug, caught by the user after #166 shipped, fixed same day — a required-but-
+   unanswered row blocked `Next`/Submit with zero visual signal as to which row.** `ValidateCurrentStep`
+   was always correct (item 5) — the gap was purely on the render side: `RenderMatrixGrid` never
+   checked `EditContext.GetValidationMessages` for a row's own `FieldIdentifier(item,
+   AnswerProperty)` the way every other built-in field already does for its own invalid-state CSS
+   class. Fixed by adding a `wizard-matrix__row--invalid` class to the `<tr>` once that check comes
+   back non-empty — same mechanism, applied per row instead of per input, since a matrix row has no
+   single element to outline.
+9. **"User can skip" — added the same day, alongside item 8's fix.** Stock `[Required]` is
+   type-level: it can't express "most statements are mandatory, but this one is optional" when that
+   varies per list item, not per type — the exact same "instance data, not type metadata" problem
+   item 1 already identified for row *labels*, now showing up for row *required-ness* too. New
+   `Validators/RequiredUnlessAttribute.cs` (`[RequiredUnless(nameof(AllowSkipProperty))]`) reflects a
+   sibling `bool` property off `ValidationContext.ObjectInstance` — same mechanism `[Compare]`
+   already uses to reflect a sibling off the whole model (H.29), just aimed at the item instance
+   instead. A required-row indicator (`<span class="wizard-matrix__required">`) is computed **per
+   row**, not once per type, since a `[RequiredUnless]`-tagged answer's actual required-ness now
+   depends on that row's own skip-flag value. Zero `WizardNavigator` changes — `Validator
+   .TryValidateObject` already calls any `ValidationAttribute.IsValid` override on the model's
+   normal per-item pass (item 5); `[RequiredUnless]` just extends the same reuse pattern batch H.29
+   already established, one more custom attribute rather than new engine plumbing.
 
-### J. Numbered rating-scale fields (planned, G.30 — design only, not yet implemented)
+### J. Numbered rating-scale fields (shipped, G.30/#167/#168/#169)
 
 A single question with an N-point numbered scale between two endpoint labels — e.g. "How satisfied
 are you with the product?" with circles `1 2 3 4 5` between "Not satisfied" and "Completely
@@ -576,7 +604,7 @@ but a much smaller feature: **one scalar property, not a list.**
    `InputText` for a typed `<input>`/`<textarea>` (H.30). No new list machinery, no new schema
    collection field, no new validation path — this is the smaller of the two asks, and can likely
    ship well ahead of I.
-2. **Shape: `[FormRatingScale(min, max, minLabel, maxLabel)]` on an `int?` property.** Nullable for
+2. **Shipped (#167): `[FormRatingScale(min, max, minLabel, maxLabel)]` on an `int?` property.** Nullable for
    the same reason G.29's `Answer` is nullable — an unrated question must not silently look
    answered (a plain non-nullable `int` defaulting to `0` — or worse, `min` — would misrecord "no
    opinion" as a real rating). All four constructor args are compile-time constants (unlike
@@ -591,18 +619,20 @@ but a much smaller feature: **one scalar property, not a list.**
        public int? Satisfaction { get; set; }
    }
    ```
-3. **Dispatch placement:** inside `TryRenderBuiltInScalar`'s existing int/nullable-int branch
-   (`NativeNumberTypes.Contains(effectiveType)`), check for `[FormRatingScale]` *before* falling
+3. **Shipped (#167) — dispatch placement:** inside `TryRenderBuiltInScalar`'s existing int/nullable-int branch
+   (`NativeNumberTypes.Contains(effectiveType)`), a check for `[FormRatingScale]` *before* falling
    through to `InputNumber<TValue>` — the exact same "attribute wins over the tier's own default"
    shape `[DataType]` already established for the string branch in the same method (H.30). No new
-   dispatch tier, no new file-level concern — likely lands as one more branch inside
-   `DynamicWizard.Fields.cs`, not a new partial class the way `[FormMatrix]` needs.
-4. **Markup:** a row of `min..max` native `<input type="radio">` elements sharing one `name`
+   dispatch tier, no new file-level concern — lands as one more branch inside
+   `DynamicWizard.Fields.cs`, not a new partial class the way `[FormMatrix]` needs. (Restricted to
+   `effectiveType == typeof(int)` specifically, not the other five `NativeNumberTypes` members — the
+   attribute's own shape only makes sense for a whole-number scale.)
+4. **Shipped (#167) — markup:** a row of `min..max` native `<input type="radio">` elements sharing one `name`
    (styled as circles via CSS, not custom `<button>` + ARIA reinvention — same "prefer the native
-   primitive" principle just established for I.4's table), flanked by the two endpoint labels as
+   primitive" principle established for I.4's table), flanked by the two endpoint labels as
    plain text. Clicking a point writes that integer onto the property and calls `OnFieldChanged()`
    — the same manual-binding shape `RenderTypedTextInput`/`RenderTextArea` already use for
-   raw, non-`InputBase`-derived elements.
+   raw, non-`InputBase`-derived elements. `RenderRatingScale` in `DynamicWizard.Fields.cs`.
 5. **Validation needs zero new code.** `Satisfaction` is a plain `int?` property — `[Required]`/
    `[Range(min, max)]` already validate through the existing zero-engine-code stock-attribute path
    (H.29) regardless of how the property is *rendered*. Nothing to build here either.
@@ -613,17 +643,20 @@ but a much smaller feature: **one scalar property, not a list.**
      point carrying its own label, not just the two endpoints) is a distinct, deferred idea if it
      ever comes up — don't build it speculatively.
    - **Fixed two-endpoint labeling** — no per-point label option in v1 (see above).
-7. **New files/touch points anticipated:** `Attributes/FormRatingScaleAttribute.cs` (new); one new
-   branch inside `TryRenderBuiltInScalar` + one new `RenderRatingScale` method in
-   `DynamicWizard.Fields.cs` (no new partial file expected, unlike I); `DynamicWizard.razor.css` (a
-   `.wizard-rating` style, circular points via `border-radius: 50%` + a selected-state class);
-   README/DEVELOPMENT.md bullets; extend the same matrix playground (or its own) with the
-   satisfaction-scale example from the reference screenshot; tests (render structure — correct
-   point count `max - min + 1`, endpoint label text; interaction — clicking a point sets the
-   property and doesn't affect other points; validation — an unrated `[Required]` field blocks
-   `Next`).
+7. **Touch points — done vs. still pending:**
+   - **Shipped (#167):** `Attributes/FormRatingScaleAttribute.cs`; the `TryRenderBuiltInScalar`
+     branch + `RenderRatingScale` in `DynamicWizard.Fields.cs`; `DynamicWizard.razor.css`'s
+     `.wizard-rating`/`.wizard-rating__endpoint`/`.wizard-rating__points`/`.wizard-rating__point`
+     rules (circular points via `border-radius: 50%` + a `:checked` fill).
+   - **Shipped (#168):** tests in `DynamicWizardTests.cs` (render structure — correct point count
+     `max - min + 1`, endpoint label text; interaction — clicking a point sets the property, and a
+     later click replaces rather than sticks with the earlier one; validation — an unrated
+     `[Required]` field blocks `Next`).
+   - **Shipped (#169):** README/DEVELOPMENT.md bullets; `DynamicFormWizardSurveyFieldsPlaygroundView`
+     (new playground, wired into NavMenu + all 3 demo hosts) with the satisfaction-scale example
+     from the reference screenshot.
 
-### K. Vertical radio-list enum rendering (planned, G.31 — design only, not yet implemented)
+### K. Vertical radio-list enum rendering (shipped, G.31/#170/#171/#172)
 
 A single-choice question rendered as a stacked native radio group — e.g. "Compared to our
 competitors, do you feel the product is: Less expensive / Priced about the same / More expensive /
@@ -639,7 +672,7 @@ Not sure" — instead of the `<select>` dropdown every enum property gets today 
    `onchange`/`name`-sharing code to write at all, unlike G.29's matrix rows or G.30's rating
    points, both of which render raw elements by hand. This is render-tree wiring only: no new
    validation path, no new list machinery, no new manual event handler.
-2. **Shape: a bare marker attribute, `[FormRadioList]`, on an enum (or nullable-enum) property.**
+2. **Shipped (#170) — shape: a bare marker attribute, `[FormRadioList]`, on an enum (or nullable-enum) property.**
    No constructor args needed — it doesn't configure anything, it just swaps which built-in
    component tier 2 opens for this one property.
    ```csharp
@@ -663,13 +696,13 @@ Not sure" — instead of the `<select>` dropdown every enum property gets today 
    members, so the property can stay a plain non-nullable enum. `[FormRadioList]` should still work
    on a *nullable* enum too (mirroring `RenderNullableEnumSelect`'s existing nullable-enum handling)
    for the cases where "no answer yet" is genuinely distinct from every listed choice.
-3. **Dispatch placement:** inside `TryRenderBuiltInScalar`'s existing enum branch
-   (`effectiveType.IsEnum`), check for `[FormRadioList]` before choosing `RenderEnumSelect`/
+3. **Shipped (#170) — dispatch placement:** inside `TryRenderBuiltInScalar`'s existing enum branch
+   (`effectiveType.IsEnum`), a check for `[FormRadioList]` before choosing `RenderEnumSelect`/
    `RenderNullableEnumSelect` — same "attribute short-circuits the tier's own default" shape now
    common to H.30 (`[DataType]`), J (`[FormRatingScale]`), and this. Two new methods,
    `RenderEnumRadioList`/`RenderNullableEnumRadioList`, mirroring the existing
    `RenderEnumSelect`/`RenderNullableEnumSelect` pair one-for-one.
-4. **Markup:** `OpenComponent(InputRadioGroup<TEnum>)` with one child `InputRadio<TEnum>` per enum
+4. **Shipped (#170) — markup:** `OpenComponent(InputRadioGroup<TEnum>)` with one child `InputRadio<TEnum>` per enum
    member (each member's `[Display(Name=...)]` if present else the bare name, as visible label
    text) as `ChildContent` — the exact same "nest a variable-length set of children inside one
    component via `ChildContent`" shape `RenderEnumSelect` already uses for `<option>` elements, just
@@ -679,18 +712,182 @@ Not sure" — instead of the `<select>` dropdown every enum property gets today 
    rendering swap in this doc (H.30, J.5): the property's *type* doesn't change, only how it's
    rendered, so whatever already validates a plain enum/nullable-enum property keeps validating it
    unchanged.
+5a. **Bug caught by writing #171's tests, not by inspection — `InputRadioGroup<TValue>` renders no
+   wrapping DOM element at all.** The original #170 implementation passed `class="wizard-radio-list"`
+   directly to `InputRadioGroup`, assuming (per A.4's dispatch pattern — every other tier-2
+   component splats onto its own rendered element) that it would land on some wrapping element the
+   same way it does for `InputSelect`/`InputNumber`/etc. It doesn't: `InputRadioGroup` only supplies
+   a cascading value to its `ChildContent`, with no element of its own to attach `class`/
+   `AdditionalAttributes` to — the attribute was silently dropped, no exception, no visible symptom
+   short of a missing `.wizard-radio-list` element in the rendered markup. Confirmed by inspecting
+   actual output (a temporary `throw new Exception(cut.Markup)` in the test, not by reading
+   Blazor's source and assuming). Fixed by wrapping the component in an explicit `<div
+   class="wizard-radio-list">` opened/closed by `RenderEnumRadioList`/`RenderNullableEnumRadioList`
+   themselves, with `target.ExtraAttributes` also moved onto that wrapper (previously spec'd for
+   the component itself, same reasoning). **Also confirmed while fixing this:** a real browser
+   `onchange` event on an `InputRadio<TValue>` carries the radio's own `value` string attribute
+   (the enum member name) as the event payload, parsed back into `TValue` by the group's own
+   binder — *not* a boolean "checked" flag the way a native checkbox's change event does. Tests
+   must call `.Change("EnumMemberName")`, not `.Change(true)`, or the click silently no-ops against
+   the bound value.
 6. **Related idea, explicitly not scoped here:** `[FormSelect]` (a fixed *string* option list, not
    an enum) currently also only renders as a `<select>` — the same "radio list instead of dropdown"
    want could apply there too. Not building that now; flagged so it isn't mistaken for already
    covered by this section if raised later.
-7. **New files/touch points anticipated:** `Attributes/FormRadioListAttribute.cs` (new, bare marker
-   — `[AttributeUsage(AttributeTargets.Property)]`, no properties/ctor args); two new methods in
-   `DynamicWizard.Fields.cs` (`RenderEnumRadioList`/`RenderNullableEnumRadioList`); `DynamicWizard.
-   razor.css` (a `.wizard-radio-list` vertical-stack style); README/DEVELOPMENT.md bullets; add the
-   competitor-comparison example from the reference screenshot to whichever survey-themed
-   playground exists by then; tests (render structure — one radio per enum member, correct visible
-   labels via `[Display(Name=...)]`; interaction — selecting one option sets the property and
-   deselects any previous choice; validation — unaffected, prove with one test rather than assert).
+7. **Touch points — all shipped:**
+   - **#170:** `Attributes/FormRadioListAttribute.cs` (bare marker —
+     `[AttributeUsage(AttributeTargets.Property)]`, no properties/ctor args); the two new methods in
+     `DynamicWizard.Fields.cs` (`RenderEnumRadioList`/`RenderNullableEnumRadioList`), each opening
+     its own explicit `<div class="wizard-radio-list">` wrapper (see 5a — `InputRadioGroup` renders
+     none itself); `DynamicWizard.razor.css`'s `.wizard-radio-list`/`.wizard-radio-list__option`
+     vertical-stack style.
+   - **#171:** tests in `DynamicWizardTests.cs` (render structure — one radio per enum member,
+     correct visible labels via `[Display(Name=...)]`; interaction — selecting one option sets the
+     property and a later selection replaces it, using `.Change("EnumMemberName")` per 5a's finding,
+     not `.Change(true)`; validation — unaffected, proven with a nullable-enum `[Required]` model
+     rather than just asserted).
+   - **Shipped (#172):** README/DEVELOPMENT.md bullets; the competitor-comparison example from the
+     reference screenshot in `DynamicFormWizardSurveyFieldsPlaygroundView` (same playground as J's
+     rating-scale example, wired into NavMenu + all 3 demo hosts).
+
+### L. Package identity — extraction to its own repo/brand as `BlazorComposites` (decided naming, extraction not yet executed)
+
+This package's fit inside the BlazorAtoms family was questioned directly: every other library in
+the family is a small, hand-composed, ~0-dep primitive (`AtomTextField`, `AtomSelect` placed
+explicitly by a consumer); this package is the opposite shape — an attribute-driven reflection
+engine that *generates* an entire multi-step form from a decorated POCO (see "Why this package
+doesn't fit the rest of the family" at the top of this doc). That mismatch, plus this package's own
+growth — three dedicated docs, 161+ tests, 7 playgrounds, and three more field-type designs queued
+(sections I/J/K) — is the concrete evidence the family's "atom" metaphor no longer describes it.
+
+1. **Decision: this package (and any future same-tier complex component) becomes its own brand,
+   `BlazorComposites`, eventually its own repo — not folded permanently into BlazorAtoms.**
+   **Why the name:** "atomic" vs "composite" is a direct, pre-existing antonym pair (chemistry/CS:
+   indivisible vs. built-from-parts) — it extends the existing "Atoms" metaphor rather than
+   borrowing unrelated vocabulary, and doesn't require explaining a borrowed taxonomy to a new
+   reader. It also lines up with the GoF Composite design pattern ("compose objects into tree
+   structures, treat individual objects and compositions uniformly"), a term most .NET developers
+   already recognize, giving the name instant intuition without a glossary.
+   **Names considered and rejected:**
+   - `BlazorElements` — rejected: "element" is already overloaded in web development (HTML
+     element, DOM element), so the name reads as "DOM wrapper," not "composed complex component" —
+     the opposite of the intended signal.
+   - `BlazorOrganisms` (Brad Frost's atomic-design ladder: Atoms → Molecules → Organisms) —
+     considered seriously, correctly matches this package's actual complexity tier, but rejected
+     for two reasons: it borrows a specific external taxonomy a reader may not know, and a single
+     "Organisms" package holding one component (this wizard) for the foreseeable future reads like
+     an empty shelf — a tier name implies siblings are coming, and none are currently planned.
+     `BlazorComposites` doesn't have this problem: "composite" reads naturally as a family name
+     even with one current member.
+2. **Extraction is a repo/branding move, not a dependency change.** `BlazorAtoms.DynamicFormWizard`
+   already exists as an isolated project (own `.csproj`, own test project, own README/DEVELOPMENT/
+   DESIGN-DISCUSSION trio) — nothing about its *code* needs to change to move repos. The planned
+   render-adapter package (A.1, depending on `BlazorAtoms.Inputs`) stays viable after extraction: a
+   NuGet package reference crosses repos with zero friction, so moving this package out of the
+   BlazorAtoms repo does not sever that planned integration.
+3. **Timing rationale: do the extraction now, before any git history accumulates.** No commit has
+   ever been made for this package specifically (per this project's own standing "never commit
+   without explicit instruction" rule) — extracting now means a clean start in the new repo, not a
+   history rewrite or a squashed-history compromise later.
+4. **Scope of what moves:** the package source, its dedicated test project, and its 7 playgrounds
+   (currently living in `samples/Demos.Shared/Playgrounds/` inside the BlazorAtoms repo) all move
+   together — leaving the playgrounds behind as orphaned demos referencing an external package was
+   explicitly considered and rejected; they're a heavy, wizard-specific investment and belong with
+   the code they demonstrate.
+5. **Naming for the extracted package itself, not yet finalized.** Whether the NuGet package keeps
+   the `BlazorAtoms.` prefix (trust halo from the parent brand, but reads as a permanent sub-brand)
+   or drops it entirely in favor of a fully independent identity (e.g. `BlazorComposites.
+   DynamicFormWizard` or similar) is an open naming question for whoever executes the extraction —
+   tracked in "Not yet decided" below.
+6. **Not yet executed.** This section records the naming and rationale only. No repo has been
+   created, no files have moved, and no package renaming has happened — per explicit instruction,
+   this was a documentation-only decision, execution is separate future work.
+
+### M. Nested-target `DependsOn` (shipped, G.27/#138)
+
+`[DependsOn]` previously only targeted a top-level property name on `TModel` (B.6) — it could
+neither reach into a nested group's own fields (e.g. "hide something based on
+`CustomerInfo.Country`") nor let two fields *within the same repeating-list item* depend on each
+other (e.g. a `Beneficiary`'s own `IsPrimary` gating its own `SharePercent`). This section splits
+G.27 into the two genuinely distinct sub-problems it actually contains, rather than treating it as
+one feature — they needed different fixes, both now shipped.
+
+1. **Sub-problem (a): reaching *into* a single-instance nested group.** A top-level (or another
+   nested-group) property's `[DependsOn]` needs to target a field that lives one or more levels
+   inside an auto-expanded complex-type group (B.5), not just a flat top-level property.
+   **Shape: a dotted-path target string, resolved from `Model`.** No new attribute — `[DependsOn]`'s
+   existing string target parameter already accepts any string; the change is teaching evaluation to
+   recognize a dot and walk the chain, not a new constructor overload.
+   ```csharp
+   public class CustomerInfo
+   {
+       public string Country { get; set; } = "USA";
+   }
+
+   public class ApplicationModel
+   {
+       [FormStep(1)]
+       public CustomerInfo CustomerInfo { get; set; } = new();
+
+       [FormStep(1)]
+       [DependsOn("CustomerInfo.Country", "USA")]
+       public string StateTaxId { get; set; } = string.Empty;
+   }
+   ```
+   **Trade-off, stated up front:** the top-level segment of a dotted path can still use `nameof`
+   (e.g. `$"{nameof(ApplicationModel.CustomerInfo)}.Country"`), but the *nested* segment cannot —
+   there's no compile-time-safe way to express a cross-type dotted member chain in C#. A rename of
+   `CustomerInfo.Country` would not be caught by the compiler the way a flat `nameof(Country)`
+   target is today. This is a real, accepted regression in that one guarantee, not an oversight.
+   **Resolution stays inside `WizardNavigator`'s existing `Matches` logic** (C.11's comparison
+   operators need zero changes) — once the dotted path resolves to a value via a small reflection
+   walk from `Model` (split on `.`, `GetValue` down the chain), everything downstream (equality,
+   ordering operators, `InvalidOperationException` on a non-`IComparable` type) behaves exactly as
+   it does for a flat target today.
+2. **Sub-problem (b): two fields inside the *same* repeating-list item depending on each other.**
+   Unlike (a), this needs **no dotted path at all** — both properties already live on the same
+   `TItem` instance, so a plain `nameof(SiblingProperty)` target (today's existing syntax) is
+   already sufficient *syntax*. The actual gap is in **evaluation root**, not attribute shape:
+   `Matches` always resolves its target against `Model` today, but a list item's own field has no
+   static path from `Model` (list rows are runtime instances, not a fixed property chain) — the
+   root needs to be *that specific item instance* instead.
+   ```csharp
+   public class Beneficiary
+   {
+       public bool IsPrimary { get; set; }
+
+       [DependsOn(nameof(IsPrimary), true)]
+       public int SharePercent { get; set; }
+   }
+   ```
+   **Fix is plumbing, not new syntax:** wherever the engine already knows which item instance owns a
+   given `FieldTarget` (it must, to call `PropertyInfo.SetValue`/`GetValue` on the right row already
+   — G.25's complex-item repeater), that same item instance needs to become the evaluation root
+   passed into `Matches`, instead of always defaulting to `Model`.
+3. **What stays unaffected — step-level visibility.** Both sub-problems only ever hide/show a field
+   *within* an already-visible nested group or an already-rendered list item — neither can remove a
+   step or an item from existing. `EffectiveStepNumbers()`/`DisplayPosition()` (C.9) and the list
+   item add/remove mechanics (G.25) need zero changes; this is purely a field-render-dispatch-level
+   concern, the same tier `[DataType]`/`[FormRatingScale]`/`[FormRadioList]` already operate at.
+4. **Known v1 scope limit, explicit rather than discovered later: indexed-list-row targeting is out
+   of scope.** Neither sub-problem covers a *cross-item* target like `Beneficiaries[0].Name` (one
+   specific row's field, referenced from outside that row) — no scenario has asked for this, and it
+   would need an entirely different addressing scheme (an index into a runtime-sized collection
+   isn't a static path the way a single-instance nested group's property chain is). Don't design it
+   speculatively; revisit only if a concrete case surfaces.
+5. **What actually shipped:** `WizardNavigator` gained a shared `ResolvePath` walker (dotted-or-plain,
+   used by both sub-problems) plus two new public entry points — `AreDependenciesSatisfied`
+   (resolves against `Model`, used by `IsVisible` and by `RenderExpandedGroup` for a nested group
+   member's own `[DependsOn]`, DESIGN-DISCUSSION.md M.1) and the static `IsItemPropertyVisible`
+   (resolves against a list item instance, called from `RenderComplexItemRepeater`, M.2). No new
+   attribute file — `[DependsOn]`'s existing string target parameter needed no shape change. Both
+   `RenderExpandedGroup` (`DynamicWizard.Fields.cs`) and `RenderComplexItemRepeater`
+   (`DynamicWizard.Lists.cs`) now `continue` past a nested/item field whose dependencies aren't
+   satisfied, instead of always rendering every property unconditionally. Tests (`WizardNavigatorTests.cs`,
+   `DynamicWizardTests.cs`): dotted-path visibility toggling (including a null nested segment along
+   the path, treated as not-matching rather than throwing); a nested group member's own `[DependsOn]`
+   hidden/shown; two list rows' sibling `DependsOn` proven not to cross-affect each other. 168/168
+   passing, both net9.0/net10.0.
 
 ## Scenarios walked through (reference — the concrete cases that drove the decisions above)
 
@@ -734,3 +931,7 @@ Not sure" — instead of the `<select>` dropdown every enum property gets today 
   UI kit (e.g. a `BlazorAtoms.DynamicFormWizard.Atoms` adapter vs. others).
 - Exact shape of the async step-transition action hook (G.22) once it's actually designed — this
   doc only records that it's needed and why, not its API.
+- Final package/repo name for the `BlazorComposites` extraction (L) — keep the `BlazorAtoms.`
+  prefix for brand trust, or go fully independent. Also: when the extraction itself happens
+  (immediately vs. after current pending scope #132–143 lands), and whether it's one new repo or a
+  repo *per* future composite component.

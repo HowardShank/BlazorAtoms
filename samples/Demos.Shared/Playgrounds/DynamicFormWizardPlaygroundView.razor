@@ -16,6 +16,10 @@
    Pick <strong>Personal</strong> and the wizard ends right after Contact Info -- the
    <code>[FormPathEnd]</code> marker on that step stops navigation there even though a Manager
    Details step exists later in the model.</p>
+<p>Type <strong>Springfield</strong> into City (step 2) to reveal a "Regional Discount" checkbox on
+   that same step -- <code>RegionalDiscount</code>'s <code>[DependsOn("Contact.City", "Springfield")]</code>
+   is a dotted-path target reaching <em>into</em> the auto-expanded <code>Contact</code> group
+   (DESIGN-DISCUSSION.md section M, #138), not just a flat top-level sibling.</p>
 <p><code>ShowCancelButton</code>/<code>OnWizardCancel</code> (#137) add the Cancel button in the
    nav row below. <strong>Save draft</strong>/<strong>Resume saved draft</strong> (#134) show
    draft-save/resume: <code>Model</code> and <code>CurrentStep</code> are serialized to a plain
@@ -27,7 +31,7 @@
 {
     <p>
         <strong>Submitted!</strong> Kind=@_completed.Kind, Street=@_completed.Contact.Street,
-        City=@_completed.Contact.City
+        City=@_completed.Contact.City, RegionalDiscount=@_completed.RegionalDiscount
         @if (_completed.Kind == AccountKind.Manager)
         {
             <text>, Company=@_completed.Manager.CompanyName</text>
@@ -134,6 +138,12 @@ else
         [FormStep(2, "Contact Info")]
         [FormPathEnd(nameof(Kind), AccountKind.Personal)]
         public ContactInfo Contact { get; set; } = new();
+
+        // Dotted-path [DependsOn] (DESIGN-DISCUSSION.md section M.1, #138) -- reaches INTO the
+        // Contact nested group's own City field, not just a flat top-level sibling.
+        [FormStep(2)]
+        [DependsOn("Contact.City", "Springfield")]
+        public bool RegionalDiscount { get; set; }
 
         [FormStep(3, "Manager Details")]
         [DependsOn(nameof(Kind), AccountKind.Manager)]
