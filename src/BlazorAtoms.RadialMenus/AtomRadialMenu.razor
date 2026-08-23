@@ -29,6 +29,7 @@
      @onkeydown="OnKeyDownAsync"
      @onwheel="OnWheel"
      @onwheel:preventDefault="@(Overflow == RadialMenuOverflow.Spin)"
+     @onpointerenter="OnHostPointerEnter"
      @onpointerleave="OnHostPointerLeaveAsync">
 
     @* --- spokes, painted under everything else ------------------------------------------------ *@
@@ -64,10 +65,25 @@
             }
             else if (CanGoBack)
             {
-                <svg class="atom-radial-menu-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                @* A re-rooted menu shows only descendants, so the center is the only thing that can
+                   name the level you are in. The chevron stays because it is the only affordance
+                   saying the button goes back, but it gives up room to the label. *@
+                <svg class="atom-radial-menu-glyph atom-radial-menu-glyph-back" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                     aria-hidden="true">
                     <path d="M15 18l-6-6 6-6" />
                 </svg>
+                @if (CenterItem is { } current)
+                {
+                    @if (!string.IsNullOrEmpty(current.Icon))
+                    {
+                        <span class="@($"atom-radial-menu-icon {current.Icon}")" aria-hidden="true"></span>
+                    }
+                    @if (ShowLabels && !string.IsNullOrEmpty(current.Label))
+                    {
+                        <span class="atom-radial-menu-label atom-radial-menu-center-label">@LabelFor(current)</span>
+                    }
+                }
             }
             else
             {
@@ -111,6 +127,7 @@
                     tabindex="@TabIndexFor(key)"
                     role="menuitem"
                     data-depth="@ring.Depth"
+                    data-path="@SlotPath(ring, slot)"
                     data-kind="@SlotKindAttr(slot)"
                     data-branch="@(item?.IsBranch == true ? "true" : null)"
                     data-expanded="@(SlotExpanded(ring, slot) ? "true" : null)"
@@ -160,7 +177,7 @@
                 }
                 @if (Debug)
                 {
-                    <span class="atom-radial-menu-debug-tag" aria-hidden="true">@DebugLabel(slot)</span>
+                    <span class="atom-radial-menu-debug-tag" aria-hidden="true">@DebugLabel(ring, slot)</span>
                 }
             </button>
         }

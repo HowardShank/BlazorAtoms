@@ -33,6 +33,10 @@ public partial class AtomRadialMenu : AtomComponentBase, IAsyncDisposable
     /// easy to do by accident and would otherwise recurse forever.</summary>
     private const int MaxDepth = 16;
 
+    /// <summary>How many overlapping pairs the cross-ring check names before it just counts the
+    /// rest. A collapsed tree can produce dozens of them, and a wall of advisories is unreadable.</summary>
+    private const int MaxReportedCollisions = 3;
+
     private readonly List<RadialRing> _rings = [];
     private readonly HashSet<string> _openPaths = [];
     private readonly Dictionary<string, ElementReference> _refs = [];
@@ -40,6 +44,7 @@ public partial class AtomRadialMenu : AtomComponentBase, IAsyncDisposable
     private readonly List<string> _buildAdvisories = [];
 
     private ElementReference _hostRef;
+    private CancellationTokenSource? _hoverCts;
     private IJSObjectReference? _module;
     private DotNetObjectReference<AtomRadialMenu>? _selfRef;
     private bool _attached;
@@ -64,8 +69,9 @@ public partial class AtomRadialMenu : AtomComponentBase, IAsyncDisposable
     [Parameter] public RenderFragment<RadialMenuItem>? ItemTemplate { get; set; }
 
     /// <summary>Replaces the center button's content. Default is a hamburger glyph, or a back arrow
-    /// when <see cref="ExpandMode"/> is <see cref="RadialMenuExpandMode.Drill"/> and the menu is
-    /// below the top level.</summary>
+    /// plus the current level's name whenever the visible frame is not the true root — under
+    /// <see cref="RadialMenuExpandMode.Drill"/>, or under a <see cref="MaxVisibleDepth"/> window that
+    /// has re-rooted.</summary>
     [Parameter] public RenderFragment? CenterTemplate { get; set; }
 
     // ---- geometry -----------------------------------------------------------------------------
@@ -125,6 +131,31 @@ public partial class AtomRadialMenu : AtomComponentBase, IAsyncDisposable
     /// <summary>Items on one ring past which the layout notes that the ring is crowded. Advisory
     /// only, surfaced through <see cref="Debug"/>. Default 12.</summary>
     [Parameter] public int CrowdingWarnThreshold { get; set; } = 12;
+
+    /// <summary>How many ring levels are on screen at once. Null (the default) renders every open
+    /// level.</summary>
+    /// <remarks>
+    /// <para>Set it and the menu <b>re-roots</b>: open a branch deeper than the window and the
+    /// ancestor that falls out of view becomes the new center, whose children start again at the base
+    /// radius across the full <see cref="StartAngle"/>–<see cref="EndAngle"/> arc. The center button
+    /// then names that ancestor and goes back, exactly as it does under
+    /// <see cref="RadialMenuExpandMode.Drill"/>.</para>
+    /// <para>This is the answer to a deep <see cref="RadialMenuExpandMode.Concentric"/> menu running
+    /// off screen. Keeping a child inside its parent's slice means each level's arc is the parent's
+    /// divided by the branching factor, and equal-size items on a narrowing arc need
+    /// <c>R ≥ (ItemSize + ItemGap) / (2·sin(arc/2))</c> — so the radius roughly doubles per level and
+    /// no <see cref="RadialMenuArcMode"/> changes that. Capping the levels caps how far the arc can
+    /// narrow, which caps the radius. At the default sizes with a three-way branch, <b>3 is about the
+    /// largest window whose radius is still set by <see cref="RingGap"/> rather than by item
+    /// collision</b>; 2 is comfortable.</para>
+    /// <para>Ignored by <see cref="RadialMenuExpandMode.Drill"/>, which already shows exactly one
+    /// level. Values below 1 are ignored too, with an advisory under <see cref="Debug"/>.</para>
+    /// <para><c>data-depth</c> and <c>data-path</c> keep reporting an item's <b>true</b> depth and
+    /// address. Only sizing, radius and the overflow state are measured from the visible frame — a
+    /// re-rooted ring renders at full size rather than shrinking by a depth the viewer can no longer
+    /// see.</para>
+    /// </remarks>
+    [Parameter] public int? MaxVisibleDepth { get; set; }
 
     // ---- size ---------------------------------------------------------------------------------
 
@@ -228,6 +259,22 @@ public partial class AtomRadialMenu : AtomComponentBase, IAsyncDisposable
 
     /// <summary>A pointer press outside the menu closes it. Needs the JS module. Default true.</summary>
     [Parameter] public bool CloseOnOutsideClick { get; set; } = true;
+
+    /// <summary>
+    /// Grace period in milliseconds before <see cref="RadialMenuTrigger.Hover"/> closes the menu
+    /// after the pointer leaves. Default 250.
+    /// </summary>
+    /// <remarks>
+    /// Not cosmetic — without it the menu is unusable. Items are positioned outside the host's own
+    /// box, so travelling from the center button to an item crosses a band of empty space that
+    /// belongs to no element: at the defaults that is
+    /// <c>Radius 64 - CenterSize/2 - ItemSize/2 = 8px</c>. Crossing it raises
+    /// <c>pointerleave</c> on the host, which would close the ring before the pointer ever arrives.
+    /// The same gap exists between a branch and its child ring under
+    /// <see cref="RadialMenuExpandMode.Cascade"/>. Re-entering the menu cancels the pending close, so
+    /// the delay is only ever spent on a genuine exit. Set 0 to close immediately.
+    /// </remarks>
+    [Parameter] public double HoverCloseDelay { get; set; } = 250;
 
     /// <summary>Whether the menu is open. Bindable with <c>@bind-Open</c>; left unbound, the
     /// component manages it and reports changes through <see cref="OpenChanged"/>.</summary>
@@ -350,16 +397,45 @@ public partial class AtomRadialMenu : AtomComponentBase, IAsyncDisposable
 
         if (!EffectiveOpen || Items.Count == 0) return;
 
+        if (MaxVisibleDepth is int requested && requested < 1)
+            _buildAdvisories.Add($"MaxVisibleDepth={requested} is not a level count; ignored, every open level is rendered.");
+
         if (ExpandMode == RadialMenuExpandMode.Drill)
         {
             BuildDrillRing();
+            if (Debug) DetectCrossRingCollisions();
             return;
+        }
+
+        // The window's root. Empty unless MaxVisibleDepth is set AND the open chain is deeper than
+        // it, in which case the frame is re-rooted at the ancestor that keeps the window full.
+        var rootPath = VisibleRootPath;
+        var rootItems = ItemsAt(rootPath);
+
+        if (rootItems is null || rootItems.Count == 0)
+        {
+            // The path stopped resolving — Items can change underneath an open path at any time.
+            rootPath = "";
+            rootItems = Items;
+        }
+
+        var window = EffectiveMaxVisibleDepth;
+        var rootDepth = DepthOf(rootPath);
+
+        if (rootDepth > 0)
+        {
+            _buildAdvisories.Add($"MaxVisibleDepth={window} re-rooted the menu at '{rootPath}'; {rootDepth} ancestor level(s) are off screen and the center button goes back to them.");
+
+            if (!SingleBranchOpen)
+                _buildAdvisories.Add("MaxVisibleDepth follows the single deepest open path, so with SingleBranchOpen=false any branch open outside that path is not rendered at all.");
         }
 
         // Depth-first so a ring's children land immediately after it, which keeps the rendered
         // stacking order (and therefore the tab order) matching the visual hierarchy.
         var pending = new Stack<PendingRing>();
-        pending.Push(new PendingRing(0, "", 0, 0, CenterSize, null, Items, StartAngle, EndAngle, null));
+        pending.Push(new PendingRing(
+            rootDepth, 0, rootPath, 0, 0, CenterSize, null, rootItems, StartAngle, EndAngle, null,
+            new SpokeAnchor(0, 0, CenterSize, IsCenter: true)));
 
         while (pending.Count > 0)
         {
@@ -373,6 +449,10 @@ public partial class AtomRadialMenu : AtomComponentBase, IAsyncDisposable
                 continue;
             }
 
+            // Window full. Re-rooting already picked a root that makes this the last level, so this
+            // only bites when the open set is not one chain.
+            if (window is int w && p.VisibleDepth >= w - 1) continue;
+
             foreach (var slot in ring.Layout.Slots)
             {
                 if (slot.Kind != RadialMenuSlotKind.Item) continue;
@@ -385,6 +465,166 @@ public partial class AtomRadialMenu : AtomComponentBase, IAsyncDisposable
                 pending.Push(BuildChild(p, ring, slot, item, key));
             }
         }
+
+        DropFocusIfItLeftTheFrame();
+        if (Debug) DetectCrossRingCollisions();
+    }
+
+    /// <summary>
+    /// Re-rooting and going back both change how many rings exist, so a remembered focus key can
+    /// point past the end of the list. Left alone, the roving tabindex would give its 0 to a button
+    /// that is not rendered and nothing in the menu would be tabbable.
+    /// </summary>
+    private void DropFocusIfItLeftTheFrame()
+    {
+        if (_focusKey is null || _focusKey == CenterKey) return;
+
+        var (ringIndex, slotIndex) = ParseKey(_focusKey);
+        if (ringIndex < 0 || ringIndex >= _rings.Count
+            || slotIndex < 0 || slotIndex >= _rings[ringIndex].Layout.Slots.Count)
+            _focusKey = null;
+    }
+
+    // ---- the visible frame --------------------------------------------------------------------
+
+    /// <summary>The window size, or null when there is no window. Guards the parameter so the rest
+    /// of the walk never has to think about zero or negative level counts.</summary>
+    private int? EffectiveMaxVisibleDepth => MaxVisibleDepth is int n && n > 0 ? n : null;
+
+    /// <summary>
+    /// The path the center button stands for: the branch the visible frame hangs off, or empty at the
+    /// true root. <see cref="RadialMenuExpandMode.Drill"/> is the one-level case of the same idea.
+    /// </summary>
+    private string VisibleRootPath
+    {
+        get
+        {
+            if (ExpandMode == RadialMenuExpandMode.Drill) return DeepestOpenPath();
+            if (EffectiveMaxVisibleDepth is not int window) return "";
+
+            // Rings run from the root's depth to the deepest open depth inclusive, so filling a
+            // window of `window` levels means rooting `window - 1` levels above the deepest.
+            var deepest = DeepestOpenPath();
+            var rootDepth = DepthOf(deepest) - window + 1;
+            return rootDepth <= 0 ? "" : AncestorAt(deepest, rootDepth);
+        }
+    }
+
+    /// <summary>The deepest open path, or empty when nothing is open. Ties are broken ordinally so
+    /// the frame cannot flicker between two equally deep branches across renders.</summary>
+    private string DeepestOpenPath() => _openPaths.Count == 0
+        ? ""
+        : _openPaths.OrderByDescending(DepthOf).ThenBy(p => p, StringComparer.Ordinal).First();
+
+    /// <summary>The prefix of <paramref name="path"/> holding <paramref name="depth"/> segments.</summary>
+    private static string AncestorAt(string path, int depth)
+    {
+        if (depth <= 0) return "";
+        var segments = path.Split('/');
+        return depth >= segments.Length ? path : string.Join('/', segments.Take(depth));
+    }
+
+    /// <summary>The items a ring rooted at <paramref name="path"/> would show, or null if the path no
+    /// longer resolves against <see cref="Items"/>.</summary>
+    private IReadOnlyList<RadialMenuItem>? ItemsAt(string path) =>
+        path.Length == 0 ? Items : ItemAt(path)?.Children;
+
+    /// <summary>The item at a slash-joined index path, or null on any segment that does not resolve.
+    /// The path is our own state, but <see cref="Items"/> can change under it between renders.</summary>
+    private RadialMenuItem? ItemAt(string path)
+    {
+        if (path.Length == 0) return null;
+
+        var items = Items;
+        RadialMenuItem? current = null;
+
+        foreach (var segment in path.Split('/'))
+        {
+            if (items is null
+                || !int.TryParse(segment, NumberStyles.Integer, CultureInfo.InvariantCulture, out var index)
+                || index < 0 || index >= items.Count)
+                return null;
+
+            current = items[index];
+            items = current.Children;
+        }
+
+        return current;
+    }
+
+    /// <summary>
+    /// Reports items from <em>different</em> rings that landed on top of each other.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="RadialLayout"/> only ever sees one ring, so it can prove that a ring's own items
+    /// clear each other and clear their hub - it cannot know that two sibling subtrees were each
+    /// solved independently and collided, nor that a deep <see cref="RadialMenuExpandMode.Cascade"/>
+    /// ring (whose hub is its parent item, not the center button) drifted back across the center.
+    /// Both are real and both are invisible to the per-ring solve, so the check belongs here, where
+    /// every slot's absolute position is known.
+    /// <para>Runs only under <see cref="Debug"/>: it is quadratic in the rendered slot count and its
+    /// only product is an advisory.</para>
+    /// </remarks>
+    private void DetectCrossRingCollisions()
+    {
+        // Ring -1 is the center button - an obstacle that only ring 0's own solve accounts for.
+        var placed = new List<(int Ring, string Name, double X, double Y, double Size)>
+        {
+            (-1, "the center button", 0, 0, CenterSize),
+        };
+
+        for (var r = 0; r < _rings.Count; r++)
+        {
+            var ring = _rings[r];
+            foreach (var slot in ring.Layout.Slots)
+            {
+                if (slot.Kind != RadialMenuSlotKind.Item) continue;
+
+                var path = SlotPath(ring, slot);
+                placed.Add((
+                    r,
+                    path is null ? $"a slot at depth {ring.Depth}" : $"item {path}",
+                    ring.OriginX + slot.X,
+                    ring.OriginY + slot.Y,
+                    slot.Size));
+            }
+        }
+
+        var hits = new List<(double Deficit, string Note)>();
+
+        for (var i = 0; i < placed.Count; i++)
+        {
+            for (var j = i + 1; j < placed.Count; j++)
+            {
+                var a = placed[i];
+                var b = placed[j];
+
+                // Same ring is RadialLayout's job, and it already accounts for the wrap gap and for
+                // multi-ring staggering. Re-checking it here would double-report every finding.
+                if (a.Ring == b.Ring) continue;
+
+                var needed = (a.Size + b.Size) / 2 + ItemGap;
+                var apart = Hypot(b.X - a.X, b.Y - a.Y);
+                if (apart >= needed) continue;
+
+                hits.Add((needed - apart, string.Create(CultureInfo.InvariantCulture,
+                    $"{a.Name} and {b.Name} are {apart:0.#}px apart but need {needed:0.#}px to clear.")));
+            }
+        }
+
+        if (hits.Count == 0) return;
+
+        // Worst first: the deepest overlap is the one worth looking at, not whichever pair the walk
+        // happened to reach first.
+        foreach (var hit in hits.OrderByDescending(h => h.Deficit).Take(MaxReportedCollisions))
+            _buildAdvisories.Add(hit.Note);
+
+        if (hits.Count > MaxReportedCollisions)
+            _buildAdvisories.Add($"{hits.Count - MaxReportedCollisions} further overlap(s) between rings are not listed.");
+
+        _buildAdvisories.Add(ExpandMode == RadialMenuExpandMode.Cascade
+            ? "ExpandMode=Cascade solves each branch on its own, so sibling subtrees can collide once the tree runs more than two levels deep. Narrow ChildSweep, lower SizeScalePerDepth, or switch to Concentric (children stay inside the parent's slice) or Drill (one ring at a time, same footprint at any depth)."
+            : "These rings were solved independently. Widen the arc, raise RingGap, or lower SizeScalePerDepth.");
     }
 
     /// <summary>
@@ -407,35 +647,53 @@ public partial class AtomRadialMenu : AtomComponentBase, IAsyncDisposable
             items = next.item.Children!;
         }
 
-        var pending = new PendingRing(DepthOf(path), path, 0, 0, CenterSize, null, items, StartAngle, EndAngle, null);
+        // VisibleDepth 0: Drill's ring is alone on screen at the base radius, so it is sized and
+        // paginated as the frame's own first level, not as the deep level it happens to be.
+        var pending = new PendingRing(
+            DepthOf(path), 0, path, 0, 0, CenterSize, null, items, StartAngle, EndAngle, null,
+            new SpokeAnchor(0, 0, CenterSize, IsCenter: true));
+
         _rings.Add(SolveRing(pending));
+        DropFocusIfItLeftTheFrame();
     }
 
     private PendingRing BuildChild(PendingRing parent, RadialRing parentRing, RadialSlot slot, RadialMenuItem item, string key)
     {
         var (start, end) = ChildArc(item, slot, parentRing.Layout);
         var depth = parent.Depth + 1;
+        var visibleDepth = parent.VisibleDepth + 1;
+
+        // Where the parent BUTTON is. Both modes hang their spokes off it; they differ only in where
+        // the ring itself is centred, which is a separate question.
+        var anchor = new SpokeAnchor(
+            parent.OriginX + slot.X,
+            parent.OriginY + slot.Y,
+            slot.Size,
+            IsCenter: false);
 
         if (ExpandMode == RadialMenuExpandMode.Concentric)
         {
             // Same center, further out. The floor keeps the child ring clear of the parent ring it
             // has to sit outside of, measured from the parent slot's own distance from center.
             var parentRadius = Math.Sqrt(slot.X * slot.X + slot.Y * slot.Y);
-            var floor = parentRadius + slot.Size / 2 + RingGap + SizeForDepth(depth) / 2;
-            return new PendingRing(depth, key, 0, 0, CenterSize, floor, item.Children!, start, end, slot.AngleDegrees);
+            var floor = parentRadius + slot.Size / 2 + RingGap + SizeForDepth(visibleDepth) / 2;
+            return new PendingRing(depth, visibleDepth, key, 0, 0, CenterSize, floor, item.Children!, start, end, slot.AngleDegrees, anchor);
         }
 
         // Cascade: the parent item becomes the hub the children radiate from, so they clear it the
-        // same way the first ring clears the center button.
+        // same way the first ring clears the center button. Here the ring's origin and the spoke
+        // anchor coincide - under Concentric they do not, which is the whole reason the anchor is
+        // carried separately.
         return new PendingRing(
-            depth, key,
+            depth, visibleDepth, key,
             parent.OriginX + slot.X,
             parent.OriginY + slot.Y,
             slot.Size,
             null,
             item.Children!,
             start, end,
-            slot.AngleDegrees);
+            slot.AngleDegrees,
+            anchor);
     }
 
     /// <summary>
@@ -472,7 +730,11 @@ public partial class AtomRadialMenu : AtomComponentBase, IAsyncDisposable
 
     private RadialRing SolveRing(PendingRing p)
     {
-        var size = RingItemSize(p.Items, p.Depth);
+        // Everything the viewer can judge by eye is measured from the VISIBLE depth: size, the base
+        // radius, and which ring owns the page/spin state. Depth stays true so data-depth and
+        // data-path still address the real tree.
+        var size = RingItemSize(p.Items, p.VisibleDepth);
+        var isFrameRoot = p.VisibleDepth == 0;
         var request = new RadialLayoutRequest
         {
             ItemCount = p.Items.Count,
@@ -481,7 +743,7 @@ public partial class AtomRadialMenu : AtomComponentBase, IAsyncDisposable
             Distribution = Distribution,
             AngleStep = AngleStep,
             Direction = Direction,
-            Radius = p.RadiusFloor ?? (p.Depth == 0 ? Radius : null),
+            Radius = p.RadiusFloor ?? (isFrameRoot ? Radius : null),
             RadiusMode = RadiusMode,
             MaxRadius = EffectiveMaxRadius,
             CenterSize = p.HubSize,
@@ -492,17 +754,17 @@ public partial class AtomRadialMenu : AtomComponentBase, IAsyncDisposable
             Overflow = Overflow,
             MaxPerRing = MaxPerRing,
             PageSize = PageSize,
-            PageIndex = p.Depth == 0 ? _pageIndex : 0,
+            PageIndex = isFrameRoot ? _pageIndex : 0,
             VisibleCount = VisibleCount,
-            SpinOffset = p.Depth == 0 ? _spinOffset : 0,
+            SpinOffset = isFrameRoot ? _spinOffset : 0,
             SizeStep = SizeStep,
             CrowdingWarnThreshold = CrowdingWarnThreshold,
         };
 
         return new RadialRing(
-            p.Depth, p.PathKey, p.OriginX, p.OriginY, p.HubSize,
+            p.Depth, p.VisibleDepth, p.PathKey, p.OriginX, p.OriginY, p.HubSize,
             p.StartAngle, p.EndAngle, p.ParentAngle,
-            p.Items, RadialLayout.Solve(request));
+            p.SpokeFrom, p.Items, RadialLayout.Solve(request));
     }
 
     /// <summary>
@@ -548,6 +810,14 @@ public partial class AtomRadialMenu : AtomComponentBase, IAsyncDisposable
     private double? EffectiveMaxRadius => MaxRadius
         ?? (RadiusMode == RadialMenuRadiusMode.FitContainer && _hostHalf > 0 ? _hostHalf : null);
 
+    /// <summary>
+    /// The branch the visible frame hangs off, or null at the true root. A re-rooted menu shows only
+    /// descendants, so the center button is the one place that can say where you are — under
+    /// <see cref="RadialMenuExpandMode.Drill"/> and under a <see cref="MaxVisibleDepth"/> window
+    /// alike.
+    /// </summary>
+    private RadialMenuItem? CenterItem => ItemAt(VisibleRootPath);
+
     private static int DepthOf(string pathKey) =>
         pathKey.Length == 0 ? 0 : pathKey.Count(c => c == '/') + 1;
 
@@ -560,6 +830,7 @@ public partial class AtomRadialMenu : AtomComponentBase, IAsyncDisposable
     /// <summary>A ring queued for solving. Internal, so nothing here reaches the consumer.</summary>
     private sealed record PendingRing(
         int Depth,
+        int VisibleDepth,
         string PathKey,
         double OriginX,
         double OriginY,
@@ -568,13 +839,15 @@ public partial class AtomRadialMenu : AtomComponentBase, IAsyncDisposable
         IReadOnlyList<RadialMenuItem> Items,
         double StartAngle,
         double EndAngle,
-        double? ParentAngle);
+        double? ParentAngle,
+        SpokeAnchor SpokeFrom);
 }
 
 /// <summary>One solved ring, ready to render. Internal by design — the consumer sees items and
 /// parameters, never the layout state behind them.</summary>
 internal sealed record RadialRing(
     int Depth,
+    int VisibleDepth,
     string PathKey,
     double OriginX,
     double OriginY,
@@ -582,5 +855,19 @@ internal sealed record RadialRing(
     double ArcStart,
     double ArcEnd,
     double? ParentAngle,
+    SpokeAnchor SpokeFrom,
     IReadOnlyList<RadialMenuItem> Items,
     RadialLayoutResult Layout);
+
+/// <summary>
+/// The button a ring's spokes are drawn from: its center point, its diameter, and whether it is the
+/// center button (which may carry a different shape from the items, so a different inradius).
+/// </summary>
+/// <remarks>
+/// Deliberately <b>not</b> the same thing as the ring's origin. Under
+/// <see cref="RadialMenuExpandMode.Cascade"/> the two coincide, which is why the distinction went
+/// unnoticed - but under <see cref="RadialMenuExpandMode.Concentric"/> a child ring is centred on the
+/// menu while the button its items belong to sits out on the previous ring, so a spoke drawn from the
+/// origin runs from the center button instead of from the item that was clicked.
+/// </remarks>
+internal sealed record SpokeAnchor(double X, double Y, double Size, bool IsCenter);

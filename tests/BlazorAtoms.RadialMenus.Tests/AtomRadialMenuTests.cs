@@ -106,6 +106,128 @@ public class AtomRadialMenuTests
         Assert.True(cut.Find("button.atom-radial-menu-center").HasAttribute("disabled"));
     }
 
+    // ---- hover -------------------------------------------------------------------------------
+
+    [Fact]
+    public void Hovering_the_center_opens_the_ring()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var cut = ctx.Render<AtomRadialMenu>(p => p
+            .Add(x => x.Items, Leaves("A", "B", "C"))
+            .Add(x => x.Trigger, RadialMenuTrigger.Hover));
+
+        cut.Find("button.atom-radial-menu-center").PointerEnter();
+
+        Assert.Equal(3, cut.FindAll("button.atom-radial-menu-item").Count);
+    }
+
+    [Fact]
+    public void Leaving_the_host_does_not_close_the_ring_before_the_grace_period_elapses()
+    {
+        // The reason the grace period exists: items are positioned OUTSIDE the host's own box, so
+        // travelling from the center button to an item crosses empty space owned by no element and
+        // raises pointerleave on the host. Closing on that leave makes the items unreachable — the
+        // pointer never gets there. A long delay here keeps the test deterministic.
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var cut = ctx.Render<AtomRadialMenu>(p => p
+            .Add(x => x.Items, Leaves("A", "B", "C"))
+            .Add(x => x.Trigger, RadialMenuTrigger.Hover)
+            .Add(x => x.HoverCloseDelay, 30_000));
+
+        cut.Find("button.atom-radial-menu-center").PointerEnter();
+        Assert.Equal(3, cut.FindAll("button.atom-radial-menu-item").Count);
+
+        cut.Find("div.atom-radial-menu").PointerLeave();
+
+        // Still open: the pointer is mid-flight across the gap.
+        Assert.Equal(3, cut.FindAll("button.atom-radial-menu-item").Count);
+    }
+
+    [Fact]
+    public async Task Arriving_at_an_item_calls_off_the_pending_close()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var cut = ctx.Render<AtomRadialMenu>(p => p
+            .Add(x => x.Items, Leaves("A", "B", "C"))
+            .Add(x => x.Trigger, RadialMenuTrigger.Hover)
+            .Add(x => x.HoverCloseDelay, 30_000));
+
+        cut.Find("button.atom-radial-menu-center").PointerEnter();
+        var host = cut.Find("div.atom-radial-menu");
+
+        host.PointerLeave();    // crossing the gap
+        host.PointerEnter();    // landed on an item, which fires enter on the host too
+
+        Assert.Equal(3, cut.FindAll("button.atom-radial-menu-item").Count);
+
+        // And the item is genuinely usable once reached. Find and click inside InvokeAsync so the
+        // element reference cannot go stale between the two calls.
+        await cut.InvokeAsync(() => cut.FindAll("button.atom-radial-menu-item")[1].Click());
+        Assert.Empty(cut.FindAll("button.atom-radial-menu-item"));
+    }
+
+    [Fact]
+    public void A_zero_delay_closes_on_leave_immediately()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var cut = ctx.Render<AtomRadialMenu>(p => p
+            .Add(x => x.Items, Leaves("A", "B", "C"))
+            .Add(x => x.Trigger, RadialMenuTrigger.Hover)
+            .Add(x => x.HoverCloseDelay, 0));
+
+        cut.Find("button.atom-radial-menu-center").PointerEnter();
+        cut.Find("div.atom-radial-menu").PointerLeave();
+
+        Assert.Empty(cut.FindAll("button.atom-radial-menu-item"));
+    }
+
+    [Fact]
+    public async Task The_grace_period_does_eventually_close_the_menu()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var cut = ctx.Render<AtomRadialMenu>(p => p
+            .Add(x => x.Items, Leaves("A", "B", "C"))
+            .Add(x => x.Trigger, RadialMenuTrigger.Hover)
+            .Add(x => x.HoverCloseDelay, 20));
+
+        cut.Find("button.atom-radial-menu-center").PointerEnter();
+        cut.Find("div.atom-radial-menu").PointerLeave();
+
+        cut.WaitForAssertion(
+            () => Assert.Empty(cut.FindAll("button.atom-radial-menu-item")),
+            TimeSpan.FromSeconds(5));
+
+        await Task.CompletedTask;
+    }
+
+    [Fact]
+    public void A_click_trigger_ignores_hover_entirely()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var cut = ctx.Render<AtomRadialMenu>(p => p.Add(x => x.Items, Leaves("A", "B")));
+
+        cut.Find("button.atom-radial-menu-center").PointerEnter();
+        Assert.Empty(cut.FindAll("button.atom-radial-menu-item"));
+
+        cut.Find("button.atom-radial-menu-center").Click();
+        cut.Find("div.atom-radial-menu").PointerLeave();
+
+        // A leave must not close a click-opened menu.
+        Assert.Equal(2, cut.FindAll("button.atom-radial-menu-item").Count);
+    }
+
     // ---- cancellation -------------------------------------------------------------------------
 
     [Fact]
@@ -356,6 +478,105 @@ public class AtomRadialMenuTests
     }
 
     [Fact]
+    public void Every_item_carries_its_own_path_from_the_root()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var cut = RenderOpen(ctx, Tree());
+
+        // Root ring: paths are just the item index.
+        Assert.Equal(["0", "1", "2"], cut.FindAll("button.atom-radial-menu-item")
+            .Select(b => b.GetAttribute("data-path")).ToArray());
+
+        cut.FindAll("button.atom-radial-menu-item")[0].Click();   // open Shape
+
+        // Its children are addressed beneath it, and depth is the segment count minus one.
+        var children = cut.FindAll("button.atom-radial-menu-item")
+            .Where(b => b.GetAttribute("data-depth") == "1")
+            .Select(b => b.GetAttribute("data-path"))
+            .ToArray();
+
+        Assert.Equal(["0/0", "0/1"], children);
+    }
+
+    [Fact]
+    public void A_path_prefix_selects_a_whole_subtree()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var cut = RenderOpen(ctx, Tree());
+        cut.FindAll("button.atom-radial-menu-item")[0].Click();   // Shape
+        cut.FindAll("button.atom-radial-menu-item")[3].Click();   // Shape > Fill
+
+        // Everything under Shape, at any depth — exactly what data-depth alone cannot express.
+        var subtree = cut.FindAll("[data-path^=\"0/\"]")
+            .Select(b => b.GetAttribute("data-path"))
+            .ToArray();
+
+        Assert.Equal(["0/0", "0/1", "0/0/0", "0/0/1"], subtree);
+    }
+
+    [Fact]
+    public void A_pagination_stepper_has_no_path_because_it_is_not_in_the_tree()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var items = Enumerable.Range(0, 10).Select(i => Leaf($"i{i}")).ToArray();
+        var cut = RenderOpen(ctx, items, p => p
+            .Add(x => x.Overflow, RadialMenuOverflow.Paginate)
+            .Add(x => x.PageSize, 4));
+
+        var stepper = cut.Find("button.atom-radial-menu-stepper");
+        Assert.False(stepper.HasAttribute("data-path"));
+        Assert.Equal("page-next", stepper.GetAttribute("data-kind"));
+    }
+
+    [Fact]
+    public void The_debug_tag_shows_angle_radius_and_path_together()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var cut = RenderOpen(ctx, Leaves("A", "B", "C"), p => p.Add(x => x.Debug, true));
+
+        Assert.Equal("0° r64 · 0", cut.FindAll("span.atom-radial-menu-debug-tag")[0].TextContent);
+    }
+
+    [Fact]
+    public void A_five_level_tree_opens_all_the_way_down()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        // Deepest path 0/0/0/0/0 — five levels, matching the playground's DeepTree source.
+        RadialMenuItem Branch(string label, params RadialMenuItem[] kids) =>
+            new() { Label = label, Children = kids };
+
+        var deep = new[]
+        {
+            Branch("L0",
+                Branch("L1",
+                    Branch("L2",
+                        Branch("L3", Leaf("L4a"), Leaf("L4b"))))),
+            Leaf("Other"),
+        };
+
+        var cut = RenderOpen(ctx, deep);
+
+        for (var depth = 0; depth < 4; depth++)
+        {
+            var branch = cut.FindAll($"[data-depth=\"{depth}\"][data-branch]")[0];
+            cut.InvokeAsync(() => branch.Click()).Wait();
+        }
+
+        Assert.Equal(2, cut.FindAll("[data-depth=\"4\"]").Count);
+        Assert.Equal("0/0/0/0/0", cut.FindAll("[data-depth=\"4\"]")[0].GetAttribute("data-path"));
+    }
+
+    [Fact]
     public void Drill_mode_replaces_the_ring_and_turns_the_center_into_Back()
     {
         using var ctx = new BunitContext();
@@ -370,10 +591,39 @@ public class AtomRadialMenuTests
 
         Assert.Equal(2, cut.FindAll("button.atom-radial-menu-item").Count); // Fill, Stroke only
         var center = cut.Find("button.atom-radial-menu-center");
-        Assert.Equal("Back", center.GetAttribute("aria-label"));
+        Assert.Equal("Back from Shape", center.GetAttribute("aria-label"));
 
         center.Click();
         Assert.Equal(3, cut.FindAll("button.atom-radial-menu-item").Count);
+    }
+
+    /// <summary>
+    /// Drill renders only the deepest open ring, and that ring holds children - so the center button
+    /// is the only element that can say which level you are on.
+    /// </summary>
+    [Fact]
+    public void Drill_center_names_the_level_you_are_in()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var cut = RenderOpen(ctx, Tree(), p => p.Add(x => x.ExpandMode, RadialMenuExpandMode.Drill));
+
+        // At the top level there is no level to name.
+        Assert.Empty(cut.FindAll("span.atom-radial-menu-center-label"));
+
+        cut.FindAll("button.atom-radial-menu-item")[0].Click();  // into Shape
+
+        Assert.Equal("Shape", cut.Find("span.atom-radial-menu-center-label").TextContent);
+        Assert.Equal("Back from Shape", cut.Find("button.atom-radial-menu-center").GetAttribute("aria-label"));
+
+        cut.FindAll("button.atom-radial-menu-item")[0].Click();  // into Fill
+
+        Assert.Equal("Fill", cut.Find("span.atom-radial-menu-center-label").TextContent);
+
+        cut.Find("button.atom-radial-menu-center").Click();      // back out to Shape
+
+        Assert.Equal("Shape", cut.Find("span.atom-radial-menu-center-label").TextContent);
     }
 
     [Fact]
@@ -573,6 +823,193 @@ public class AtomRadialMenuTests
         Assert.Contains("--radialmenu-size:24px", deeper.GetAttribute("style"));
     }
 
+    // ---- MaxVisibleDepth ----------------------------------------------------------------------
+
+    /// <summary>L0 &gt; L1 &gt; L2 &gt; L3 &gt; (L4a, L4b), so the deepest open path is 0/0/0/0.</summary>
+    private static IReadOnlyList<RadialMenuItem> Chain()
+    {
+        RadialMenuItem Branch(string label, params RadialMenuItem[] kids) =>
+            new() { Label = label, Children = kids };
+
+        return
+        [
+            Branch("L0", Branch("L1", Branch("L2", Branch("L3", Leaf("L4a"), Leaf("L4b"))))),
+            Leaf("Other"),
+        ];
+    }
+
+    /// <summary>Opens every branch on the chain, deepest last.</summary>
+    private static void OpenTheChain(IRenderedComponent<AtomRadialMenu> cut)
+    {
+        foreach (var path in new[] { "0", "0/0", "0/0/0", "0/0/0/0" })
+        {
+            var b = cut.FindAll("button.atom-radial-menu-item")
+                .FirstOrDefault(x => x.GetAttribute("data-path") == path);
+            if (b is null) return;
+            cut.InvokeAsync(() => b.Click()).Wait();
+        }
+    }
+
+    /// <summary>
+    /// The window re-roots rather than clipping: the frame's own first ring goes back to the base
+    /// radius at full size, which is the whole point — a clipped ring would keep the radius and the
+    /// depth-shrunk size of a level whose ancestors are no longer on screen.
+    /// </summary>
+    [Fact]
+    public void MaxVisibleDepth_re_roots_the_frame_and_renders_only_that_many_levels()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var cut = RenderOpen(ctx, Chain(), p => p
+            .Add(x => x.ExpandMode, RadialMenuExpandMode.Concentric)
+            .Add(x => x.MaxVisibleDepth, 2));
+
+        OpenTheChain(cut);
+
+        var buttons = cut.FindAll("button.atom-radial-menu-item");
+        var depths = buttons.Select(b => b.GetAttribute("data-depth")).Distinct().OrderBy(d => d).ToArray();
+
+        // Deepest open path is 0/0/0/0 (depth 4 for its children), so a 2-level window is rooted at
+        // 0/0/0 and shows depths 3 and 4 only.
+        Assert.Equal(["3", "4"], depths);
+
+        // data-path still reports the true address, not a re-rooted one.
+        Assert.Equal("0/0/0/0", buttons.First(b => b.GetAttribute("data-depth") == "3").GetAttribute("data-path"));
+
+        var frameRoot = buttons.First(b => b.GetAttribute("data-depth") == "3");
+        var style = frameRoot.GetAttribute("style") ?? "";
+        var x = ParsePx(style, "--radialmenu-x");
+        var y = ParsePx(style, "--radialmenu-y");
+
+        // Base radius again: (CenterSize 64 + ItemSize 48) / 2 + ItemGap 8 = 64. And full size, not
+        // 48 * 0.9^3 = 35.
+        Assert.Equal(64, Math.Sqrt(x * x + y * y), 3);
+        Assert.Contains("--radialmenu-size:48px", style);
+
+        // The center button stands for the branch the frame hangs off.
+        Assert.Equal("Back from L2", cut.Find("button.atom-radial-menu-center").GetAttribute("aria-label"));
+        Assert.Equal("L2", cut.Find("span.atom-radial-menu-center-label").TextContent);
+    }
+
+    /// <summary>Going back has to slide the window inward, not just drop a ring off the outside.</summary>
+    [Fact]
+    public void Going_back_slides_the_window_towards_the_root()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var cut = RenderOpen(ctx, Chain(), p => p
+            .Add(x => x.ExpandMode, RadialMenuExpandMode.Concentric)
+            .Add(x => x.MaxVisibleDepth, 2));
+
+        OpenTheChain(cut);
+        cut.Find("button.atom-radial-menu-center").Click();
+
+        var depths = cut.FindAll("button.atom-radial-menu-item")
+            .Select(b => b.GetAttribute("data-depth")).Distinct().OrderBy(d => d).ToArray();
+
+        Assert.Equal(["2", "3"], depths);
+        Assert.Equal("Back from L1", cut.Find("button.atom-radial-menu-center").GetAttribute("aria-label"));
+    }
+
+    /// <summary>A window of one is Drill's framing reached from the other direction.</summary>
+    [Fact]
+    public void A_window_of_one_shows_a_single_ring_like_Drill_does()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var cut = RenderOpen(ctx, Chain(), p => p
+            .Add(x => x.ExpandMode, RadialMenuExpandMode.Concentric)
+            .Add(x => x.MaxVisibleDepth, 1));
+
+        OpenTheChain(cut);
+
+        var depths = cut.FindAll("button.atom-radial-menu-item")
+            .Select(b => b.GetAttribute("data-depth")).Distinct().ToArray();
+
+        Assert.Equal(["4"], depths);
+        Assert.Equal(2, cut.FindAll("button.atom-radial-menu-item").Count);   // L4a, L4b
+        Assert.Equal("Back from L3", cut.Find("button.atom-radial-menu-center").GetAttribute("aria-label"));
+    }
+
+    /// <summary>Drill already shows exactly one level, so the window is not its business.</summary>
+    [Fact]
+    public void Drill_ignores_MaxVisibleDepth()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var cut = RenderOpen(ctx, Chain(), p => p
+            .Add(x => x.ExpandMode, RadialMenuExpandMode.Drill)
+            .Add(x => x.MaxVisibleDepth, 3));
+
+        OpenTheChain(cut);
+
+        Assert.Equal(2, cut.FindAll("button.atom-radial-menu-item").Count);   // L4a, L4b, one ring
+        Assert.Equal("Back from L3", cut.Find("button.atom-radial-menu-center").GetAttribute("aria-label"));
+    }
+
+    /// <summary>A level count below one is not a window; it is a typo, and it is reported as one.</summary>
+    [Fact]
+    public void A_window_below_one_is_ignored_and_reported()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var cut = RenderOpen(ctx, Chain(), p => p
+            .Add(x => x.ExpandMode, RadialMenuExpandMode.Concentric)
+            .Add(x => x.MaxVisibleDepth, 0)
+            .Add(x => x.Debug, true));
+
+        OpenTheChain(cut);
+
+        var depths = cut.FindAll("button.atom-radial-menu-item")
+            .Select(b => b.GetAttribute("data-depth")).Distinct().OrderBy(d => d).ToArray();
+
+        Assert.Equal(["0", "1", "2", "3", "4"], depths);
+        Assert.Contains("MaxVisibleDepth=0 is not a level count",
+            cut.Find("ul.atom-radial-menu-advisories").TextContent);
+    }
+
+    /// <summary>
+    /// The reason the parameter exists: containment narrows each level's arc by the branching factor,
+    /// so an unwindowed Concentric radius roughly doubles per level once the neighbour-chord term
+    /// overtakes the ring-gap floor. Capping the levels caps how far the arc narrows.
+    /// </summary>
+    [Fact]
+    public void The_window_is_what_keeps_a_deep_concentric_radius_bounded()
+    {
+        double OuterRadius(int? window)
+        {
+            using var ctx = new BunitContext();
+            Module(ctx);
+
+            var cut = RenderOpen(ctx, Chain(), p =>
+            {
+                p.Add(x => x.ExpandMode, RadialMenuExpandMode.Concentric);
+                p.Add(x => x.StartAngle, 90);
+                p.Add(x => x.EndAngle, 270);
+                if (window is int w) p.Add(x => x.MaxVisibleDepth, w);
+            });
+
+            OpenTheChain(cut);
+
+            return cut.FindAll("button.atom-radial-menu-item")
+                .Select(b => b.GetAttribute("style") ?? "")
+                .Select(st => Math.Sqrt(Math.Pow(ParsePx(st, "--radialmenu-x"), 2)
+                                        + Math.Pow(ParsePx(st, "--radialmenu-y"), 2)))
+                .Max();
+        }
+
+        var unbounded = OuterRadius(null);
+        var windowed = OuterRadius(2);
+
+        Assert.True(unbounded > 250, $"expected the unwindowed menu to run away, got {unbounded}");
+        Assert.True(windowed < 140, $"expected a 2-level window to stay near the base radius, got {windowed}");
+    }
+
     // ---- overflow -----------------------------------------------------------------------------
 
     [Fact]
@@ -648,6 +1085,121 @@ public class AtomRadialMenuTests
         Assert.Equal(3, spoked.FindAll("span.atom-radial-menu-spoke").Count);
     }
 
+    /// <summary>Every spoke's start point and angle, in render order.</summary>
+    private static (double X, double Y, double Angle)[] Spokes(IRenderedComponent<AtomRadialMenu> cut) =>
+        cut.FindAll("span.atom-radial-menu-spoke")
+            .Select(s => s.GetAttribute("style") ?? "")
+            .Select(style => (
+                ParsePx(style, "--radialmenu-x"),
+                ParsePx(style, "--radialmenu-y"),
+                ParseDeg(style, "--radialmenu-angle")))
+            .ToArray();
+
+    private static double ParseDeg(string style, string name)
+    {
+        var token = style.Split(';').FirstOrDefault(t => t.StartsWith(name + ":", StringComparison.Ordinal));
+        Assert.NotNull(token);
+        var value = token![(name.Length + 1)..].Replace("deg", "", StringComparison.Ordinal);
+        return double.Parse(value, System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>
+    /// A spoke joins two buttons, so it cannot be drawn from the ring's origin along the slot's own
+    /// angle. Under Concentric the ring's origin is the menu center while the button its items belong
+    /// to is out on the previous ring, so that shortcut drew every nested spoke from the center
+    /// button - a fan of lines all converging on the hub instead of on the item that was clicked.
+    /// </summary>
+    [Fact]
+    public void Concentric_spokes_start_at_the_parent_item_not_at_the_center_button()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var cut = RenderOpen(ctx, Tree(), p => p
+            .Add(x => x.ExpandMode, RadialMenuExpandMode.Concentric)
+            .Add(x => x.SpokeMode, RadialMenuSpokeMode.ToCenter));
+
+        cut.FindAll("button.atom-radial-menu-item")[0].Click();  // Shape, at 0 degrees, so (0, -64)
+
+        var spokes = Spokes(cut);
+
+        Assert.Equal(5, spokes.Length);                                            // 3 root slots + 2 children
+        Assert.Equal(3, spokes.Count(s => s.X == 0 && s.Y == 0));                  // root ring hangs off the center
+        Assert.Equal(2, spokes.Count(s => s.X == 0 && s.Y == -64));                // children hang off Shape
+
+        // Child ring radius: 64 + 48/2 + RingGap 16 + 43.2/2 = 125.6, and its arc is the parent's
+        // own 120-degree slice, so the two children sit at -60 and +60 FROM THE MENU CENTER. From
+        // Shape at (0, -64) that is (-108.77, -62.8) and (108.77, -62.8): 1.2px further out and a
+        // long way sideways, so the spokes run almost due west and due east - not at -60 and +60,
+        // which is what the ring-origin shortcut produced.
+        var children = spokes.Where(s => s.Y == -64).OrderBy(s => s.Angle).ToArray();
+        Assert.Equal(-90.6, children[0].Angle, 1);
+        Assert.Equal(90.6, children[1].Angle, 1);
+    }
+
+    /// <summary>
+    /// The regression guard for the fix above: under Cascade the ring's origin and the parent button
+    /// are the same point, so the generalised geometry has to reproduce the slot's own direction.
+    /// </summary>
+    /// <remarks>
+    /// Compared modulo 360, because the two differ in representation and not in direction: the layout
+    /// normalises a -60 degree slot to 300, while <c>Atan2</c> returns the -180..180 branch and gives
+    /// -60 back. CSS <c>rotate()</c> cannot tell them apart, so only the direction is pinned here.
+    /// </remarks>
+    [Fact]
+    public void Cascade_spokes_still_run_along_the_slots_own_direction()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var cut = RenderOpen(ctx, Tree(), p => p.Add(x => x.SpokeMode, RadialMenuSpokeMode.ToCenter));
+
+        cut.FindAll("button.atom-radial-menu-item")[0].Click();  // Shape, at 0 degrees, so (0, -64)
+
+        var children = Spokes(cut)
+            .Where(s => s.X == 0 && s.Y == -64)
+            .Select(s => ((s.Angle % 360) + 360) % 360)
+            .OrderBy(a => a)
+            .ToArray();
+
+        // The child arc is 0 +/- ChildSweep/2, so the two children run at 60 and 300 degrees.
+        Assert.Equal(2, children.Length);
+        Assert.Equal(60, children[0], 3);
+        Assert.Equal(300, children[1], 3);
+    }
+
+    /// <summary>
+    /// <c>ToShapeEdge</c> has to trim against the shape it actually starts from. At depth 0 that is
+    /// the center button and <c>CenterShape</c>; deeper it is a parent item and <c>ItemShape</c>.
+    /// The shapes are chosen so the two answers cannot be confused: a triangle's inradius is half its
+    /// radius, a circle's is all of it.
+    /// </summary>
+    [Fact]
+    public void ToShapeEdge_trims_against_the_button_the_spoke_starts_from()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var cut = RenderOpen(ctx, Tree(), p => p
+            .Add(x => x.ExpandMode, RadialMenuExpandMode.Concentric)
+            .Add(x => x.SpokeMode, RadialMenuSpokeMode.ToShapeEdge)
+            .Add(x => x.CenterShape, RadialMenuShape.Triangle)
+            .Add(x => x.ItemShape, RadialMenuShape.Circle));
+
+        cut.FindAll("button.atom-radial-menu-item")[0].Click();
+
+        var starts = cut.FindAll("span.atom-radial-menu-spoke")
+            .Select(s => s.GetAttribute("style") ?? "")
+            .Select(style => (Y: ParsePx(style, "--radialmenu-y"), Start: ParsePx(style, "--radialmenu-spoke-start")))
+            .ToArray();
+
+        // Center button: 64/2 * cos(60) = 16.
+        Assert.All(starts.Where(s => s.Y == 0), s => Assert.Equal(16, s.Start, 3));
+
+        // Parent item, a circle at the default 48: 48/2 * 1 = 24.
+        Assert.All(starts.Where(s => s.Y == -64), s => Assert.Equal(24, s.Start, 3));
+    }
+
     [Fact]
     public void Debug_off_emits_no_overlay_at_all()
     {
@@ -686,6 +1238,84 @@ public class AtomRadialMenuTests
             .Add(x => x.Debug, true));
 
         Assert.Contains("Cyclic", cut.Find("ul.atom-radial-menu-advisories").TextContent);
+    }
+
+    /// <summary>
+    /// The overlap RadialLayout structurally cannot see: a child ring's hub under Cascade is its
+    /// parent item, so nothing in that solve knows the center button exists. Every number here is
+    /// hand-computable, which is the point - the arc is narrowed to 20 degrees so the single root
+    /// item sits at 0 degrees, and the child is aimed straight back down the spoke it came from.
+    /// </summary>
+    [Fact]
+    public void Debug_reports_an_overlap_no_single_ring_solve_could_have_seen()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var items = new[]
+        {
+            new RadialMenuItem
+            {
+                Label = "Up",
+                StartAngle = 170,
+                EndAngle = 190,
+                Children = [Leaf("Back at center")],
+            },
+        };
+
+        var cut = RenderOpen(ctx, items, p => p
+            .Add(x => x.StartAngle, -10)
+            .Add(x => x.EndAngle, 10)
+            .Add(x => x.SizeScalePerDepth, 1)
+            .Add(x => x.Debug, true));
+
+        cut.FindAll("button.atom-radial-menu-item")[0].Click();
+
+        // Root item: hub clearance (64 + 48)/2 + 8 = 64, at 0 degrees, so (0, -64).
+        // Child ring: hub is that item, clearance (48 + 48)/2 + 8 = 56, at 180 degrees, so (0, -8).
+        // Center button needs (64 + 48)/2 + 8 = 64 and has 8.
+        var text = cut.Find("ul.atom-radial-menu-advisories").TextContent;
+
+        Assert.Contains("the center button and item 0/0 are 8px apart but need 64px to clear.", text);
+        Assert.Contains("ExpandMode=Cascade solves each branch on its own", text);
+    }
+
+    /// <summary>
+    /// The same check must not cry wolf on the mode that cannot overlap: a Concentric child ring is
+    /// floored a whole RingGap outside its parent's radius, so no pair across two rings can ever be
+    /// closer than ItemGap.
+    /// </summary>
+    [Fact]
+    public void Concentric_reports_no_cross_ring_overlap_however_deep_the_tree_runs()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        RadialMenuItem Branch(string label, params RadialMenuItem[] kids) =>
+            new() { Label = label, Children = kids };
+
+        var deep = new[]
+        {
+            Branch("L0", Branch("L1", Branch("L2", Branch("L3", Leaf("L4a"), Leaf("L4b"))))),
+            Leaf("Other"),
+        };
+
+        var cut = RenderOpen(ctx, deep, p => p
+            .Add(x => x.ExpandMode, RadialMenuExpandMode.Concentric)
+            .Add(x => x.Debug, true));
+
+        for (var depth = 0; depth < 4; depth++)
+        {
+            var branch = cut.FindAll($"[data-depth=\"{depth}\"][data-branch]")[0];
+            cut.InvokeAsync(() => branch.Click()).Wait();
+        }
+
+        Assert.Equal(2, cut.FindAll("[data-depth=\"4\"]").Count);
+
+        // Other advisories are fair game here (a deep Concentric tree is legitimately crowded); the
+        // cross-ring check specifically must stay silent.
+        var advisories = cut.FindAll("ul.atom-radial-menu-advisories li").Select(li => li.TextContent);
+        Assert.DoesNotContain(advisories, a => a.Contains("to clear.", StringComparison.Ordinal));
     }
 
     // ---- accessibility ------------------------------------------------------------------------

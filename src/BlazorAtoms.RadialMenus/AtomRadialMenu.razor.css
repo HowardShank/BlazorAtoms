@@ -179,6 +179,18 @@
     height: auto;
 }
 
+/* Drill's center carries the back affordance AND the name of the level you are in, so the chevron
+   takes less room than the hamburger it replaces, which sits in the button alone. */
+.atom-radial-menu-glyph-back {
+    width: 26%;
+    min-width: 10px;
+}
+
+.atom-radial-menu-center-label {
+    font-size: 0.8em;
+    line-height: 1.1;
+}
+
 .atom-radial-menu-icon {
     font-size: 1.1em;
     line-height: 1;

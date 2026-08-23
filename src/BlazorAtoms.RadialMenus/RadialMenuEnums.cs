@@ -103,7 +103,8 @@ public enum RadialMenuExpandMode
     /// their parent occupies. The most compact way to show depth.</summary>
     Concentric,
 
-    /// <summary>Children replace the current ring in place and the center button becomes Back.
+    /// <summary>Children replace the current ring in place, and the center button goes back while
+    /// naming the level you are on — the ring itself shows only children, so nothing else can.
     /// Bounded footprint whatever the depth, at the cost of losing sight of the parent.</summary>
     Drill,
 }
@@ -165,18 +166,24 @@ public enum RadialMenuTrigger
     Always,
 }
 
-/// <summary>Whether a line is drawn from the center out to each item.</summary>
-/// <remarks>Prefixed per the repo-wide enum convention.</remarks>
+/// <summary>Whether a connector line is drawn from each item back to the button it hangs off.</summary>
+/// <remarks>
+/// <para>Prefixed per the repo-wide enum convention.</para>
+/// <para>At the top level that button is the center button. Deeper it is the branch that was opened,
+/// whatever <see cref="RadialMenuExpandMode"/> is in play — including
+/// <see cref="RadialMenuExpandMode.Concentric"/>, where the ring is centred on the menu but its items
+/// still belong to an item out on the previous ring.</para>
+/// </remarks>
 public enum RadialMenuSpokeMode
 {
     /// <summary>No spokes.</summary>
     None = 0,
 
-    /// <summary>A line from the ring's origin to the item's center, passing under both shapes.</summary>
+    /// <summary>A line between the two button centers, passing under both shapes.</summary>
     ToCenter,
 
-    /// <summary>A line spanning only the gap — from the edge of the origin shape to the edge of the
-    /// item shape — so nothing is drawn under an opaque button.</summary>
+    /// <summary>A line spanning only the gap — from the edge of the shape it starts at to the edge of
+    /// the item shape — so nothing is drawn under an opaque button.</summary>
     ToShapeEdge,
 }
 

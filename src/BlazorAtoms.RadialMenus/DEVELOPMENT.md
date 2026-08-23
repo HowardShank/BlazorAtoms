@@ -47,6 +47,33 @@ the same code. `Radius_is_solved_against_the_measured_wrap_gap_not_the_nominal_s
 Note that a 2-item case cannot distinguish the two, because `sin((360-s)/2) = sin(s/2)`. The
 regression test uses three items for that reason.
 
+### The one collision a pure per-ring solve cannot see
+
+`Solve` is given one ring, so the strongest thing it can prove is *within* that ring: its items clear
+each other, and they clear their hub. It cannot prove anything about a ring it was never shown.
+
+Two overlaps therefore live outside it, both real and both visible on screen:
+
+1. **Sibling subtrees under `Cascade`.** Each branch is solved independently from its own item as the
+   hub. Nothing tells branch A's subtree that branch B's exists.
+2. **A deep `Cascade` ring folding back over the center button.** At depth &ge; 1 the hub *is* the
+   parent item, so the hub-clearance term in that solve is about the parent, not about the center
+   button 100px away. A child arc pointing back down its own spoke walks straight into it.
+
+`DetectCrossRingCollisions` in `AtomRadialMenu.razor.cs` closes that gap, after `BuildRings`, where
+every slot's **absolute** position (`ring.OriginX + slot.X`) is known. It compares every pair of
+placed items plus a synthetic entry for the center button, skipping pairs from the same ring —
+same-ring is `Solve`'s job and it already accounts for the wrap gap and for multi-ring staggering, so
+re-checking would double-report every finding.
+
+It runs only under `Debug`: it is quadratic in the rendered slot count and its only product is an
+advisory string. Worst deficit first, three named, the rest counted, then one line naming the levers.
+
+`Debug_reports_an_overlap_no_single_ring_solve_could_have_seen` pins case 2 with hand-computable
+numbers (root item at 64px, child aimed back at 180&deg; landing 8px from a center button needing
+64px). `Concentric_reports_no_cross_ring_overlap_however_deep_the_tree_runs` pins the other
+direction: the mode that cannot overlap must not be told that it did.
+
 ### Coincident angles
 
 If two slots resolve to the same angle the true separation is 0, which demands an infinite radius.
@@ -97,6 +124,73 @@ recursion in markup, no second component, and all the tree-walking stays testabl
 `MaxDepth = 16` guards against a `RadialMenuItem` that appears among its own descendants — easy to
 build by accident from a cache, and otherwise an infinite loop.
 `An_item_graph_that_contains_itself_stops_rather_than_recursing_forever` pins it.
+
+### True depth and visible depth are different numbers
+
+`MaxVisibleDepth` re-roots the walk: `VisibleRootPath` picks the ancestor `window - 1` levels above
+the deepest open path, and `BuildRings` seeds the stack from *its* children instead of from `Items`.
+
+Rings therefore carry **two** depths. `Depth` is the real nesting level and feeds `data-depth`, which
+means `data-path` and `data-depth` still address the real tree however the frame is rooted.
+`VisibleDepth` is the level within the frame, and it is what everything the viewer can judge by eye
+uses: `RingItemSize`, the Concentric radius floor, and the `isFrameRoot` test that decides which ring
+owns the `Radius` floor and the page/spin state. Get that backwards and a re-rooted ring renders at
+`ItemSize · SizeScalePerDepth^8` at the base radius — a ring of dots, shrunk by a depth nothing on
+screen shows.
+
+`BuildDrillRing` seeds `VisibleDepth = 0` for the same reason, which **changed** Drill: a drilled ring
+used to shrink by its true depth and lose its page state. Nothing pinned the old behaviour, and the
+new one is what the mode was for.
+
+Two consequences worth knowing:
+
+- The window follows the *single* deepest open path, so with `SingleBranchOpen = false` a branch open
+  outside that path is not rendered at all. `BuildRings` raises an advisory saying so rather than
+  silently dropping it.
+- Re-rooting and going back both change how many rings exist, so `_focusKey` can point past the end of
+  `_rings`. `DropFocusIfItLeftTheFrame` clears it — otherwise the roving tabindex hands its single `0`
+  to a button that is not rendered and nothing in the menu is tabbable.
+
+Why the parameter exists at all is geometry, not taste: slice containment divides the arc by the
+branching factor per level, and `R ≥ (S + gap) / (2·sin(arc/2))` then doubles per level. `InheritSweep`
+buys a linear radius by abandoning containment, which puts a deep item nowhere near its parent.
+Shrinking items cannot keep up because `MinItemSize` floors them. Capping the levels caps the
+narrowing, and that is the only lever that fixes the cause.
+`The_window_is_what_keeps_a_deep_concentric_radius_bounded` pins both sides of it.
+
+### A spoke connects two buttons, not a ring to its own centre
+
+`SpokeStyle` originally drew from `ring.OriginX/Y` along `slot.AngleDegrees` for `Hypot(slot.X, slot.Y)`
+— three values already to hand, and correct under `Cascade` (where the ring's origin *is* the parent
+button) and under `Drill` (one ring, origin at the center button). Under `Concentric` it was wrong in
+all three terms at once: the ring's origin is the menu centre, so every nested spoke ran from the
+center button outward, producing a fan of lines converging on the hub instead of on the item that was
+clicked.
+
+Rings therefore carry a `SpokeAnchor` — the point, diameter and is-it-the-center-button of the *button*
+their items hang off, separate from the ring's origin. `SpokeStyle` derives the angle from the two
+endpoints with `Atan2(dx, -dy)` (arguments swapped and `y` negated, to land in the component's
+up-is-zero clockwise convention), and `ToShapeEdge` trims the start against `CenterShape` or
+`ItemShape` depending on which button it left.
+
+Note the angle now arrives on the -180..180 branch where the layout's own angles are normalised to
+0..360. `rotate()` cannot tell them apart, so `Cascade_spokes_still_run_along_the_slots_own_direction`
+compares modulo 360 rather than pinning the representation.
+
+### Drill's center button carries the level name
+
+`Drill` renders exactly one ring, and that ring holds *children* — so nothing on screen says which
+branch you are inside. The center button is the only place it can go, which is why it renders the
+back chevron **and** `DrillItem`'s icon and label, and why the chevron drops to 26% width to make
+room (the hamburger it replaces sits in the button alone at 45%).
+
+`DrillItem` resolves the deepest entry in `_openPaths` back to an item by walking the index segments.
+It returns null on any malformed or out-of-range segment rather than throwing: the path is internal
+state, but `Items` can change under it between renders.
+
+`CenterAccessibleName` has to say the same thing the button shows, action first — `"Back from Shape"`,
+not `"Shape"`. `Drill_center_names_the_level_you_are_in` pins both the label and the accessible name,
+including that the top level has no level to name.
 
 ### One button element for items *and* pagination steppers
 

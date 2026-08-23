@@ -18,8 +18,12 @@ public partial class AtomRadialMenu
     /// <summary>Whether the ring is on screen. <see cref="RadialMenuTrigger.Always"/> pins it open.</summary>
     private bool EffectiveOpen => Trigger == RadialMenuTrigger.Always || _rootOpen;
 
-    /// <summary>True when Drill mode has somewhere to go back to.</summary>
-    private bool CanGoBack => ExpandMode == RadialMenuExpandMode.Drill && _openPaths.Count > 0;
+    /// <summary>
+    /// True when the visible frame is not the true root, so the center button has somewhere to go
+    /// back to. Drill is always framed on its deepest open branch; a MaxVisibleDepth window is framed
+    /// on whichever ancestor keeps the window full.
+    /// </summary>
+    private bool CanGoBack => VisibleRootPath.Length > 0;
 
     private async Task SetOpenAsync(bool open)
     {
@@ -63,9 +67,78 @@ public partial class AtomRadialMenu
         if (Trigger == RadialMenuTrigger.Hover) await SetOpenAsync(true);
     }
 
+    /// <summary>
+    /// Cancels a pending hover close. <c>pointerenter</c> does not bubble, but it does fire on an
+    /// ancestor when the pointer moves into one of its descendants from outside — so arriving at any
+    /// item reaches this and calls off the close.
+    /// </summary>
+    private void OnHostPointerEnter() => CancelHoverClose();
+
+    /// <summary>
+    /// Starts the grace period before a hover close. The delay is what makes hover usable at all:
+    /// items sit outside the host's box, so the pointer must cross unowned empty space to reach
+    /// them, and that raises <c>pointerleave</c> here. See <see cref="HoverCloseDelay"/>.
+    /// </summary>
     private async Task OnHostPointerLeaveAsync()
     {
-        if (Trigger == RadialMenuTrigger.Hover) await SetOpenAsync(false);
+        if (Trigger != RadialMenuTrigger.Hover) return;
+
+        CancelHoverClose();
+
+        if (HoverCloseDelay <= 0)
+        {
+            await SetOpenAsync(false);
+            return;
+        }
+
+        var cts = new CancellationTokenSource();
+        _hoverCts = cts;
+
+        // Deliberately NOT awaited. Awaiting the grace period here would keep the pointerleave
+        // handler's Task pending for its whole duration — Blazor treats an event handler's Task as
+        // the event still being dispatched, so a 250ms delay would hold event dispatch open for
+        // 250ms every time the pointer left. The timer runs detached and marshals itself back.
+        _ = CloseAfterGraceAsync(cts);
+    }
+
+    private async Task CloseAfterGraceAsync(CancellationTokenSource cts)
+    {
+        try
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(HoverCloseDelay), cts.Token);
+
+            // Back onto the renderer's context: the continuation after Task.Delay is not on it, and
+            // touching state or calling StateHasChanged off it is a race.
+            await InvokeAsync(async () =>
+            {
+                await SetOpenAsync(false);
+                StateHasChanged();
+            });
+        }
+        catch (OperationCanceledException) { /* pointer came back — the close is off */ }
+        catch (ObjectDisposedException) { /* component went away mid-wait */ }
+        finally
+        {
+            // This call owns `cts`, so it always disposes it. The field is only cleared when it
+            // still points here — a newer leave may already have replaced it.
+            if (ReferenceEquals(_hoverCts, cts)) _hoverCts = null;
+            cts.Dispose();
+        }
+    }
+
+    /// <summary>Calls off a pending hover close. Cancel only — the awaiting
+    /// <see cref="OnHostPointerLeaveAsync"/> owns the token source and disposes it.</summary>
+    private void CancelHoverClose()
+    {
+        var cts = _hoverCts;
+        _hoverCts = null;
+        if (cts is null) return;
+
+        try
+        {
+            cts.Cancel();
+        }
+        catch (ObjectDisposedException) { /* its owner already finished */ }
     }
 
     // ---- activation ---------------------------------------------------------------------------
@@ -509,6 +582,10 @@ public partial class AtomRadialMenu
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
+        // A hover close may still be pending; left running it would fire StateHasChanged on a
+        // disposed component.
+        CancelHoverClose();
+
         if (_module is { } module)
         {
             // Each teardown call is separately timed and separately guarded, so one that hangs or
@@ -579,7 +656,9 @@ public partial class AtomRadialMenu
         .ToString();
 
     private string CenterAccessibleName => CanGoBack
-        ? "Back"
+        // Action first, then where you are leaving from - a re-rooted center button shows the current
+        // level's name, and the accessible name has to say the same thing.
+        ? CenterItem?.Label is { Length: > 0 } label ? $"Back from {label}" : "Back"
         : Trigger == RadialMenuTrigger.Always
             ? AriaLabel ?? "Radial menu"
             : EffectiveOpen ? "Close menu" : "Open menu";
@@ -625,6 +704,19 @@ public partial class AtomRadialMenu
         return SlotExpanded(ring, slot) ? "true" : "false";
     }
 
+    /// <summary>
+    /// The slot's own path from the root — slash-joined item indices, e.g. <c>"0/2/1"</c>. Null for a
+    /// pagination stepper, which is not an item and has no place in the tree.
+    /// </summary>
+    /// <remarks>
+    /// Emitted as <c>data-path</c> so a deep tree is inspectable: <c>data-depth</c> alone tells you an
+    /// item's level but not which parent chain it belongs to, and two rings at the same depth under
+    /// different parents are otherwise indistinguishable in the DOM. A prefix selector picks a whole
+    /// subtree — <c>[data-path^="0/2"]</c>.
+    /// </remarks>
+    private static string? SlotPath(RadialRing ring, RadialSlot slot) =>
+        slot.Kind == RadialMenuSlotKind.Item ? ChildKey(ring.PathKey, slot.ItemIndex) : null;
+
     private static string SlotAccessibleName(RadialSlot slot, RadialMenuItem? item) => item is not null
         ? AccessibleName(item)
         : slot.Kind == RadialMenuSlotKind.PagePrev ? "Previous page" : "Next page";
@@ -647,28 +739,46 @@ public partial class AtomRadialMenu
     }
 
     /// <summary>
-    /// Geometry of the spoke from a ring's origin out to one slot. <c>ToShapeEdge</c> starts at the
-    /// hub's inradius and stops at the item's, so no line is drawn under an opaque button.
+    /// Geometry of the spoke connecting one slot to the button it hangs off. <c>ToShapeEdge</c> starts
+    /// at that button's inradius and stops at the item's, so no line is drawn under an opaque shape.
     /// </summary>
+    /// <remarks>
+    /// A spoke joins two <em>buttons</em>, so both endpoints are absolute and the angle is derived
+    /// from them rather than taken from the slot. It cannot be the slot's own angle: that angle is
+    /// measured from the ring's origin, and under <see cref="RadialMenuExpandMode.Concentric"/> the
+    /// ring's origin is the menu center while the button the slot belongs to is out on the previous
+    /// ring. Using it there drew every nested spoke from the center button instead of from the item
+    /// that was clicked. Under <see cref="RadialMenuExpandMode.Cascade"/> and
+    /// <see cref="RadialMenuExpandMode.Drill"/> the two agree, which is why only Concentric was wrong.
+    /// </remarks>
     private string SpokeStyle(RadialRing ring, RadialSlot slot)
     {
-        var radius = Hypot(slot.X, slot.Y);
+        var from = ring.SpokeFrom;
+        var dx = ring.OriginX + slot.X - from.X;
+        var dy = ring.OriginY + slot.Y - from.Y;
+
+        // Atan2(dx, -dy) rather than Atan2(dy, dx): the component's convention is 0 straight up and
+        // angles increasing clockwise, which is the y axis negated and the arguments swapped.
+        var angle = Math.Atan2(dx, -dy) * 180.0 / Math.PI;
+        var distance = Hypot(dx, dy);
+
         var start = 0.0;
-        var length = radius;
+        var length = distance;
 
         if (SpokeMode == RadialMenuSpokeMode.ToShapeEdge)
         {
-            start = ring.HubSize / 2 * RadialShapeGeometry.InradiusRatio(RadialShapeGeometry.Sides(CenterShape, ShapeSides));
+            var fromShape = from.IsCenter ? CenterShape : ItemShape;
+            start = from.Size / 2 * RadialShapeGeometry.InradiusRatio(RadialShapeGeometry.Sides(fromShape, ShapeSides));
             var itemInradius = slot.Size / 2 * RadialShapeGeometry.InradiusRatio(RadialShapeGeometry.Sides(ItemShape, ShapeSides));
-            length = Math.Max(0, radius - start - itemInradius);
+            length = Math.Max(0, distance - start - itemInradius);
         }
 
         return new StyleVars("radialmenu")
-            .Add("x", Snap(ring.OriginX))
-            .Add("y", Snap(ring.OriginY))
+            .Add("x", Snap(from.X))
+            .Add("y", Snap(from.Y))
             .Add("spoke-start", Snap(start))
             .Add("spoke-len", Snap(length))
-            .Add("angle", Deg(Snap(slot.AngleDegrees)))
+            .Add("angle", Deg(Snap(angle)))
             .ToString();
     }
 
@@ -705,9 +815,17 @@ public partial class AtomRadialMenu
     private static string AccessibleName(RadialMenuItem item) =>
         item.Tooltip ?? item.Label ?? "Menu item";
 
-    private string? DebugLabel(RadialSlot slot) => Debug
-        ? string.Create(CultureInfo.InvariantCulture, $"{slot.AngleDegrees:0}° r{Hypot(slot.X, slot.Y):0}")
-        : null;
+    /// <summary>Angle, radius and path for the debug tag under each item — the three things you need
+    /// when working out why a deep ring landed where it did.</summary>
+    private string? DebugLabel(RadialRing ring, RadialSlot slot)
+    {
+        if (!Debug) return null;
+
+        var geometry = string.Create(CultureInfo.InvariantCulture,
+            $"{slot.AngleDegrees:0}° r{Hypot(slot.X, slot.Y):0}");
+
+        return SlotPath(ring, slot) is { } path ? $"{geometry} · {path}" : geometry;
+    }
 
     /// <summary>Every advisory the current layout produced, plus anything the ring walk itself had to
     /// report. Surfaced only under <see cref="Debug"/>.</summary>

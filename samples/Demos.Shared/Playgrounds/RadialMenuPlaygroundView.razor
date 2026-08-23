@@ -4,10 +4,103 @@
 <PageTitle>AtomRadialMenu Playground</PageTitle>
 
 <h1>AtomRadialMenu playground</h1>
-<p>Tune <code>&lt;AtomRadialMenu&gt;</code> live. 0&deg; is straight up and angles increase clockwise.
-   Item count is never capped &mdash; drag <strong>Item count</strong> up to 24 and watch the ring
-   solve a bigger radius rather than overlapping. Turn on <strong>Debug</strong> to see the arc
-   bounds, each item's angle and radius, and anything the layout had to compromise on.</p>
+<p>Tune <code>&lt;AtomRadialMenu&gt;</code> live. <strong>0&deg; is straight up and angles increase
+   clockwise</strong>, like a compass. Item count is never capped &mdash; drag <strong>Item count</strong>
+   up to 24 and watch the ring solve a bigger radius rather than overlapping.</p>
+
+<div class="rm-docs">
+    <h2>Terminology</h2>
+    <dl>
+        <dt>Center button</dt>
+        <dd>The button at the middle. Styled by <code>CenterSize</code>, <code>CenterShape</code>,
+            <code>CenterColor</code>, <code>CenterBackground</code>, <code>CenterTemplate</code>. The
+            geometry engine calls it the <em>hub</em> &mdash; it is the obstacle every item has to clear,
+            which is why a sparse ring's radius is often set by the center button rather than by the
+            items.</dd>
+
+        <dt>Depth</dt>
+        <dd>Nesting level. <strong>0</strong> is the root menu, <strong>1</strong> is a branch's
+            children, and so on. Every item button carries <code>data-depth</code>. This is what
+            "level" means everywhere in the docs. Capped at 16.</dd>
+
+        <dt>Ring</dt>
+        <dd>A <em>different</em> thing from depth: the concentric ring index <em>inside one depth</em>.
+            It is only ever above 0 under <code>Overflow="RadialMenuOverflow.Rings"</code>, which wraps
+            a crowded level onto extra circles. So an item can be depth 2, ring 1 at the same time.
+            When you mean nesting, say <strong>depth</strong>.</dd>
+
+        <dt>Slot</dt>
+        <dd>One position on a ring. Holds either an item or a synthetic pagination stepper
+            (<code>data-kind="page-prev"</code> / <code>"page-next"</code>).</dd>
+
+        <dt>Path</dt>
+        <dd>An item's address from the root: slash-joined indices, emitted as <code>data-path</code>.
+            <code>0/2/1</code> means root item 0, then its child 2, then that child's item 1. Depth is
+            the number of segments minus one. Two rings at the same depth under different parents are
+            indistinguishable by <code>data-depth</code> alone &mdash; the path is what separates
+            them.</dd>
+
+        <dt>Branch / leaf</dt>
+        <dd>An item with <code>Children</code> is a branch: it opens a ring and gets
+            <code>data-branch="true"</code> plus <code>aria-haspopup</code>. Anything else is a leaf and
+            raises <code>OnItemInvoked</code>.</dd>
+    </dl>
+
+    <h2>Finding a deep path</h2>
+    <p>Pick <strong>DeepTree</strong> as the item source: five levels, several children at every level,
+       with the deepest path being <code>File &rsaquo; New &rsaquo; Project &rsaquo; Blazor &rsaquo;
+       Server</code>. Turn on <strong>Debug</strong> and each item gets a tag showing
+       <em>angle, radius and path</em>, on top of the arc bounds, ring circles, per-item ticks and any
+       advisory the layout had to raise.</p>
+    <p>In devtools, a prefix selector picks out a whole subtree:</p>
+    <pre class="rm-docs-code">document.querySelectorAll('[data-path^="0/1"]')     // everything under root item 0, child 1
+document.querySelectorAll('[data-depth="3"]')        // every item at level 3
+document.querySelectorAll('[data-branch][data-expanded]')</pre>
+
+    <h2>Size grows fast with depth</h2>
+    <p>Footprint is driven by depth &times; children per level &times; <code>ExpandMode</code>, and the
+       three modes diverge sharply once you are more than two levels down:</p>
+    <ul>
+        <li><strong>Cascade</strong> &mdash; children radiate from the branch itself. Reads best, grows
+            worst: by level 4 it is very wide, and <strong>sibling subtrees can genuinely overlap</strong>
+            because each branch is solved on its own. Turn on <strong>Debug</strong> and the advisory list
+            names the overlapping pair by path, with how far apart they are and how far apart they needed
+            to be.</li>
+        <li><strong>Concentric</strong> &mdash; one more ring radius per level from a shared center, each
+            child confined to its parent's slice. Cannot overlap: a child ring is floored a whole
+            <code>RingGap</code> outside its parent's radius. Compact for two or three levels,
+            off-screen by four or five, and the slices get thin fast.</li>
+        <li><strong>Drill</strong> &mdash; children replace the ring, and the center button goes back
+            <em>and names the level you are on</em>. <strong>The only mode with a bounded footprint at
+            any depth</strong>, at the cost of losing sight of the parent. Use it for genuinely deep
+            trees.</li>
+    </ul>
+    <p>Levers when it gets too big: <code>SizeScalePerDepth</code> (shrinks each level),
+       <code>ChildSweep</code> (narrows the fan), <code>MaxRadius</code> with an
+       <code>Overflow</code> policy, and <code>LabelPlacement="TooltipOnly"</code> to drop label-driven
+       sizing entirely. <code>--radialmenu-extent</code> on the root reports half the box the open menu
+       actually wants.</p>
+
+    <h2>Why Concentric runs away, and the one lever that fixes it</h2>
+    <p>Keeping a child inside its parent's slice means each level's arc is the parent's divided by the
+       branching factor. Equal-size items on a narrowing arc need
+       <code>R &ge; (ItemSize + ItemGap) / (2&middot;sin(arc/2))</code>, so <strong>the radius roughly
+       doubles per level</strong> once that term overtakes the <code>RingGap</code> floor. With a
+       180&deg; root arc and three-way branching the crossover is at level 3: radii go
+       64, 126, 183, <strong>329</strong>, 604.</p>
+    <p>No <code>ArcMode</code> changes that. <code>InheritSweep</code> keeps the radius linear but
+       gives every level the full arc, so a deep item sits nowhere near its parent and the spokes
+       become long lines to nowhere &mdash; it trades the symptom for a worse one. Shrinking items
+       cannot keep up either, because <code>MinItemSize</code> floors them long before the arc stops
+       halving.</p>
+    <p>The fix is <strong><code>MaxVisibleDepth</code></strong>: cap the levels on screen and the arc
+       can only narrow that many times, so the radius is bounded by construction. The menu
+       <em>re-roots</em> &mdash; open deeper and the ancestor that scrolls out of the window becomes
+       the center button, which names it and goes back. At the default sizes <strong>3 is about the
+       largest window still bounded by <code>RingGap</code> rather than by item collision</strong>,
+       and 2 is comfortable. <code>Drill</code> is the same idea with a window of 1.</p>
+</div>
+
 <p><a href="playground/activityindicators">&larr; Back to demo</a></p>
 
 <div class="rm-stage">
@@ -28,6 +121,7 @@
                     PageSize="@PageSizeV"
                     VisibleCount="@VisibleCountV"
                     CrowdingWarnThreshold="@CrowdingV"
+                    MaxVisibleDepth="@NzI(MaxVisibleDepthV)"
                     CenterSize="@CenterSizeV"
                     ItemSize="@ItemSizeV"
                     MinItemSize="@MinItemSizeV"
@@ -54,6 +148,7 @@
                     SingleBranchOpen="@SingleBranchOpenV"
                     CloseOnLeafInvoke="@CloseOnLeafInvokeV"
                     CloseOnOutsideClick="@CloseOnOutsideClickV"
+                    HoverCloseDelay="@HoverCloseDelayV"
                     SpokeMode="@SpokeModeV"
                     SpokeWidth="@SpokeWidthV"
                     SpokeColor="@Nz(SpokeColorV)"
@@ -156,6 +251,12 @@
     <div class="ctrl">
         <label>MaxPerRing (Rings)</label>
         <input type="text" @bind="MaxPerRingV" @bind:event="oninput" placeholder="(derived)" />
+    </div>
+    <div class="ctrl">
+        <label>MaxVisibleDepth (levels on screen)</label>
+        <input type="text" @bind="MaxVisibleDepthV" @bind:event="oninput" placeholder="(all)" />
+        <span class="hint">Caps how many rings render, re-rooting deeper opens so the center goes back.
+            The cure for a deep Concentric menu leaving the screen &mdash; try 2 with DeepTree. Ignored by Drill.</span>
     </div>
     <div class="ctrl">
         <label>PageSize (Paginate) <span class="val">@PageSizeV</span></label>
@@ -297,6 +398,13 @@
         <input type="range" min="20" max="360" step="10" @bind="ChildSweepV" @bind:event="oninput" @bind:culture="Inv" />
     </div>
     <div class="ctrl">
+        <label>HoverCloseDelay (ms) <span class="val">@HoverCloseDelayV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="1200" step="50" @bind="HoverCloseDelayV" @bind:event="oninput" @bind:culture="Inv" />
+        <span class="hint">Trigger=Hover only. Items sit outside the host box, so the pointer crosses
+            unowned space to reach them; without a grace period the ring closes before you arrive.
+            Drag to 0 to see the bug.</span>
+    </div>
+    <div class="ctrl">
         <label>Flags</label>
         <div class="row"><input type="checkbox" id="rmOpen" @bind="OpenV" /><label for="rmOpen" class="inline">Open (two-way)</label></div>
         <div class="row"><input type="checkbox" id="rmSbo" @bind="SingleBranchOpenV" /><label for="rmSbo" class="inline">SingleBranchOpen</label></div>
@@ -398,6 +506,18 @@
 <CodeSnippetBox Code="@Snippet" FileName="AtomRadialMenuExample.razor" />
 
 <style>
+    .rm-docs { background:#f7f9fc; border:1px solid #d0d0d8; border-left:4px solid #2f6feb; border-radius:8px; padding:1rem 1.25rem; margin-bottom:1.5rem; font-size:.9rem; line-height:1.55; }
+    .rm-docs h2 { font-size:.8rem; text-transform:uppercase; letter-spacing:.08em; color:#2f6feb; margin:1.25rem 0 .5rem; }
+    .rm-docs h2:first-child { margin-top:0; }
+    .rm-docs dl { margin:0; }
+    .rm-docs dt { font-weight:600; color:#1f2933; margin-top:.6rem; }
+    .rm-docs dd { margin:.15rem 0 0 1.25rem; color:#52606d; }
+    .rm-docs ul { margin:.25rem 0 .5rem 1.25rem; padding:0; color:#52606d; }
+    .rm-docs li { margin:.3rem 0; }
+    .rm-docs p { color:#52606d; margin:.4rem 0; }
+    .rm-docs code { background:#eef2f7; border-radius:4px; padding:.05rem .3rem; font-size:.85em; color:#1f2933; }
+    .rm-docs-code { margin:.4rem 0 0; padding:.6rem .8rem; background:#0d1118; border-radius:6px; color:#cfd8e3;
+        font-family:ui-monospace,Consolas,monospace; font-size:.78rem; line-height:1.5; overflow-x:auto; white-space:pre-wrap; }
     .rm-stage { display:grid; place-items:center; min-height:480px; background:#f7f9fc; border:1px solid #d0d0d8; border-radius:12px; padding:2rem; margin-bottom:.75rem; }
     .rm-readout { display:flex; align-items:center; flex-wrap:wrap; gap:1rem; color:#6b7785; font-size:.85rem; margin-bottom:1.25rem; }
     .rm-readout code { color:#0a7ea4; }
@@ -430,7 +550,7 @@
     private static readonly RadialMenuArcMode[] ArcModes = Enum.GetValues<RadialMenuArcMode>();
     private static readonly RadialMenuSpokeMode[] SpokeModes = Enum.GetValues<RadialMenuSpokeMode>();
 
-    private enum ItemSource { Flat, LongLabels, IconsOnly, NestedTree, WithDisabled }
+    private enum ItemSource { Flat, LongLabels, IconsOnly, NestedTree, DeepTree, WithDisabled }
     private static readonly ItemSource[] Sources = Enum.GetValues<ItemSource>();
 
     // ---- state, one field per parameter -------------------------------------------------------
@@ -455,6 +575,7 @@
     private double RingGapV = 16;
     private double ItemGapV = 8;
     private int CrowdingV = 12;
+    private string MaxVisibleDepthV = "";
 
     private double CenterSizeV = 64;
     private double ItemSizeV = 48;
@@ -485,6 +606,7 @@
     private bool SingleBranchOpenV = true;
     private bool CloseOnLeafInvokeV = true;
     private bool CloseOnOutsideClickV = true;
+    private double HoverCloseDelayV = 250;
 
     private RadialMenuSpokeMode SpokeModeV = RadialMenuSpokeMode.None;
     private double SpokeWidthV = 2;
@@ -529,6 +651,7 @@
         ItemSource.LongLabels => "Long labels: switch SizeMode to FromFont or Measure to watch the shapes grow to fit.",
         ItemSource.IconsOnly => "No labels at all — the case for LabelPlacement=TooltipOnly.",
         ItemSource.NestedTree => "Three levels deep. Try each ExpandMode.",
+        ItemSource.DeepTree => "Five levels, several children at every level. Turn on Debug and read the path on each tag. Cascade gets huge by level 4; Drill stays the same size at any depth.",
         ItemSource.WithDisabled => "Every third item is disabled, and keyboard navigation skips them.",
         _ => "Plain leaves, count driven by the slider.",
     };
@@ -539,6 +662,7 @@
         ItemSource.IconsOnly => Build(i => new RadialMenuItem { Tooltip = $"Action {i + 1}" }),
         ItemSource.WithDisabled => Build(i => new RadialMenuItem { Label = $"Item {i + 1}", Disabled = i % 3 == 2 }),
         ItemSource.NestedTree => Tree,
+        ItemSource.DeepTree => Deep,
         _ => Build(i => new RadialMenuItem { Label = $"Item {i + 1}" }),
     };
 
@@ -581,6 +705,118 @@
         },
         new RadialMenuItem { Label = "Lock", Disabled = true },
         new RadialMenuItem { Label = "Delete" },
+    ];
+
+    // Five levels with several children at every level, and two separate 4-level paths so sibling
+    // subtrees can be compared side by side. Deepest path is File > New > Project > Blazor > Server,
+    // which is depth 0 through 4. Labels stay short because they are drawn inside the shapes.
+    private static readonly RadialMenuItem[] Deep =
+    [
+        new RadialMenuItem
+        {
+            Label = "File",
+            Children =
+            [
+                new RadialMenuItem
+                {
+                    Label = "New",
+                    Children =
+                    [
+                        new RadialMenuItem
+                        {
+                            Label = "Project",
+                            Children =
+                            [
+                                new RadialMenuItem
+                                {
+                                    Label = "Blazor",
+                                    Children =
+                                    [
+                                        new RadialMenuItem { Label = "Server" },
+                                        new RadialMenuItem { Label = "Wasm" },
+                                        new RadialMenuItem { Label = "Auto" },
+                                    ],
+                                },
+                                new RadialMenuItem { Label = "Console" },
+                                new RadialMenuItem { Label = "Library" },
+                            ],
+                        },
+                        new RadialMenuItem { Label = "File" },
+                        new RadialMenuItem { Label = "Folder" },
+                    ],
+                },
+                new RadialMenuItem
+                {
+                    Label = "Open",
+                    Children =
+                    [
+                        new RadialMenuItem
+                        {
+                            Label = "Recent",
+                            Children =
+                            [
+                                new RadialMenuItem { Label = "Today" },
+                                new RadialMenuItem { Label = "Week" },
+                            ],
+                        },
+                        new RadialMenuItem { Label = "Browse" },
+                    ],
+                },
+                new RadialMenuItem { Label = "Save" },
+            ],
+        },
+        new RadialMenuItem
+        {
+            Label = "Edit",
+            Children =
+            [
+                new RadialMenuItem { Label = "Undo" },
+                new RadialMenuItem
+                {
+                    Label = "Find",
+                    Children =
+                    [
+                        new RadialMenuItem { Label = "In file" },
+                        new RadialMenuItem
+                        {
+                            Label = "Project",
+                            Children =
+                            [
+                                new RadialMenuItem { Label = "Text" },
+                                new RadialMenuItem { Label = "Regex" },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+        new RadialMenuItem
+        {
+            Label = "View",
+            Children =
+            [
+                new RadialMenuItem
+                {
+                    Label = "Zoom",
+                    Children =
+                    [
+                        new RadialMenuItem { Label = "In" },
+                        new RadialMenuItem { Label = "Out" },
+                        new RadialMenuItem { Label = "Reset" },
+                    ],
+                },
+                new RadialMenuItem
+                {
+                    Label = "Theme",
+                    Children =
+                    [
+                        new RadialMenuItem { Label = "Light" },
+                        new RadialMenuItem { Label = "Dark" },
+                    ],
+                },
+            ],
+        },
+        new RadialMenuItem { Label = "Help" },
     ];
 
     // ---- templates ----------------------------------------------------------------------------
@@ -640,6 +876,7 @@
             if (RingGapV != 16) a.Add($"RingGap=\"{RingGapV.ToString(Inv)}\"");
             if (ItemGapV != 8) a.Add($"ItemGap=\"{ItemGapV.ToString(Inv)}\"");
             if (CrowdingV != 12) a.Add($"CrowdingWarnThreshold=\"{CrowdingV}\"");
+            if (NzI(MaxVisibleDepthV) is int levels) a.Add($"MaxVisibleDepth=\"{levels}\"");
 
             if (CenterSizeV != 64) a.Add($"CenterSize=\"{CenterSizeV.ToString(Inv)}\"");
             if (ItemSizeV != 48) a.Add($"ItemSize=\"{ItemSizeV.ToString(Inv)}\"");
@@ -670,6 +907,7 @@
             if (!SingleBranchOpenV) a.Add("SingleBranchOpen=\"false\"");
             if (!CloseOnLeafInvokeV) a.Add("CloseOnLeafInvoke=\"false\"");
             if (!CloseOnOutsideClickV) a.Add("CloseOnOutsideClick=\"false\"");
+            if (HoverCloseDelayV != 250) a.Add($"HoverCloseDelay=\"{HoverCloseDelayV.ToString(Inv)}\"");
 
             if (SpokeModeV != RadialMenuSpokeMode.None) a.Add($"SpokeMode=\"RadialMenuSpokeMode.{SpokeModeV}\"");
             if (SpokeWidthV != 2) a.Add($"SpokeWidth=\"{SpokeWidthV.ToString(Inv)}\"");
