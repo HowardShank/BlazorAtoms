@@ -1,0 +1,720 @@
+@using System.Globalization
+@using BlazorAtoms.RadialMenus
+
+<PageTitle>AtomRadialMenu Playground</PageTitle>
+
+<h1>AtomRadialMenu playground</h1>
+<p>Tune <code>&lt;AtomRadialMenu&gt;</code> live. 0&deg; is straight up and angles increase clockwise.
+   Item count is never capped &mdash; drag <strong>Item count</strong> up to 24 and watch the ring
+   solve a bigger radius rather than overlapping. Turn on <strong>Debug</strong> to see the arc
+   bounds, each item's angle and radius, and anything the layout had to compromise on.</p>
+<p><a href="playground/activityindicators">&larr; Back to demo</a></p>
+
+<div class="rm-stage">
+    <AtomRadialMenu Items="@CurrentItems"
+                    @bind-Open="OpenV"
+                    StartAngle="@StartAngleV"
+                    EndAngle="@EndAngleV"
+                    Distribution="@DistributionV"
+                    AngleStep="@NzD(AngleStepV)"
+                    Direction="@DirectionV"
+                    Radius="@NzD(RadiusV)"
+                    RadiusMode="@RadiusModeV"
+                    MaxRadius="@NzD(MaxRadiusV)"
+                    RingGap="@RingGapV"
+                    ItemGap="@ItemGapV"
+                    Overflow="@OverflowV"
+                    MaxPerRing="@NzI(MaxPerRingV)"
+                    PageSize="@PageSizeV"
+                    VisibleCount="@VisibleCountV"
+                    CrowdingWarnThreshold="@CrowdingV"
+                    CenterSize="@CenterSizeV"
+                    ItemSize="@ItemSizeV"
+                    MinItemSize="@MinItemSizeV"
+                    SizeMode="@SizeModeV"
+                    SizeScalePerDepth="@SizeScaleV"
+                    SizeStep="@SizeStepV"
+                    FontSize="@FontSizeV"
+                    LineHeight="@LineHeightV"
+                    CharWidthRatio="@CharWidthRatioV"
+                    TextFitFactor="@TextFitFactorV"
+                    CenterShape="@CenterShapeV"
+                    ItemShape="@ItemShapeV"
+                    ShapeSides="@NzI(ShapeSidesV)"
+                    ShapeRotation="@ShapeRotationV"
+                    CustomPath="@Nz(CustomPathV)"
+                    LabelPlacement="@LabelPlacementV"
+                    ShowLabels="@ShowLabelsV"
+                    MaxLabelChars="@NzI(MaxLabelCharsV)"
+                    LabelOffset="@LabelOffsetV"
+                    Trigger="@TriggerV"
+                    ExpandMode="@ExpandModeV"
+                    ArcMode="@ArcModeV"
+                    ChildSweep="@ChildSweepV"
+                    SingleBranchOpen="@SingleBranchOpenV"
+                    CloseOnLeafInvoke="@CloseOnLeafInvokeV"
+                    CloseOnOutsideClick="@CloseOnOutsideClickV"
+                    SpokeMode="@SpokeModeV"
+                    SpokeWidth="@SpokeWidthV"
+                    SpokeColor="@Nz(SpokeColorV)"
+                    ItemColor="@Nz(ItemColorV)"
+                    ItemBackground="@Nz(ItemBackgroundV)"
+                    ItemBorderColor="@Nz(ItemBorderColorV)"
+                    BorderWidth="@BorderWidthV"
+                    CenterColor="@Nz(CenterColorV)"
+                    CenterBackground="@Nz(CenterBackgroundV)"
+                    HoverBackground="@Nz(HoverBackgroundV)"
+                    ActiveBackground="@Nz(ActiveBackgroundV)"
+                    LabelColor="@Nz(LabelColorV)"
+                    DisabledOpacity="@DisabledOpacityV"
+                    AnimationDuration="@AnimationDurationV"
+                    StaggerDelay="@StaggerDelayV"
+                    Easing="@Nz(EasingV)"
+                    AriaLabel="@Nz(AriaLabelV)"
+                    KeyboardNavigation="@KeyboardNavigationV"
+                    Debug="@DebugV"
+                    CancellationToken="@(CancelV ? Cancelled : default)"
+                    ItemTemplate="@(UseItemTemplate ? BadgeTemplate : null)"
+                    CenterTemplate="@(UseCenterTemplate ? StarCenter : null)"
+                    OnItemInvoked="@OnInvoked"
+                    OnBranchOpened="@OnOpened"
+                    OnBranchClosed="@OnClosed"
+                    CssClass="@Nz(HatchClass)"
+                    Style="@Nz(HatchStyle)"
+                    title="@Nz(HatchTitle)" />
+</div>
+
+<div class="rm-readout">
+    <span>Open = <code>@OpenV</code></span>
+    <span>Items = <code>@CurrentItems.Count</code></span>
+    <span>Last event: <code>@(LastEvent ?? "(none)")</code></span>
+    <button type="button" class="rm-clear" @onclick="@(() => LastEvent = null)">clear</button>
+</div>
+
+<div class="rm-controls">
+    <div class="ctrl">
+        <label>Item source (Items)</label>
+        <select @bind="SourceV">
+            @foreach (var s in Sources) { <option value="@s">@s</option> }
+        </select>
+        <span class="hint">@SourceHint</span>
+    </div>
+    <div class="ctrl">
+        <label>Item count &mdash; crowding stress <span class="val">@CountV</span></label>
+        <input type="range" min="1" max="24" step="1" @bind="CountV" @bind:event="oninput" />
+        <span class="hint">Only affects the flat sources. The radius grows; nothing is dropped.</span>
+    </div>
+
+    <div class="ctrl group">Arc</div>
+    <div class="ctrl">
+        <label>StartAngle <span class="val">@StartAngleV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="360" step="5" @bind="StartAngleV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>EndAngle <span class="val">@EndAngleV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="360" step="5" @bind="EndAngleV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Distribution</label>
+        <select @bind="DistributionV">
+            @foreach (var d in Distributions) { <option value="@d">@d</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>AngleStep (FixedStep only)</label>
+        <input type="text" @bind="AngleStepV" @bind:event="oninput" placeholder="(unset)" />
+    </div>
+    <div class="ctrl">
+        <label>Direction</label>
+        <select @bind="DirectionV">
+            @foreach (var d in Directions) { <option value="@d">@d</option> }
+        </select>
+    </div>
+
+    <div class="ctrl group">Radius &amp; overflow</div>
+    <div class="ctrl">
+        <label>RadiusMode</label>
+        <select @bind="RadiusModeV">
+            @foreach (var m in RadiusModes) { <option value="@m">@m</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>Radius (px)</label>
+        <input type="text" @bind="RadiusV" @bind:event="oninput" placeholder="(solved)" />
+    </div>
+    <div class="ctrl">
+        <label>MaxRadius (px)</label>
+        <input type="text" @bind="MaxRadiusV" @bind:event="oninput" placeholder="(none / measured)" />
+    </div>
+    <div class="ctrl">
+        <label>Overflow</label>
+        <select @bind="OverflowV">
+            @foreach (var o in Overflows) { <option value="@o">@o</option> }
+        </select>
+        <span class="hint">Rings/Shrink need MaxRadius (or MaxPerRing). Paginate and Spin always apply.</span>
+    </div>
+    <div class="ctrl">
+        <label>MaxPerRing (Rings)</label>
+        <input type="text" @bind="MaxPerRingV" @bind:event="oninput" placeholder="(derived)" />
+    </div>
+    <div class="ctrl">
+        <label>PageSize (Paginate) <span class="val">@PageSizeV</span></label>
+        <input type="range" min="1" max="12" step="1" @bind="PageSizeV" @bind:event="oninput" />
+    </div>
+    <div class="ctrl">
+        <label>VisibleCount (Spin) <span class="val">@VisibleCountV</span></label>
+        <input type="range" min="1" max="16" step="1" @bind="VisibleCountV" @bind:event="oninput" />
+        <span class="hint">Scroll the wheel over the menu to rotate.</span>
+    </div>
+    <div class="ctrl">
+        <label>RingGap <span class="val">@RingGapV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="48" step="2" @bind="RingGapV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>ItemGap <span class="val">@ItemGapV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="48" step="1" @bind="ItemGapV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>CrowdingWarnThreshold <span class="val">@CrowdingV</span></label>
+        <input type="range" min="2" max="32" step="1" @bind="CrowdingV" @bind:event="oninput" />
+    </div>
+
+    <div class="ctrl group">Size</div>
+    <div class="ctrl">
+        <label>CenterSize <span class="val">@CenterSizeV.ToString(Inv)</span></label>
+        <input type="range" min="24" max="140" step="4" @bind="CenterSizeV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>ItemSize <span class="val">@ItemSizeV.ToString(Inv)</span></label>
+        <input type="range" min="16" max="120" step="2" @bind="ItemSizeV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>MinItemSize <span class="val">@MinItemSizeV.ToString(Inv)</span></label>
+        <input type="range" min="8" max="80" step="2" @bind="MinItemSizeV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>SizeMode</label>
+        <select @bind="SizeModeV">
+            @foreach (var m in SizeModes) { <option value="@m">@m</option> }
+        </select>
+        <span class="hint">FromFont estimates from the label; Measure asks the browser for the real width.</span>
+    </div>
+    <div class="ctrl">
+        <label>SizeScalePerDepth <span class="val">@SizeScaleV.ToString(Inv)</span></label>
+        <input type="range" min="0.5" max="1" step="0.05" @bind="SizeScaleV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>SizeStep <span class="val">@SizeStepV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="16" step="1" @bind="SizeStepV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>FontSize <span class="val">@FontSizeV.ToString(Inv)</span></label>
+        <input type="range" min="8" max="28" step="1" @bind="FontSizeV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>LineHeight <span class="val">@LineHeightV.ToString(Inv)</span></label>
+        <input type="range" min="0.9" max="2" step="0.1" @bind="LineHeightV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>CharWidthRatio <span class="val">@CharWidthRatioV.ToString(Inv)</span></label>
+        <input type="range" min="0.3" max="1" step="0.05" @bind="CharWidthRatioV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>TextFitFactor <span class="val">@TextFitFactorV.ToString(Inv)</span></label>
+        <input type="range" min="0.5" max="1" step="0.05" @bind="TextFitFactorV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+
+    <div class="ctrl group">Shape</div>
+    <div class="ctrl">
+        <label>ItemShape</label>
+        <select @bind="ItemShapeV">
+            @foreach (var s in Shapes) { <option value="@s">@s</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>CenterShape</label>
+        <select @bind="CenterShapeV">
+            @foreach (var s in Shapes) { <option value="@s">@s</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>ShapeSides (Polygon)</label>
+        <input type="text" @bind="ShapeSidesV" @bind:event="oninput" placeholder="(6)" />
+    </div>
+    <div class="ctrl">
+        <label>ShapeRotation <span class="val">@ShapeRotationV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="180" step="5" @bind="ShapeRotationV" @bind:event="oninput" @bind:culture="Inv" />
+        <span class="hint">30 turns a hexagon flat-top.</span>
+    </div>
+    <div class="ctrl">
+        <label>CustomPath (Shape=Custom)</label>
+        <input type="text" @bind="CustomPathV" @bind:event="oninput" placeholder="SVG path d, 100x100 box" />
+    </div>
+
+    <div class="ctrl group">Labels</div>
+    <div class="ctrl">
+        <label>LabelPlacement</label>
+        <select @bind="LabelPlacementV">
+            @foreach (var p in LabelPlacements) { <option value="@p">@p</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>MaxLabelChars</label>
+        <input type="text" @bind="MaxLabelCharsV" @bind:event="oninput" placeholder="(unlimited)" />
+    </div>
+    <div class="ctrl">
+        <label>LabelOffset <span class="val">@LabelOffsetV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="32" step="1" @bind="LabelOffsetV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Toggles</label>
+        <div class="row"><input type="checkbox" id="rmLbls" @bind="ShowLabelsV" /><label for="rmLbls" class="inline">ShowLabels</label></div>
+        <div class="row"><input type="checkbox" id="rmTpl" @bind="UseItemTemplate" /><label for="rmTpl" class="inline">ItemTemplate (custom)</label></div>
+        <div class="row"><input type="checkbox" id="rmCtpl" @bind="UseCenterTemplate" /><label for="rmCtpl" class="inline">CenterTemplate (custom)</label></div>
+    </div>
+
+    <div class="ctrl group">Behaviour</div>
+    <div class="ctrl">
+        <label>Trigger</label>
+        <select @bind="TriggerV">
+            @foreach (var t in Triggers) { <option value="@t">@t</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>ExpandMode</label>
+        <select @bind="ExpandModeV">
+            @foreach (var m in ExpandModes) { <option value="@m">@m</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>ArcMode</label>
+        <select @bind="ArcModeV">
+            @foreach (var m in ArcModes) { <option value="@m">@m</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>ChildSweep <span class="val">@ChildSweepV.ToString(Inv)</span></label>
+        <input type="range" min="20" max="360" step="10" @bind="ChildSweepV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Flags</label>
+        <div class="row"><input type="checkbox" id="rmOpen" @bind="OpenV" /><label for="rmOpen" class="inline">Open (two-way)</label></div>
+        <div class="row"><input type="checkbox" id="rmSbo" @bind="SingleBranchOpenV" /><label for="rmSbo" class="inline">SingleBranchOpen</label></div>
+        <div class="row"><input type="checkbox" id="rmClose" @bind="CloseOnLeafInvokeV" /><label for="rmClose" class="inline">CloseOnLeafInvoke</label></div>
+        <div class="row"><input type="checkbox" id="rmOut" @bind="CloseOnOutsideClickV" /><label for="rmOut" class="inline">CloseOnOutsideClick</label></div>
+        <div class="row"><input type="checkbox" id="rmKeys" @bind="KeyboardNavigationV" /><label for="rmKeys" class="inline">KeyboardNavigation</label></div>
+        <div class="row"><input type="checkbox" id="rmDbg" @bind="DebugV" /><label for="rmDbg" class="inline">Debug</label></div>
+        <div class="row"><input type="checkbox" id="rmCancel" @bind="CancelV" /><label for="rmCancel" class="inline">CancellationToken (cancelled)</label></div>
+        <span class="hint">A cancelled token collapses the component entirely &mdash; the whole menu disappears, centre button included.</span>
+    </div>
+
+    <div class="ctrl group">Look</div>
+    <div class="ctrl">
+        <label>SpokeMode</label>
+        <select @bind="SpokeModeV">
+            @foreach (var m in SpokeModes) { <option value="@m">@m</option> }
+        </select>
+    </div>
+    <div class="ctrl">
+        <label>SpokeWidth <span class="val">@SpokeWidthV.ToString(Inv)</span></label>
+        <input type="range" min="1" max="12" step="1" @bind="SpokeWidthV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>BorderWidth <span class="val">@BorderWidthV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="8" step="1" @bind="BorderWidthV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>DisabledOpacity <span class="val">@DisabledOpacityV.ToString(Inv)</span></label>
+        <input type="range" min="0.1" max="1" step="0.05" @bind="DisabledOpacityV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>SpokeColor</label>
+        <input type="text" @bind="SpokeColorV" @bind:event="oninput" placeholder="(default)" />
+    </div>
+    <div class="ctrl">
+        <label>ItemColor</label>
+        <input type="text" @bind="ItemColorV" @bind:event="oninput" placeholder="(default)" />
+    </div>
+    <div class="ctrl">
+        <label>ItemBackground</label>
+        <input type="text" @bind="ItemBackgroundV" @bind:event="oninput" placeholder="(default)" />
+    </div>
+    <div class="ctrl">
+        <label>ItemBorderColor</label>
+        <input type="text" @bind="ItemBorderColorV" @bind:event="oninput" placeholder="(default)" />
+    </div>
+    <div class="ctrl">
+        <label>CenterColor</label>
+        <input type="text" @bind="CenterColorV" @bind:event="oninput" placeholder="(default)" />
+    </div>
+    <div class="ctrl">
+        <label>CenterBackground</label>
+        <input type="text" @bind="CenterBackgroundV" @bind:event="oninput" placeholder="(default)" />
+    </div>
+    <div class="ctrl">
+        <label>HoverBackground</label>
+        <input type="text" @bind="HoverBackgroundV" @bind:event="oninput" placeholder="(default)" />
+    </div>
+    <div class="ctrl">
+        <label>ActiveBackground</label>
+        <input type="text" @bind="ActiveBackgroundV" @bind:event="oninput" placeholder="(default)" />
+    </div>
+    <div class="ctrl">
+        <label>LabelColor</label>
+        <input type="text" @bind="LabelColorV" @bind:event="oninput" placeholder="(default)" />
+    </div>
+
+    <div class="ctrl group">Motion, a11y, escape hatch</div>
+    <div class="ctrl">
+        <label>AnimationDuration <span class="val">@AnimationDurationV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="800" step="20" @bind="AnimationDurationV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>StaggerDelay <span class="val">@StaggerDelayV.ToString(Inv)</span></label>
+        <input type="range" min="0" max="120" step="5" @bind="StaggerDelayV" @bind:event="oninput" @bind:culture="Inv" />
+    </div>
+    <div class="ctrl">
+        <label>Easing</label>
+        <input type="text" @bind="EasingV" @bind:event="oninput" placeholder="(default overshoot)" />
+    </div>
+    <div class="ctrl">
+        <label>AriaLabel</label>
+        <input type="text" @bind="AriaLabelV" @bind:event="oninput" placeholder="(Radial menu)" />
+    </div>
+    <div class="ctrl">
+        <label>Extra class (CssClass)</label>
+        <input type="text" @bind="HatchClass" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Extra style (Style)</label>
+        <input type="text" @bind="HatchStyle" @bind:event="oninput" placeholder="(none)" />
+    </div>
+    <div class="ctrl">
+        <label>Splatted title attribute</label>
+        <input type="text" @bind="HatchTitle" @bind:event="oninput" placeholder="(none)" />
+    </div>
+</div>
+
+<CodeSnippetBox Code="@Snippet" FileName="AtomRadialMenuExample.razor" />
+
+<style>
+    .rm-stage { display:grid; place-items:center; min-height:480px; background:#f7f9fc; border:1px solid #d0d0d8; border-radius:12px; padding:2rem; margin-bottom:.75rem; }
+    .rm-readout { display:flex; align-items:center; flex-wrap:wrap; gap:1rem; color:#6b7785; font-size:.85rem; margin-bottom:1.25rem; }
+    .rm-readout code { color:#0a7ea4; }
+    .rm-clear { padding:.15rem .5rem; border:1px solid #cbd2d9; border-radius:5px; background:#fff; color:#52606d; font-size:.75rem; cursor:pointer; }
+    .rm-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem 1.5rem; background:#0d1118; border:1px solid #1b2330; border-radius:12px; padding:1.25rem 1.5rem; color:#cfd8e3; }
+    .rm-controls .ctrl { display:flex; flex-direction:column; gap:.4rem; }
+    .rm-controls .ctrl.group { grid-column:1/-1; margin-top:.5rem; padding-top:.75rem; border-top:1px solid #1b2330; color:#5fb7c9; font-size:.75rem; text-transform:uppercase; letter-spacing:.1em; }
+    .rm-controls label { font-size:.8rem; text-transform:uppercase; letter-spacing:.06em; color:#8794a3; display:flex; justify-content:space-between; gap:.5rem; }
+    .rm-controls label .val { color:#5fb7c9; font-family:ui-monospace,Consolas,monospace; text-transform:none; }
+    .rm-controls .hint { font-size:.72rem; color:#6b7785; text-transform:none; letter-spacing:0; }
+    .rm-controls input[type=range] { width:100%; accent-color:#4a90d9; }
+    .rm-controls input[type=text], .rm-controls select { padding:.45rem .5rem; border-radius:6px; border:1px solid #1b2330; background:#070b10; color:#e6edf3; font-family:ui-monospace,monospace; }
+    .rm-controls .row { display:flex; align-items:center; gap:.5rem; }
+    .rm-controls .row input[type=checkbox] { accent-color:#4a90d9; width:16px; height:16px; }
+    .rm-controls .row label.inline { text-transform:none; letter-spacing:0; color:#cfd8e3; font-size:.85rem; justify-content:flex-start; }
+</style>
+
+@code {
+    private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
+
+    private static readonly RadialMenuDistribution[] Distributions = Enum.GetValues<RadialMenuDistribution>();
+    private static readonly RadialMenuDirection[] Directions = Enum.GetValues<RadialMenuDirection>();
+    private static readonly RadialMenuRadiusMode[] RadiusModes = Enum.GetValues<RadialMenuRadiusMode>();
+    private static readonly RadialMenuOverflow[] Overflows = Enum.GetValues<RadialMenuOverflow>();
+    private static readonly RadialMenuSizeMode[] SizeModes = Enum.GetValues<RadialMenuSizeMode>();
+    private static readonly RadialMenuShape[] Shapes = Enum.GetValues<RadialMenuShape>();
+    private static readonly RadialMenuLabelPlacement[] LabelPlacements = Enum.GetValues<RadialMenuLabelPlacement>();
+    private static readonly RadialMenuTrigger[] Triggers = Enum.GetValues<RadialMenuTrigger>();
+    private static readonly RadialMenuExpandMode[] ExpandModes = Enum.GetValues<RadialMenuExpandMode>();
+    private static readonly RadialMenuArcMode[] ArcModes = Enum.GetValues<RadialMenuArcMode>();
+    private static readonly RadialMenuSpokeMode[] SpokeModes = Enum.GetValues<RadialMenuSpokeMode>();
+
+    private enum ItemSource { Flat, LongLabels, IconsOnly, NestedTree, WithDisabled }
+    private static readonly ItemSource[] Sources = Enum.GetValues<ItemSource>();
+
+    // ---- state, one field per parameter -------------------------------------------------------
+
+    private ItemSource SourceV = ItemSource.Flat;
+    private int CountV = 6;
+
+    private bool OpenV = true;
+    private double StartAngleV;
+    private double EndAngleV = 360;
+    private RadialMenuDistribution DistributionV = RadialMenuDistribution.Auto;
+    private string AngleStepV = "";
+    private RadialMenuDirection DirectionV = RadialMenuDirection.Clockwise;
+
+    private string RadiusV = "";
+    private RadialMenuRadiusMode RadiusModeV = RadialMenuRadiusMode.Auto;
+    private string MaxRadiusV = "";
+    private RadialMenuOverflow OverflowV = RadialMenuOverflow.GrowRadius;
+    private string MaxPerRingV = "";
+    private int PageSizeV = 8;
+    private int VisibleCountV = 8;
+    private double RingGapV = 16;
+    private double ItemGapV = 8;
+    private int CrowdingV = 12;
+
+    private double CenterSizeV = 64;
+    private double ItemSizeV = 48;
+    private double MinItemSizeV = 24;
+    private RadialMenuSizeMode SizeModeV = RadialMenuSizeMode.Fixed;
+    private double SizeScaleV = 0.9;
+    private double SizeStepV = 4;
+    private double FontSizeV = 13;
+    private double LineHeightV = 1.2;
+    private double CharWidthRatioV = 0.55;
+    private double TextFitFactorV = 0.95;
+
+    private RadialMenuShape CenterShapeV = RadialMenuShape.Circle;
+    private RadialMenuShape ItemShapeV = RadialMenuShape.Circle;
+    private string ShapeSidesV = "";
+    private double ShapeRotationV;
+    private string CustomPathV = "";
+
+    private RadialMenuLabelPlacement LabelPlacementV = RadialMenuLabelPlacement.Inside;
+    private bool ShowLabelsV = true;
+    private string MaxLabelCharsV = "";
+    private double LabelOffsetV = 6;
+
+    private RadialMenuTrigger TriggerV = RadialMenuTrigger.Click;
+    private RadialMenuExpandMode ExpandModeV = RadialMenuExpandMode.Cascade;
+    private RadialMenuArcMode ArcModeV = RadialMenuArcMode.AutoCenteredOnParent;
+    private double ChildSweepV = 120;
+    private bool SingleBranchOpenV = true;
+    private bool CloseOnLeafInvokeV = true;
+    private bool CloseOnOutsideClickV = true;
+
+    private RadialMenuSpokeMode SpokeModeV = RadialMenuSpokeMode.None;
+    private double SpokeWidthV = 2;
+    private string SpokeColorV = "";
+    private string ItemColorV = "";
+    private string ItemBackgroundV = "";
+    private string ItemBorderColorV = "";
+    private double BorderWidthV = 1;
+    private string CenterColorV = "";
+    private string CenterBackgroundV = "";
+    private string HoverBackgroundV = "";
+    private string ActiveBackgroundV = "";
+    private string LabelColorV = "";
+    private double DisabledOpacityV = 0.4;
+
+    private double AnimationDurationV = 180;
+    private double StaggerDelayV = 25;
+    private string EasingV = "";
+
+    private string AriaLabelV = "";
+    private bool KeyboardNavigationV = true;
+    private bool DebugV;
+    private bool CancelV;
+
+    // A token that is already cancelled, so the checkbox demonstrates the cancelled render path
+    // without needing a live CancellationTokenSource on the page.
+    private static readonly CancellationToken Cancelled = new(canceled: true);
+
+    private bool UseItemTemplate;
+    private bool UseCenterTemplate;
+
+    private string HatchClass = "";
+    private string HatchStyle = "";
+    private string HatchTitle = "";
+
+    private string? LastEvent;
+
+    // ---- items --------------------------------------------------------------------------------
+
+    private string SourceHint => SourceV switch
+    {
+        ItemSource.LongLabels => "Long labels: switch SizeMode to FromFont or Measure to watch the shapes grow to fit.",
+        ItemSource.IconsOnly => "No labels at all — the case for LabelPlacement=TooltipOnly.",
+        ItemSource.NestedTree => "Three levels deep. Try each ExpandMode.",
+        ItemSource.WithDisabled => "Every third item is disabled, and keyboard navigation skips them.",
+        _ => "Plain leaves, count driven by the slider.",
+    };
+
+    private IReadOnlyList<RadialMenuItem> CurrentItems => SourceV switch
+    {
+        ItemSource.LongLabels => Build(i => new RadialMenuItem { Label = LongLabels[i % LongLabels.Length] }),
+        ItemSource.IconsOnly => Build(i => new RadialMenuItem { Tooltip = $"Action {i + 1}" }),
+        ItemSource.WithDisabled => Build(i => new RadialMenuItem { Label = $"Item {i + 1}", Disabled = i % 3 == 2 }),
+        ItemSource.NestedTree => Tree,
+        _ => Build(i => new RadialMenuItem { Label = $"Item {i + 1}" }),
+    };
+
+    private RadialMenuItem[] Build(Func<int, RadialMenuItem> make) =>
+        Enumerable.Range(0, Math.Max(1, CountV)).Select(make).ToArray();
+
+    private static readonly string[] LongLabels =
+        ["Duplicate selection", "Cut", "Bring to front", "Export as SVG", "Paste in place", "Group"];
+
+    private static readonly RadialMenuItem[] Tree =
+    [
+        new RadialMenuItem
+        {
+            Label = "Shape",
+            Children =
+            [
+                new RadialMenuItem
+                {
+                    Label = "Fill",
+                    Children =
+                    [
+                        new RadialMenuItem { Label = "Solid" },
+                        new RadialMenuItem { Label = "Gradient" },
+                        new RadialMenuItem { Label = "Pattern" },
+                    ],
+                },
+                new RadialMenuItem { Label = "Stroke" },
+                new RadialMenuItem { Label = "Shadow" },
+            ],
+        },
+        new RadialMenuItem { Label = "Text" },
+        new RadialMenuItem
+        {
+            Label = "Layer",
+            Children =
+            [
+                new RadialMenuItem { Label = "Forward" },
+                new RadialMenuItem { Label = "Back" },
+            ],
+        },
+        new RadialMenuItem { Label = "Lock", Disabled = true },
+        new RadialMenuItem { Label = "Delete" },
+    ];
+
+    // ---- templates ----------------------------------------------------------------------------
+
+    private RenderFragment<RadialMenuItem> BadgeTemplate => item =>
+        @<span style="display:flex;flex-direction:column;align-items:center;line-height:1">
+            <strong style="font-size:1.1em">@(item.Label?.Length > 0 ? item.Label[..1] : "?")</strong>
+            <small style="font-size:.6em;opacity:.7">@(item.IsBranch ? "dir" : "cmd")</small>
+        </span>;
+
+    private RenderFragment StarCenter =>
+        @<span style="font-size:1.4em;line-height:1">&#9733;</span>;
+
+    // ---- events -------------------------------------------------------------------------------
+
+    private void OnInvoked(RadialMenuItem item) => LastEvent = $"OnItemInvoked: {item.Label ?? item.Tooltip}";
+    private void OnOpened(RadialMenuItem item) => LastEvent = $"OnBranchOpened: {item.Label}";
+    private void OnClosed(RadialMenuItem item) => LastEvent = $"OnBranchClosed: {item.Label}";
+
+    // ---- "unset" helpers ----------------------------------------------------------------------
+
+    private static string? Nz(string s) => string.IsNullOrWhiteSpace(s) ? null : s;
+
+    private static double? NzD(string s) =>
+        double.TryParse(s, NumberStyles.Float, Inv, out var v) ? v : null;
+
+    private static int? NzI(string s) =>
+        int.TryParse(s, NumberStyles.Integer, Inv, out var v) ? v : null;
+
+    // ---- snippet ------------------------------------------------------------------------------
+
+    // Emitted one attribute per line, aligned under the tag name. The flat single-line form ran past
+    // 250 characters once a handful of controls were off their defaults: unreadable in the snippet
+    // box and unreadable once pasted into a file. Attributes are collected first and then joined, so
+    // every guard stays one self-contained line.
+    private const string SnippetPad = "                ";   // aligns under "<AtomRadialMenu "
+
+    private string Snippet
+    {
+        get
+        {
+            var a = new List<string> { "Items=\"@items\"", "@bind-Open=\"open\"" };
+
+            if (StartAngleV != 0) a.Add($"StartAngle=\"{StartAngleV.ToString(Inv)}\"");
+            if (EndAngleV != 360) a.Add($"EndAngle=\"{EndAngleV.ToString(Inv)}\"");
+            if (DistributionV != RadialMenuDistribution.Auto) a.Add($"Distribution=\"RadialMenuDistribution.{DistributionV}\"");
+            if (NzD(AngleStepV) is double step) a.Add($"AngleStep=\"{step.ToString(Inv)}\"");
+            if (DirectionV != RadialMenuDirection.Clockwise) a.Add($"Direction=\"RadialMenuDirection.{DirectionV}\"");
+
+            if (NzD(RadiusV) is double radius) a.Add($"Radius=\"{radius.ToString(Inv)}\"");
+            if (RadiusModeV != RadialMenuRadiusMode.Auto) a.Add($"RadiusMode=\"RadialMenuRadiusMode.{RadiusModeV}\"");
+            if (NzD(MaxRadiusV) is double maxRadius) a.Add($"MaxRadius=\"{maxRadius.ToString(Inv)}\"");
+            if (OverflowV != RadialMenuOverflow.GrowRadius) a.Add($"Overflow=\"RadialMenuOverflow.{OverflowV}\"");
+            if (NzI(MaxPerRingV) is int perRing) a.Add($"MaxPerRing=\"{perRing}\"");
+            if (PageSizeV != 8) a.Add($"PageSize=\"{PageSizeV}\"");
+            if (VisibleCountV != 8) a.Add($"VisibleCount=\"{VisibleCountV}\"");
+            if (RingGapV != 16) a.Add($"RingGap=\"{RingGapV.ToString(Inv)}\"");
+            if (ItemGapV != 8) a.Add($"ItemGap=\"{ItemGapV.ToString(Inv)}\"");
+            if (CrowdingV != 12) a.Add($"CrowdingWarnThreshold=\"{CrowdingV}\"");
+
+            if (CenterSizeV != 64) a.Add($"CenterSize=\"{CenterSizeV.ToString(Inv)}\"");
+            if (ItemSizeV != 48) a.Add($"ItemSize=\"{ItemSizeV.ToString(Inv)}\"");
+            if (MinItemSizeV != 24) a.Add($"MinItemSize=\"{MinItemSizeV.ToString(Inv)}\"");
+            if (SizeModeV != RadialMenuSizeMode.Fixed) a.Add($"SizeMode=\"RadialMenuSizeMode.{SizeModeV}\"");
+            if (SizeScaleV != 0.9) a.Add($"SizeScalePerDepth=\"{SizeScaleV.ToString(Inv)}\"");
+            if (SizeStepV != 4) a.Add($"SizeStep=\"{SizeStepV.ToString(Inv)}\"");
+            if (FontSizeV != 13) a.Add($"FontSize=\"{FontSizeV.ToString(Inv)}\"");
+            if (LineHeightV != 1.2) a.Add($"LineHeight=\"{LineHeightV.ToString(Inv)}\"");
+            if (CharWidthRatioV != 0.55) a.Add($"CharWidthRatio=\"{CharWidthRatioV.ToString(Inv)}\"");
+            if (TextFitFactorV != 0.95) a.Add($"TextFitFactor=\"{TextFitFactorV.ToString(Inv)}\"");
+
+            if (CenterShapeV != RadialMenuShape.Circle) a.Add($"CenterShape=\"RadialMenuShape.{CenterShapeV}\"");
+            if (ItemShapeV != RadialMenuShape.Circle) a.Add($"ItemShape=\"RadialMenuShape.{ItemShapeV}\"");
+            if (NzI(ShapeSidesV) is int sides) a.Add($"ShapeSides=\"{sides}\"");
+            if (ShapeRotationV != 0) a.Add($"ShapeRotation=\"{ShapeRotationV.ToString(Inv)}\"");
+            if (Nz(CustomPathV) is not null) a.Add($"CustomPath=\"{CustomPathV}\"");
+
+            if (LabelPlacementV != RadialMenuLabelPlacement.Inside) a.Add($"LabelPlacement=\"RadialMenuLabelPlacement.{LabelPlacementV}\"");
+            if (!ShowLabelsV) a.Add("ShowLabels=\"false\"");
+            if (NzI(MaxLabelCharsV) is int maxChars) a.Add($"MaxLabelChars=\"{maxChars}\"");
+            if (LabelOffsetV != 6) a.Add($"LabelOffset=\"{LabelOffsetV.ToString(Inv)}\"");
+
+            if (TriggerV != RadialMenuTrigger.Click) a.Add($"Trigger=\"RadialMenuTrigger.{TriggerV}\"");
+            if (ExpandModeV != RadialMenuExpandMode.Cascade) a.Add($"ExpandMode=\"RadialMenuExpandMode.{ExpandModeV}\"");
+            if (ArcModeV != RadialMenuArcMode.AutoCenteredOnParent) a.Add($"ArcMode=\"RadialMenuArcMode.{ArcModeV}\"");
+            if (ChildSweepV != 120) a.Add($"ChildSweep=\"{ChildSweepV.ToString(Inv)}\"");
+            if (!SingleBranchOpenV) a.Add("SingleBranchOpen=\"false\"");
+            if (!CloseOnLeafInvokeV) a.Add("CloseOnLeafInvoke=\"false\"");
+            if (!CloseOnOutsideClickV) a.Add("CloseOnOutsideClick=\"false\"");
+
+            if (SpokeModeV != RadialMenuSpokeMode.None) a.Add($"SpokeMode=\"RadialMenuSpokeMode.{SpokeModeV}\"");
+            if (SpokeWidthV != 2) a.Add($"SpokeWidth=\"{SpokeWidthV.ToString(Inv)}\"");
+            if (Nz(SpokeColorV) is not null) a.Add($"SpokeColor=\"{SpokeColorV}\"");
+            if (Nz(ItemColorV) is not null) a.Add($"ItemColor=\"{ItemColorV}\"");
+            if (Nz(ItemBackgroundV) is not null) a.Add($"ItemBackground=\"{ItemBackgroundV}\"");
+            if (Nz(ItemBorderColorV) is not null) a.Add($"ItemBorderColor=\"{ItemBorderColorV}\"");
+            if (BorderWidthV != 1) a.Add($"BorderWidth=\"{BorderWidthV.ToString(Inv)}\"");
+            if (Nz(CenterColorV) is not null) a.Add($"CenterColor=\"{CenterColorV}\"");
+            if (Nz(CenterBackgroundV) is not null) a.Add($"CenterBackground=\"{CenterBackgroundV}\"");
+            if (Nz(HoverBackgroundV) is not null) a.Add($"HoverBackground=\"{HoverBackgroundV}\"");
+            if (Nz(ActiveBackgroundV) is not null) a.Add($"ActiveBackground=\"{ActiveBackgroundV}\"");
+            if (Nz(LabelColorV) is not null) a.Add($"LabelColor=\"{LabelColorV}\"");
+            if (DisabledOpacityV != 0.4) a.Add($"DisabledOpacity=\"{DisabledOpacityV.ToString(Inv)}\"");
+
+            if (AnimationDurationV != 180) a.Add($"AnimationDuration=\"{AnimationDurationV.ToString(Inv)}\"");
+            if (StaggerDelayV != 25) a.Add($"StaggerDelay=\"{StaggerDelayV.ToString(Inv)}\"");
+            if (Nz(EasingV) is not null) a.Add($"Easing=\"{EasingV}\"");
+
+            if (Nz(AriaLabelV) is not null) a.Add($"AriaLabel=\"{AriaLabelV}\"");
+            if (!KeyboardNavigationV) a.Add("KeyboardNavigation=\"false\"");
+            if (DebugV) a.Add("Debug=\"true\"");
+            if (CancelV) a.Add("CancellationToken=\"@token\"");
+
+            a.Add("OnItemInvoked=\"@OnItemInvoked\"");
+            if (SourceV == ItemSource.NestedTree)
+            {
+                a.Add("OnBranchOpened=\"@OnBranchOpened\"");
+                a.Add("OnBranchClosed=\"@OnBranchClosed\"");
+            }
+
+            if (Nz(HatchClass) is not null) a.Add($"CssClass=\"{HatchClass}\"");
+            if (Nz(HatchStyle) is not null) a.Add($"Style=\"{HatchStyle}\"");
+            if (Nz(HatchTitle) is not null) a.Add($"title=\"{HatchTitle}\"");
+
+            var tag = "<AtomRadialMenu " + string.Join("\n" + SnippetPad, a);
+
+            if (!UseItemTemplate && !UseCenterTemplate) return tag + " />";
+
+            var sb = new System.Text.StringBuilder(tag);
+            sb.Append('>');
+            if (UseCenterTemplate) sb.Append("\n    <CenterTemplate><span>&#9733;</span></CenterTemplate>");
+            if (UseItemTemplate) sb.Append("\n    <ItemTemplate Context=\"item\"><strong>@item.Label</strong></ItemTemplate>");
+            sb.Append("\n</AtomRadialMenu>");
+            return sb.ToString();
+        }
+    }
+}

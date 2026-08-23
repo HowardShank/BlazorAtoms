@@ -1,0 +1,230 @@
+@inherits AtomComponentBase
+
+@* AtomRadialMenu — a center button whose items radiate on a consumer-defined arc (0 degrees up,
+   clockwise), where any item can open a ring of its own to any depth.
+
+   The markup is deliberately FLAT: AtomRadialMenu.razor.cs walks the open branches and flattens
+   them into _rings, so there is no recursion here and no second component to leak onto the
+   consumer's surface. Everything positional arrives as --radialmenu-* custom properties.
+
+   Shapes are real SVG, authored inline rather than through MarkupString, because Blazor's CSS
+   isolation never puts its scope attribute on MarkupString content and the scoped selectors would
+   silently fail to match. *@
+
+@* Cancellation collapses the whole component, the same convention the rest of the family uses
+   (AtomChip, AtomPill, AtomTag, AtomBadge). Interop is guarded on the element reference rather than
+   on this flag, because an uncaptured @ref is the observable consequence. *@
+@if (!CancellationToken.IsCancellationRequested)
+{
+<div @ref="_hostRef"
+     @attributes="AdditionalAttributes"
+     class="@ClassAttr(RootClass)"
+     style="@StyleAttr(RootStyle)"
+     role="menu"
+     aria-label="@(AriaLabel ?? "Radial menu")"
+     data-open="@(EffectiveOpen ? "true" : "false")"
+     data-measuring="@(_awaitingMeasure ? "true" : null)"
+     data-expand="@ExpandMode.ToString().ToLowerInvariant()"
+     data-labels="@LabelPlacement.ToString().ToLowerInvariant()"
+     @onkeydown="OnKeyDownAsync"
+     @onwheel="OnWheel"
+     @onwheel:preventDefault="@(Overflow == RadialMenuOverflow.Spin)"
+     @onpointerleave="OnHostPointerLeaveAsync">
+
+    @* --- spokes, painted under everything else ------------------------------------------------ *@
+    @if (SpokeMode != RadialMenuSpokeMode.None)
+    {
+        @foreach (var ring in _rings)
+        {
+            @foreach (var slot in ring.Layout.Slots)
+            {
+                <span class="atom-radial-menu-spoke" style="@SpokeStyle(ring, slot)" aria-hidden="true"></span>
+            }
+        }
+    }
+
+    @* --- center button ------------------------------------------------------------------------ *@
+    <button @ref="_refs[CenterKey]"
+            type="button"
+            class="atom-radial-menu-center"
+            style="@CenterStyle"
+            tabindex="@TabIndexFor(CenterKey)"
+            aria-haspopup="true"
+            aria-expanded="@(EffectiveOpen ? "true" : "false")"
+            aria-label="@CenterAccessibleName"
+            title="@CenterAccessibleName"
+            disabled="@(Trigger == RadialMenuTrigger.Always && !CanGoBack)"
+            @onclick="ToggleRootAsync"
+            @onpointerenter="OnCenterPointerEnterAsync">
+        @ShapeSvg(CenterShape, "atom-radial-menu-shape")
+        <span class="atom-radial-menu-center-content">
+            @if (CenterTemplate is not null)
+            {
+                @CenterTemplate
+            }
+            else if (CanGoBack)
+            {
+                <svg class="atom-radial-menu-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M15 18l-6-6 6-6" />
+                </svg>
+            }
+            else
+            {
+                <svg class="atom-radial-menu-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                    <path d="M4 7h16M4 12h16M4 17h16" />
+                </svg>
+            }
+        </span>
+    </button>
+
+    @* --- items -------------------------------------------------------------------------------- *@
+    @for (var r = 0; r < _rings.Count; r++)
+    {
+        // Copied into locals: a `for` variable is shared across iterations, so a lambda or a @ref
+        // capturing it directly would see the final value for every button.
+        var ringIndex = r;
+        var ring = _rings[ringIndex];
+
+        for (var s = 0; s < ring.Layout.Slots.Count; s++)
+        {
+            var slotIndex = s;
+            var slot = ring.Layout.Slots[slotIndex];
+            var key = SlotKey(ringIndex, slotIndex);
+            var item = SlotItem(ring, slot);
+
+            @* ONE button element for items and pagination steppers alike, differing only in
+               attribute values and inner content.
+
+               Two sibling <button>s in an if/else cannot be used here: when a keyed, @ref-bearing
+               element has to be swapped for the other branch at the same position — which is exactly
+               what happens when a "next" stepper turns into a "prev" one on page change — Blazor's
+               RenderTreeDiffBuilder.RemoveOldFrame throws NotImplementedException on the
+               ElementReferenceCapture frame. Keeping the element identical sidesteps the diff path
+               entirely; only child content varies, and child frames carry no reference capture. *@
+            <button @key="key"
+                    @ref="_refs[key]"
+                    type="button"
+                    class="@SlotClass(ring, slot)"
+                    style="@SlotStyle(ring, slot, slotIndex)"
+                    tabindex="@TabIndexFor(key)"
+                    role="menuitem"
+                    data-depth="@ring.Depth"
+                    data-kind="@SlotKindAttr(slot)"
+                    data-branch="@(item?.IsBranch == true ? "true" : null)"
+                    data-expanded="@(SlotExpanded(ring, slot) ? "true" : null)"
+                    aria-haspopup="@(item?.IsBranch == true ? "true" : null)"
+                    aria-expanded="@SlotAriaExpanded(ring, slot)"
+                    aria-label="@SlotAccessibleName(slot, item)"
+                    title="@SlotAccessibleName(slot, item)"
+                    disabled="@(item?.Disabled == true)"
+                    @onclick="@(() => ActivateAsync(ringIndex, slotIndex))"
+                    @onpointerenter="@(() => OnItemPointerEnterAsync(ringIndex, slotIndex))">
+                @* The emerge animation lives on this wrapper, never on the button. The button's own
+                   transform is what positions it, and an animation that also wrote `transform`
+                   would make the item's POSITION depend on the animation having advanced — an
+                   animation that is deferred or throttled then leaves items at the `from` offset. *@
+                <span class="atom-radial-menu-body">
+                @ShapeSvg(SlotShape(item), "atom-radial-menu-shape")
+                <span class="atom-radial-menu-content">
+                    @if (item is null)
+                    {
+                        <svg class="atom-radial-menu-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="@(slot.Kind == RadialMenuSlotKind.PagePrev ? "M15 18l-6-6 6-6" : "M9 6l6 6-6 6")" />
+                        </svg>
+                    }
+                    else if (ItemTemplate is not null)
+                    {
+                        @ItemTemplate(item)
+                    }
+                    else
+                    {
+                        @if (!string.IsNullOrEmpty(item.Icon))
+                        {
+                            <span class="@($"atom-radial-menu-icon {item.Icon}")" aria-hidden="true"></span>
+                        }
+                        @if (ShowLabels && LabelPlacement == RadialMenuLabelPlacement.Inside && !string.IsNullOrEmpty(item.Label))
+                        {
+                            <span class="atom-radial-menu-label">@LabelFor(item)</span>
+                        }
+                    }
+                </span>
+                </span>
+                @* Outside the animated body on purpose: a label pinned to the ring should not
+                   scale in and out with the shape. *@
+                @if (item is not null && ShowLabels && LabelPlacement == RadialMenuLabelPlacement.Outside && !string.IsNullOrEmpty(item.Label))
+                {
+                    <span class="atom-radial-menu-outside-label">@LabelFor(item)</span>
+                }
+                @if (Debug)
+                {
+                    <span class="atom-radial-menu-debug-tag" aria-hidden="true">@DebugLabel(slot)</span>
+                }
+            </button>
+        }
+    }
+
+    @* --- debug overlay ------------------------------------------------------------------------ *@
+    @if (Debug)
+    {
+        @foreach (var ring in _rings)
+        {
+            var half = DebugHalf(ring);
+            var startEdge = DebugEdge(ring.ArcStart, half);
+            var endEdge = DebugEdge(ring.ArcEnd, half);
+
+            <svg class="atom-radial-menu-debug"
+                 style="@RingOriginStyle(ring)"
+                 viewBox="@DebugViewBox(ring)"
+                 aria-hidden="true"
+                 focusable="false">
+                <circle class="atom-radial-menu-debug-ring" cx="0" cy="0" r="@Num(ring.Layout.Radius)" />
+                @if (ring.Layout.RingCount > 1)
+                {
+                    <circle class="atom-radial-menu-debug-ring" cx="0" cy="0" r="@Num(ring.Layout.OuterRadius)" />
+                }
+                <line class="atom-radial-menu-debug-arc" x1="0" y1="0" x2="@Num(startEdge.X)" y2="@Num(startEdge.Y)" />
+                <line class="atom-radial-menu-debug-arc" x1="0" y1="0" x2="@Num(endEdge.X)" y2="@Num(endEdge.Y)" />
+                @foreach (var slot in ring.Layout.Slots)
+                {
+                    <line class="atom-radial-menu-debug-tick" x1="0" y1="0" x2="@Num(slot.X)" y2="@Num(slot.Y)" />
+                }
+            </svg>
+        }
+
+        <ul class="atom-radial-menu-advisories">
+            @foreach (var note in Advisories)
+            {
+                <li>@note</li>
+            }
+        </ul>
+    }
+</div>
+
+}
+
+@code {
+    // A RenderFragment template rather than a MarkupString: templates authored with @<...> DO get
+    // the CSS-isolation scope attribute, MarkupString content never does.
+    private RenderFragment ShapeSvg(RadialMenuShape shape, string cssClass) =>
+        @<svg class="@cssClass" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+            @if (UsesCustomPath(shape))
+            {
+                <path d="@CustomPath" vector-effect="non-scaling-stroke" />
+            }
+            else if (PointsFor(shape) is { } points)
+            {
+                <polygon points="@points" vector-effect="non-scaling-stroke" />
+            }
+            else if (IsSquircle(shape))
+            {
+                <rect x="0" y="0" width="100" height="100" rx="26" ry="26" vector-effect="non-scaling-stroke" />
+            }
+            else
+            {
+                <circle cx="50" cy="50" r="50" vector-effect="non-scaling-stroke" />
+            }
+        </svg>;
+}

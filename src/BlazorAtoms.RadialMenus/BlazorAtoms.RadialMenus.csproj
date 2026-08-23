@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <Import Project="$(RepoRoot)build\Packable.props" />
+  <Import Project="$(RepoRoot)build\Shared.props" />
+
+  <PropertyGroup>
+    <PackageId>BlazorAtoms.RadialMenus</PackageId>
+    <Title>Blazor Radial Menus</Title>
+    <Description>Radial (pie / wheel) menu for Blazor. Ships AtomRadialMenu — a center button whose items radiate on a consumer-defined arc (0 degrees at top, clockwise), where any item is a leaf action or a nested child menu of any depth. Item count is never capped: the ring radius is solved from collision geometry, with Rings/Shrink/Paginate/Spin overflow policies. Shapes are real SVG polygons (circle through octagon, or your own path), sized so the label fits inside the shape rather than its bounding box. A small lazy JS module the component imports itself supplies container-fit, viewport flip and outside-click.</Description>
+    <PackageTags>Blazor;RadialMenu;PieMenu;WheelMenu;Menu;ContextMenu;Radial;SVG;WebAssembly;Server</PackageTags>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BlazorAtoms.RadialMenus.Tests" />
+  </ItemGroup>
+
+</Project>

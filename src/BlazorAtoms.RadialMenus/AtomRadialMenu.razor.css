@@ -1,0 +1,316 @@
+/* AtomRadialMenu — every position arrives from C# as a --radialmenu-* custom property, so this
+   sheet only has to say what those properties mean. Nothing here computes geometry.
+
+   Keyframes names are written literally in `animation`, never routed through a var(): Blazor's CSS
+   isolation rewrites a literal name with the component's scope suffix but leaves a name hidden
+   inside a custom property alone, which points the animation at a keyframes block that no longer
+   exists — and fails silently. */
+
+.atom-radial-menu {
+    /* Fallbacks live here so the component is usable with no parameters set at all. */
+    --radialmenu-center-size: 64px;
+    --radialmenu-item-size: 48px;
+    --radialmenu-font-size: 13px;
+    --radialmenu-line-height: 1.2;
+    --radialmenu-label-offset: 6px;
+    --radialmenu-border-width: 1px;
+    --radialmenu-spoke-width: 2px;
+    --radialmenu-duration: 180ms;
+    --radialmenu-easing: cubic-bezier(0.34, 1.4, 0.64, 1);
+    --radialmenu-disabled-opacity: 0.4;
+
+    --radialmenu-color: #1f2933;
+    --radialmenu-bg: #ffffff;
+    --radialmenu-border: #cbd2d9;
+    --radialmenu-center-color: #ffffff;
+    --radialmenu-center-bg: #2f6feb;
+    --radialmenu-hover-bg: #eef2f7;
+    --radialmenu-active-bg: #dbe7ff;
+    --radialmenu-label-color: #52606d;
+    --radialmenu-spoke-color: #cbd2d9;
+
+    position: relative;
+    width: var(--radialmenu-center-size);
+    height: var(--radialmenu-center-size);
+    /* The ring deliberately escapes this box — a menu pops over its surroundings rather than
+       reserving room for its widest state. --radialmenu-extent reports the space it actually wants
+       for a consumer who does need to reserve it. */
+    overflow: visible;
+    isolation: isolate;
+}
+
+/* The measure pass replaces estimated widths with real ones. Hiding the ring until it lands means
+   the estimate is computed but never seen, so there is no visible reflow. */
+.atom-radial-menu[data-measuring="true"] .atom-radial-menu-item {
+    visibility: hidden;
+}
+
+/* ---- buttons ------------------------------------------------------------------------------- */
+
+.atom-radial-menu-center,
+.atom-radial-menu-item {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--radialmenu-color);
+    font: inherit;
+    font-size: var(--radialmenu-font-size);
+    line-height: var(--radialmenu-line-height);
+    cursor: pointer;
+    /* Positions are pixel offsets from the menu's center; the -50% re-centers the button on that
+       point rather than hanging it off its own top-left corner. */
+    transform: translate(
+        calc(-50% + var(--radialmenu-x, 0px)),
+        calc(-50% + var(--radialmenu-y, 0px)));
+}
+
+.atom-radial-menu-center {
+    width: var(--radialmenu-center-size);
+    height: var(--radialmenu-center-size);
+    color: var(--radialmenu-center-color);
+    z-index: 2;
+}
+
+.atom-radial-menu-item {
+    width: var(--radialmenu-size, var(--radialmenu-item-size));
+    height: var(--radialmenu-size, var(--radialmenu-item-size));
+    z-index: 3;
+}
+
+/* The emerge animation lives here, one level in, and only ever touches opacity and scale. The
+   button's own transform stays purely positional, so an animation that is deferred, throttled in a
+   background tab, or never started cannot leave items sitting at the wrong offset. */
+.atom-radial-menu-body {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+}
+
+.atom-radial-menu-item > .atom-radial-menu-body {
+    animation: atom-radial-menu-emerge var(--radialmenu-duration) var(--radialmenu-easing) both;
+    animation-delay: var(--radialmenu-delay, 0ms);
+}
+
+.atom-radial-menu-center:disabled,
+.atom-radial-menu-item:disabled {
+    cursor: default;
+    opacity: var(--radialmenu-disabled-opacity);
+}
+
+/* ---- the shape ----------------------------------------------------------------------------- */
+
+.atom-radial-menu-shape {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    /* The outline is inscribed in its 100x100 box, so its stroke straddles the nominal edge exactly
+       the way a CSS border on a circle does. ItemGap already provides the clearance. */
+    overflow: visible;
+    pointer-events: none;
+}
+
+.atom-radial-menu-shape > * {
+    fill: var(--radialmenu-bg);
+    stroke: var(--radialmenu-border);
+    stroke-width: var(--radialmenu-border-width);
+    transition: fill var(--radialmenu-duration) ease;
+}
+
+.atom-radial-menu-center .atom-radial-menu-shape > * {
+    fill: var(--radialmenu-center-bg);
+    stroke: none;
+}
+
+.atom-radial-menu-item:hover:not(:disabled) .atom-radial-menu-shape > *,
+.atom-radial-menu-item:focus-visible .atom-radial-menu-shape > * {
+    fill: var(--radialmenu-hover-bg);
+}
+
+.atom-radial-menu-item[data-expanded="true"] .atom-radial-menu-shape > * {
+    fill: var(--radialmenu-active-bg);
+}
+
+/* clip-path would have clipped the focus ring off; an SVG outline leaves the button's own ring
+   intact, which is the reason shapes are drawn as SVG rather than as clip-path polygons. */
+.atom-radial-menu-center:focus-visible,
+.atom-radial-menu-item:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+    z-index: 4;
+}
+
+/* ---- content ------------------------------------------------------------------------------- */
+
+.atom-radial-menu-content,
+.atom-radial-menu-center-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    /* Keep content inside the shape's inscribed area rather than its bounding box — the same
+       constraint the sizing formula solves for. 70% is the inradius of a square, the tightest of
+       the common shapes. */
+    max-width: 76%;
+    max-height: 76%;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.atom-radial-menu-label {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.atom-radial-menu-glyph {
+    width: 45%;
+    min-width: 14px;
+    height: auto;
+}
+
+.atom-radial-menu-icon {
+    font-size: 1.1em;
+    line-height: 1;
+}
+
+/* An outside label hangs beyond the shape on the same radius, so its length can never force the
+   shape to grow. */
+.atom-radial-menu-outside-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(
+        calc(-50% + cos(var(--radialmenu-angle, 0deg) - 90deg) * (var(--radialmenu-size, 48px) / 2 + var(--radialmenu-label-offset))),
+        calc(-50% + sin(var(--radialmenu-angle, 0deg) - 90deg) * (var(--radialmenu-size, 48px) / 2 + var(--radialmenu-label-offset))));
+    color: var(--radialmenu-label-color);
+    font-size: var(--radialmenu-font-size);
+    line-height: 1;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+/* ---- spokes -------------------------------------------------------------------------------- */
+
+.atom-radial-menu-spoke {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: var(--radialmenu-spoke-len, 0px);
+    height: var(--radialmenu-spoke-width);
+    background: var(--radialmenu-spoke-color);
+    /* Rotate about the ring's origin, then push out by the start offset. -90deg converts our
+       up-is-zero angle into CSS's right-is-zero rotation. */
+    transform-origin: 0 50%;
+    transform:
+        translate(var(--radialmenu-x, 0px), calc(var(--radialmenu-y, 0px) - var(--radialmenu-spoke-width) / 2))
+        rotate(calc(var(--radialmenu-angle, 0deg) - 90deg))
+        translateX(var(--radialmenu-spoke-start, 0px));
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* ---- debug overlay ------------------------------------------------------------------------- */
+
+.atom-radial-menu-debug {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: calc(var(--radialmenu-outer-radius, 0px) * 2 + var(--radialmenu-item-size));
+    height: calc(var(--radialmenu-outer-radius, 0px) * 2 + var(--radialmenu-item-size));
+    transform: translate(
+        calc(-50% + var(--radialmenu-x, 0px)),
+        calc(-50% + var(--radialmenu-y, 0px)));
+    overflow: visible;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.atom-radial-menu-debug-ring {
+    fill: none;
+    stroke: #d64545;
+    stroke-width: 1;
+    stroke-dasharray: 4 4;
+    vector-effect: non-scaling-stroke;
+}
+
+.atom-radial-menu-debug-arc {
+    stroke: #2f6feb;
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+}
+
+.atom-radial-menu-debug-tick {
+    stroke: #d64545;
+    stroke-width: 1;
+    stroke-dasharray: 2 3;
+    vector-effect: non-scaling-stroke;
+}
+
+.atom-radial-menu-debug-tag {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0 2px;
+    background: #1f2933;
+    color: #fff;
+    font-size: 9px;
+    line-height: 1.4;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.atom-radial-menu-advisories {
+    position: absolute;
+    top: calc(100% + var(--radialmenu-extent, 0px));
+    left: 50%;
+    width: max-content;
+    max-width: 42ch;
+    margin: 8px 0 0;
+    padding: 6px 8px 6px 22px;
+    transform: translateX(-50%);
+    background: #fffaf0;
+    border: 1px solid #d9a03c;
+    color: #7a4b0b;
+    font-size: 11px;
+    line-height: 1.4;
+    z-index: 6;
+}
+
+.atom-radial-menu-advisories:empty {
+    display: none;
+}
+
+/* ---- motion -------------------------------------------------------------------------------- */
+
+@keyframes atom-radial-menu-emerge {
+    from {
+        opacity: 0;
+        transform: scale(0.4);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atom-radial-menu-item > .atom-radial-menu-body {
+        animation: none;
+    }
+
+    .atom-radial-menu-shape > * {
+        transition: none;
+    }
+}
