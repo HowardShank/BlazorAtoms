@@ -306,8 +306,29 @@ public class AtomRadialMenuTests
 
         var cut = RenderOpen(ctx, Leaves("N", "E", "S", "W"));
 
-        Assert.DoesNotContain("E-", cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("e-1", cut.Markup, StringComparison.Ordinal);
+        // Checked against the DECLARATIONS, not against the whole markup. Scanning the markup for
+        // "E-" reads item labels and attribute values too, so it both misses nothing and fails for
+        // reasons that have nothing to do with number formatting - and when it does fail it cannot
+        // say which value was wrong.
+        var declarations = cut.FindAll("[style]")
+            .Select(e => e.GetAttribute("style") ?? "")
+            .SelectMany(style => style.Split(';', StringSplitOptions.RemoveEmptyEntries))
+            .Select(d => d.Trim())
+            .Where(d => d.StartsWith("--", StringComparison.Ordinal))
+            .ToArray();
+
+        Assert.NotEmpty(declarations);
+
+        var scientific = declarations
+            .Where(d => System.Text.RegularExpressions.Regex.IsMatch(d, @"\d[eE][+-]?\d"))
+            .ToArray();
+
+        Assert.True(scientific.Length == 0,
+            "scientific notation reached the stylesheet: " + string.Join(" | ", scientific));
+
+        // A dropped declaration is the other half of the same bug: StyleVars omits a value it cannot
+        // format, so the property is simply absent rather than obviously wrong.
+        Assert.All(declarations, d => Assert.Contains(":", d, StringComparison.Ordinal));
     }
 
     [Fact]
@@ -1008,6 +1029,403 @@ public class AtomRadialMenuTests
 
         Assert.True(unbounded > 250, $"expected the unwindowed menu to run away, got {unbounded}");
         Assert.True(windowed < 140, $"expected a 2-level window to stay near the base radius, got {windowed}");
+    }
+
+    // ---- Items changing under an open menu ----------------------------------------------------
+    // Items is a consumer parameter, so it can be swapped, mutated or emptied at any moment,
+    // including while branches are open and paths point into it. None of that may throw, and the
+    // menu has to end up showing the new tree rather than a stale one.
+
+    /// <summary>An item's rendered label, or "?" for a pagination stepper.</summary>
+    private static string[] ItemLabels(IRenderedComponent<AtomRadialMenu> cut) =>
+        cut.FindAll("button.atom-radial-menu-item")
+            .Select(b => b.QuerySelector("span.atom-radial-menu-label")?.TextContent ?? "?")
+            .ToArray();
+
+    private static string[] ItemPaths(IRenderedComponent<AtomRadialMenu> cut) =>
+        cut.FindAll("button.atom-radial-menu-item")
+            .Select(b => b.GetAttribute("data-path") ?? "?")
+            .ToArray();
+
+    private static RadialMenuItem Branch(string label, params RadialMenuItem[] kids) =>
+        new() { Label = label, Children = kids };
+
+    [Fact]
+    public void Replacing_Items_rebuilds_the_ring()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var cut = RenderOpen(ctx, Leaves("A", "B"));
+        Assert.Equal(["A", "B"], ItemLabels(cut));
+
+        cut.Render(p =>
+        {
+            p.Add(x => x.Items, Leaves("X", "Y", "Z"));
+            p.Add(x => x.Trigger, RadialMenuTrigger.Always);
+        });
+
+        Assert.Equal(["X", "Y", "Z"], ItemLabels(cut));
+    }
+
+    /// <summary>
+    /// The same list instance, mutated in place. <c>OnParametersSet</c> calls <c>BuildRings</c>
+    /// unconditionally and reads <c>Items</c> live, so there is no equality check or
+    /// <c>ShouldRender</c> short circuit to defeat — any re-render at all picks the change up, even
+    /// one that passes no new parameter values.
+    /// </summary>
+    [Fact]
+    public void Mutating_the_same_Items_instance_is_picked_up_on_any_re_render()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var list = new List<RadialMenuItem> { Leaf("A"), Leaf("B") };
+        var cut = RenderOpen(ctx, list);
+        Assert.Equal(["A", "B"], ItemLabels(cut));
+
+        list.Add(Leaf("C"));
+        cut.Render();
+
+        Assert.Equal(["A", "B", "C"], ItemLabels(cut));
+    }
+
+    [Fact]
+    public void An_open_branch_that_becomes_a_leaf_drops_its_child_ring()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var cut = RenderOpen(ctx, [Branch("Br", Leaf("k1"), Leaf("k2")), Leaf("Other")]);
+        cut.FindAll("button.atom-radial-menu-item")[0].Click();
+        Assert.Equal(["0", "1", "0/0", "0/1"], ItemPaths(cut));
+
+        // Same index, no longer a branch. The open path survives in state but nothing can hang off it.
+        cut.Render(p =>
+        {
+            p.Add(x => x.Items, Leaves("Br", "Other"));
+            p.Add(x => x.Trigger, RadialMenuTrigger.Always);
+        });
+
+        Assert.Equal(["0", "1"], ItemPaths(cut));
+    }
+
+    [Fact]
+    public void An_open_path_past_the_end_of_Items_is_ignored()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var cut = RenderOpen(ctx, [Leaf("A"), Branch("Br", Leaf("k1"), Leaf("k2"))]);
+        cut.FindAll("button.atom-radial-menu-item")[1].Click();
+        Assert.Equal(4, cut.FindAll("button.atom-radial-menu-item").Count);
+
+        cut.Render(p =>
+        {
+            p.Add(x => x.Items, Leaves("A"));
+            p.Add(x => x.Trigger, RadialMenuTrigger.Always);
+        });
+
+        Assert.Equal(["A"], ItemLabels(cut));
+    }
+
+    [Fact]
+    public void Emptying_Items_while_open_leaves_only_the_center_button()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var cut = RenderOpen(ctx, Leaves("A", "B"));
+
+        cut.Render(p =>
+        {
+            p.Add(x => x.Items, Array.Empty<RadialMenuItem>());
+            p.Add(x => x.Trigger, RadialMenuTrigger.Always);
+        });
+
+        Assert.Empty(cut.FindAll("button.atom-radial-menu-item"));
+        Assert.NotNull(cut.Find("button.atom-radial-menu-center"));
+    }
+
+    /// <summary>
+    /// Covers the fallback in <c>BuildRings</c> for a window root that no longer resolves. A
+    /// re-rooted frame hangs off a path, and that path can stop existing between renders — without
+    /// the fallback the seed ring would have no items and the menu would render empty while
+    /// <c>Items</c> still has a tree in it.
+    /// </summary>
+    [Fact]
+    public void A_window_root_that_stops_resolving_falls_back_to_the_true_root()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var deep = new[] { Branch("L0", Branch("L1", Branch("L2", Leaf("x"), Leaf("y")))), Leaf("Other") };
+
+        var cut = ctx.Render<AtomRadialMenu>(p =>
+        {
+            p.Add(x => x.Items, deep);
+            p.Add(x => x.Trigger, RadialMenuTrigger.Always);
+            p.Add(x => x.ExpandMode, RadialMenuExpandMode.Concentric);
+            p.Add(x => x.MaxVisibleDepth, 2);
+        });
+
+        foreach (var path in new[] { "0", "0/0" })
+        {
+            var b = cut.FindAll("button.atom-radial-menu-item").First(x => x.GetAttribute("data-path") == path);
+            cut.InvokeAsync(() => b.Click()).Wait();
+        }
+
+        // Re-rooted: the frame hangs off "0/0" and shows depths 1 and 2 only.
+        Assert.Equal(["0/0", "0/0/0"], ItemPaths(cut));
+
+        // "0/0" no longer exists — L0 is a leaf now.
+        cut.Render(p =>
+        {
+            p.Add(x => x.Items, Leaves("L0", "Other"));
+            p.Add(x => x.Trigger, RadialMenuTrigger.Always);
+            p.Add(x => x.ExpandMode, RadialMenuExpandMode.Concentric);
+            p.Add(x => x.MaxVisibleDepth, 2);
+        });
+
+        Assert.Equal(["L0", "Other"], ItemLabels(cut));
+        Assert.Equal(["0", "1"], ItemPaths(cut));
+    }
+
+    /// <summary>
+    /// Pins what is currently TRUE rather than what is desirable: open state is stored as index
+    /// paths, so removing or reordering items hands openness to whatever now occupies that index.
+    /// Nothing throws and no stale ring survives — but the branch shown expanded is the wrong one.
+    /// </summary>
+    /// <remarks>
+    /// The fix, if this ever matters, is to key open state on <see cref="RadialMenuItem.Id"/> when
+    /// the consumer supplies one and fall back to index paths otherwise. That is a design change, not
+    /// a bug fix, so this test exists to make the current behaviour deliberate and to fail loudly if
+    /// someone changes it without meaning to.
+    /// </remarks>
+    [Fact]
+    public void Open_state_is_positional_so_shifting_indices_moves_it()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var cut = RenderOpen(ctx, [
+            Leaf("First"),
+            Branch("Second", Leaf("s1"), Leaf("s2")),
+            Branch("Third", Leaf("t1")),
+        ]);
+
+        cut.FindAll("button.atom-radial-menu-item")[1].Click();   // open "Second", at path 1
+        Assert.Equal(["First", "Second", "Third", "s1", "s2"], ItemLabels(cut));
+
+        // Drop "First". "Third" now sits at index 1 — the path that is open.
+        cut.Render(p =>
+        {
+            p.Add(x => x.Items, new[]
+            {
+                Branch("Second", Leaf("s1"), Leaf("s2")),
+                Branch("Third", Leaf("t1")),
+            });
+            p.Add(x => x.Trigger, RadialMenuTrigger.Always);
+        });
+
+        // "Third" is the one rendered expanded, not "Second".
+        Assert.Equal(["Second", "Third", "t1"], ItemLabels(cut));
+        Assert.Equal(["0", "1", "1/0"], ItemPaths(cut));
+    }
+
+    // ---- CollapseAllAsync ---------------------------------------------------------------------
+
+    /// <summary>
+    /// The case the method exists for. <c>Trigger=Always</c> pins the ring open, so the close path
+    /// that clears the open paths never runs and nothing else can reset the expansion state.
+    /// </summary>
+    [Fact]
+    public async Task CollapseAllAsync_resets_the_expansion_state_under_Trigger_Always()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var cut = RenderOpen(ctx, Tree());
+        cut.FindAll("button.atom-radial-menu-item")[0].Click();   // Shape
+        cut.FindAll("button.atom-radial-menu-item")[3].Click();   // Fill, a grandchild ring
+        Assert.Equal(["0", "1", "2", "0/0", "0/1", "0/0/0", "0/0/1"], ItemPaths(cut));
+
+        await cut.InvokeAsync(cut.Instance.CollapseAllAsync);
+
+        // Branches gone, ring still there — Always keeps the menu on screen.
+        Assert.Equal(["0", "1", "2"], ItemPaths(cut));
+        Assert.NotNull(cut.Find("button.atom-radial-menu-center"));
+    }
+
+    /// <summary>Deepest first, so a consumer replaying the events unwinds in the order it expects.</summary>
+    [Fact]
+    public async Task CollapseAllAsync_reports_every_branch_it_closed_deepest_first()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var closed = new List<string?>();
+        var cut = RenderOpen(ctx, Tree(), p => p
+            .Add(x => x.OnBranchClosed, EventCallback.Factory.Create<RadialMenuItem>(this, i => closed.Add(i.Label))));
+
+        cut.FindAll("button.atom-radial-menu-item")[0].Click();   // Shape
+        cut.FindAll("button.atom-radial-menu-item")[3].Click();   // Fill
+        closed.Clear();                                           // opening raises nothing; be explicit
+
+        await cut.InvokeAsync(cut.Instance.CollapseAllAsync);
+
+        Assert.Equal(["Fill", "Shape"], closed);
+    }
+
+    [Fact]
+    public async Task CollapseAllAsync_does_nothing_when_no_branch_is_open()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var closed = new List<string?>();
+        var cut = RenderOpen(ctx, Tree(), p => p
+            .Add(x => x.OnBranchClosed, EventCallback.Factory.Create<RadialMenuItem>(this, i => closed.Add(i.Label))));
+
+        await cut.InvokeAsync(cut.Instance.CollapseAllAsync);
+
+        Assert.Empty(closed);
+        Assert.Equal(["0", "1", "2"], ItemPaths(cut));
+    }
+
+    /// <summary>Collapsing branches is not closing the menu, whatever the trigger.</summary>
+    [Fact]
+    public async Task CollapseAllAsync_leaves_a_click_triggered_menu_open()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var states = new List<bool>();
+        var cut = ctx.Render<AtomRadialMenu>(p => p
+            .Add(x => x.Items, Tree())
+            .Add(x => x.OpenChanged, EventCallback.Factory.Create<bool>(this, states.Add)));
+
+        cut.Find("button.atom-radial-menu-center").Click();       // open the menu
+        cut.FindAll("button.atom-radial-menu-item")[0].Click();   // open Shape
+        Assert.Equal(["0", "1", "2", "0/0", "0/1"], ItemPaths(cut));
+
+        await cut.InvokeAsync(cut.Instance.CollapseAllAsync);
+
+        Assert.Equal(["0", "1", "2"], ItemPaths(cut));
+        Assert.Equal([true], states);                             // no OpenChanged(false)
+    }
+
+    /// <summary>
+    /// A path that stopped resolving has no item to report, so it is dropped rather than crashing or
+    /// raising a callback with a stale object.
+    /// </summary>
+    [Fact]
+    public async Task CollapseAllAsync_skips_branches_whose_path_no_longer_resolves()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var closed = new List<string?>();
+        var cut = RenderOpen(ctx, Tree(), p => p
+            .Add(x => x.OnBranchClosed, EventCallback.Factory.Create<RadialMenuItem>(this, i => closed.Add(i.Label))));
+
+        cut.FindAll("button.atom-radial-menu-item")[0].Click();   // open Shape at path 0
+        closed.Clear();
+
+        // Items shrinks so path 0 is the only item and the open path still points at it, while the
+        // deeper open path 0/0 no longer resolves at all.
+        cut.Render(p =>
+        {
+            p.Add(x => x.Items, Leaves("Only"));
+            p.Add(x => x.Trigger, RadialMenuTrigger.Always);
+            p.Add(x => x.OnBranchClosed, EventCallback.Factory.Create<RadialMenuItem>(this, i => closed.Add(i.Label)));
+        });
+
+        await cut.InvokeAsync(cut.Instance.CollapseAllAsync);
+
+        Assert.Equal(["Only"], ItemLabels(cut));
+        Assert.DoesNotContain("Fill", closed);
+    }
+
+    // ---- loading children on demand -----------------------------------------------------------
+
+    /// <summary>
+    /// The lazy-loading contract. <c>ToggleBranchAsync</c> adds the path to the open set and rebuilds
+    /// the rings BEFORE awaiting <c>OnBranchOpened</c>, so by the time a handler runs the branch is
+    /// already open. Supplying the real children then renders them with no second click — the open
+    /// path is positional, so it keeps addressing the same branch across the swap.
+    /// </summary>
+    [Fact]
+    public void A_branch_can_have_its_real_children_supplied_when_it_opens()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var opened = new List<string?>();
+
+        var cut = ctx.Render<AtomRadialMenu>(p =>
+        {
+            p.Add(x => x.Items, new[] { Branch("Lazy", Leaf("Loading")), Leaf("Other") });
+            p.Add(x => x.Trigger, RadialMenuTrigger.Always);
+            p.Add(x => x.OnBranchOpened, EventCallback.Factory.Create<RadialMenuItem>(this, i => opened.Add(i.Label)));
+        });
+
+        cut.FindAll("button.atom-radial-menu-item")[0].Click();
+
+        // A placeholder child is what makes the item a branch at all, so it can be opened and
+        // reported before anything has been fetched.
+        Assert.Equal(["Lazy"], opened);
+        Assert.Equal(["Lazy", "Other", "Loading"], ItemLabels(cut));
+
+        // What a handler's fetch would produce, arriving on the next render.
+        cut.Render(p =>
+        {
+            p.Add(x => x.Items, new[] { Branch("Lazy", Leaf("A"), Leaf("B")), Leaf("Other") });
+            p.Add(x => x.Trigger, RadialMenuTrigger.Always);
+            p.Add(x => x.OnBranchOpened, EventCallback.Factory.Create<RadialMenuItem>(this, i => opened.Add(i.Label)));
+        });
+
+        Assert.Equal(["Lazy", "Other", "A", "B"], ItemLabels(cut));
+        Assert.Equal(["0", "1", "0/0", "0/1"], ItemPaths(cut));
+        Assert.Equal(["Lazy"], opened);          // still one open event; no second click was needed
+    }
+
+    /// <summary>
+    /// The trap that makes the placeholder necessary: <c>IsBranch</c> is
+    /// <c>Children is { Count: &gt; 0 }</c>, so an item whose children have not been fetched yet is a
+    /// LEAF. Clicking it raises <c>OnItemInvoked</c>, never <c>OnBranchOpened</c>, and under the
+    /// default <c>CloseOnLeafInvoke</c> it closes the whole menu.
+    /// </summary>
+    [Fact]
+    public void An_item_with_no_children_yet_is_a_leaf_and_cannot_be_opened()
+    {
+        using var ctx = new BunitContext();
+        Module(ctx);
+
+        var opened = new List<string?>();
+        var invoked = new List<string?>();
+
+        var cut = ctx.Render<AtomRadialMenu>(p =>
+        {
+            p.Add(x => x.Items, new[] { new RadialMenuItem { Label = "Empty", Children = [] }, Leaf("Other") });
+            p.Add(x => x.OnBranchOpened, EventCallback.Factory.Create<RadialMenuItem>(this, i => opened.Add(i.Label)));
+            p.Add(x => x.OnItemInvoked, EventCallback.Factory.Create<RadialMenuItem>(this, i => invoked.Add(i.Label)));
+        });
+
+        cut.Find("button.atom-radial-menu-center").Click();
+
+        // No data-branch and no aria-haspopup: the markup already calls it a leaf.
+        var button = cut.Find("button.atom-radial-menu-item[data-path=\"0\"]");
+        Assert.Null(button.GetAttribute("data-branch"));
+        Assert.Null(button.GetAttribute("aria-haspopup"));
+
+        button.Click();
+
+        Assert.Empty(opened);
+        Assert.Equal(["Empty"], invoked);
+
+        // CloseOnLeafInvoke defaults to true, so the menu is gone rather than showing an empty ring.
+        Assert.Empty(cut.FindAll("button.atom-radial-menu-item"));
     }
 
     // ---- overflow -----------------------------------------------------------------------------

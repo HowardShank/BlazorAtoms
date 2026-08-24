@@ -13,6 +13,46 @@ public partial class AtomRadialMenu
 {
     private const string CenterKey = "center";
 
+    // ---- public API ---------------------------------------------------------------------------
+
+    /// <summary>
+    /// Collapses every open branch, leaving the root ring on screen. Call it through <c>@ref</c>.
+    /// </summary>
+    /// <remarks>
+    /// <para>The only way to reset the expansion state under
+    /// <see cref="RadialMenuTrigger.Always"/>, which pins the ring open and therefore never runs the
+    /// close path that would otherwise clear it. Reloading a data set under <c>Always</c> without this
+    /// leaves branches expanded on paths into the old tree — and because open paths are positional,
+    /// the next click on one of them closes it instead of opening it.</para>
+    /// <para>Works under every trigger, and never closes the menu itself: this collapses branches, it
+    /// does not do the job of <see cref="Open"/>.</para>
+    /// <para><see cref="OnBranchClosed"/> is raised once per branch that was open, deepest first, so a
+    /// consumer tracking expansion state stays in step. A branch whose path no longer resolves against
+    /// <see cref="Items"/> is dropped silently — there is no item left to report.</para>
+    /// </remarks>
+    public async Task CollapseAllAsync()
+    {
+        if (_openPaths.Count == 0) return;
+
+        // Resolve and snapshot before clearing. The callbacks below are awaited, so a handler is free
+        // to change Items or reopen something while we are still walking the list.
+        var closed = _openPaths
+            .OrderByDescending(DepthOf)
+            .ThenByDescending(p => p, StringComparer.Ordinal)
+            .Select(ItemAt)
+            .Where(item => item is not null)
+            .ToArray();
+
+        _openPaths.Clear();
+        BuildRings();
+        StateHasChanged();
+
+        if (!OnBranchClosed.HasDelegate) return;
+
+        foreach (var item in closed)
+            await OnBranchClosed.InvokeAsync(item);
+    }
+
     // ---- open state ---------------------------------------------------------------------------
 
     /// <summary>Whether the ring is on screen. <see cref="RadialMenuTrigger.Always"/> pins it open.</summary>

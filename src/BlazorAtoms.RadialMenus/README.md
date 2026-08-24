@@ -269,6 +269,78 @@ There are two kinds of advisory, from two different places:
 A cross-ring advisory is a real overlap on screen, not a warning about one. If you get them, the
 guidance line that follows names the levers — or switch `ExpandMode` per the table above.
 
+### Changing `Items` while the menu is open
+
+Safe. You can swap the list, mutate the same instance in place, or empty it entirely with branches
+open — `OnParametersSet` rebuilds the rings from scratch and reads `Items` live, so any re-render picks
+the change up. An open path that no longer resolves is ignored, a branch that became a leaf loses its
+child ring, and a re-rooted `MaxVisibleDepth` frame whose root vanished falls back to the true root.
+Individual items are immutable (`init`-only, `Children` included), so changing one means building a
+replacement.
+
+One thing to know: **open state is positional.** It is stored as index paths, so removing or
+reordering items hands openness to whatever now occupies that index — remove item 0 and the branch
+that was open at index 1 is no longer the one shown expanded. Append and remove at the end, or close
+the menu first (`Open="false"` clears the open paths) when restructuring.
+
+### Loading children on demand
+
+A branch's children can arrive after it is opened. `ToggleBranchAsync` adds the path to the open set
+and rebuilds the rings **before** awaiting `OnBranchOpened`, so by the time your handler runs the
+branch is already open — supply the real children and they render on the next pass, with no second
+click.
+
+```razor
+<AtomRadialMenu Items="@_items" OnBranchOpened="LoadAsync" @bind-Open="_open" />
+
+@code {
+    private RadialMenuItem[] _items = [];
+
+    private async Task LoadAsync(RadialMenuItem branch)
+    {
+        if (branch.Data is not string key) return;
+        var children = await Api.GetChildrenAsync(key);
+        _items = WithChildren(_items, key, children);   // rebuild the tree, same positions
+    }
+}
+```
+
+**A branch needs at least one child to be openable.** `IsBranch` is `Children is { Count: > 0 }`, so
+an item whose children have not been fetched yet is a *leaf*: clicking it raises `OnItemInvoked`, never
+`OnBranchOpened`, and under the default `CloseOnLeafInvoke` it closes the menu. Give it one placeholder
+child — a `"Loading…"` leaf — and it opens, reports, and gets replaced.
+
+Use `Id` or `Data` to identify which branch to fill, and put the fetched children back at the **same
+index**, because open state is positional (see above). Route navigation needs none of this: a new
+component instance starts with an empty open set and whatever `Items` you hand it.
+
+### Collapsing branches from code
+
+`CollapseAllAsync()` closes every open branch and leaves the ring where it is. Call it through
+`@ref`:
+
+```razor
+<AtomRadialMenu @ref="_menu" Items="@_items" Trigger="RadialMenuTrigger.Always" />
+
+@code {
+    private AtomRadialMenu? _menu;
+
+    private async Task ReloadAsync()
+    {
+        if (_menu is not null) await _menu.CollapseAllAsync();
+        _items = await Api.GetMenuAsync();
+    }
+}
+```
+
+It is the **only** way to reset the expansion state under `Trigger="Always"`, which pins the ring open
+and therefore never runs the close path that would otherwise clear it. That matters most when you swap
+a data set: open paths are positional, so any left behind keep branches expanded on paths into the old
+tree, and the next click on one closes it instead of opening it.
+
+It never closes the menu itself — that is `Open`'s job — and it raises `OnBranchClosed` once per branch
+it closed, deepest first, so state you keep in sync stays in sync.
+
 ### Events
 
 `OnItemInvoked` (leaf activated), `OnBranchOpened`, `OnBranchClosed`, and `Open` / `OpenChanged` for

@@ -125,6 +125,28 @@ recursion in markup, no second component, and all the tree-walking stays testabl
 build by accident from a cache, and otherwise an infinite loop.
 `An_item_graph_that_contains_itself_stops_rather_than_recursing_forever` pins it.
 
+### `CollapseAllAsync` is the component's only imperative API
+
+Everything else is parameters and callbacks. This one exists because `Trigger=Always` makes
+`EffectiveOpen` unconditionally true, so `SetOpenAsync` returns early and the branch of it that clears
+`_openPaths` is unreachable — under that trigger a consumer has no way at all to reset expansion state.
+The precedent for an `@ref`-called method is `AtomCanvasStudio`.
+
+Two details are deliberate:
+
+- It resolves and **snapshots** the closed items before clearing, because `OnBranchClosed` is awaited
+  and a handler may change `Items` or reopen something mid-walk.
+- Paths that no longer resolve are dropped rather than reported, since there is no item to hand the
+  callback.
+
+Rejected alternative: treating `Open="false"` as "collapse all" under `Always`. It only fires on a
+*transition*, so a consumer wanting to collapse twice in a row would have to set it true first — a
+command dressed as state.
+
+`CollapseAllAsync_resets_the_expansion_state_under_Trigger_Always` and
+`CollapseAllAsync_reports_every_branch_it_closed_deepest_first` pin the two halves; both were
+mutation-checked.
+
 ### True depth and visible depth are different numbers
 
 `MaxVisibleDepth` re-roots the walk: `VisibleRootPath` picks the ancestor `window - 1` levels above

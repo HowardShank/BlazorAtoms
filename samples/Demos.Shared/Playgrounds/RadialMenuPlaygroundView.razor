@@ -57,6 +57,28 @@
 document.querySelectorAll('[data-depth="3"]')        // every item at level 3
 document.querySelectorAll('[data-branch][data-expanded]')</pre>
 
+    <h2>Loading children on demand</h2>
+    <p>Pick <strong>LazyTree</strong>. Each branch fetches its children the moment it opens, with a
+       latency slider standing in for the API call. Three fetch levels, then leaves, and
+       <strong>reload data set</strong> throws the whole set away and starts over.</p>
+    <p>Two things make it work. First, the component adds the path to its open set and rebuilds its
+       rings <em>before</em> it awaits <code>OnBranchOpened</code> &mdash; so by the time your handler
+       runs the branch is already open, and handing back the real children just renders them. No
+       second click.</p>
+    <p>Second, an unloaded branch must carry <strong>one placeholder child</strong>.
+       <code>IsBranch</code> is <code>Children is { Count: &gt; 0 }</code>, so an item with no children
+       is a <em>leaf</em>: clicking it raises <code>OnItemInvoked</code>, never
+       <code>OnBranchOpened</code>, and the default <code>CloseOnLeafInvoke</code> shuts the menu. The
+       placeholder here is disabled so it cannot be clicked itself.</p>
+    <p>Use <code>Id</code> or <code>Data</code> to say which branch to fill, and put the children back
+       at the <strong>same index</strong> &mdash; open paths are positional, so reordering during a
+       reload moves whichever branch was open.</p>
+    <p>Before swapping a data set wholesale, collapse. <strong>reload data set</strong> calls
+       <code>CollapseAllAsync()</code> through <code>@@ref</code>, which is the only way to reset the
+       expansion state under <code>Trigger="Always"</code>: that trigger pins the ring open, so the
+       close path that would clear the open paths never runs. Skip it and branches stay expanded on
+       paths into the old tree &mdash; the next click on one closes it instead of loading it.</p>
+
     <h2>Size grows fast with depth</h2>
     <p>Footprint is driven by depth &times; children per level &times; <code>ExpandMode</code>, and the
        three modes diverge sharply once you are more than two levels down:</p>
@@ -104,7 +126,8 @@ document.querySelectorAll('[data-branch][data-expanded]')</pre>
 <p><a href="playground/activityindicators">&larr; Back to demo</a></p>
 
 <div class="rm-stage">
-    <AtomRadialMenu Items="@CurrentItems"
+    <AtomRadialMenu @ref="_menu"
+                    Items="@CurrentItems"
                     @bind-Open="OpenV"
                     StartAngle="@StartAngleV"
                     EndAngle="@EndAngleV"
@@ -183,6 +206,12 @@ document.querySelectorAll('[data-branch][data-expanded]')</pre>
     <span>Open = <code>@OpenV</code></span>
     <span>Items = <code>@CurrentItems.Count</code></span>
     <span>Last event: <code>@(LastEvent ?? "(none)")</code></span>
+    @if (SourceV == ItemSource.LazyTree)
+    {
+        <span>Fetches = <code>@_lazyFetches</code></span>
+        <span>@(_lazyBusy is null ? "idle" : $"loading {_lazyBusy}…")</span>
+        <button type="button" class="rm-clear" @onclick="ReloadLazyData">reload data set</button>
+    }
     <button type="button" class="rm-clear" @onclick="@(() => LastEvent = null)">clear</button>
 </div>
 
@@ -193,6 +222,12 @@ document.querySelectorAll('[data-branch][data-expanded]')</pre>
             @foreach (var s in Sources) { <option value="@s">@s</option> }
         </select>
         <span class="hint">@SourceHint</span>
+    </div>
+    <div class="ctrl">
+        <label>Fetch latency, ms (LazyTree) <span class="val">@LazyDelayV</span></label>
+        <input type="range" min="0" max="1500" step="100" @bind="LazyDelayV" @bind:event="oninput" />
+        <span class="hint">Stands in for the API call. The branch is already open while this runs, so the
+            placeholder is what the user sees.</span>
     </div>
     <div class="ctrl">
         <label>Item count &mdash; crowding stress <span class="val">@CountV</span></label>
@@ -550,12 +585,14 @@ document.querySelectorAll('[data-branch][data-expanded]')</pre>
     private static readonly RadialMenuArcMode[] ArcModes = Enum.GetValues<RadialMenuArcMode>();
     private static readonly RadialMenuSpokeMode[] SpokeModes = Enum.GetValues<RadialMenuSpokeMode>();
 
-    private enum ItemSource { Flat, LongLabels, IconsOnly, NestedTree, DeepTree, WithDisabled }
+    private enum ItemSource { Flat, LongLabels, IconsOnly, NestedTree, DeepTree, WithDisabled, LazyTree }
     private static readonly ItemSource[] Sources = Enum.GetValues<ItemSource>();
 
     // ---- state, one field per parameter -------------------------------------------------------
 
     private ItemSource SourceV = ItemSource.Flat;
+    private int LazyDelayV = 400;
+    private AtomRadialMenu? _menu;
     private int CountV = 6;
 
     private bool OpenV = true;
@@ -653,6 +690,7 @@ document.querySelectorAll('[data-branch][data-expanded]')</pre>
         ItemSource.NestedTree => "Three levels deep. Try each ExpandMode.",
         ItemSource.DeepTree => "Five levels, several children at every level. Turn on Debug and read the path on each tag. Cascade gets huge by level 4; Drill stays the same size at any depth.",
         ItemSource.WithDisabled => "Every third item is disabled, and keyboard navigation skips them.",
+        ItemSource.LazyTree => "Children are fetched when a branch opens. Each unloaded branch carries one disabled \"Loading\" child, because an item with no children is a LEAF and could not be opened at all. Three fetch levels, then leaves.",
         _ => "Plain leaves, count driven by the slider.",
     };
 
@@ -663,7 +701,113 @@ document.querySelectorAll('[data-branch][data-expanded]')</pre>
         ItemSource.WithDisabled => Build(i => new RadialMenuItem { Label = $"Item {i + 1}", Disabled = i % 3 == 2 }),
         ItemSource.NestedTree => Tree,
         ItemSource.DeepTree => Deep,
+        ItemSource.LazyTree => _lazy,
         _ => Build(i => new RadialMenuItem { Label = $"Item {i + 1}" }),
+    };
+
+    // ---- LazyTree: children fetched when a branch opens ---------------------------------------
+    // AtomRadialMenu adds the path to its open set and rebuilds its rings BEFORE it awaits
+    // OnBranchOpened, so by the time this handler runs the branch is already open. Handing back the
+    // real children just renders them - the user never clicks twice.
+
+    private RadialMenuItem[] _lazy = LazyRoots();
+    private readonly HashSet<string> _lazyLoaded = [];
+    private string? _lazyBusy;
+    private int _lazyFetches;
+
+    /// <summary>
+    /// A branch whose children have not arrived yet. The single placeholder child is load-bearing:
+    /// IsBranch is <c>Children is { Count: &gt; 0 }</c>, so without it the item would be a LEAF -
+    /// clicking it would raise OnItemInvoked, never OnBranchOpened, and CloseOnLeafInvoke would shut
+    /// the menu. Disabled so the placeholder itself cannot be activated.
+    /// </summary>
+    private static RadialMenuItem LazyBranch(string key, string label) => new()
+    {
+        Label = label,
+        Data = key,
+        Children = [new RadialMenuItem { Label = "Loading\u2026", Disabled = true }],
+    };
+
+    private static RadialMenuItem[] LazyRoots() =>
+    [
+        LazyBranch("customers", "Customers"),
+        LazyBranch("orders", "Orders"),
+        LazyBranch("reports", "Reports"),
+        LazyBranch("admin", "Admin"),
+    ];
+
+    private async Task ReloadLazyData()
+    {
+        // Collapse BEFORE swapping the data in. Open paths are positional, so any left behind would
+        // keep branches expanded on paths into the OLD tree, and the next click on one would close it
+        // rather than load it. Open=false is not enough here: under Trigger=Always the menu is pinned
+        // open and never runs the close path that clears them, which is exactly why
+        // CollapseAllAsync exists.
+        if (_menu is not null) await _menu.CollapseAllAsync();
+
+        _lazy = LazyRoots();
+        _lazyLoaded.Clear();
+        _lazyFetches = 0;
+        _lazyBusy = null;
+
+        // After the collapse, because it raises OnBranchClosed for each branch it closed and those
+        // handlers write LastEvent.
+        LastEvent = "data set reloaded";
+    }
+
+    /// <summary>The fake API. Stops handing back branches at the third level so the example ends.</summary>
+    private static RadialMenuItem[] Fetch(string key)
+    {
+        var depth = key.Count(c => c == '/');
+        var names = depth switch
+        {
+            0 => key switch
+            {
+                "customers" => new[] { "Active", "Lapsed", "Prospects" },
+                "orders" => ["Open", "Shipped", "Returned"],
+                "reports" => ["Daily", "Monthly"],
+                _ => ["Users", "Roles", "Audit"],
+            },
+            1 => ["This year", "Last year", "Archive"],
+            _ => ["Summary", "Detail"],
+        };
+
+        return names
+            .Select((name, i) => depth < 2
+                ? LazyBranch($"{key}/{i}", name)
+                : new RadialMenuItem { Label = name, Data = $"{key}/{i}" })
+            .ToArray();
+    }
+
+    /// <summary>
+    /// Rebuilds the tree with <paramref name="children"/> under the node whose <c>Data</c> is
+    /// <paramref name="key"/>. RadialMenuItem is init-only, so a change anywhere means new instances
+    /// down the spine - which is exactly what a data-driven menu does anyway. Positions are preserved,
+    /// because the component's open paths are index-based.
+    /// </summary>
+    private static RadialMenuItem[] WithChildren(
+        IReadOnlyList<RadialMenuItem> items, string key, IReadOnlyList<RadialMenuItem> children) =>
+        items.Select(item =>
+            item.Data as string == key
+                ? Clone(item, children)
+                : item.Children is { Count: > 0 } kids
+                    ? Clone(item, WithChildren(kids, key, children))
+                    : item)
+            .ToArray();
+
+    private static RadialMenuItem Clone(RadialMenuItem item, IReadOnlyList<RadialMenuItem> children) => new()
+    {
+        Id = item.Id,
+        Label = item.Label,
+        Icon = item.Icon,
+        Tooltip = item.Tooltip,
+        Disabled = item.Disabled,
+        Data = item.Data,
+        StartAngle = item.StartAngle,
+        EndAngle = item.EndAngle,
+        Shape = item.Shape,
+        CssClass = item.CssClass,
+        Children = children,
     };
 
     private RadialMenuItem[] Build(Func<int, RadialMenuItem> make) =>
@@ -833,7 +977,25 @@ document.querySelectorAll('[data-branch][data-expanded]')</pre>
     // ---- events -------------------------------------------------------------------------------
 
     private void OnInvoked(RadialMenuItem item) => LastEvent = $"OnItemInvoked: {item.Label ?? item.Tooltip}";
-    private void OnOpened(RadialMenuItem item) => LastEvent = $"OnBranchOpened: {item.Label}";
+    private async Task OnOpened(RadialMenuItem item)
+    {
+        LastEvent = $"OnBranchOpened: {item.Label}";
+
+        if (SourceV != ItemSource.LazyTree
+            || item.Data is not string key
+            || !_lazyLoaded.Add(key))          // Add returns false if it was already fetched
+            return;
+
+        _lazyBusy = item.Label;
+        StateHasChanged();                     // paint the placeholder before the await
+
+        if (LazyDelayV > 0) await Task.Delay(LazyDelayV);
+
+        _lazy = WithChildren(_lazy, key, Fetch(key));
+        _lazyFetches++;
+        _lazyBusy = null;
+        StateHasChanged();
+    }
     private void OnClosed(RadialMenuItem item) => LastEvent = $"OnBranchClosed: {item.Label}";
 
     // ---- "unset" helpers ----------------------------------------------------------------------
@@ -938,6 +1100,7 @@ document.querySelectorAll('[data-branch][data-expanded]')</pre>
                 a.Add("OnBranchOpened=\"@OnBranchOpened\"");
                 a.Add("OnBranchClosed=\"@OnBranchClosed\"");
             }
+            if (SourceV == ItemSource.LazyTree) a.Add("OnBranchOpened=\"@LoadChildrenAsync\"");
 
             if (Nz(HatchClass) is not null) a.Add($"CssClass=\"{HatchClass}\"");
             if (Nz(HatchStyle) is not null) a.Add($"Style=\"{HatchStyle}\"");
