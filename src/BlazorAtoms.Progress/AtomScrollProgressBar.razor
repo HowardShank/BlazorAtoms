@@ -21,11 +21,19 @@
     reparented containing-block chain, not DOM ancestry). See atom-progress.js for the full
     explanation and the fallback used on browsers without scroll-driven animations at all. Either
     way the consumer just drops this in once, near the top of a page — no wrapping, no ChildContent.
+
+    The track carries -pending until that call reports a measure, which the scoped CSS renders as
+    visibility:hidden. Without it the pre-JS track (position:fixed, width:100%) paints as a
+    full-width strip across the top of the VIEWPORT before JS narrows it to the container — brief
+    in Server or WebAssembly, but seconds long under InteractiveAuto, whose server pass attaches
+    against not-yet-overflowing content and only gets the right container once the WebAssembly
+    pass re-attaches. Measured is C#-owned rather than a class JS strips, so a later re-render
+    can't resurrect the hidden state.
 *@
 
 <div @attributes="AdditionalAttributes"
      @ref="_trackRef"
-     class="@ClassAttr($"atom-scroll-progress-track atom-scroll-progress-track-{PositionClass}")"
+     class="@ClassAttr($"atom-scroll-progress-track atom-scroll-progress-track-{PositionClass}{(Measured ? "" : " atom-scroll-progress-track-pending")}")"
      style="@StyleAttr(RootStyle)">
     <div @ref="_barRef" class="atom-scroll-progress-bar"></div>
 </div>

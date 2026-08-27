@@ -8,7 +8,7 @@ Progress indicators for Blazor.
 | **`AtomProgressRing`** | Circular SVG arc with an optional centered readout | `Diameter`, `Cap`, `StartAngle`, `CenterContent` |
 | **`AtomProgressSteps`** | Discrete step tracker (wizard / checkout) | `Steps`, `Current`, `Orientation`, `Marker`, `StatusFor`, `StepTemplate`, `OnStepClick` |
 | **`AtomMeter`** | Scalar gauge with quality bands (`role="meter"`) | `Low`, `High`, `Optimum`, `Segments`, `ShowScale`, `Width`, `Radius` |
-| **`AtomScrollProgressBar`** | Fixed reading-progress bar driven by scroll position | `Position`, `Align`, `Width`, `Color`, `Height` |
+| **`AtomScrollProgressBar`** | Fixed reading-progress bar driven by scroll position | `Position`, `Align`, `Width`, `Color`, `Height`, `ScrollContainer` |
 
 The first four share a base (see [Shared parameters](#shared-parameters)) and are **zero-JS**.
 `AtomScrollProgressBar` is the odd one out on both counts — it has no `Value` at all, and it does need
@@ -264,6 +264,10 @@ browsers, the same `OnAfterRenderAsync` call falls back to a plain `scroll`/`res
 same detected scroll container, setting `width` directly from
 `scrollTop / (scrollHeight - clientHeight)`.
 
+The same listener path is used, on any browser, when the bar isn't a DOM descendant of the container
+it tracks — see [Which element does it track?](#which-element-does-it-track) — because a named
+scroll-timeline isn't visible from outside the declaring element's subtree.
+
 ### Parameters
 
 | Parameter | Type | Default | Notes |
@@ -273,9 +277,65 @@ same detected scroll container, setting `width` directly from
 | `Position` | `ScrollProgressPosition` | `Top` | Which edge of the scroll container the bar sticks to (`Top`/`Bottom`) — not the raw viewport edge; see below. |
 | `Width` | `string?` | `null` | Width of the track. Any standard CSS length (`"50%"`, `"300px"`, `"20rem"`, ...), resolved against the scroll container, not the viewport. `null` (default) spans the full container width. |
 | `Align` | `ScrollProgressAlign` | `Start` | Horizontal alignment of the track within the container when `Width` makes it narrower (`Start`/`Center`/`End`). |
+| `ScrollContainer` | `string?` | `null` | CSS selector naming the scrollable element to track. `null` = walk up from the bar for the nearest ancestor that is actually scrolling. See below. |
 
 Plus the shared escape hatch on every Atom component (`CssClass`, `Style`, arbitrary splatted
 attributes) on the root `<div>`.
+
+### Which element does it track?
+
+Resolution order:
+
+1. **`ScrollContainer`**, if set — `document.querySelector`, so the bar can live anywhere in the
+   markup rather than inside the thing it measures. A selector that matches nothing falls through
+   to step 2 rather than failing silently. Same parameter name and semantics as
+   `AtomScrollTo.ScrollContainer` in `BlazorAtoms.Navigation`.
+
+   One mechanical consequence: a CSS named scroll-timeline is only visible to descendants of the
+   element declaring it, so when the bar sits *outside* the container it tracks, the native
+   scroll-driven animation can't be used and that bar transparently uses the scroll-listener path
+   instead (the same one non-Chromium browsers use). Behaviour is identical; it's per bar, so one
+   page can have a nested-container bar on the listener path and a page-level bar running natively.
+2. Otherwise, walk up from the bar for the nearest ancestor with `overflow-y: auto|scroll` **that
+   is currently overflowing**, stopping at the document.
+
+That "currently overflowing" test is deliberate — an `overflow: auto` box that never scrolls isn't
+this bar's scroller — but it makes the answer depend on *when* you ask. So resolution is repeated
+rather than once-and-done, driven by two signals that both re-resolve and rebind when the answer
+changes:
+
+- a **`ResizeObserver`** on the page and the current container — catches the container or the page
+  actually changing size (a window resize, a sidebar opening);
+- a **capture-phase `scroll` listener** on `document` — catches a container that has *become*
+  scrollable since the last resolution. This one is necessary because `ResizeObserver` reports a
+  change to an element's own box, never to its `scrollHeight`: in an app-shell layout, a
+  viewport-bounded content div never resizes when content grows inside it, so the
+  not-overflowing → overflowing transition is invisible to the observer. The first scroll of the
+  real container is the signal instead. (Scroll events don't bubble, but capture phase on
+  `document` still sees them from any element.)
+
+Both funnel into one `requestAnimationFrame`-debounced check, so a burst of layout changes or a
+stream of scroll events costs at most one re-resolve per frame.
+
+Belt and braces: the bar also isn't painted until a container has been measured (below), so even a
+resolution that starts out wrong is never visible.
+
+Set `ScrollContainer` explicitly when you already know the scroller — it skips the heuristic
+entirely, and it's the clearest way to give several bars on one page different targets.
+
+### It stays hidden until it has been measured
+
+Until the module reports a successful measure, the track carries
+`atom-scroll-progress-track-pending` (`visibility: hidden`). The pre-JS `width: 100%` on a
+`position: fixed` track spans the whole **viewport**, so painting it before measurement shows a
+full-width bar in the wrong place.
+
+If JS never runs — static SSR/prerender, a failed module import, scripting disabled — the bar stays
+hidden rather than appearing misplaced. Nothing is lost by that: the fill is advanced either by a
+scroll-timeline or by the fallback scroll listener, so without JS it could never move anyway.
+
+Several bars can share one container: the named `scroll-timeline` is created once per container and
+reference-counted, so instances don't overwrite each other's timeline.
 
 ### Sizing and positioning against the container, not the viewport
 

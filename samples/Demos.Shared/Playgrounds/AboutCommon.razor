@@ -1,0 +1,98 @@
+
+@* Shared body of each demo host's /about page, split out 2026-08-27: the three About.razor files
+   were 78 near-identical lines differing only in one sentence about render mode. Each host's
+   About.razor now carries a summary of what that sample demonstrates and renders this for
+   everything that isn't host-specific. Naming follows the existing HomeCommon.razor.
+
+   The project/team block lives here rather than in each About because it is identical by nature —
+   one author, one repository, one license — and duplicating it three ways is the problem this
+   split exists to remove.
+
+   The demo directory at the bottom is intentionally left exactly as it was found. It is a link
+   index, not a library catalogue, and it lags the fuller table in HomeCommon.razor (no Charts,
+   Gauges, Skeletons, Equipment, Drawer, RadialMenu, Scrollbars, Typography...). Bringing it up to
+   date is a separate, deliberate pass. *@
+
+<p>
+    <strong>Blazor Atoms</strong> is a family of small, self-contained Blazor component libraries.
+    Each library ships as its own NuGet package with ~zero third-party dependencies: take one
+    component, one library, or several, and it just works. No umbrella package, no global theme
+    provider, no <code>builder.Services.Add…()</code> registration, no <code>&lt;script&gt;</code>
+    tag to wire up.
+</p>
+
+<p>
+    Every component is plain Blazor plus inline SVG/CSS — themeable through CSS custom properties,
+    crisp at any zoom, animatable in pure CSS. JavaScript is used only where a browser primitive
+    truly needs it, and always self-loads invisibly to the consumer. The same markup runs unchanged
+    in Server, WebAssembly and Auto — which is what these three sibling demo apps exist to prove.
+</p>
+
+<h2>Project</h2>
+<ul>
+    <li><strong>Author and maintainer</strong> — Howard Shank</li>
+    <li><strong>Source, issues and releases</strong> —
+        <a href="https://github.com/HowardShank/BlazorAtoms">github.com/HowardShank/BlazorAtoms</a>
+        (per-library <code>README.md</code> for usage, <code>DEVELOPMENT.md</code> for internals)</li>
+    <li><strong>License</strong> — MIT</li>
+    <li><strong>Packages</strong> — one NuGet package per library, published as
+        <code>BlazorAtoms.&lt;Area&gt;</code>; reference only the ones you use</li>
+</ul>
+
+<h2>Demos</h2>
+
+<h3>Feedback &amp; Status</h3>
+<ul>
+    <li><a href="playground/activityindicators">Activity Indicators</a> — <code>BlazorAtoms.ActivityIndicators</code></li>
+    <li><a href="playground/progress">Progress Indicators</a>, <a href="playground/scrollprogress">Scroll Progress</a> — <code>BlazorAtoms.Progress</code></li>
+    <li><a href="playground/badge">Badges</a> — <code>BlazorAtoms.Badges</code></li>
+    <li><a href="playground/chip">Chips, Tags &amp; Pills</a> — <code>BlazorAtoms.Badges</code></li>
+    <li><a href="playground/rating">Ratings</a> — <code>BlazorAtoms.Ratings</code></li>
+    <li><a href="playground/avatar">Avatars</a> — <code>BlazorAtoms.Avatars</code></li>
+    <li><a href="playground/highlight">Highlights</a> / <a href="playground/highlighter">Highlighter</a> — <code>BlazorAtoms.Highlights</code></li>
+</ul>
+
+<h3>Data &amp; Visualization</h3>
+<ul>
+    <li><a href="barcodes">Barcodes</a>, <a href="qrcode">QR Codes</a>, <a href="qrimage">QR Image Viewer</a> — <code>BlazorAtoms.Barcodes</code></li>
+    <li><a href="playground/canvas">Canvas</a>, <a href="playground/signaturepad">Signature Pad</a>, <a href="playground/canvas-studio">Canvas Studio</a> — <code>BlazorAtoms.Canvas</code></li>
+</ul>
+
+<h3>Forms &amp; Input</h3>
+<ul>
+    <li><a href="playground/formfields">Standard Inputs</a>, <a href="playground/rangeinput">Range Input</a>, <a href="playground/crtinput">CRT Input</a>, <a href="playground/crtdisplay">CRT Display</a> — <code>BlazorAtoms.Inputs</code></li>
+    <li><a href="playground/buttons">Buttons</a> — <code>BlazorAtoms.Buttons</code></li>
+</ul>
+
+<h3>Data &amp; Utilities</h3>
+<ul>
+    <li><a href="playground/datahasher">Data Hasher</a> — <code>BlazorAtoms.Data</code></li>
+    <li><a href="playground/dropzone">Drag &amp; Drop</a> — <code>BlazorAtoms.DragDrop</code></li>
+</ul>
+
+<h3>Navigation</h3>
+<ul>
+    <li><a href="playground/scroll-to">Scroll To</a>, <a href="playground/breadcrumbs">Breadcrumbs</a> — <code>BlazorAtoms.Navigation</code></li>
+</ul>
+
+<h3>Content &amp; Identity</h3>
+<ul>
+    <li><a href="playground/clock">Clocks</a>, <a href="playground/timezone-map">Timezone Map</a>, <a href="playground/timezone-picker">Timezone Picker</a> — <code>BlazorAtoms.Clocks</code></li>
+    <li><a href="playground/screensaver-rain">Matrix Rain</a></li>
+</ul>
+
+<h3>Tabs</h3>
+<ul>
+    <li><a href="playground/tabs">Tabs</a> — <code>BlazorAtoms.Tabs</code></li>
+</ul>
+
+<h3>Cards</h3>
+<ul>
+    <li><a href="playground/cardlayout">Card Layout</a>, <a href="playground/cardvariants">Hover-reveal Cards</a>, <a href="playground/cardreveal">AtomCardReveal</a> — <code>BlazorAtoms.Cards</code></li>
+</ul>
+
+<h3>Overlay &amp; Behavior</h3>
+<ul>
+    <li><a href="playground/tooltip">Tooltips</a>, <a href="playground/shapedtooltip">Shaped Tooltips</a>, <a href="playground/paintedtooltip">Painted Tooltips</a> — <code>BlazorAtoms.Tooltips</code></li>
+    <li><a href="playground/transition">AtomTransition</a> — <code>BlazorAtoms.Transitions</code></li>
+</ul>

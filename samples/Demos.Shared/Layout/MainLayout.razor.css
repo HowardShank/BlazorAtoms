@@ -1,3 +1,7 @@
+/* Scoped CSS for the shared demo-host chrome. See MainLayout.razor for why this lives in
+   Demos.Shared and why #blazor-error-ui's styles are NOT here (they belong in each app's unscoped
+   wwwroot/app.css, next to the div in that app's host page). */
+
 .page {
     position: relative;
     display: flex;
@@ -57,9 +61,8 @@ main {
     .sidebar {
         display: flex;
         flex-direction: column;
-        width: 250px;
-        height: 100vh;
         width: 320px;
+        height: 100vh;
         position: sticky;
         top: 0;
     }
@@ -81,8 +84,14 @@ main {
         padding-right: 1.5rem !important;
     }
 
-    /* main = viewport-tall flex column: top-row pinned at top, #content scrolls internally
-       (bottom bounded by the viewport), not the whole window. */
+    /* main = viewport-tall flex column: top-row pinned at top, the article scrolls internally
+       (bottom bounded by the viewport), not the whole window — so the scrollbar sits at the top of
+       the scrolling container rather than the top of the window. Desktop only; the mobile block
+       above keeps normal document scrolling, since the sidebar isn't alongside the content there.
+
+       Targets .content rather than an id: before this file was shared, only BlazorWebAppSvrDemo had
+       these rules and they keyed off an id="content" that its article alone carried. Every host's
+       article carries class="content", so the class is what generalises. */
     main {
         height: 100vh;
         display: flex;
@@ -94,31 +103,10 @@ main {
         flex: 0 0 auto;
     }
 
-    #content {
+    main > .content {
         flex: 1 1 auto;
         min-height: 0;        /* let the flex child shrink so overflow-y can scroll */
         overflow-y: auto;
         margin-top: 0.5rem;   /* tiny gap beneath the top-row, no overlap */
     }
 }
-
-#blazor-error-ui {
-    color-scheme: light only;
-    background: lightyellow;
-    bottom: 0;
-    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
-    box-sizing: border-box;
-    display: none;
-    left: 0;
-    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
-    position: fixed;
-    width: 100%;
-    z-index: 1000;
-}
-
-    #blazor-error-ui .dismiss {
-        cursor: pointer;
-        position: absolute;
-        right: 0.75rem;
-        top: 0.5rem;
-    }

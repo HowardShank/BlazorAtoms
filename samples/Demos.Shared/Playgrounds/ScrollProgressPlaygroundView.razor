@@ -3,7 +3,20 @@
 
 <PageTitle>AtomScrollProgressBar Playground</PageTitle>
 
-<AtomScrollProgressBar Color="@Color" Height="@Height" Position="@Position" Width="@Nz(Width)" Align="@Align" />
+<AtomScrollProgressBar Color="@Color" Height="@Height" Position="@Position" Width="@Nz(Width)" Align="@Align" ScrollContainer="@Nz(ScrollContainer)" />
+
+@* Extra instances, off by default. These exist to keep the multi-instance paths exercised: a
+   second bar on the SAME container proves the named scroll-timeline is shared per container
+   rather than overwritten (that defect sat here undetected precisely because nothing ever
+   rendered two bars), and the boxed one proves ScrollContainer targeting a different scroller. *@
+@if (ShowSecondBar)
+{
+    <AtomScrollProgressBar Color="#4cc9f0" Height="6px" Position="ScrollProgressPosition.Bottom" />
+}
+@if (ShowBoxBar)
+{
+    <AtomScrollProgressBar Color="#f9c74f" Height="6px" ScrollContainer="#scrollprogress-box" />
+}
 
 <div class="scrollprogress-page">
     <h1>AtomScrollProgressBar playground</h1>
@@ -44,9 +57,37 @@
                 <option value="@ScrollProgressAlign.End">End</option>
             </select>
         </div>
+        <div class="ctrl">
+            <label>ScrollContainer (blank = nearest scrolling ancestor)</label>
+            <input type="text" @bind="ScrollContainer" @bind:event="oninput" placeholder="e.g. #scrollprogress-box, main > .content" />
+        </div>
+        <div class="ctrl">
+            <label>Extra bars (multi-instance)</label>
+            <label class="chk"><input type="checkbox" @bind="ShowSecondBar" /> Second bar, same container (bottom, blue)</label>
+            <label class="chk"><input type="checkbox" @bind="ShowBoxBar" /> Bar on the boxed scroller (yellow)</label>
+        </div>
     </div>
 
     <CodeSnippetBox Code="@Snippet" FileName="AtomScrollProgressBarExample.razor" />
+
+    <h2>A second, nested scroller</h2>
+    <p>
+        This box has its own <code>overflow-y: auto</code>, so it's a scroll container in its own
+        right. Tick <em>Bar on the boxed scroller</em> above, or type
+        <code>#scrollprogress-box</code> into <code>ScrollContainer</code>, to aim a bar at it
+        instead of at the page — the bar is <code>position: fixed</code> but sizes and positions
+        itself to this box's edges, not the viewport's.
+    </p>
+    <div id="scrollprogress-box" class="scrollprogress-box">
+        @for (var i = 0; i < 6; i++)
+        {
+            <p>
+                Nested scroller paragraph @(i + 1). At vero eos et accusamus et iusto odio
+                dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti
+                quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.
+            </p>
+        }
+    </div>
 
     <article class="scrollprogress-article">
         @for (var i = 0; i < 12; i++)
@@ -78,6 +119,10 @@
     .scrollprogress-color-row { display:flex; gap:.5rem; align-items:center; }
     .scrollprogress-color-row input[type=color] { padding:0; width:2.75rem; height:2.2rem; flex:0 0 auto; }
     .scrollprogress-color-row input[type=text] { flex:1 1 auto; min-width:0; }
+    .scrollprogress-controls .chk { display:flex; align-items:center; gap:.4rem; text-transform:none;
+        letter-spacing:normal; font-size:.85rem; color:#cfd8e3; }
+    .scrollprogress-box { max-height:220px; overflow-y:auto; border:1px solid #1b2330;
+        border-radius:12px; padding:1rem 1.25rem; margin-bottom:2rem; line-height:1.8; color:#333; }
     .scrollprogress-article { line-height: 2; color: #333; }
 </style>
 
@@ -87,6 +132,9 @@
     private ScrollProgressPosition Position = ScrollProgressPosition.Top;
     private string Width = "";
     private ScrollProgressAlign Align = ScrollProgressAlign.Start;
+    private string ScrollContainer = "";
+    private bool ShowSecondBar;
+    private bool ShowBoxBar;
 
     private static string? Nz(string s) => string.IsNullOrEmpty(s) ? null : s;
 
@@ -100,6 +148,7 @@
             if (Position != ScrollProgressPosition.Top) attrs += $" Position=\"ScrollProgressPosition.{Position}\"";
             if (!string.IsNullOrEmpty(Width)) attrs += $" Width=\"{Width}\"";
             if (Align != ScrollProgressAlign.Start) attrs += $" Align=\"ScrollProgressAlign.{Align}\"";
+            if (!string.IsNullOrEmpty(ScrollContainer)) attrs += $" ScrollContainer=\"{ScrollContainer}\"";
             return $"<AtomScrollProgressBar{attrs} />";
         }
     }

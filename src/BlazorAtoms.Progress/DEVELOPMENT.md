@@ -159,14 +159,14 @@ same "0 BlazorAtoms deps" standard as every other package except `BlazorAtoms.Tr
 First shipped version tried the obvious pure-CSS approach: `animation-timeline: scroll()` (bare,
 default "nearest" scroller) on a `position: fixed` bar, relying entirely on implicit ancestor
 auto-detection — no JS at all when supported. Broke immediately in this repo's own demo app (an
-app-shell layout: fixed sidebar, `<main>` with `overflow:hidden`, an inner `#content` div that
+app-shell layout: fixed sidebar, `<main>` with `overflow:hidden`, an inner `.content` article that
 actually scrolls) — the bar's width stayed permanently at 0%, confirmed live via direct DOM/computed-style
 inspection in the browser rather than guessed from reading the CSS.
 
 Root cause, also confirmed live: a `position: fixed` element's "nearest ancestor scroller" is
 resolved by Chrome via its *containing-block* chain, which fixed positioning reparents to the
 viewport — not via the element's actual DOM/flat-tree ancestry, which is what the spec's "nearest"
-keyword is supposed to mean and where the real scroll container (`#content`) actually lives. So the
+keyword is supposed to mean and where the real scroll container (`main > .content`) actually lives. So the
 bare-`scroll()` + `position:fixed` combination silently binds to the wrong (or no) scroller whenever
 the real page layout isn't a simple whole-document-scrolls case.
 
@@ -190,6 +190,111 @@ scroll-driven animations nor this component in use, which is to say: none. The m
 `resize`-listener fallback (for browsers without scroll-driven animations at all) reuses the same
 scroll-container detection, so there's exactly one "find the real scroller" implementation either
 way.
+
+### Container resolution is a race, so it repeats
+
+`findScrollParent` only accepts a candidate with `overflow-y: auto|scroll` **and**
+`scrollHeight > clientHeight`. The second half is the correct rule — an `overflow: auto` box that
+never scrolls is not this bar's scroller — but it makes the answer time-dependent, and the original
+implementation asked exactly once, from `OnAfterRenderAsync(firstRender: true)`.
+
+That surfaced on `BlazorWebAppAutoDemo`: under `InteractiveAuto` the component is instantiated
+twice. The server pass attaches before the article has overflowed, resolution falls through to the
+document, and the bar renders as a full-width strip across the top of the viewport until the
+WebAssembly pass re-attaches against now-overflowing content. Pure Server and pure WebAssembly
+attach once, after layout, and never showed it. Same class of bug for any late-arriving content.
+
+Three mitigations, each covering something the others can't:
+
+1. **The track stays hidden until a container has been measured** (see below). This is what removes
+   the visible defect outright: during static SSR/prerender the module import fails, so nothing is
+   painted; the first attach that succeeds already has laid-out content to measure.
+2. **A `ResizeObserver`** on `document.body` plus the current container. Covers the container or the
+   page genuinely changing size — a window resize, a sidebar opening — and document-scrolling
+   layouts where `body` grows.
+3. **A capture-phase `scroll` listener on `document`.** Covers what (2) structurally cannot:
+   `ResizeObserver` reports a change to an element's own box, never to its `scrollHeight`, so in
+   this repo's own app-shell layout (`main { height: 100vh; overflow: hidden }` around
+   `.content { overflow-y: auto }`) neither `body` nor `.content` ever resizes when content grows
+   inside them, and the not-overflowing → overflowing transition is invisible to the observer. The
+   first scroll of the real container is the signal instead. Capture phase because scroll events do
+   not bubble — but on `document`, capture still sees them from any element.
+
+(2) and (3) both funnel into one rAF-debounced `scheduleRecheck`, so a burst of layout changes or a
+stream of scroll events costs at most one re-resolve per frame; the handler bodies are just the
+`state.rafId` guard. Neither is container-scoped, so both are registered once in `observeLayout`
+and survive a rebind — only `detachScrollProgress` tears them down, and the capture flag has to
+match on removal or it silently no-ops.
+
+Rejected alternative: dropping the `scrollHeight > clientHeight` test. It would let a nearer,
+non-scrolling `overflow: auto` box capture the bar and pin it at 0%, and it would push more bars
+onto shared containers, making the timeline collision below *more* likely rather than less.
+
+`ScrollContainer` (a CSS selector, deliberately the same name and semantics as
+`AtomScrollTo.ScrollContainer` in `BlazorAtoms.Navigation`) bypasses the heuristic entirely. The
+two packages are independent by design, so the few lines of selector-resolution JS are duplicated
+rather than shared; `build/SharedJs.props` is the mechanism if that's ever worth consolidating.
+
+### The native path needs the bar inside the container — `usingTimeline` vs `supportsTimeline`
+
+Naming a scroll-timeline explicitly (rather than relying on bare `scroll()`) fixes resolution
+through the *containing-block* chain, which is what `position: fixed` breaks. It does **not** make
+the name globally visible: a named timeline is referenceable only by descendants of the element
+that declares it.
+
+That surfaced as soon as `ScrollContainer` existed, whose entire premise is that the bar can live
+anywhere. Aiming a bar at a sibling scroll box left `animation-timeline` naming a timeline out of
+scope, and an *inactive* timeline still applies the keyframes' fill (see the fallback-interference
+note above) — so the bar sat pinned at 100% and ignored scrolling, looking for all the world like
+broken geometry rather than an unresolvable name. The page-level bar was unaffected because it
+genuinely is a DOM descendant of `.content`.
+
+`bind()` therefore tests `container.contains(track)` and drops that binding to the manual
+scroll-listener path, which needs nothing but `scrollTop` and works from anywhere in the DOM. This
+is a per-**binding** decision, not a per-browser one, hence `state.usingTimeline` next to
+`state.supportsTimeline`: the same page can legitimately run one bar natively and another manually,
+and `unbind` must release a timeline claim only for bindings that actually took one. `bind` also
+clears any `animation-name: none` left behind by a previous fallback binding, or a native rebind
+would stay disabled.
+
+Rejected for now: CSS `timeline-scope`, which widens a named timeline's visibility and would keep
+the native path in this case. It's a second platform dependency on top of scroll-driven animations,
+and it needs list management on a shared property when several bars are in play — not worth it for a
+case that is rare by construction, and the listener path is already well-exercised as the
+Firefox/Safari route.
+
+### One scroll-timeline per container, reference-counted
+
+The timeline name is per-instance random but it has to be set on the **container**
+(`scroll-timeline-name`). Two bars resolving to the same container therefore had the second attach
+overwrite the property, leaving the first bar's `animation-timeline` pointing at a name present on
+no element — silently frozen, native/Chromium branch only. Latent for a long time because nothing
+rendered two bars.
+
+Now the container carries a registry (`__atomScrollProgressTimeline = { name, refs }`): the first
+bar creates the timeline, later bars reuse it, and the properties are cleared only when the last
+reference goes. Same container plus same axis means sharing is the correct semantics, not a
+workaround. The fallback (listener) branch never had this problem — it's per-instance state writing
+to its own bar's `width`.
+
+### The track is hidden until measured
+
+A `position: fixed` track's pre-JS `width: 100%` spans the whole viewport, so it must not be
+painted before the container is measured. `AtomScrollProgressBar` owns that state in C# (`Measured`
+→ `atom-scroll-progress-track-pending` → `visibility: hidden`) rather than letting JS strip a
+class, so a later re-render can't resurrect the hidden state.
+
+If JS never runs the bar stays hidden permanently. That's intentional: neither the scroll-timeline
+nor the fallback listener exists to advance the fill, so a visible bar would be a stuck one.
+
+### Teardown is required, not optional
+
+An earlier revision claimed "nothing DOM-scoped to leak" while registering `resize` handlers on
+`window` and `scroll` handlers on the container, which outlive the component; `DisposeAsync` only
+disposed the module proxy. Everything is now tracked on the track element under
+`__atomScrollProgressState` and removed by `detachScrollProgress`, called from `DisposeAsync` —
+listeners, the `ResizeObserver`, the pending rAF, this track's timeline reference, and the inline
+geometry.
 
 ### Why there's no `prefers-reduced-motion` override
 

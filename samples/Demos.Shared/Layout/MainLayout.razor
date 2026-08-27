@@ -1,0 +1,48 @@
+@inherits LayoutComponentBase
+@using BlazorAtoms.Breadcrumbs
+
+@*
+    The single site-chrome layout for all three demo hosts (Server / Auto / Wasm), merged here
+    2026-08-27 the same way NavMenu was in July. It had drifted three ways: Svr had grown a second
+    <AtomBreadcrumbBar /> inside its top-row plus an id="top-row" and a commented-out debug div,
+    and only Svr carried the scroll-containment CSS (keyed off an id="content" the other two never
+    had), so a scrolling fix had to be written twice before this merge.
+
+    No #blazor-error-ui here. It belongs in each host's own host page — Components/App.razor for
+    Svr and Auto, wwwroot/index.html for standalone Wasm — with its styles in that app's unscoped
+    wwwroot/app.css. That is where the Blazor templates put it, and the reason is real: the banner
+    has to be able to appear for failures that happen before this layout has ever rendered.
+
+    Scoped CSS in an RCL is fine — the SDK folds Demos.Shared's .razor.css into each consuming
+    app's <App>.styles.css bundle, exactly as it already does for NavMenu.razor.css.
+*@
+<style>
+    main {
+        min-width: 0px;
+        flex: 1 1 0%;
+    }
+
+    article {
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+</style>
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4">
+            <a href="about">About</a>
+        </div>
+
+        <div class="px-4">
+            <AtomBreadcrumbBar />
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>

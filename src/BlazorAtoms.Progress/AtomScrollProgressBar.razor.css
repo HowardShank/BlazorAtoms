@@ -20,6 +20,17 @@
     pointer-events: none;
 }
 
+/* The width:100% above is a placeholder, not a design: until atom-progress.js has measured the
+   real scroll container the track spans the whole VIEWPORT, which paints a full-width bar in the
+   wrong place (glaring under InteractiveAuto, whose server pass resolves the container before the
+   content overflows). AtomScrollProgressBar applies this class until attach reports a measure.
+   visibility rather than display:none so nothing about the track's box changes when it appears.
+   If JS never runs at all the bar stays hidden for good — correct, since neither the
+   scroll-timeline nor the fallback listener can advance the fill without it. */
+.atom-scroll-progress-track-pending {
+    visibility: hidden;
+}
+
 .atom-scroll-progress-track-top {
     top: 0;
 }

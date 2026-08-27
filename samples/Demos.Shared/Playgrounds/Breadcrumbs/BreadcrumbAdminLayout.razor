@@ -1,9 +1,10 @@
 @inherits LayoutComponentBase
 @using BlazorAtoms.Breadcrumbs
 
-@* Self-contained (no site chrome) — the Wasm/Auto demo hosts' page files live in a Client
-   project that references Demos.Shared but not the host's own Server project, so this layout
-   can't nest each host's own MainLayout type without a circular reference. *@
+@* Self-contained: deliberately no site chrome, so the nested-provider demo is about the trail and
+   nothing else. The original reason was a hard constraint — each host owned its own MainLayout and
+   AutoDemo's page files live in a .Client project that can't reference the host — but MainLayout
+   moved into Demos.Shared on 2026-08-27, so nesting it here is now possible if that's ever wanted. *@
 <div class="px-4" style="margin-top:.5rem;">
     <a href="playground/breadcrumbs">&larr; Back to Breadcrumbs Playground</a>
     <p><strong>Admin section trail (independent from the site-wide one on other pages):</strong></p>

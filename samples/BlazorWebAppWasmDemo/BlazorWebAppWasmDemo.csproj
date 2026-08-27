@@ -6,18 +6,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <!-- TRANSITIONAL — delete once samples\BlazorWebAppWasmDemo\{BlazorWebAppWasmDemo,
-       BlazorWebAppWasmDemo.Client}\ are removed from disk. This project sits at the sample folder
-       root (mirroring BlazorWebAppSvrDemo), so its default **\*.cs and **\*.razor globs would
-       otherwise swallow the two old project directories nested beneath it: duplicate component
-       types, duplicate @page routes, two Program classes. DefaultItemExcludes is the right knob
-       because the Razor SDK's own .razor glob honours it (Sdk.Razor.CurrentVersion.props: Content
-       Include="**\*.razor" Exclude="$(DefaultItemExcludes);…", and RazorComponent is derived from
-       @(Content) in Sdk.Razor.CurrentVersion.targets). -->
-  <PropertyGroup>
-    <DefaultItemExcludes>$(DefaultItemExcludes);BlazorWebAppWasmDemo\**;BlazorWebAppWasmDemo.Client\**</DefaultItemExcludes>
-  </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
     <!-- Makes `dotnet run` serve this project on its own: without it a standalone WASM project has

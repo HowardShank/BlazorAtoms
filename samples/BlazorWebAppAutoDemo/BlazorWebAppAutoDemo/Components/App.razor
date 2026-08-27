@@ -15,6 +15,17 @@
 
 <body>
     <Routes />
+
+    @* Lives here rather than in MainLayout (which is now shared across all three demo hosts via
+       Demos.Shared): the runtime unhides this on an unhandled error, including one that happens
+       before the layout has rendered. Styles are in the unscoped wwwroot/app.css, since a
+       component's scoped CSS can't match an element the component doesn't render. *@
+    <div id="blazor-error-ui" data-nosnippet>
+        An unhandled error has occurred.
+        <a href="." class="reload">Reload</a>
+        <span class="dismiss">🗙</span>
+    </div>
+
     <script src="_framework/blazor.web.js"></script>
 </body>
 
