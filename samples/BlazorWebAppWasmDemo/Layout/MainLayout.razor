@@ -1,0 +1,35 @@
+@inherits LayoutComponentBase
+@using BlazorAtoms.Breadcrumbs
+@using Demos.Shared.Layout
+@* #blazor-error-ui lives in wwwroot/index.html for standalone WebAssembly — the runtime unhides it
+   on an unhandled error, including errors that happen before this layout has rendered. *@
+<style>
+    main {
+        min-width: 0px;
+        flex: 1 1 0%;
+    }
+
+    article {
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+</style>
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4">
+            <a href="about">About</a>
+        </div>
+
+        <div class="px-4">
+            <AtomBreadcrumbBar />
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>

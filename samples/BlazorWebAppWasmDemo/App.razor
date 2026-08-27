@@ -1,0 +1,23 @@
+@using BlazorAtoms.Breadcrumbs
+
+@* Ported from this sample's former server host (Components/Routes.razor). Two differences forced by
+   standalone hosting: no AdditionalAssemblies (every routable page now lives in this one assembly,
+   and adding Demos.Shared would make its ten self-routed playground views collide with the
+   wrappers in Pages/), and an explicit <NotFound> — the server host handled 404 via re-execution. *@
+<Router AppAssembly="typeof(Program).Assembly">
+    <Found Context="routeData">
+        <CascadingValue Value="routeData">
+            <AtomBreadcrumbProvider>
+                <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+            </AtomBreadcrumbProvider>
+        </CascadingValue>
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <PageTitle>Not found</PageTitle>
+        <LayoutView Layout="typeof(Layout.MainLayout)">
+            <h1>Not found</h1>
+            <p role="alert">There's nothing at this address.</p>
+        </LayoutView>
+    </NotFound>
+</Router>

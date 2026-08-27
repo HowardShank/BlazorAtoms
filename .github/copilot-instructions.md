@@ -30,7 +30,7 @@
 ## Adding a Component
 1. Library: component `.razor` + code-behind `.razor.cs` under `src/BlazorAtoms.<Area>/`.
 2. Shared playground: `samples/Demos.Shared/Playgrounds/<Name>PlaygroundView.razor` that wires every parameter and emits a `<CodeSnippetBox>` snippet.
-3. Three thin wrapper pages: `samples/BlazorWebAppSvrDemo/Components/Pages/`, `samples/BlazorWebAppAutoDemo/BlazorWebAppAutoDemo.Client/Pages/`, `samples/BlazorWebAppWasmDemo/BlazorWebAppWasmDemo.Client/Pages/`.
+3. Three thin wrapper pages: `samples/BlazorWebAppSvrDemo/Components/Pages/` (`@rendermode InteractiveServer`), `samples/BlazorWebAppAutoDemo/BlazorWebAppAutoDemo.Client/Pages/` (`@rendermode InteractiveAuto`), `samples/BlazorWebAppWasmDemo/Pages/` (no `@rendermode` — standalone WebAssembly).
 4. Add NavMenu entries in all three demos and a `samples/Demos.Shared/Demo.razor` link.
 5. Tests: `tests/BlazorAtoms.<Area>.Tests/<Name>Tests.cs` plus `Usings.cs` with `Bunit`, `Xunit`, `Microsoft.AspNetCore.Components`, and the library namespace.
 6. Add the library project reference to `samples/Demos.Shared/Demos.Shared.csproj`.

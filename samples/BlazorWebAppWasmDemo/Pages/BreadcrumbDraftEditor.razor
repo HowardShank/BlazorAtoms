@@ -1,0 +1,9 @@
+@page "/playground/breadcrumbs/customers/{id:int}/draft/{draftNumber:int}"
+@using Demos.Shared.Playgrounds.Breadcrumbs
+
+<BreadcrumbDraftEditorView Id="@Id" DraftNumber="@DraftNumber" />
+
+@code {
+    [Parameter] public int Id { get; set; }
+    [Parameter] public int DraftNumber { get; set; }
+}

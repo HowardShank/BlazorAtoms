@@ -1,0 +1,29 @@
+@page "/RouteInfo"
+@using BlazorWebAppWasmDemo.services
+@inject RouteInfoService RouteInfoObj
+
+<h3>Available Routes</h3>
+
+<div>Route Templates</div>
+<ul>
+    @foreach (var route in RouteInfoObj.RoutesTemplates)
+    {
+        <li>@route</li>
+    }
+</ul>
+
+<div>Route objects</div>
+<ul>
+    @foreach (var route in RouteInfoObj.Routes)
+    {
+        <li>@route</li>
+    }
+</ul>
+
+<div>Page Types</div>
+<ul>
+    @foreach (var type in RouteInfoObj.PageTypes)
+{
+    <li>@type.FullName</li>
+}
+</ul>

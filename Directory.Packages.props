@@ -20,6 +20,9 @@
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.10" Condition="'$(TargetFramework)'=='net10.0'" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.0.18" Condition="'$(TargetFramework)'=='net9.0'" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.10" Condition="'$(TargetFramework)'=='net10.0'" />
+    <!-- Standalone WASM sample only (BlazorWebAppWasmDemo): supplies the RunCommand that makes
+         `dotnet run` serve a project with no server host. Samples are single-target net10.0. -->
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.10" Condition="'$(TargetFramework)'=='net10.0'" />
   </ItemGroup>
   <!-- Test dependencies -->
   <ItemGroup>

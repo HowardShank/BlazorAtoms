@@ -7,24 +7,34 @@
     module, just with less hand-copied duplication of small cross-cutting helpers (nextFrame, etc.).
     A library opts in with: <Import Project="$(RepoRoot)build\SharedJs.props" />
 
-    Indirection through $(IntermediateOutputPath) (rather than a Content item pointing straight at
-    the canonical source under BlazorAtoms.Shared) is required: when two packages that both import
-    this file end up referenced by the same consuming app (e.g. a demo host referencing both
-    BlazorAtoms.Layout and BlazorAtoms.Transitions, the latter pulling in BlazorAtoms.Behaviors),
-    the SDK's DiscoverPrecompressedAssets task dedupes by each asset's original source path across
-    the WHOLE aggregated static-web-asset graph — two Content items both tracing back to the exact
-    same absolute path crashes it ("An item with the same key has already been added"). Copying
-    into each project's own (always project-unique) intermediate directory first gives every
-    package a distinct source path, even though the bytes are identical.
+    The copy destination MUST be the project's real wwwroot/shared/ directory, not a staging
+    directory paired with Link="wwwroot\shared\...". A Link'd Content item outside wwwroot produces
+    a static web asset whose ContentRoot is the project's wwwroot/ while its Identity points at the
+    staging directory — i.e. ContentRoot + RelativePath resolves to a wwwroot/shared/ path that does
+    not exist on disk. `dotnet watch` resolves static assets that way when the Blazor WebAssembly
+    project is the root (running the .Client alone rather than through its server host) and dies on
+    startup: "The directory name '...\wwwroot\shared\' does not exist. (Parameter 'path')" out of
+    FileSystemWatcher.CheckPathValidity.
+
+    Copying into each project's own wwwroot also keeps the source paths distinct, which is required
+    for a second reason: when two packages that both import this file end up referenced by the same
+    consuming app (e.g. a demo host referencing both BlazorAtoms.Layout and BlazorAtoms.Transitions,
+    the latter pulling in BlazorAtoms.Behaviors), the SDK's DiscoverPrecompressedAssets task dedupes
+    by each asset's original source path across the WHOLE aggregated static-web-asset graph — two
+    Content items both tracing back to the exact same absolute path crashes it ("An item with the
+    same key has already been added"). Per-project wwwroot copies each get a distinct source path,
+    even though the bytes are identical.
+
+    The copies are build output living in the source tree; .gitignore excludes src/*/wwwroot/shared/.
   -->
   <PropertyGroup>
-    <SharedJsIntermediateDir>$(IntermediateOutputPath)sharedjs\</SharedJsIntermediateDir>
+    <SharedJsDestinationDir>$(MSBuildProjectDirectory)\wwwroot\shared\</SharedJsDestinationDir>
   </PropertyGroup>
 
-  <Target Name="CopySharedJsToIntermediate"
+  <Target Name="CopySharedJsToWwwroot"
           BeforeTargets="AssignTargetPaths;GetCopyToOutputDirectoryItems;ResolveStaticWebAssetsInputs;ResolveStaticWebAssetsInputsUpdated;AssignTargetPathsForStaticWebAssets"
           Inputs="$(RepoRoot)src\BlazorAtoms.Shared\js\next-frame.js"
-          Outputs="$(SharedJsIntermediateDir)next-frame.js">
+          Outputs="$(SharedJsDestinationDir)next-frame.js">
     <!--
       Explicit Inputs/Outputs (rather than relying solely on the Copy task's SkipUnchangedFiles)
       so MSBuild's own incremental-build engine can determine staleness on its own — independent
@@ -35,14 +45,17 @@
       <_SharedJsSource Include="$(RepoRoot)src\BlazorAtoms.Shared\js\**\*.js" />
     </ItemGroup>
     <Copy SourceFiles="@(_SharedJsSource)"
-          DestinationFolder="$(SharedJsIntermediateDir)"
+          DestinationFolder="$(SharedJsDestinationDir)"
           SkipUnchangedFiles="true" />
   </Target>
 
   <ItemGroup>
-    <!-- Literal (non-wildcard) path: MSBuild only needs wildcard globs to resolve at evaluation
-         time, so this is safe to reference before CopySharedJsToIntermediate has produced it. -->
-    <Content Include="$(SharedJsIntermediateDir)next-frame.js" Link="wwwroot\shared\next-frame.js">
+    <!-- Remove first: once the copy target has run, the SDK's default wwwroot discovery would pick
+         the file up on its own and the explicit item below would be a duplicate asset. Include with
+         a literal (non-wildcard) path — MSBuild only needs wildcard globs to resolve at evaluation
+         time, so this is safe to reference before CopySharedJsToWwwroot has produced it. -->
+    <Content Remove="wwwroot\shared\**\*.js" />
+    <Content Include="wwwroot\shared\next-frame.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

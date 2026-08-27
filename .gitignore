@@ -27,3 +27,6 @@ Thumbs.db
 CLAUDE.md
 CLAUDE.local.md
 .claude/
+
+# Build output copied into each library's wwwroot by build/SharedJs.props.
+src/*/wwwroot/shared/
