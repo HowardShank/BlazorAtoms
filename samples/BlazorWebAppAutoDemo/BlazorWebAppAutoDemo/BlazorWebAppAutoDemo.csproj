@@ -7,8 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\BlazorAtoms.Branding\BlazorAtoms.Branding.csproj" />
-    <!-- For the shared NavMenu rendered by this host's own MainLayout. -->
+    <!-- Demos.Shared is the only project reference a demo host needs: it owns the site chrome
+         (MainLayout, NavMenu), every playground view, and RouteInfoService, and it carries the
+         BlazorAtoms.* and Branding references those need. Types and static web assets both flow
+         transitively, so listing individual component libraries here duplicates that graph and
+         goes stale — see the note in CLAUDE.md's new-library checklist. -->
     <ProjectReference Include="..\..\Demos.Shared\Demos.Shared.csproj" />
     <ProjectReference Include="..\BlazorWebAppAutoDemo.Client\BlazorWebAppAutoDemo.Client.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />

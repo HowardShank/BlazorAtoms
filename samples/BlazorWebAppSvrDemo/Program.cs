@@ -1,5 +1,5 @@
 using BlazorWebAppSvrDemo.Components;
-using BlazorWebAppSvrDemo.services;
+using Demos.Shared.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 

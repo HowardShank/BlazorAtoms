@@ -1,10 +1,26 @@
 using Microsoft.AspNetCore.Components;
 using System.Reflection;
 
-namespace BlazorWebAppWasmDemo.services
+namespace Demos.Shared.Services
 {
     /// <summary>
-    /// Service to extract all @page route templates from all loaded assemblies.
+    /// Extracts every @page route template, RouteAttribute and routable page type from the loaded
+    /// assemblies.
+    /// <para>
+    /// This exists to support <c>BlazorAtoms.Breadcrumbs</c>. That library builds its parent-route
+    /// graph by scanning <c>AppDomain.CurrentDomain.GetAssemblies()</c> for components carrying
+    /// <c>[Route]</c> and <c>[AtomBreadcrumb]</c> (see <c>AtomBreadcrumbGraph</c>), so a trail is
+    /// only ever as correct as what that scan can see. This service is the read-out for the same
+    /// view of the world: if a route is missing from the /RouteInfo page, Breadcrumbs cannot resolve
+    /// it either.
+    /// </para>
+    /// <para>
+    /// That makes it the practical check for the trimming risk recorded in
+    /// <c>src/BlazorAtoms.Breadcrumbs/breadcrumbplan.md</c> — assembly scanning has known
+    /// AOT/trimming caveats, and a published, trimmed WebAssembly build is where they would first
+    /// bite. Hence a page in each demo host, including Auto, whose two runtimes each scan their own
+    /// AppDomain.
+    /// </para>
     /// </summary>
     public class RouteInfoService
     {
@@ -117,7 +133,17 @@ namespace BlazorWebAppWasmDemo.services
                 .ToList();
 
             var pageTypes = assemblies
-                .SelectMany(a => a.ExportedTypes)
+                .SelectMany(a =>
+                {
+                    try
+                    {
+                        return a.ExportedTypes;
+                    }
+                    catch
+                    {
+                        return Array.Empty<Type>(); // Skip problematic assemblies
+                    }
+                })
                 .Where(t =>
                     typeof(ComponentBase).IsAssignableFrom(t) && // Must be a Blazor component
                     t.GetCustomAttributes<RouteAttribute>(inherit: true).Any() // Must have @page

@@ -13,16 +13,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\BlazorAtoms.ActivityIndicators\BlazorAtoms.ActivityIndicators.csproj" />
-    <ProjectReference Include="..\..\..\src\BlazorAtoms.Barcodes\BlazorAtoms.Barcodes.csproj" />
-    <ProjectReference Include="..\..\..\src\BlazorAtoms.Tooltips\BlazorAtoms.Tooltips.csproj" />
-    <ProjectReference Include="..\..\..\src\BlazorAtoms.Badges\BlazorAtoms.Badges.csproj" />
-    <ProjectReference Include="..\..\..\src\BlazorAtoms.Avatars\BlazorAtoms.Avatars.csproj" />
-    <ProjectReference Include="..\..\..\src\BlazorAtoms.Clocks\BlazorAtoms.Clocks.csproj" />
-    <ProjectReference Include="..\..\..\src\BlazorAtoms.Canvas\BlazorAtoms.Canvas.csproj" />
-    <ProjectReference Include="..\..\..\src\BlazorAtoms.Ratings\BlazorAtoms.Ratings.csproj" />
-    <ProjectReference Include="..\..\..\src\BlazorAtoms.Equipment\BlazorAtoms.Equipment.csproj" />
-    <ProjectReference Include="..\..\BlazorAtoms.Branding\BlazorAtoms.Branding.csproj" />
+    <!-- Demos.Shared is the only project reference a demo host needs: it owns the site chrome
+         (MainLayout, NavMenu), every playground view, and RouteInfoService, and it carries the
+         BlazorAtoms.* and Branding references those need. Types and static web assets both flow
+         transitively, so listing individual component libraries here duplicates that graph and
+         goes stale — see the note in CLAUDE.md's new-library checklist. -->
     <ProjectReference Include="..\..\Demos.Shared\Demos.Shared.csproj" />
   </ItemGroup>
 

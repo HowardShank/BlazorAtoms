@@ -1,0 +1,45 @@
+@using Demos.Shared.Services
+@inject RouteInfoService RouteInfoObj
+
+<PageTitle>Route Info — Blazor Atoms</PageTitle>
+
+<h3>Available Routes</h3>
+
+<p>
+    Everything <code>BlazorAtoms.Breadcrumbs</code> can see. It builds its parent-route graph by
+    reflecting over the assemblies loaded in <em>this runtime</em>, so a route missing from the list
+    below is a route a breadcrumb trail cannot resolve either.
+</p>
+<p>
+    "This runtime" is load-bearing under <code>InteractiveAuto</code>, where the answer legitimately
+    differs between passes. Measured in this repo's Auto demo: <strong>63</strong> templates on the
+    server pass, <strong>61</strong> once WebAssembly takes over — the two missing are <code>/</code>
+    and <code>/Error</code>, which live in the host project rather than <code>.Client</code>, so the
+    browser runtime never loads that assembly. The practical consequence: an
+    <code>[AtomBreadcrumb]</code> parent chain pointing at a host-only page resolves server-side and
+    silently fails to in WebAssembly. Compare a cold load against a reload here to see it.
+</p>
+
+<div>Route Templates</div>
+<ul>
+    @foreach (var route in RouteInfoObj.RoutesTemplates)
+    {
+        <li>@route</li>
+    }
+</ul>
+
+<div>Route objects</div>
+<ul>
+    @foreach (var route in RouteInfoObj.Routes)
+    {
+        <li>@route</li>
+    }
+</ul>
+
+<div>Page Types</div>
+<ul>
+    @foreach (var type in RouteInfoObj.PageTypes)
+{
+    <li>@type.FullName</li>
+}
+</ul>

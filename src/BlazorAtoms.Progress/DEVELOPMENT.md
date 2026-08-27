@@ -296,6 +296,25 @@ disposed the module proxy. Everything is now tracked on the track element under
 listeners, the `ResizeObserver`, the pending rAF, this track's timeline reference, and the inline
 geometry.
 
+### Test coverage boundary — deliberate, not an oversight
+
+`AtomScrollProgressBarTests.cs` pins the C#/markup contract: parameters reaching
+`attachScrollProgress`, `updateLayout` vs a second attach, the pending/measured class, and
+`detachScrollProgress` on dispose. bUnit cannot execute the JS module, so everything inside
+`atom-progress.js` — container resolution, the timeline registry, the capture-phase listener, the
+`contains()` native-vs-manual branch — has **no automated coverage**.
+
+Considered and declined (2026-08-27): a Node `node:test` suite over a fake DOM (zero npm
+dependencies, would cover the branch logic), and Playwright against a live demo (would cover real
+geometry and real scroll timelines). Both were judged disproportionate for this repo, which has no
+JS test tooling at all and a manual-trigger dotnet-only CI job.
+
+The standing check is the **ScrollProgress playground**, whose two toggles are permanent for exactly
+this reason: "second bar, same container" exercises the shared reference-counted timeline, and "bar
+on the boxed scroller" exercises `ScrollContainer` plus the out-of-container manual path. Both
+defects this file describes were invisible until something rendered them, so they are wired into the
+demo rather than left to a one-off manual check. Exercise them when changing this module.
+
 ### Why there's no `prefers-reduced-motion` override
 
 Every other effect component in this repo disables its animation under

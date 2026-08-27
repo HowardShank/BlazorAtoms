@@ -1,5 +1,6 @@
 using BlazorWebAppAutoDemo.Client.Pages;
 using BlazorWebAppAutoDemo.Components;
+using Demos.Shared.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +14,12 @@ builder.Services.AddRazorComponents()
 // the circuit with "Server returned an error on close". Only affects the Interactive Server path;
 // WebAssembly components don't cross this boundary.
 builder.Services.AddSignalR(o => o.MaximumReceiveMessageSize = 5 * 1024 * 1024);
+
+// Backs the /RouteInfo page. Registered in BOTH containers — here and in the .Client project —
+// because under InteractiveAuto the page runs server-side on a first visit and in WebAssembly
+// afterwards, and each runtime resolves from its own container and scans its own AppDomain. That
+// split is the point: it shows what route discovery (and therefore Breadcrumbs) can see in each.
+builder.Services.AddSingleton<RouteInfoService>();
 
 var app = builder.Build();
 

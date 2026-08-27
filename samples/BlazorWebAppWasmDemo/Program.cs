@@ -1,5 +1,5 @@
 using BlazorWebAppWasmDemo;
-using BlazorWebAppWasmDemo.services;
+using Demos.Shared.Services;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
