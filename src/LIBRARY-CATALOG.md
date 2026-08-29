@@ -10,8 +10,8 @@ usable in any Blazor render mode.
 > into, no global setup/theme provider, no `builder.Services.Add…()` registration, and no
 > JS bundle to wire up. Each component is plain Blazor + CSS/SVG that reads its inputs from
 > `[Parameter]`s and styles from CSS variables, so it **intermixes freely with any application** —
-> a greenfield app, a legacy page, or alongside a heavy component suite (MudBlazor, Radzen,
-> Fluent, Telerik) without conflict. Take one component, take one library, or take several; you
+> a greenfield app, a legacy page, or alongside a heavy component suite without conflict.
+> Take one component, take one library, or take several; you
 > never inherit a large framework just to use a spinner.
 >
 > **One deliberate exception:** `BlazorAtoms.Transitions` carries a real `ProjectReference` to

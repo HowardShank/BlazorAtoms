@@ -16,9 +16,9 @@
     <li><strong>No umbrella package</strong> &mdash; no shared runtime dependency tying the libraries together.</li>
     <li><strong>Requires little or no setup</strong> &mdash; no global theme provider, only when necessary <code>builder.Services.Add…()</code> registration, no <code>&lt;script&gt;</code> tag to wire up by hand (auto import of JS).</li>
     <li><strong>Any render mode</strong> &mdash; the same markup works unchanged in Server, WebAssembly, and Auto unless otherwisse noted in the component library.</li>
-    <li><strong>Plays nice</strong> &mdash; intermixes freely with any application, greenfield or legacy, and alongside heavier component suites (MudBlazor, Radzen<sup>&reg;</sup>, Fluent UI<sup>&reg;</sup>, Telerik<sup>&reg;</sup>) without conflict.<sup>*</sup></li>
+    <li><strong>Plays nice</strong> &mdash; intermixes freely with any application, greenfield or legacy, and alongside heavier component suites without conflict.</li>
+    <li><strong>Lean footprint</strong> &mdash; each library compiles to its own compact assembly, typically tens of kilobytes, not megabytes. Taking one badge component doesn't drag in unrelated card, chart, or wizard code you never call. That matters most exactly where size is scrutinized &mdash; WebAssembly download payloads, edge/serverless cold starts, any build with a size budget. Because each package is already scoped to what you use, there's less dead code left for the WASM trimmer to even need to strip.</li>
 </ul>
-<p><small><sup>*</sup> MudBlazor, Radzen, Fluent UI, and Telerik may be/are trademarks of their respective owners. Mentioned only for compatibility context; no affiliation or endorsement is implied.</small></p>
 
 <h2>Design Philosophy</h2>
 <p>

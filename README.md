@@ -10,7 +10,7 @@ each shipped as its own standalone NuGet package with ~0 third-party dependencie
 > setup/theme provider, no `builder.Services.Add…()` registration, and no JS bundle to wire up by
 > hand. Every component reads its inputs from `[Parameter]`s and its look from CSS variables, so it
 > intermixes freely with any application — greenfield, legacy, or alongside a heavier component
-> suite (MudBlazor, Radzen, Fluent, Telerik) — without conflict.
+> suite — without conflict.
 
 ## Libraries
 
