@@ -18,6 +18,7 @@
 /*.sln                                @HowardShank
 /src/*/*.csproj                       @HowardShank
 /tests/*/*.csproj                     @HowardShank
+/appsettings.json                     @HowardShank
 
 # Legal + policy
 /LICENSE.txt                          @HowardShank
